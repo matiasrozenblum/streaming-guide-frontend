@@ -1,8 +1,11 @@
+import { Panelist } from './panelist';
+
 export interface Program {
-    id: string;
-    name: string;
-    description: string;
-    startTime: string; // formato HH:mm
-    endTime: string;   // formato HH:mm
-    channelId: string;
-  }
+  id: string;
+  name: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  channelId: string;
+  panelists?: Panelist[];
+}

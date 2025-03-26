@@ -6,10 +6,11 @@ interface Props {
   start: string;
   end: string;
   description?: string;
+  panelists?: { id: string; name: string }[];
   color?: string;
 }
 
-export const ProgramBlock = ({ name, start, end, description, color = '#1976d2' }: Props) => {
+export const ProgramBlock = ({ name, start, end, description, panelists, color = '#1976d2' }: Props) => {
   console.log(`🎯 ProgramBlock`, { start, end });
   const startTime = dayjs(start, 'HH:mm');
   const endTime = dayjs(end, 'HH:mm');
@@ -18,7 +19,17 @@ export const ProgramBlock = ({ name, start, end, description, color = '#1976d2' 
   console.log(`⏱️ Offset: ${offset}, Duration: ${duration}`);
 
   return (
-    <Tooltip title={<>{name}<br />{description}</>} arrow placement="top">
+    <Tooltip title={<>
+        <strong>{name}</strong><br />
+        {description}<br />
+        {panelists?.length && (
+          <>
+            <br />
+            <strong>Panelistas:</strong><br />
+            {panelists.map((p) => p.name).join(', ')}
+          </>
+        )}
+      </>} arrow placement="top">
       <Box
         position="absolute"
         left={`${(offset / 60) * 100 + 8}px`}

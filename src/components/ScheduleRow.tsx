@@ -2,19 +2,20 @@ import { Box, Typography, Avatar } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
 
 interface Program {
-    id: string;
-    name: string;
-    start_time: string;
-    end_time: string;
-    description?: string;
-  }
+  id: string;
+  name: string;
+  start_time: string;
+  end_time: string;
+  description?: string;
+  panelists?: { id: string; name: string }[];
+}
 
 interface Props {
-    channelName: string;
-    channelLogo?: string;
-    programs: Program[];
-    color?: string;
-  }
+  channelName: string;
+  channelLogo?: string;
+  programs: Program[];
+  color?: string;
+}
 
 export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props) => {
   console.log(`📡 ${channelName} programs count:`, programs.length);
@@ -45,6 +46,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
             start={p.start_time}
             end={p.end_time}
             description={p.description}
+            panelists={p.panelists}
             color={color}
         />
         ))}

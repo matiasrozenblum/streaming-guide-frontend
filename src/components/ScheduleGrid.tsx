@@ -5,17 +5,16 @@ import { TimeHeader } from './TimeHeader';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { Channel } from '@/types/channel';
-import { Program } from '@/types/program';
+import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 
 interface Props {
   channels: Channel[];
-  programs: Program[];
+  schedules: Schedule[];
 }
 
-export const ScheduleGrid = ({ channels, programs }: Props) => {
+export const ScheduleGrid = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-
   const [selectedDay, setSelectedDay] = useState('monday');
 
   const daysOfWeek = [
@@ -37,9 +36,6 @@ export const ScheduleGrid = ({ channels, programs }: Props) => {
     });
   };
 
-  const getProgramsForChannel = (channelId: string) =>
-    programs.filter((p) => p.channelId === channelId);
-
   useEffect(() => {
     const now = dayjs();
     const startOfDay = now.hour(8).minute(0);
@@ -52,9 +48,16 @@ export const ScheduleGrid = ({ channels, programs }: Props) => {
     });
   }, []);
 
-  if (!channels.length || !programs.length) {
+  if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4 }}>Sin datos disponibles</Typography>;
   }
+
+  // Filtrar schedules por día seleccionado
+  const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
+
+  // Agrupar schedules por canal
+  const getSchedulesForChannel = (channelId: string) =>
+    schedulesForDay.filter((s) => s.program.channel.id === channelId);
 
   return (
     <>
@@ -71,7 +74,7 @@ export const ScheduleGrid = ({ channels, programs }: Props) => {
         ))}
       </Box>
 
-      {/* Botones de navegación horaria */}
+      {/* Botones de horario */}
       <Box display="flex" gap={1} mb={2}>
         {jumpHours.map((hour) => (
           <Button
@@ -85,12 +88,6 @@ export const ScheduleGrid = ({ channels, programs }: Props) => {
         ))}
       </Box>
 
-      {/* Mostrar qué día está seleccionado (solo para debug ahora) */}
-      <Typography variant="subtitle1" sx={{ mb: 1 }}>
-        Día seleccionado: {selectedDay}
-      </Typography>
-
-      {/* Contenedor scrollable horizontal */}
       <Box overflow="auto" ref={scrollRef} sx={{ maxWidth: '100%', position: 'relative' }}>
         <Box minWidth="1200px" position="relative">
           <TimeHeader />
@@ -100,12 +97,13 @@ export const ScheduleGrid = ({ channels, programs }: Props) => {
               key={channel.id}
               channelName={channel.name}
               channelLogo={channel.logo_url}
-              programs={getProgramsForChannel(channel.id).map((p) => ({
-                id: p.id,
-                name: p.name,
-                start_time: p.startTime.slice(0, 5),
-                end_time: p.endTime.slice(0, 5),
-                description: p.description,
+              programs={getSchedulesForChannel(channel.id).map((s) => ({
+                id: s.id.toString(),
+                name: s.program.name,
+                start_time: s.start_time.slice(0, 5),
+                end_time: s.end_time.slice(0, 5),
+                description: s.program.description,
+                panelists: s.program.panelists,
               }))}
               color={getColorForChannel(index)}
             />

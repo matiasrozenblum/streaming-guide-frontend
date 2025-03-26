@@ -2,49 +2,29 @@ import { useEffect, useState } from 'react';
 import { Container, Typography, Box, CircularProgress } from '@mui/material';
 import { api } from '@/services/api';
 import { Channel } from '@/types/channel';
-import { Program } from '@/types/program';
+import { Schedule } from '@/types/schedule';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 
 export default function Home() {
-  const [channels, setChannels] = useState<Channel[]>([]);
-  const [programs, setPrograms] = useState<Program[]>([]);
+  const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-  Promise.all([
-    api.get('/channels'),
-    api.get('/programs'),
-  ])
-    .then(([channelsRes, programsRes]) => {
-      setChannels(channelsRes.data);
+    api.get('/schedules')
+      .then((res) => {
+        console.log('📦 Schedules from backend:', res.data);
+        setSchedules(res.data);
+      })
+      .catch((err) => console.error(err))
+      .finally(() => setLoading(false));
+  }, []);
 
-      setPrograms(programsRes.data.map((p: any) => ({
-        ...p,
-        channelId: p.channel_id,
-        startTime: p.start_time,
-        endTime: p.end_time,
-      })));
-    })
-    .catch((err) => console.error(err))
-    .finally(() => setLoading(false));
-}, []);useEffect(() => {
-  Promise.all([
-    api.get('/channels'),
-    api.get('/programs'),
-  ])
-    .then(([channelsRes, programsRes]) => {
-      setChannels(channelsRes.data);
-      console.log('🧪 Raw programs data from backend:', programsRes.data);
-      setPrograms(programsRes.data.map((p: any) => ({
-        ...p,
-        channelId: p.channel?.id,
-        startTime: p.start_time,
-        endTime: p.end_time,
-      })));
-    })
-    .catch((err) => console.error(err))
-    .finally(() => setLoading(false));
-}, []);
+  // Obtener canales únicos a partir de los schedules
+  const channels = Array.from(
+    new Map(
+      schedules.map((s) => [s.program.channel.id, s.program.channel])
+    ).values()
+  );
 
   return (
     <Container maxWidth="xl">
@@ -57,7 +37,7 @@ export default function Home() {
           <CircularProgress />
         </Box>
       ) : (
-        <ScheduleGrid channels={channels} programs={programs} />
+        <ScheduleGrid channels={channels} schedules={schedules} />
       )}
     </Container>
   );
