@@ -11,17 +11,40 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    Promise.all([
-      api.get('/channels'),
-      api.get('/programs'),
-    ])
-      .then(([channelsRes, programsRes]) => {
-        setChannels(channelsRes.data);
-        setPrograms(programsRes.data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
-  }, []);
+  Promise.all([
+    api.get('/channels'),
+    api.get('/programs'),
+  ])
+    .then(([channelsRes, programsRes]) => {
+      setChannels(channelsRes.data);
+
+      setPrograms(programsRes.data.map((p: any) => ({
+        ...p,
+        channelId: p.channel_id,
+        startTime: p.start_time,
+        endTime: p.end_time,
+      })));
+    })
+    .catch((err) => console.error(err))
+    .finally(() => setLoading(false));
+}, []);useEffect(() => {
+  Promise.all([
+    api.get('/channels'),
+    api.get('/programs'),
+  ])
+    .then(([channelsRes, programsRes]) => {
+      setChannels(channelsRes.data);
+      console.log('🧪 Raw programs data from backend:', programsRes.data);
+      setPrograms(programsRes.data.map((p: any) => ({
+        ...p,
+        channelId: p.channel?.id,
+        startTime: p.start_time,
+        endTime: p.end_time,
+      })));
+    })
+    .catch((err) => console.error(err))
+    .finally(() => setLoading(false));
+}, []);
 
   return (
     <Container maxWidth="xl">

@@ -10,16 +10,18 @@ interface Props {
 }
 
 export const ProgramBlock = ({ name, start, end, description, color = '#1976d2' }: Props) => {
+  console.log(`🎯 ProgramBlock`, { start, end });
   const startTime = dayjs(start, 'HH:mm');
   const endTime = dayjs(end, 'HH:mm');
   const duration = endTime.diff(startTime, 'minute');
-  const offset = startTime.diff(dayjs().hour(8).minute(0), 'minute');
+  const offset = Math.max(0, startTime.diff(dayjs().hour(8).minute(0), 'minute'));
+  console.log(`⏱️ Offset: ${offset}, Duration: ${duration}`);
 
   return (
     <Tooltip title={<>{name}<br />{description}</>} arrow placement="top">
       <Box
         position="absolute"
-        left={`${(offset / 60) * 100}px`}
+        left={`${(offset / 60) * 100 + 8}px`}
         width={`${(duration / 60) * 100}px`}
         height="40px"
         bgcolor={color}

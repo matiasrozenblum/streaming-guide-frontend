@@ -17,6 +17,7 @@ interface Props {
   }
 
 export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props) => {
+  console.log(`📡 ${channelName} programs count:`, programs.length);
   return (
     <Box display="flex" alignItems="center" borderBottom={1} position="relative" height="60px">
       <Box
@@ -36,14 +37,15 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
       </Box>
 
       <Box position="relative" flex="1" height="100%">
-        {programs.map((p) => (
-          <ProgramBlock
-          key={p.id}
-          name={p.name}
-          start={p.start_time}
-          end={p.end_time}
-          description={p.description}
-          color={color}
+      {programs.map((p) => (
+        console.log(`🧱 Rendering program in ${channelName}:`, p),
+        <ProgramBlock
+            key={p.id}
+            name={p.name}
+            start={p.start_time}
+            end={p.end_time}
+            description={p.description}
+            color={color}
         />
         ))}
       </Box>
