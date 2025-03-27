@@ -1,37 +1,21 @@
-// src/components/NowIndicator.tsx
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
-import { useEffect, useState } from 'react';
+import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '@/constants/layout';
 
 export const NowIndicator = () => {
-  const [position, setPosition] = useState(0);
-
-  const updatePosition = () => {
-    const now = dayjs();
-    const start = now.hour(8).minute(0).second(0); // día de referencia desde las 08:00
-    const minutesFromStart = now.diff(start, 'minute');
-    const pos = (minutesFromStart / 60) * 100; // 100px por hora
-    setPosition(pos);
-  };
-
-  useEffect(() => {
-    updatePosition();
-    const interval = setInterval(updatePosition, 60000); // actualizar cada minuto
-    return () => clearInterval(interval);
-  }, []);
-
-  // Si aún no es hora de empezar la grilla
-  if (position < 0 || position > 1200) return null;
+  const now = dayjs();
+  const minutesFromMidnight = now.diff(now.startOf('day'), 'minute');
+  const offsetPx = minutesFromMidnight * PIXELS_PER_MINUTE;
 
   return (
     <Box
       position="absolute"
       top={0}
-      left={`${position}px`}
-      height="100%"
+      left={`${CHANNEL_LABEL_WIDTH + offsetPx}px`}
       width="2px"
+      height="100%"
       bgcolor="red"
-      zIndex={2}
+      zIndex={9999}
     />
   );
 };

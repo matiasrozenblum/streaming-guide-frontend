@@ -38,8 +38,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
       </Box>
 
       <Box position="relative" flex="1" height="100%">
-      {programs.map((p) => (
-        console.log(`🧱 Rendering program in ${channelName}:`, p),
+      {programs.map((p, i) => (
         <ProgramBlock
             key={p.id}
             name={p.name}
