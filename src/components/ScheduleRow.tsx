@@ -1,4 +1,4 @@
-import { Box, Typography, Avatar } from '@mui/material';
+import { Box, Avatar } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
 
 interface Program {
