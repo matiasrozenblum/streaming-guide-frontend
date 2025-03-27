@@ -8,6 +8,7 @@ interface Program {
   end_time: string;
   description?: string;
   panelists?: { id: string; name: string }[];
+  logo_url?: string;
 }
 
 interface Props {
@@ -39,6 +40,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
 
       <Box position="relative" flex="1" height="100%">
       {programs.map((p, i) => (
+        console.log('p.logo_url:', p.name),
         <ProgramBlock
             key={p.id}
             name={p.name}
@@ -46,6 +48,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
             end={p.end_time}
             description={p.description}
             panelists={p.panelists}
+            logo_url={p.logo_url}
             color={color}
         />
         ))}

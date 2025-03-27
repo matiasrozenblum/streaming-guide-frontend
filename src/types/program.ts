@@ -8,4 +8,5 @@ export interface Program {
   endTime: string;
   channelId: string;
   panelists?: Panelist[];
+  logo_url?: string;
 }

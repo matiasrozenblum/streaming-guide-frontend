@@ -98,6 +98,7 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
                 end_time: s.end_time.slice(0, 5),
                 description: s.program.description,
                 panelists: s.program.panelists,
+                logo_url: s.program.logo_url,
               }))}
               color={getColorForChannel(index)}
             />
