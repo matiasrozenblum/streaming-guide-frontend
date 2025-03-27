@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Container, Typography, Box, CircularProgress } from '@mui/material';
 import { api } from '@/services/api';
-import { Channel } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 

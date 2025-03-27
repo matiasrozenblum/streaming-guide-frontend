@@ -31,15 +31,17 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
         sx={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
       >
         {channelLogo ? (
-          <Avatar src={channelLogo} alt={channelName} sx={{ width: 32, height: 32 }} />
+          <Avatar src={channelLogo} alt={channelName} sx={{
+            width: '100%',
+            height: '100%',
+            objectFit: 'cover',
+            borderRadius: 'inherit',
+          }} />
         ) : null}
-        <Typography variant="body2" fontWeight={600}>
-          {channelName}
-        </Typography>
       </Box>
 
       <Box position="relative" flex="1" height="100%">
-      {programs.map((p, i) => (
+      {programs.map((p) => (
         console.log('p.logo_url:', p.name),
         <ProgramBlock
             key={p.id}

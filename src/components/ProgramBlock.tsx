@@ -15,8 +15,6 @@ interface Props {
   color?: string;
 }
 
-const BLOCK_SPACING = 2;
-
 export const ProgramBlock = ({
   name,
   start,
@@ -58,7 +56,7 @@ export const ProgramBlock = ({
         position="absolute"
         left={`${offsetPx}px`}
         width={`${widthPx}px`}
-        height="40px"
+        height="60px"
         overflow="hidden"
         borderRadius={1}
       >
