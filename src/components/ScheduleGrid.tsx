@@ -94,10 +94,15 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
         sx={{
           width: '100%',
           position: 'relative',
+          height: 'calc(100vh - 180px)', // Podés ajustar este valor si tenés otros headers
+          '@media (max-width: 600px)': {
+            height: 'calc(100vh - 140px)',
+          },
         }}
       >
   <Box
     minWidth={`${60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH}px`}
+    width="fit-content"
     position="relative"
   >
     <TimeHeader />
