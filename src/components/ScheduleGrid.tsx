@@ -32,6 +32,8 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
 
   const isToday = selectedDay === dayjs().format('dddd').toLowerCase();
 
+  const totalGridWidth = 60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH;
+
   // Jump buttons cada 2 horas
   const jumpHours = Array.from({ length: 12 }, (_, i) => i * 2).map((h) =>
     `${String(h).padStart(2, '0')}:00`
@@ -92,19 +94,21 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
         overflow="auto"
         ref={scrollRef}
         sx={{
-          width: '100%',
           position: 'relative',
-          height: 'calc(100vh - 180px)', // Podés ajustar este valor si tenés otros headers
-          '@media (max-width: 600px)': {
-            height: 'calc(100vh - 140px)',
-          },
+          display: 'block',
+          width: '100%',
+          maxWidth: '100vw',
+          minWidth: totalGridWidth
         }}
       >
-  <Box
-    minWidth={`${60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH}px`}
-    width="fit-content"
-    position="relative"
-  >
+      <Box
+        minWidth= {totalGridWidth}
+        sx={{
+          width: 'fit-content',
+          display: 'inline-block',
+        }}
+        position='relative'
+      >
     <TimeHeader />
     {isToday && <NowIndicator />}
     {channels.map((channel, index) => (
