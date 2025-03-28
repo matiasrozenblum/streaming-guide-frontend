@@ -1,6 +1,7 @@
 import { Box, Typography, Button } from '@mui/material';
 import { useEffect, useState, useRef } from 'react';
 import dayjs from 'dayjs';
+import { TimeHeader } from './TimeHeader';
 import { Channel } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
@@ -37,7 +38,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
     const now = dayjs();
     const minutesFromStart = now.diff(now.startOf('day'), 'minute');
     scrollRef.current?.scrollTo({
-      left: minutesFromStart * PIXELS_PER_MINUTE,
+      left: minutesFromStart * PIXELS_PER_MINUTE - 60,
       behavior: 'smooth',
     });
   }, []);
@@ -77,6 +78,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
             position: 'relative',
           }}
         >
+        <TimeHeader />
           {isToday && <NowIndicator />}
           {channels.map((channel, index) => (
             <ScheduleRow

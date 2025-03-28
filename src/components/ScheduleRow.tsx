@@ -1,4 +1,4 @@
-import { Box, Avatar, Typography } from '@mui/material';
+import { Box, Avatar, Typography, useMediaQuery, useTheme } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
 import { ROW_HEIGHT } from '../constants/layout';
 
@@ -21,6 +21,9 @@ interface Props {
 }
 
 export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const labelWidth = isMobile ? 100 : 160;
   return (
     <Box 
       display="flex" 
@@ -35,7 +38,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       }}
     >
       <Box
-        width={160}
+        width={labelWidth}
         px={2}
         display="flex"
         alignItems="center"

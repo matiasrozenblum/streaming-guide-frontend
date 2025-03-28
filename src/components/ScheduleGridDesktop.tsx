@@ -37,7 +37,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     const now = dayjs();
     const minutesFromStart = now.diff(now.startOf('day'), 'minute');
     scrollRef.current?.scrollTo({
-      left: minutesFromStart * PIXELS_PER_MINUTE,
+      left: minutesFromStart * PIXELS_PER_MINUTE - 200,
       behavior: 'smooth',
     });
   }, []);
