@@ -1,5 +1,6 @@
-import { Box, Avatar } from '@mui/material';
+import { Box, Avatar, Typography } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
+import { ROW_HEIGHT } from '../constants/layout';
 
 interface Program {
   id: string;
@@ -19,31 +20,62 @@ interface Props {
 }
 
 export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props) => {
-  console.log(`📡 ${channelName} programs count:`, programs.length);
   return (
-    <Box display="flex" alignItems="center" borderBottom={1} position="relative" height="60px">
+    <Box 
+      display="flex" 
+      alignItems="center" 
+      borderBottom="1px solid rgba(0, 0, 0, 0.12)"
+      position="relative" 
+      height={`${ROW_HEIGHT}px`}
+      sx={{
+        '&:hover': {
+          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+        },
+      }}
+    >
       <Box
-        width="120px"
-        px={1}
+        width={160}
+        px={2}
         display="flex"
         alignItems="center"
-        gap={1}
-        sx={{ overflow: 'hidden', whiteSpace: 'nowrap' }}
+        gap={2}
+        position="sticky"
+        left={0}
+        bgcolor="white"
+        height="100%"
+        zIndex={2}
+        sx={{ 
+          borderRight: '1px solid rgba(0, 0, 0, 0.12)',
+          boxShadow: '2px 0 4px rgba(0,0,0,0.05)',
+        }}
       >
         {channelLogo ? (
-          <Avatar src={channelLogo} alt={channelName} sx={{
-            width: '100%',
-            height: '100%',
-            objectFit: 'cover',
-            borderRadius: 'inherit',
-          }} />
+          <Avatar 
+            src={channelLogo} 
+            alt={channelName}
+            sx={{
+              width: 40,
+              height: 40,
+              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            }}
+          />
         ) : null}
+        <Typography
+          variant="subtitle2"
+          sx={{
+            fontWeight: 'bold',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          {channelName}
+        </Typography>
       </Box>
 
       <Box position="relative" flex="1" height="100%">
-      {programs.map((p) => (
-        console.log('p.logo_url:', p.name),
-        <ProgramBlock
+        {programs.map((p) => (
+          <ProgramBlock
             key={p.id}
             name={p.name}
             start={p.start_time}
@@ -53,7 +85,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
             logo_url={p.logo_url}
             channelName={channelName}
             color={color}
-        />
+          />
         ))}
       </Box>
     </Box>

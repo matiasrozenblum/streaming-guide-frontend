@@ -82,29 +82,39 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
       </Box>
 
       {/* Grilla */}
-      <Box overflow="auto" ref={scrollRef} sx={{ maxWidth: '100%', position: 'relative' }}>
-        <Box minWidth={`${60 * 24 + CHANNEL_LABEL_WIDTH}px`} position="relative">
-          <TimeHeader />
-          <NowIndicator />
-          {channels.map((channel, index) => (
-            <ScheduleRow
-              key={channel.id}
-              channelName={channel.name}
-              channelLogo={channel.logo_url}
-              programs={getSchedulesForChannel(channel.id).map((s) => ({
-                id: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                description: s.program.description,
-                panelists: s.program.panelists,
-                logo_url: s.program.logo_url,
-              }))}
-              color={getColorForChannel(index)}
-            />
-          ))}
-        </Box>
-      </Box>
+      <Box
+  overflow="auto"
+  ref={scrollRef}
+  sx={{
+    width: '100%',
+    position: 'relative',
+  }}
+>
+  <Box
+    minWidth={`${60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH}px`}
+    position="relative"
+  >
+    <TimeHeader />
+    <NowIndicator />
+    {channels.map((channel, index) => (
+      <ScheduleRow
+        key={channel.id}
+        channelName={channel.name}
+        channelLogo={channel.logo_url}
+        programs={getSchedulesForChannel(channel.id).map((s) => ({
+          id: s.id.toString(),
+          name: s.program.name,
+          start_time: s.start_time.slice(0, 5),
+          end_time: s.end_time.slice(0, 5),
+          description: s.program.description,
+          panelists: s.program.panelists,
+          logo_url: s.program.logo_url,
+        }))}
+        color={getColorForChannel(index)}
+      />
+    ))}
+  </Box>
+</Box>
     </>
   );
 };
