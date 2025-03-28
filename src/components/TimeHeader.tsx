@@ -26,7 +26,7 @@ export const TimeHeader = () => {
         return (
           <Box
             key={hour}
-            width={`${120 * PIXELS_PER_MINUTE}px`}
+            width={`${60 * PIXELS_PER_MINUTE}px`}
             p={1}
             textAlign="center"
             borderRight="1px solid rgba(0, 0, 0, 0.08)"

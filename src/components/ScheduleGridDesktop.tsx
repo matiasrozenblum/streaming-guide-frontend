@@ -19,11 +19,11 @@ interface Props {
 
 export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const today = dayjs().format('dddd').toLowerCase(); // Ej: "friday"
+  const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
 
   const isToday = selectedDay === today;
-  const totalGridWidth = 60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH;
+  const totalGridWidth = (PIXELS_PER_MINUTE * 60 * 24) + CHANNEL_LABEL_WIDTH;
 
   const daysOfWeek = [
     { label: 'Lun', value: 'monday' },
@@ -34,13 +34,16 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   ];
 
   useEffect(() => {
-    const now = dayjs();
-    const minutesFromStart = now.diff(now.startOf('day'), 'minute');
-    scrollRef.current?.scrollTo({
-      left: minutesFromStart * PIXELS_PER_MINUTE - 200,
-      behavior: 'smooth',
-    });
-  }, []);
+    if (isToday) {
+      const now = dayjs();
+      const minutesFromStart = (now.hour() * 60) + now.minute();
+      const scrollPosition = (minutesFromStart * PIXELS_PER_MINUTE) - 200;
+      scrollRef.current?.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth',
+      });
+    }
+  }, [isToday]);
 
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4 }}>Sin datos disponibles</Typography>;
@@ -52,7 +55,6 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
 
   return (
     <>
-      {/* Selector de días */}
       <Box display="flex" gap={1} mb={2}>
         {daysOfWeek.map((day) => (
           <Button
@@ -65,22 +67,19 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         ))}
       </Box>
 
-      {/* Grilla */}
       <Box
-        overflow="auto"
         ref={scrollRef}
         sx={{
-          position: 'relative',
-          display: 'block',
+          overflow: 'auto',
           width: '100%',
           maxWidth: '100vw',
-          minWidth: totalGridWidth,
         }}
       >
         <Box
-          minWidth={totalGridWidth}
-          sx={{ width: 'fit-content', display: 'inline-block' }}
-          position="relative"
+          sx={{
+            width: `${totalGridWidth}px`,
+            position: 'relative',
+          }}
         >
           <TimeHeader />
           {isToday && <NowIndicator />}

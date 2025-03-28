@@ -4,14 +4,16 @@ import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '../constants/layout';
 
 export const NowIndicator = () => {
   const now = dayjs();
-  const minutesFromMidnight = now.diff(now.startOf('day'), 'minute');
-  const offsetPx = minutesFromMidnight * PIXELS_PER_MINUTE;
+  const hours = now.hour();
+  const minutes = now.minute();
+  const minutesFromMidnight = (hours * 60) + minutes;
+  const offsetPx = CHANNEL_LABEL_WIDTH + (minutesFromMidnight * PIXELS_PER_MINUTE);
 
   return (
     <Box
       position="absolute"
       top={0}
-      left={`${CHANNEL_LABEL_WIDTH + offsetPx}px`}
+      left={`${offsetPx}px`}
       sx={{
         width: '2px',
         height: '100%',
