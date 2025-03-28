@@ -1,4 +1,4 @@
-import { Box, Tooltip, Typography, alpha } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { PIXELS_PER_MINUTE } from '../constants/layout';
@@ -28,6 +28,8 @@ export const ProgramBlock = ({
   isToday,
 }: Props) => {
   // Para posicionamiento en la grilla (desde las 00:00)
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const parsedStart = dayjs(start, 'HH:mm');
   const parsedEnd = dayjs(end, 'HH:mm');
   const offset = parsedStart.diff(dayjs().startOf('day'), 'minute');
@@ -75,7 +77,7 @@ export const ProgramBlock = ({
     >
       <Box
         position="absolute"
-        left={`${offsetPx}px`}
+        left={`${isMobile ? offsetPx - 60 : offsetPx}px`}
         width={`${widthPx}px`}
         height="100%"
         sx={{
