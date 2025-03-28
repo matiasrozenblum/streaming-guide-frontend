@@ -25,7 +25,6 @@ export const ProgramBlock = ({
   panelists,
   logo_url,
   color = '#2196F3',
-  channelName,
   isToday,
 }: Props) => {
   // Para posicionamiento en la grilla (desde las 00:00)
