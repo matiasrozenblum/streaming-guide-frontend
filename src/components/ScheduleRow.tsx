@@ -17,9 +17,10 @@ interface Props {
   channelLogo?: string;
   programs: Program[];
   color?: string;
+  isToday?: boolean;
 }
 
-export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props) => {
+export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
   return (
     <Box 
       display="flex" 
@@ -85,6 +86,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
             logo_url={p.logo_url}
             channelName={channelName}
             color={color}
+            isToday={isToday}
           />
         ))}
       </Box>

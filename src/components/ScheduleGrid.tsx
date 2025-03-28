@@ -8,6 +8,9 @@ import { Channel } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '@/constants/layout';
+import weekday from 'dayjs/plugin/weekday';
+
+dayjs.extend(weekday);
 
 interface Props {
   channels: Channel[];
@@ -25,6 +28,8 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
     { label: 'Jue', value: 'thursday' },
     { label: 'Vie', value: 'friday' },
   ];
+
+  const isToday = selectedDay === dayjs().format('dddd').toLowerCase();
 
   // Jump buttons cada 2 horas
   const jumpHours = Array.from({ length: 12 }, (_, i) => i * 2).map((h) =>
@@ -95,7 +100,7 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
     position="relative"
   >
     <TimeHeader />
-    <NowIndicator />
+    {isToday && <NowIndicator />}
     {channels.map((channel, index) => (
       <ScheduleRow
         key={channel.id}
@@ -111,6 +116,7 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
           logo_url: s.program.logo_url,
         }))}
         color={getColorForChannel(index)}
+        isToday={isToday}
       />
     ))}
   </Box>

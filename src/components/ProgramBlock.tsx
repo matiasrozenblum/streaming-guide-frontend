@@ -14,6 +14,7 @@ interface Props {
   logo_url?: string;
   color?: string;
   channelName?: string;
+  isToday?: boolean;
 }
 
 export const ProgramBlock = ({
@@ -25,6 +26,7 @@ export const ProgramBlock = ({
   logo_url,
   color = '#2196F3',
   channelName,
+  isToday,
 }: Props) => {
   // Para posicionamiento en la grilla (desde las 00:00)
   const parsedStart = dayjs(start, 'HH:mm');
@@ -39,8 +41,8 @@ export const ProgramBlock = ({
   const parsedStartWithDate = dayjs(`${dayjs().format('YYYY-MM-DD')} ${start}`, 'YYYY-MM-DD HH:mm');
   const parsedEndWithDate = dayjs(`${dayjs().format('YYYY-MM-DD')} ${end}`, 'YYYY-MM-DD HH:mm');
   const now = dayjs();
-  const isLive = now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
-  const isPast = now.isAfter(parsedEndWithDate);
+  const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
+  const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   return (
     <Tooltip
