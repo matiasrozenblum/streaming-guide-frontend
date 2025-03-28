@@ -1,4 +1,4 @@
-import { Box, Tooltip } from '@mui/material';
+import { Box, Tooltip, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { PIXELS_PER_MINUTE } from '@/constants/layout';
@@ -13,6 +13,7 @@ interface Props {
   panelists?: { id: string; name: string }[];
   logo_url?: string;
   color?: string;
+  channelName?: string;
 }
 
 export const ProgramBlock = ({
@@ -22,6 +23,7 @@ export const ProgramBlock = ({
   description,
   panelists,
   logo_url,
+  channelName,
 }: Props) => {
   const parsedStart = dayjs(start, 'HH:mm');
   const parsedEnd = dayjs(end, 'HH:mm');
@@ -31,6 +33,8 @@ export const ProgramBlock = ({
 
   const widthPx = duration * PIXELS_PER_MINUTE - 1;
   const offsetPx = offset * PIXELS_PER_MINUTE;
+
+  const isVorterix = !logo_url && channelName === 'Vorterix';
 
   return (
     <Tooltip
@@ -59,8 +63,24 @@ export const ProgramBlock = ({
         height="60px"
         overflow="hidden"
         borderRadius={1}
+        sx={
+          isVorterix
+            ? {
+                backgroundColor: 'rgba(78, 38, 180, 0.1)',
+                border: '1px solid rgb(78, 38, 180)',
+                borderRadius: '12px',
+                fontFamily:
+                  'ui-sans-serif, system-ui, -apple-system, "system-ui", "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji"',
+                padding: '8px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                textAlign: 'center',
+              }
+            : undefined
+        }
       >
-        {logo_url && (
+        {logo_url ? (
           <Box
             component="img"
             src={logo_url}
@@ -72,7 +92,11 @@ export const ProgramBlock = ({
               borderRadius: 'inherit',
             }}
           />
-        )}
+        ) : isVorterix ? (
+          <Typography variant="caption" sx={{ fontWeight: 'bold', fontSize: '0.75rem' }}>
+            {name}
+          </Typography>
+        ) : null}
       </Box>
     </Tooltip>
   );

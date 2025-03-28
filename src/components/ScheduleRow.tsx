@@ -51,6 +51,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color }: Props
             description={p.description}
             panelists={p.panelists}
             logo_url={p.logo_url}
+            channelName={channelName}
             color={color}
         />
         ))}
