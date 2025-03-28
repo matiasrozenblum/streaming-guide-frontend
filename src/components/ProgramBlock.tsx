@@ -1,7 +1,7 @@
 import { Box, Tooltip, Typography, alpha } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '../constants/layout';
+import { PIXELS_PER_MINUTE } from '../constants/layout';
 
 dayjs.extend(customParseFormat);
 
