@@ -19,7 +19,8 @@ interface Props {
 
 export const ScheduleGrid = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const [selectedDay, setSelectedDay] = useState('monday');
+  const today = dayjs().format('dddd').toLowerCase(); // Ej: "friday"
+  const [selectedDay, setSelectedDay] = useState(today);
 
   const daysOfWeek = [
     { label: 'Lun', value: 'monday' },
@@ -88,13 +89,13 @@ export const ScheduleGrid = ({ channels, schedules }: Props) => {
 
       {/* Grilla */}
       <Box
-  overflow="auto"
-  ref={scrollRef}
-  sx={{
-    width: '100%',
-    position: 'relative',
-  }}
->
+        overflow="auto"
+        ref={scrollRef}
+        sx={{
+          width: '100%',
+          position: 'relative',
+        }}
+      >
   <Box
     minWidth={`${60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH}px`}
     position="relative"
