@@ -27,7 +27,7 @@ export const ProgramBlock = ({
   color = '#2196F3',
   isToday,
 }: Props) => {
-  const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
+  const { pixelsPerMinute } = useLayoutValues();
   
   // Calculate minutes from midnight for positioning
   const [startHours, startMinutes] = start.split(':').map(Number);

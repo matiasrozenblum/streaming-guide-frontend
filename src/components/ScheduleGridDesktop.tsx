@@ -32,7 +32,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     { label: 'Mié', value: 'wednesday' },
     { label: 'Jue', value: 'thursday' },
     { label: 'Vie', value: 'friday' },
-    { label: 'Sab', value: 'saturday' },
+    { label: 'Sáb', value: 'saturday' },
     { label: 'Dom', value: 'sunday' },
   ];
 
@@ -58,12 +58,26 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
 
   return (
     <>
-      <Box display="flex" gap={1} mb={2}>
+      <Box 
+        display="flex" 
+        gap={1} 
+        mb={2} 
+        p={2}
+        sx={{
+          background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         {daysOfWeek.map((day) => (
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
+            sx={{
+              minWidth: '80px',
+              height: '40px',
+            }}
           >
             {day.label}
           </Button>
@@ -76,12 +90,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           overflow: 'auto',
           width: '100%',
           maxWidth: '100vw',
+          position: 'relative',
         }}
       >
         <Box
           sx={{
             width: `${totalGridWidth}px`,
             position: 'relative',
+            overflow: 'hidden',
           }}
         >
           <TimeHeader />

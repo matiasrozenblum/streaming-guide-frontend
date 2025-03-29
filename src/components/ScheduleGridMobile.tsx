@@ -24,13 +24,13 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
 
   const daysOfWeek = [
-    { label: 'Lun', value: 'monday' },
-    { label: 'Mar', value: 'tuesday' },
-    { label: 'Mié', value: 'wednesday' },
-    { label: 'Jue', value: 'thursday' },
-    { label: 'Vie', value: 'friday' },
-    { label: 'Sab', value: 'saturday' },
-    { label: 'Dom', value: 'sunday' },
+    { label: 'L', value: 'monday' },
+    { label: 'M', value: 'tuesday' },
+    { label: 'X', value: 'wednesday' },
+    { label: 'J', value: 'thursday' },
+    { label: 'V', value: 'friday' },
+    { label: 'S', value: 'saturday' },
+    { label: 'D', value: 'sunday' },
   ];
 
   useEffect(() => {
@@ -55,13 +55,30 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
 
   return (
     <Box>
-      <Box display="flex" gap={1} mb={2} overflow="auto" px={2}>
+      <Box 
+        display="flex" 
+        gap={1} 
+        mb={2} 
+        p={2}
+        sx={{
+          background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
+          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(8px)',
+          overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
+        }}
+      >
         {daysOfWeek.map((day) => (
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
-            sx={{ minWidth: 'auto' }}
+            sx={{
+              minWidth: '44px',
+              height: '44px',
+              padding: '0',
+              borderRadius: '10px',
+            }}
           >
             {day.label}
           </Button>
@@ -75,12 +92,14 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           overflowY: 'hidden',
           width: '100%',
           WebkitOverflowScrolling: 'touch',
+          position: 'relative',
         }}
       >
         <Box
           sx={{
             width: `${totalGridWidth}px`,
             position: 'relative',
+            overflow: 'hidden',
           }}
         >
           <TimeHeader />
