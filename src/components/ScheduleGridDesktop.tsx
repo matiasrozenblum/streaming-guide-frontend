@@ -32,6 +32,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     { label: 'Mié', value: 'wednesday' },
     { label: 'Jue', value: 'thursday' },
     { label: 'Vie', value: 'friday' },
+    { label: 'Sab', value: 'saturday' },
+    { label: 'Dom', value: 'sunday' },
   ];
 
   useEffect(() => {
