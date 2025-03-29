@@ -1,6 +1,6 @@
-import { Box, Avatar, Typography, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
-import { ROW_HEIGHT, CHANNEL_LABEL_WIDTH_NO_PADDING } from '../constants/layout';
+import { useLayoutValues } from '../constants/layout';
 
 interface Program {
   id: string;
@@ -23,6 +23,7 @@ interface Props {
 export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { channelLabelWidth, rowHeight } = useLayoutValues();
 
   return (
     <Box 
@@ -30,7 +31,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       alignItems="center" 
       borderBottom="1px solid rgba(0, 0, 0, 0.12)"
       position="relative" 
-      height={`${ROW_HEIGHT}px`}
+      height={`${rowHeight}px`}
       sx={{
         '&:hover': {
           backgroundColor: 'rgba(0, 0, 0, 0.02)',
@@ -38,8 +39,8 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       }}
     >
       <Box
-        width={`${CHANNEL_LABEL_WIDTH_NO_PADDING}px`}
-        px={isMobile ? 1 : 2}
+        width={`${channelLabelWidth}px`}
+        minWidth={`${channelLabelWidth}px`}
         display="flex"
         alignItems="center"
         gap={isMobile ? 1 : 2}
@@ -66,6 +67,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         ) : null}
         <Typography
           variant="subtitle2"
+          px={isMobile ? 1 : 2}
           sx={{
             fontWeight: 'bold',
             overflow: 'hidden',

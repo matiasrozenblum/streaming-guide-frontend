@@ -1,13 +1,13 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
-import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '../constants/layout';
+import { useLayoutValues } from '../constants/layout';
 
 export const NowIndicator = () => {
+  const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const now = dayjs();
-  const hours = now.hour();
-  const minutes = now.minute();
-  const minutesFromMidnight = (hours * 60) + minutes;
-  const offsetPx = CHANNEL_LABEL_WIDTH + (minutesFromMidnight * PIXELS_PER_MINUTE);
+  const startOfDay = now.startOf('day');
+  const minutesFromMidnight = now.diff(startOfDay, 'minute');
+  const offsetPx = channelLabelWidth + (minutesFromMidnight * pixelsPerMinute);
 
   return (
     <Box

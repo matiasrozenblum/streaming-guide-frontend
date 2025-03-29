@@ -7,7 +7,7 @@ import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
-import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '@/constants/layout';
+import { useLayoutValues } from '@/constants/layout';
 
 interface Props {
   channels: Channel[];
@@ -18,9 +18,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
+  const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
 
   const isToday = selectedDay === today;
-  const totalGridWidth = (PIXELS_PER_MINUTE * 60 * 24) + CHANNEL_LABEL_WIDTH;
+  const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
 
   const daysOfWeek = [
     { label: 'Lun', value: 'monday' },
@@ -34,13 +35,13 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
     if (isToday) {
       const now = dayjs();
       const minutesFromStart = (now.hour() * 60) + now.minute();
-      const scrollPosition = (minutesFromStart * PIXELS_PER_MINUTE) - 100;
+      const scrollPosition = (minutesFromStart * pixelsPerMinute) - 100;
       scrollRef.current?.scrollTo({
         left: scrollPosition,
         behavior: 'smooth',
       });
     }
-  }, [isToday]);
+  }, [isToday, pixelsPerMinute]);
 
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4 }}>Sin datos disponibles</Typography>;

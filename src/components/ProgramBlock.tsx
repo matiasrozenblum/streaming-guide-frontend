@@ -1,7 +1,7 @@
 import { Box, Tooltip, Typography, alpha } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '../constants/layout';
+import { useLayoutValues } from '../constants/layout';
 
 dayjs.extend(customParseFormat);
 
@@ -27,16 +27,18 @@ export const ProgramBlock = ({
   color = '#2196F3',
   isToday,
 }: Props) => {
+  const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
+  
   // Calculate minutes from midnight for positioning
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
   
   const minutesFromMidnightStart = (startHours * 60) + startMinutes;
   const minutesFromMidnightEnd = (endHours * 60) + endMinutes;
-  console.log('name', name, 'minutesFromMidnightStart', minutesFromMidnightStart);
-  const offsetPx = CHANNEL_LABEL_WIDTH + (minutesFromMidnightStart * PIXELS_PER_MINUTE);
+  
+  const offsetPx = (minutesFromMidnightStart * pixelsPerMinute);
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * PIXELS_PER_MINUTE - 1;
+  const widthPx = duration * pixelsPerMinute - 1;
 
   // For live and past status
   const now = dayjs();
