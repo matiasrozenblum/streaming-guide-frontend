@@ -1,6 +1,7 @@
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
+import { getChannelBackground } from '@/utils/getChannelBackground';
 
 interface Program {
   id: string;
@@ -55,29 +56,38 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         }}
       >
         {channelLogo ? (
-          <Avatar 
-            src={channelLogo} 
-            alt={channelName}
-            sx={{
-              width: isMobile ? 32 : 40,
-              height: isMobile ? 32 : 40,
-              boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-            }}
-          />
-        ) : null}
-        <Typography
-          variant="subtitle2"
-          px={isMobile ? 1 : 2}
-          sx={{
-            fontWeight: 'bold',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
-            fontSize: isMobile ? '0.75rem' : '0.875rem',
-          }}
-        >
-          {channelName}
-        </Typography>
+  <Avatar 
+    src={channelLogo} 
+    alt={channelName}
+    variant="rounded"
+    sx={{
+      width: isMobile ? 122 : 130,
+      height: isMobile ? 60 : 68,
+      mx: 'auto',
+      backgroundColor: getChannelBackground(channelName),
+      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+      overflow: 'hidden',
+    '& img': {
+      objectFit: 'contain',
+      width: '100%',
+      height: '100%',
+    }
+    }}
+  />
+) : (
+  <Typography
+    variant="subtitle2"
+    textAlign="center"
+    px={1}
+    sx={{
+      fontWeight: 'bold',
+      fontSize: isMobile ? '0.7rem' : '0.8rem',
+      lineHeight: 1.1,
+    }}
+  >
+    {channelName}
+  </Typography>
+)}
       </Box>
 
       <Box position="relative" flex="1" height="100%">
