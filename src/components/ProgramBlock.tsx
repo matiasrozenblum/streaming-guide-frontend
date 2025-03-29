@@ -77,7 +77,7 @@ export const ProgramBlock = ({
     >
       <Box
         position="absolute"
-        left={`${isMobile ? offsetPx - 60 : offsetPx}px`}
+        left={`${isMobile ? offsetPx + 60 : offsetPx}px`}
         width={`${widthPx}px`}
         height="100%"
         sx={{
