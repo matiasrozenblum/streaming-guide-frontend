@@ -97,7 +97,6 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           sx={{
             width: `${totalGridWidth}px`,
             position: 'relative',
-            overflow: 'hidden',
           }}
         >
           <TimeHeader />

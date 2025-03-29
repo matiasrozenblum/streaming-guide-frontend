@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Box, Container, ThemeProvider, createTheme, useMediaQuery, CircularProgress } from '@mui/material';
+import { Box, Container, ThemeProvider, createTheme, useMediaQuery, CircularProgress, Typography } from '@mui/material';
 import { ScheduleGridDesktop } from '@/components/ScheduleGridDesktop';
 import { ScheduleGridMobile } from '@/components/ScheduleGridMobile';
 import { Calendar, Clock, Tv2 } from 'lucide-react';
@@ -170,10 +170,17 @@ export default function Home() {
               boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)',
               backdropFilter: 'blur(8px)',
             }}>
-              <Tv2 size={40} className="text-blue-600" />
+              <Tv2 size={40} style={{ 
+                  color: '#2563eb',
+                  strokeWidth: 1.5 
+                }} />
               <Box>
-                <h1 className="text-4xl font-bold text-gray-900 mb-2">TV Schedule</h1>
-                <p className="text-gray-600">Your complete guide to weekly programming</p>
+                <Typography variant="h1" sx={{ fontSize: '2.25rem', fontWeight: 700, color: '#111827', mb: 1 }}>
+                  TV Schedule
+                </Typography>
+                <Typography variant="subtitle1" sx={{ color: '#4B5563', fontWeight: 400 }}>
+                  Your complete guide to weekly programming
+                </Typography>
               </Box>
             </Box>
             
@@ -188,12 +195,22 @@ export default function Home() {
               backdropFilter: 'blur(8px)',
             }}>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Calendar size={20} className="text-blue-600" />
-                <p className="text-gray-700 font-medium">Weekly Programming</p>
+                <Calendar size={20} style={{ 
+                  color: '#2563eb',
+                  strokeWidth: 1.5 
+                }} />
+                <Typography sx={{ color: '#374151', fontWeight: 500 }}>
+                  Weekly Programming
+                </Typography>
               </Box>
               <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                <Clock size={20} className="text-blue-600" />
-                <p className="text-gray-700 font-medium">Live Updates</p>
+                <Clock size={20} style={{ 
+                  color: '#2563eb',
+                  strokeWidth: 1.5 
+                }} />
+                <Typography sx={{ color: '#374151', fontWeight: 500 }}>
+                  Live Updates
+                </Typography>
               </Box>
             </Box>
           </MotionBox>
