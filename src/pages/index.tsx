@@ -176,10 +176,10 @@ export default function Home() {
                 }} />
               <Box>
                 <Typography variant="h1" sx={{ fontSize: '2.25rem', fontWeight: 700, color: '#111827', mb: 1 }}>
-                  TV Schedule
+                  La Guía del Streaming
                 </Typography>
                 <Typography variant="subtitle1" sx={{ color: '#4B5563', fontWeight: 400 }}>
-                  Your complete guide to weekly programming
+                  Tu guía completa de la programación semanal
                 </Typography>
               </Box>
             </Box>
