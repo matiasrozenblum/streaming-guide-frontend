@@ -9,4 +9,5 @@ export interface Program {
   channelId: string;
   panelists?: Panelist[];
   logo_url?: string;
+  youtube_url?: string;
 }

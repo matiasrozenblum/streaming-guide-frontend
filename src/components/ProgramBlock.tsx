@@ -1,7 +1,8 @@
-import { Box, Tooltip, Typography, alpha } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, Button } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '../constants/layout';
+import { OpenInNew } from '@mui/icons-material';
 
 dayjs.extend(customParseFormat);
 
@@ -15,6 +16,7 @@ interface Props {
   color?: string;
   channelName?: string;
   isToday?: boolean;
+  youtube_url?: string;
 }
 
 export const ProgramBlock = ({
@@ -26,28 +28,33 @@ export const ProgramBlock = ({
   logo_url,
   color = '#2196F3',
   isToday,
+  youtube_url,
 }: Props) => {
   const { pixelsPerMinute } = useLayoutValues();
-  
-  // Calculate minutes from midnight for positioning
+
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
-  
   const minutesFromMidnightStart = (startHours * 60) + startMinutes;
   const minutesFromMidnightEnd = (endHours * 60) + endMinutes;
-  
+
   const offsetPx = (minutesFromMidnightStart * pixelsPerMinute);
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
   const widthPx = duration * pixelsPerMinute - 1;
 
-  // For live and past status
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
   const parsedStartWithDate = dayjs(`${currentDate} ${start}`, 'YYYY-MM-DD HH:mm');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
-  
+
   const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
   const isPast = isToday && now.isAfter(parsedEndWithDate);
+
+  const handleClick = () => {
+    if (!youtube_url) return;
+    const url = isLive ? 'https://youtube.com' : youtube_url;
+    const newTab = window.open(url, '_blank');
+    newTab?.focus();
+  };
 
   return (
     <Tooltip
@@ -74,6 +81,25 @@ export const ProgramBlock = ({
               </Typography>
             </Box>
           ) : null}
+          {youtube_url && (
+            <Button
+              onClick={handleClick}
+              variant="contained"
+              size="small"
+              startIcon={<OpenInNew />}
+              sx={{
+                mt: 2,
+                backgroundColor: '#FF0000',
+                '&:hover': { backgroundColor: '#cc0000' },
+                fontWeight: 'bold',
+                textTransform: 'none',
+                fontSize: '0.8rem',
+                boxShadow: 'none',
+              }}
+            >
+              {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+            </Button>
+          )}
         </Box>
       }
       arrow

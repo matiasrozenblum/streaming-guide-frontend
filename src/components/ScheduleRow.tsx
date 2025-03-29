@@ -11,6 +11,7 @@ interface Program {
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
+  youtube_url?: string;
 }
 
 interface Props {
@@ -19,9 +20,10 @@ interface Props {
   programs: Program[];
   color?: string;
   isToday?: boolean;
+  youtube_url?: string;
 }
 
-export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
+export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday, youtube_url }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
@@ -103,6 +105,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
             channelName={channelName}
             color={color}
             isToday={isToday}
+            youtube_url={p.youtube_url}
           />
         ))}
       </Box>
