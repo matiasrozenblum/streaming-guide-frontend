@@ -18,7 +18,8 @@ export const NowIndicator = () => {
         width: '2px',
         height: '100%',
         backgroundColor: '#f44336',
-        zIndex: 1000,
+        zIndex: 2,
+        clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`,
         '&::after': {
           content: '""',
           position: 'absolute',
