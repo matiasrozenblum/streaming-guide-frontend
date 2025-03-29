@@ -20,7 +20,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const [selectedDay, setSelectedDay] = useState(today);
 
   const isToday = selectedDay === today;
-  const totalGridWidth = 60 * PIXELS_PER_MINUTE * 24 + CHANNEL_LABEL_WIDTH;
+  const totalGridWidth = (PIXELS_PER_MINUTE * 60 * 24) + CHANNEL_LABEL_WIDTH;
 
   const daysOfWeek = [
     { label: 'Lun', value: 'monday' },
@@ -30,55 +30,57 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
     { label: 'Vie', value: 'friday' },
   ];
 
-  const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
-  const getSchedulesForChannel = (channelId: string) =>
-    schedulesForDay.filter((s) => s.program.channel.id === channelId);
-
   useEffect(() => {
-    const now = dayjs();
-    const minutesFromStart = now.diff(now.startOf('day'), 'minute');
-    scrollRef.current?.scrollTo({
-      left: minutesFromStart * PIXELS_PER_MINUTE - 60,
-      behavior: 'smooth',
-    });
-  }, []);
+    if (isToday) {
+      const now = dayjs();
+      const minutesFromStart = (now.hour() * 60) + now.minute();
+      const scrollPosition = (minutesFromStart * PIXELS_PER_MINUTE) - 100;
+      scrollRef.current?.scrollTo({
+        left: scrollPosition,
+        behavior: 'smooth',
+      });
+    }
+  }, [isToday]);
 
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4 }}>Sin datos disponibles</Typography>;
   }
 
+  const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
+  const getSchedulesForChannel = (channelId: string) =>
+    schedulesForDay.filter((s) => s.program.channel.id === channelId);
+
   return (
     <Box>
-      {/* Selector de días */}
-      <Box display="flex" gap={1} mb={2} overflow="auto">
+      <Box display="flex" gap={1} mb={2} overflow="auto" px={2}>
         {daysOfWeek.map((day) => (
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
+            sx={{ minWidth: 'auto' }}
           >
             {day.label}
           </Button>
         ))}
       </Box>
 
-      {/* Scroll horizontal unificado */}
       <Box
         ref={scrollRef}
         sx={{
           overflowX: 'auto',
           overflowY: 'hidden',
           width: '100%',
-          minHeight: '100px',
+          WebkitOverflowScrolling: 'touch',
         }}
       >
         <Box
           sx={{
-            minWidth: `${totalGridWidth}px`,
+            width: `${totalGridWidth}px`,
             position: 'relative',
           }}
         >
-        <TimeHeader />
+          <TimeHeader />
           {isToday && <NowIndicator />}
           {channels.map((channel, index) => (
             <ScheduleRow

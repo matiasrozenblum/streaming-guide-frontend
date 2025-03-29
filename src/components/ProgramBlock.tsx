@@ -1,7 +1,7 @@
-import { Box, Tooltip, Typography, alpha, useMediaQuery, useTheme } from '@mui/material';
+import { Box, Tooltip, Typography, alpha } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { PIXELS_PER_MINUTE } from '../constants/layout';
+import { PIXELS_PER_MINUTE, CHANNEL_LABEL_WIDTH } from '../constants/layout';
 
 dayjs.extend(customParseFormat);
 
@@ -27,21 +27,23 @@ export const ProgramBlock = ({
   color = '#2196F3',
   isToday,
 }: Props) => {
-  // Para posicionamiento en la grilla (desde las 00:00)
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const parsedStart = dayjs(start, 'HH:mm');
-  const parsedEnd = dayjs(end, 'HH:mm');
-  const offset = parsedStart.diff(dayjs().startOf('day'), 'minute');
-  const duration = parsedEnd.diff(parsedStart, 'minute');
-  const offsetPx = offset * PIXELS_PER_MINUTE;
+  // Calculate minutes from midnight for positioning
+  const [startHours, startMinutes] = start.split(':').map(Number);
+  const [endHours, endMinutes] = end.split(':').map(Number);
+  
+  const minutesFromMidnightStart = (startHours * 60) + startMinutes;
+  const minutesFromMidnightEnd = (endHours * 60) + endMinutes;
+  console.log('name', name, 'minutesFromMidnightStart', minutesFromMidnightStart);
+  const offsetPx = CHANNEL_LABEL_WIDTH + (minutesFromMidnightStart * PIXELS_PER_MINUTE);
+  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
   const widthPx = duration * PIXELS_PER_MINUTE - 1;
-  console.log('name', name, 'parsedStart', parsedStart, 'offset', offset, 'duration', duration, 'offsetPx', offsetPx, 'widthPx', widthPx);
 
-  // Para lógica real con fecha actual
-  const parsedStartWithDate = dayjs(`${dayjs().format('YYYY-MM-DD')} ${start}`, 'YYYY-MM-DD HH:mm');
-  const parsedEndWithDate = dayjs(`${dayjs().format('YYYY-MM-DD')} ${end}`, 'YYYY-MM-DD HH:mm');
+  // For live and past status
   const now = dayjs();
+  const currentDate = now.format('YYYY-MM-DD');
+  const parsedStartWithDate = dayjs(`${currentDate} ${start}`, 'YYYY-MM-DD HH:mm');
+  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  
   const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
@@ -77,7 +79,7 @@ export const ProgramBlock = ({
     >
       <Box
         position="absolute"
-        left={`${isMobile ? offsetPx + 60 : offsetPx}px`}
+        left={`${offsetPx}px`}
         width={`${widthPx}px`}
         height="100%"
         sx={{

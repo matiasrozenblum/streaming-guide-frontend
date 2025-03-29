@@ -1,4 +1,14 @@
-export const getColorForChannel = (index: number) => {
-    const colors = ['#1976d2', '#2e7d32', '#d32f2f', '#f57c00', '#6a1b9a', '#0097a7'];
-    return colors[index % colors.length];
-  };
+const channelColors = [
+  '#2196F3', // Blue
+  '#4CAF50', // Green
+  '#F44336', // Red
+  '#9C27B0', // Purple
+  '#FF9800', // Orange
+  '#00BCD4', // Cyan
+  '#795548', // Brown
+  '#607D8B', // Blue Grey
+];
+
+export const getColorForChannel = (index: number): string => {
+  return channelColors[index % channelColors.length];
+};
