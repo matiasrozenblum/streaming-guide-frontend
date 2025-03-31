@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, CircularProgress } from '@mui/material';
+import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, CircularProgress, Components } from '@mui/material';
+import type { ThemeOptions } from '@mui/material/styles';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -21,7 +22,7 @@ export const useThemeContext = () => {
   return context;
 };
 
-const getDesignTokens = (mode: ThemeMode) => ({
+const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
   palette: {
     mode,
     primary: {
@@ -66,7 +67,7 @@ const getDesignTokens = (mode: ThemeMode) => ({
         disableRipple: true,
       },
       styleOverrides: {
-        root: ({ theme }: { theme: Theme }) => ({
+        root: {
           textTransform: 'none',
           fontWeight: 600,
           borderRadius: 12,
@@ -75,46 +76,46 @@ const getDesignTokens = (mode: ThemeMode) => ({
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             transform: 'translateY(-1px)',
-            boxShadow: theme.palette.mode === 'light'
+            boxShadow: mode === 'light'
               ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
           },
-        }),
-        contained: ({ theme }: { theme: Theme }) => ({
-          background: theme.palette.mode === 'light'
+        },
+        contained: {
+          background: mode === 'light'
             ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
             : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
           color: '#ffffff',
           '&:hover': {
-            background: theme.palette.mode === 'light'
+            background: mode === 'light'
               ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
               : 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
           },
-        }),
-        outlined: ({ theme }: { theme: Theme }) => ({
-          borderColor: theme.palette.mode === 'light' ? '#e2e8f0' : '#334155',
-          color: theme.palette.mode === 'light' ? '#64748b' : '#94a3b8',
-          backgroundColor: theme.palette.mode === 'light' ? '#ffffff' : '#1e293b',
+        },
+        outlined: {
+          borderColor: mode === 'light' ? '#e2e8f0' : '#334155',
+          color: mode === 'light' ? '#64748b' : '#94a3b8',
+          backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
           '&:hover': {
-            borderColor: theme.palette.mode === 'light' ? '#cbd5e1' : '#475569',
-            backgroundColor: theme.palette.mode === 'light' ? '#f8fafc' : '#334155',
+            borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
+            backgroundColor: mode === 'light' ? '#f8fafc' : '#334155',
           },
-        }),
+        },
       },
     },
     MuiTooltip: {
       styleOverrides: {
-        tooltip: ({ theme }: { theme: Theme }) => ({
-          backgroundColor: theme.palette.mode === 'light' ? '#1e293b' : '#0f172a',
+        tooltip: {
+          backgroundColor: mode === 'light' ? '#1e293b' : '#0f172a',
           padding: '12px 16px',
           maxWidth: 320,
           fontSize: '0.875rem',
           lineHeight: 1.5,
           borderRadius: 8,
-        }),
-        arrow: ({ theme }: { theme: Theme }) => ({
-          color: theme.palette.mode === 'light' ? '#1e293b' : '#0f172a',
-        }),
+        },
+        arrow: {
+          color: mode === 'light' ? '#1e293b' : '#0f172a',
+        },
       },
     },
     MuiContainer: {
@@ -126,7 +127,7 @@ const getDesignTokens = (mode: ThemeMode) => ({
         },
       },
     },
-  },
+  } as Components<Theme>,
 });
 
 export const CustomThemeProvider = ({ children }: { children: React.ReactNode }) => {
