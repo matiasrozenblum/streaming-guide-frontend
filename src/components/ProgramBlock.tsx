@@ -55,7 +55,7 @@ export const ProgramBlock = ({
 
   const handleClick = () => {
     if (!youtube_url) return;
-    const url = isLive ? 'https://youtube.com' : youtube_url;
+    const url = youtube_url;
     const newTab = window.open(url, '_blank');
     newTab?.focus();
   };
