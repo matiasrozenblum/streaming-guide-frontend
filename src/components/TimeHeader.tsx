@@ -1,11 +1,15 @@
+'use client';
+
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
 export const TimeHeader = () => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
+  const { mode, theme } = useThemeContext();
   const now = dayjs();
   const totalWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
   
@@ -13,22 +17,31 @@ export const TimeHeader = () => {
     <Box 
       display="flex" 
       width={`${totalWidth}px`}
-      borderBottom="1px solid rgba(0, 0, 0, 0.12)"
+      borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
       height={`${timeHeaderHeight}px`}
-      bgcolor="white"
+      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       position="sticky"
       top={0}
       zIndex={1000}
-      sx={{ boxShadow: '0 2px 4px rgba(0,0,0,0.05)' }}
+      sx={{ 
+        boxShadow: mode === 'light'
+          ? '0 2px 4px rgba(0,0,0,0.05)'
+          : '0 2px 4px rgba(0,0,0,0.2)'
+      }}
     >
       <Box
         width={`${channelLabelWidth}px`}
         minWidth={`${channelLabelWidth}px`}
-        borderRight="1px solid rgba(0, 0, 0, 0.12)"
-        bgcolor="white"
+        borderRight={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
+        bgcolor={mode === 'light' ? 'white' : '#1e293b'}
         position="sticky"
         left={0}
         zIndex={2}
+        sx={{
+          boxShadow: mode === 'light'
+            ? '2px 0 4px rgba(0,0,0,0.05)'
+            : '2px 0 4px rgba(0,0,0,0.2)',
+        }}
       />
       
       <Box 
@@ -60,7 +73,9 @@ export const TimeHeader = () => {
                   top: 0,
                   bottom: 0,
                   width: '1px',
-                  backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                  backgroundColor: mode === 'light'
+                    ? 'rgba(0, 0, 0, 0.08)'
+                    : 'rgba(255, 255, 255, 0.08)',
                 }
               }}
             >
@@ -68,7 +83,9 @@ export const TimeHeader = () => {
                 variant="body2"
                 sx={{
                   fontWeight: hour === now.hour() ? 'bold' : 'normal',
-                  color: hour === now.hour() ? 'primary.main' : 'inherit',
+                  color: hour === now.hour() 
+                    ? theme.palette.primary.main
+                    : mode === 'light' ? '#374151' : '#f1f5f9',
                 }}
               >
                 {hourTime.format('HH:mm')}

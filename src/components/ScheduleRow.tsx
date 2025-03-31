@@ -1,6 +1,9 @@
+'use client';
+
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
 
 interface Program {
@@ -24,6 +27,7 @@ interface Props {
 
 export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
   const theme = useTheme();
+  const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
 
@@ -31,12 +35,14 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
     <Box 
       display="flex" 
       alignItems="center" 
-      borderBottom="1px solid rgba(0, 0, 0, 0.12)"
+      borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
       position="relative" 
       height={`${rowHeight}px`}
       sx={{
         '&:hover': {
-          backgroundColor: 'rgba(0, 0, 0, 0.02)',
+          backgroundColor: mode === 'light' 
+            ? 'rgba(0, 0, 0, 0.02)' 
+            : 'rgba(255, 255, 255, 0.02)',
         },
       }}
     >
@@ -48,47 +54,52 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         gap={isMobile ? 1 : 2}
         position="sticky"
         left={0}
-        bgcolor="white"
+        bgcolor={mode === 'light' ? 'white' : '#1e293b'}
         height="100%"
         zIndex={2}
         sx={{ 
-          borderRight: '1px solid rgba(0, 0, 0, 0.12)',
-          boxShadow: '2px 0 4px rgba(0,0,0,0.05)',
+          borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+          boxShadow: mode === 'light' 
+            ? '2px 0 4px rgba(0,0,0,0.05)'
+            : '2px 0 4px rgba(0,0,0,0.2)',
         }}
       >
         {channelLogo ? (
-  <Avatar 
-    src={channelLogo} 
-    alt={channelName}
-    variant="rounded"
-    sx={{
-      width: isMobile ? 122 : 130,
-      height: isMobile ? 60 : 68,
-      mx: 'auto',
-      backgroundColor: getChannelBackground(channelName),
-      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-      overflow: 'hidden',
-    '& img': {
-      objectFit: 'contain',
-      width: '100%',
-      height: '100%',
-    }
-    }}
-  />
-) : (
-  <Typography
-    variant="subtitle2"
-    textAlign="center"
-    px={1}
-    sx={{
-      fontWeight: 'bold',
-      fontSize: isMobile ? '0.7rem' : '0.8rem',
-      lineHeight: 1.1,
-    }}
-  >
-    {channelName}
-  </Typography>
-)}
+          <Avatar 
+            src={channelLogo} 
+            alt={channelName}
+            variant="rounded"
+            sx={{
+              width: isMobile ? 122 : 130,
+              height: isMobile ? 60 : 68,
+              mx: 'auto',
+              backgroundColor: getChannelBackground(channelName),
+              boxShadow: mode === 'light'
+                ? '0 2px 4px rgba(0,0,0,0.1)'
+                : '0 2px 4px rgba(0,0,0,0.2)',
+              overflow: 'hidden',
+              '& img': {
+                objectFit: 'contain',
+                width: '100%',
+                height: '100%',
+              }
+            }}
+          />
+        ) : (
+          <Typography
+            variant="subtitle2"
+            textAlign="center"
+            px={1}
+            sx={{
+              fontWeight: 'bold',
+              fontSize: isMobile ? '0.7rem' : '0.8rem',
+              lineHeight: 1.1,
+              color: mode === 'light' ? '#374151' : '#f1f5f9',
+            }}
+          >
+            {channelName}
+          </Typography>
+        )}
       </Box>
 
       <Box position="relative" flex="1" height="100%">

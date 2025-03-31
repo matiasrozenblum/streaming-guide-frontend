@@ -1,3 +1,5 @@
+'use client';
+
 import { Box, Typography, Button } from '@mui/material';
 import { useRef, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
@@ -8,6 +10,7 @@ import { Channel } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
+import { useThemeContext } from '@/contexts/ThemeContext';
 import weekday from 'dayjs/plugin/weekday';
 
 dayjs.extend(weekday);
@@ -22,6 +25,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
+  const { mode } = useThemeContext();
 
   const isToday = selectedDay === today;
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
@@ -49,7 +53,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   }, [isToday, pixelsPerMinute]);
 
   if (!channels.length || !schedules.length) {
-    return <Typography sx={{ mt: 4 }}>Sin datos disponibles</Typography>;
+    return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
   }
 
   const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
@@ -64,8 +68,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         mb={2} 
         p={2}
         sx={{
-          background: 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))',
-          borderBottom: '1px solid rgba(0,0,0,0.1)',
+          background: mode === 'light'
+            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
+            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
+          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
         }}
       >
