@@ -9,10 +9,7 @@ import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
-import { motion } from 'framer-motion';
 import { OpenInNew } from '@mui/icons-material';
-
-const MotionBox = motion(Box);
 
 interface Props {
   channels: Channel[];
