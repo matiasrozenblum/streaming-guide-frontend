@@ -327,6 +327,11 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
                     );
                   }
 
+                  const currentDate = now.format('YYYY-MM-DD');
+                  const parsedStartWithDate = dayjs(`${currentDate} ${program.start_time}`, 'YYYY-MM-DD HH:mm');
+                  const parsedEndWithDate = dayjs(`${currentDate} ${program.end_time}`, 'YYYY-MM-DD HH:mm');
+                  const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
+
                   return (
                     <Tooltip
                       key={`${channel.id}-${slot.hour}`}
@@ -413,6 +418,24 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
                             overflow: 'hidden',
                           }}
                         >
+                          {isLive && (
+                            <Box
+                              sx={{
+                                position: 'absolute',
+                                top: 4,
+                                right: 4,
+                                backgroundColor: '#f44336',
+                                color: 'white',
+                                fontSize: '0.65rem',
+                                padding: '2px 6px',
+                                borderRadius: '4px',
+                                fontWeight: 'bold',
+                                zIndex: 10,
+                              }}
+                            >
+                              LIVE
+                            </Box>
+                          )}
                           {program.program.logo_url ? (
                             <Box
                               component="img"
