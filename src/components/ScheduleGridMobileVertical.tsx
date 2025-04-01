@@ -362,7 +362,7 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
                             <Button
                               onClick={(e) => {
                                 e.stopPropagation();
-                                window.open(program.program.youtube_url, '_blank');
+                                window.open(isLive? channel.streaming_url : program.program.youtube_url, '_blank');
                               }}
                               variant="contained"
                               size="small"

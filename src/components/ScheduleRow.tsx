@@ -15,6 +15,7 @@ interface Program {
   panelists?: { id: string; name: string }[];
   logo_url?: string;
   youtube_url?: string;
+  live_url?: string;
 }
 
 interface Props {
@@ -116,6 +117,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
             color={color}
             isToday={isToday}
             youtube_url={p.youtube_url}
+            live_url={p.live_url}
           />
         ))}
       </Box>

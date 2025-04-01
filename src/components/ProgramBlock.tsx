@@ -20,6 +20,7 @@ interface Props {
   channelName?: string;
   isToday?: boolean;
   youtube_url?: string;
+  live_url?: string;
 }
 
 export const ProgramBlock = ({
@@ -32,6 +33,7 @@ export const ProgramBlock = ({
   color = '#2196F3',
   isToday,
   youtube_url,
+  live_url,
 }: Props) => {
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
@@ -55,7 +57,8 @@ export const ProgramBlock = ({
 
   const handleClick = () => {
     if (!youtube_url) return;
-    const url = youtube_url;
+    const url = isLive ? live_url : youtube_url;
+    console.log('url', url, 'live_url', live_url, 'youtube_url', youtube_url);
     const newTab = window.open(url, '_blank');
     newTab?.focus();
   };
