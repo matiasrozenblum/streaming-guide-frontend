@@ -17,6 +17,7 @@ interface Props {
 }
 
 export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
   const gridRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
@@ -48,11 +49,25 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
       const currentHourElement = document.getElementById(`time-${currentHour}`);
       if (currentHourElement) {
         const yOffset = -100;
-        const y = currentHourElement.getBoundingClientRect().top + window.pageYOffset + yOffset;
-        window.scrollTo({ top: y, behavior: 'smooth' });
+        gridRef.current.scrollTo({
+          top: currentHourElement.offsetTop + yOffset,
+          behavior: 'smooth'
+        });
       }
     }
   }, [isToday, currentHour]);
+
+  // Sync horizontal scroll between header and content
+  const handleScroll = (e: React.UIEvent<HTMLDivElement>) => {
+    if (scrollContainerRef.current && gridRef.current) {
+      const scrollLeft = (e.target as HTMLDivElement).scrollLeft;
+      if (e.target === scrollContainerRef.current) {
+        gridRef.current.scrollLeft = scrollLeft;
+      } else if (e.target === gridRef.current) {
+        scrollContainerRef.current.scrollLeft = scrollLeft;
+      }
+    }
+  };
 
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
@@ -88,23 +103,15 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
 
   const programs = getPrograms();
 
-  // Calculate current position for now indicator
-  const rowHeight = 60; // height of each time slot in pixels
-  const channelHeaderHeight = 60; // height of channel header
-  const gridGap = 8; // gap between rows (gap: 1 in the grid = 4px)
-  
-  const minutesSinceMidnight = (currentHour * 60) + currentMinute;
-  const timeOffset = (minutesSinceMidnight / 60) * (rowHeight + gridGap);
-  const nowIndicatorOffset = channelHeaderHeight + timeOffset;
-
   return (
-    <Box sx={{ position: 'relative' }}>
-      {/* Days of week selector */}
+    <Box sx={{ 
+      display: 'flex', 
+      flexDirection: 'column',
+      height: '100%',
+    }}>
+      {/* Days of week selector - Fixed at top */}
       <Box 
         sx={{
-          position: 'sticky',
-          top: 0,
-          zIndex: 10,
           background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.95), rgba(255,255,255,0.9))'
             : 'linear-gradient(to right, rgba(30,41,59,0.95), rgba(30,41,59,0.9))',
@@ -134,303 +141,336 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
         ))}
       </Box>
 
-      {/* Main Grid */}
-      <Box
-        ref={gridRef}
-        sx={{
-          display: 'grid',
-          gridTemplateColumns: `80px repeat(${channels.length}, 74px)`,
-          gridAutoRows: '60px',
-          gap: 1,
-          overflowX: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          pb: 2,
-          position: 'relative',
-          mx: 'auto',
-          maxWidth: 'fit-content',
-          mt: 2,
-        }}
-      >
-        {/* Channel Headers Row */}
+      {/* Scrollable container */}
+      <Box sx={{ 
+        flex: 1,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}>
+        {/* Header row with horizontal scroll */}
         <Box
+          ref={scrollContainerRef}
+          onScroll={handleScroll}
           sx={{
-            gridColumn: '1',
-            gridRow: '1',
-            p: 1,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            position: 'sticky',
-            zIndex: 9,
+            overflowX: 'auto',
+            overflowY: 'hidden',
+            WebkitOverflowScrolling: 'touch',
             background: mode === 'light'
               ? 'rgba(255,255,255,0.95)'
               : 'rgba(30,41,59,0.95)',
+            borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
             backdropFilter: 'blur(8px)',
+            position: 'sticky',
+            top: 0,
+            zIndex: 2,
+            // Hide scrollbar for Chrome, Safari and Opera
+            '&::-webkit-scrollbar': {
+              display: 'none',
+            },
+            // Hide scrollbar for IE, Edge and Firefox
+            msOverflowStyle: 'none',  // IE and Edge
+            scrollbarWidth: 'none',  // Firefox
           }}
         >
-          <Typography
-            variant="caption"
-            sx={{
-              color: mode === 'light' ? '#64748b' : '#94a3b8',
-              fontWeight: 500,
-            }}
-          >
-            Horario
-          </Typography>
-        </Box>
-
-        {channels.map((channel, index) => (
           <Box
-            key={channel.id}
             sx={{
-              gridColumn: index + 2,
-              gridRow: '1',
+              display: 'grid',
+              gridTemplateColumns: `80px repeat(${channels.length}, 74px)`,
+              minWidth: 'fit-content',
+              gap: 1,
               p: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              background: mode === 'light'
-                ? 'rgba(255,255,255,0.8)'
-                : 'rgba(30,41,59,0.8)',
-              borderRadius: '8px',
-              height: '60px',
-              width: '74px',
-              position: 'sticky',
-              zIndex: 9,
-              backdropFilter: 'blur(8px)',
             }}
           >
-            {channel.logo_url ? (
-              <Avatar
-                src={channel.logo_url}
-                alt={channel.name}
-                variant="rounded"
-                sx={{
-                  width: '100%',
-                  height: 'auto',
-                  aspectRatio: '16/9',
-                  backgroundColor: getChannelBackground(channel.name),
-                  '& img': {
-                    objectFit: 'contain',
-                  }
-                }}
-              />
-            ) : (
-              <Typography
-                variant="caption"
-                sx={{
-                  fontWeight: 600,
-                  color: mode === 'light' ? '#374151' : '#f1f5f9',
-                  textAlign: 'center',
-                }}
-              >
-                {channel.name}
-              </Typography>
-            )}
-          </Box>
-        ))}
-
-        {/* Now Indicator */}
-        {isToday && (
-          <Box
-            sx={{
-              position: 'absolute',
-              top: `${nowIndicatorOffset}px`,
-              left: 0,
-              right: 0,
-              height: '2px',
-              backgroundColor: '#f44336',
-              zIndex: 3,
-              '&::after': {
-                content: '""',
-                position: 'absolute',
-                right: 0,
-                top: '-4px',
-                width: '10px',
-                height: '10px',
-                backgroundColor: '#f44336',
-                borderRadius: '50%',
-              },
-            }}
-          />
-        )}
-
-        {/* Time Slots and Programs */}
-        {timeSlots.map((slot, slotIndex) => (
-          <React.Fragment key={slot.hour}>
-            {/* Time Label */}
             <Box
-              id={`time-${slot.hour}`}
               sx={{
-                gridColumn: '1',
-                gridRow: slotIndex + 2,
-                p: 1,
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                background: isToday && slot.hour === currentHour
-                  ? mode === 'light'
-                    ? 'rgba(37,99,235,0.1)'
-                    : 'rgba(59,130,246,0.2)'
-                  : 'transparent',
               }}
             >
               <Typography
                 variant="caption"
                 sx={{
-                  color: isToday && slot.hour === currentHour
-                    ? theme.palette.primary.main
-                    : mode === 'light' ? '#64748b' : '#94a3b8',
-                  fontWeight: isToday && slot.hour === currentHour ? 600 : 400,
+                  color: mode === 'light' ? '#64748b' : '#94a3b8',
+                  fontWeight: 500,
                 }}
               >
-                {slot.label}
+                Horario
               </Typography>
             </Box>
 
-            {/* Programs */}
-            {channels.map((channel, channelIndex) => {
-              const program = programs[channel.id][slot.hour];
-              const color = getColorForChannel(channelIndex);
-
-              if (!program || parseInt(program.start_time.split(':')[0]) !== slot.hour) {
-                return (
-                  <Box
-                    key={`empty-${channel.id}-${slot.hour}`}
+            {channels.map((channel, index) => (
+              <Box
+                key={channel.id}
+                sx={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: mode === 'light'
+                    ? 'rgba(255,255,255,0.8)'
+                    : 'rgba(30,41,59,0.8)',
+                  borderRadius: '8px',
+                  height: '60px',
+                  width: '74px',
+                }}
+              >
+                {channel.logo_url ? (
+                  <Avatar
+                    src={channel.logo_url}
+                    alt={channel.name}
+                    variant="rounded"
                     sx={{
-                      gridColumn: channelIndex + 2,
-                      gridRow: slotIndex + 2,
-                      borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'}`,
+                      width: '100%',
+                      height: 'auto',
+                      aspectRatio: '16/9',
+                      backgroundColor: getChannelBackground(channel.name),
+                      '& img': {
+                        objectFit: 'contain',
+                      }
                     }}
                   />
-                );
-              }
-
-              return (
-                <Tooltip
-                  key={`${channel.id}-${slot.hour}`}
-                  title={
-                    <Box sx={{ p: 1 }}>
-                      <Typography variant="subtitle1" fontWeight="bold" color="white">
-                        {program.program.name}
-                      </Typography>
-                      <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
-                        {program.start_time} - {program.end_time}
-                      </Typography>
-                      {program.program.description && (
-                        <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
-                          {program.program.description}
-                        </Typography>
-                      )}
-                      {program.program.panelists?.length ? (
-                        <Box sx={{ mt: 1 }}>
-                          <Typography variant="body2" fontWeight="bold" color="white">
-                            Panelistas:
-                          </Typography>
-                          <Typography variant="body2" color="rgba(255,255,255,0.9)">
-                            {program.program.panelists.map((p) => p.name).join(', ')}
-                          </Typography>
-                        </Box>
-                      ) : null}
-                      {program.program.youtube_url && (
-                        <Button
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            window.open(program.program.youtube_url, '_blank');
-                          }}
-                          variant="contained"
-                          size="small"
-                          startIcon={<OpenInNew />}
-                          sx={{
-                            mt: 2,
-                            backgroundColor: '#FF0000',
-                            '&:hover': { backgroundColor: '#cc0000' },
-                            fontWeight: 'bold',
-                            textTransform: 'none',
-                            fontSize: '0.8rem',
-                            boxShadow: 'none',
-                          }}
-                        >
-                          Ver en YouTube
-                        </Button>
-                      )}
-                    </Box>
-                  }
-                  arrow
-                  placement="top"
-                >
-                  <Box
+                ) : (
+                  <Typography
+                    variant="caption"
                     sx={{
-                      gridColumn: channelIndex + 2,
-                      gridRow: `${slotIndex + 2} / span ${program.rowSpan}`,
-                      p: 0.5,
-                      background: `${color}${mode === 'light' ? '10' : '20'}`,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      position: 'relative',
-                      transition: 'all 0.2s ease-in-out',
-                      cursor: 'pointer',
-                      borderRadius: '8px',
-                      border: `1px solid ${color}${mode === 'light' ? '30' : '40'}`,
-                      width: '74px',
-                      '&:hover': {
-                        background: `${color}${mode === 'light' ? '20' : '30'}`,
-                        transform: 'scale(1.02)',
-                      },
+                      fontWeight: 600,
+                      color: mode === 'light' ? '#374151' : '#f1f5f9',
+                      textAlign: 'center',
                     }}
                   >
-                    <Box
-                      sx={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        flexDirection: 'column',
-                        gap: 0.5,
-                        height: '100%',
-                        width: '100%',
-                        overflow: 'hidden',
-                      }}
+                    {channel.name}
+                  </Typography>
+                )}
+              </Box>
+            ))}
+          </Box>
+        </Box>
+
+        {/* Grid content with both scrolls */}
+        <Box
+          ref={gridRef}
+          onScroll={handleScroll}
+          sx={{
+            flex: 1,
+            overflowY: 'auto',
+            overflowX: 'auto',
+            WebkitOverflowScrolling: 'touch',
+            position: 'relative',
+          }}
+        >
+          <Box
+            sx={{
+              display: 'grid',
+              gridTemplateColumns: `80px repeat(${channels.length}, 74px)`,
+              minWidth: 'fit-content',
+              gap: 1,
+              pb: 2,
+            }}
+          >
+            {/* Time Slots and Programs */}
+            {timeSlots.map((slot, slotIndex) => (
+              <React.Fragment key={slot.hour}>
+                {/* Time Label */}
+                <Box
+                  id={`time-${slot.hour}`}
+                  sx={{
+                    gridColumn: '1',
+                    gridRow: slotIndex + 1,
+                    p: 1,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                    background: isToday && slot.hour === currentHour
+                      ? mode === 'light'
+                        ? 'rgba(37,99,235,0.1)'
+                        : 'rgba(59,130,246,0.2)'
+                      : 'transparent',
+                  }}
+                >
+                  <Typography
+                    variant="caption"
+                    sx={{
+                      color: isToday && slot.hour === currentHour
+                        ? theme.palette.primary.main
+                        : mode === 'light' ? '#64748b' : '#94a3b8',
+                      fontWeight: isToday && slot.hour === currentHour ? 600 : 400,
+                    }}
+                  >
+                    {slot.label}
+                  </Typography>
+                </Box>
+
+                {/* Programs */}
+                {channels.map((channel, channelIndex) => {
+                  const program = programs[channel.id][slot.hour];
+                  const color = getColorForChannel(channelIndex);
+
+                  if (!program || parseInt(program.start_time.split(':')[0]) !== slot.hour) {
+                    return (
+                      <Box
+                        key={`empty-${channel.id}-${slot.hour}`}
+                        sx={{
+                          gridColumn: channelIndex + 2,
+                          gridRow: slotIndex + 1,
+                          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)'}`,
+                        }}
+                      />
+                    );
+                  }
+
+                  return (
+                    <Tooltip
+                      key={`${channel.id}-${slot.hour}`}
+                      title={
+                        <Box sx={{ p: 1 }}>
+                          <Typography variant="subtitle1" fontWeight="bold" color="white">
+                            {program.program.name}
+                          </Typography>
+                          <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+                            {program.start_time} - {program.end_time}
+                          </Typography>
+                          {program.program.description && (
+                            <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+                              {program.program.description}
+                            </Typography>
+                          )}
+                          {program.program.panelists?.length ? (
+                            <Box sx={{ mt: 1 }}>
+                              <Typography variant="body2" fontWeight="bold" color="white">
+                                Panelistas:
+                              </Typography>
+                              <Typography variant="body2" color="rgba(255,255,255,0.9)">
+                                {program.program.panelists.map((p) => p.name).join(', ')}
+                              </Typography>
+                            </Box>
+                          ) : null}
+                          {program.program.youtube_url && (
+                            <Button
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                window.open(program.program.youtube_url, '_blank');
+                              }}
+                              variant="contained"
+                              size="small"
+                              startIcon={<OpenInNew />}
+                              sx={{
+                                mt: 2,
+                                backgroundColor: '#FF0000',
+                                '&:hover': { backgroundColor: '#cc0000' },
+                                fontWeight: 'bold',
+                                textTransform: 'none',
+                                fontSize: '0.8rem',
+                                boxShadow: 'none',
+                              }}
+                            >
+                              Ver en YouTube
+                            </Button>
+                          )}
+                        </Box>
+                      }
+                      arrow
+                      placement="top"
                     >
-                      {program.program.logo_url ? (
+                      <Box
+                        sx={{
+                          gridColumn: channelIndex + 2,
+                          gridRow: `${slotIndex + 1} / span ${program.rowSpan}`,
+                          p: 0.5,
+                          background: `${color}${mode === 'light' ? '10' : '20'}`,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          position: 'relative',
+                          transition: 'all 0.2s ease-in-out',
+                          cursor: 'pointer',
+                          borderRadius: '8px',
+                          border: `1px solid ${color}${mode === 'light' ? '30' : '40'}`,
+                          width: '74px',
+                          '&:hover': {
+                            background: `${color}${mode === 'light' ? '20' : '30'}`,
+                            transform: 'scale(1.02)',
+                          },
+                        }}
+                      >
                         <Box
-                          component="img"
-                          src={program.program.logo_url}
-                          alt={program.program.name}
                           sx={{
-                            width: '100%',
-                            height: 'auto',
-                            objectFit: 'contain',
-                            opacity: 0.8,
-                          }}
-                        />
-                      ) : (
-                        <Typography
-                          variant="caption"
-                          sx={{
-                            fontSize: '0.65rem',
-                            lineHeight: 1.1,
-                            color: mode === 'light' ? '#374151' : '#f1f5f9',
-                            textAlign: 'center',
-                            fontWeight: 600,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            flexDirection: 'column',
+                            gap: 0.5,
+                            height: '100%',
                             width: '100%',
                             overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            whiteSpace: 'nowrap',
-                            px: 0.5,
                           }}
                         >
-                          {program.program.name}
-                        </Typography>
-                      )}
-                    </Box>
-                  </Box>
-                </Tooltip>
-              );
-            })}
-          </React.Fragment>
-        ))}
+                          {program.program.logo_url ? (
+                            <Box
+                              component="img"
+                              src={program.program.logo_url}
+                              alt={program.program.name}
+                              sx={{
+                                width: '100%',
+                                height: 'auto',
+                                objectFit: 'contain',
+                                opacity: 0.8,
+                              }}
+                            />
+                          ) : (
+                            <Typography
+                              variant="caption"
+                              sx={{
+                                fontSize: '0.65rem',
+                                lineHeight: 1.1,
+                                color: mode === 'light' ? '#374151' : '#f1f5f9',
+                                textAlign: 'center',
+                                fontWeight: 600,
+                                width: '100%',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                                px: 0.5,
+                              }}
+                            >
+                              {program.program.name}
+                            </Typography>
+                          )}
+                        </Box>
+                      </Box>
+                    </Tooltip>
+                  );
+                })}
+              </React.Fragment>
+            ))}
+          </Box>
+
+          {/* Now Indicator */}
+          {isToday && (
+            <Box
+              sx={{
+                position: 'absolute',
+                top: `${(currentHour * 60) + (currentMinute / 60 * 60)}px`,
+                left: 0,
+                right: 0,
+                height: '2px',
+                backgroundColor: '#f44336',
+                zIndex: 3,
+                '&::after': {
+                  content: '""',
+                  position: 'absolute',
+                  right: 0,
+                  top: '-4px',
+                  width: '10px',
+                  height: '10px',
+                  backgroundColor: '#f44336',
+                  borderRadius: '50%',
+                },
+              }}
+            />
+          )}
+        </Box>
       </Box>
     </Box>
   );

@@ -36,7 +36,6 @@ export default function VerticalLayout() {
     return null;
   }
 
-  // Get unique channels from schedules
   const channels = Array.from(
     new Map(
       schedules.map((s) => [s.program.channel.id, s.program.channel])
@@ -46,31 +45,19 @@ export default function VerticalLayout() {
   return (
     <Box 
       sx={{ 
-        minHeight: '100vh',
+        height: '100vh',
         background: mode === 'light' 
           ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
           : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        py: { xs: 2, sm: 4 },
-        px: { xs: 1, sm: 2 },
         position: 'relative',
-        '&::before': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: 0,
-          right: 0,
-          height: '400px',
-          background: mode === 'light'
-            ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
-            : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
-          opacity: 0.05,
-          zIndex: 0,
-        },
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
       }}
     >
       <Box
         sx={{
-          position: 'fixed',
+          position: 'absolute',
           top: 16,
           right: 16,
           zIndex: 1000,
@@ -79,13 +66,22 @@ export default function VerticalLayout() {
         <ThemeToggle />
       </Box>
 
-      <Container maxWidth="xl">
+      <Container 
+        maxWidth="xl" 
+        sx={{ 
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          py: { xs: 2, sm: 4 },
+          px: { xs: 1, sm: 2 },
+        }}
+      >
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           sx={{ 
-            mb: 6,
             position: 'relative',
             zIndex: 1,
           }}
@@ -129,50 +125,6 @@ export default function VerticalLayout() {
               </Typography>
             </Box>
           </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 4, 
-            flexWrap: 'wrap',
-            mt: 4,
-            p: 3,
-            borderRadius: 3,
-            background: mode === 'light'
-              ? 'rgba(255,255,255,0.5)'
-              : 'rgba(30,41,59,0.5)',
-            backdropFilter: 'blur(8px)',
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Calendar 
-                size={20} 
-                style={{ 
-                  color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                  strokeWidth: 1.5 
-                }} 
-              />
-              <Typography sx={{ 
-                color: mode === 'light' ? '#374151' : '#e2e8f0',
-                fontWeight: 500 
-              }}>
-                Weekly Programming
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Clock 
-                size={20} 
-                style={{ 
-                  color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                  strokeWidth: 1.5 
-                }} 
-              />
-              <Typography sx={{ 
-                color: mode === 'light' ? '#374151' : '#e2e8f0',
-                fontWeight: 500 
-              }}>
-                Live Updates
-              </Typography>
-            </Box>
-          </Box>
         </MotionBox>
         
         <MotionBox
@@ -180,6 +132,7 @@ export default function VerticalLayout() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           sx={{
+            flex: 1,
             background: mode === 'light'
               ? 'rgba(255,255,255,0.9)'
               : 'rgba(30,41,59,0.9)',
@@ -189,6 +142,8 @@ export default function VerticalLayout() {
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             overflow: 'hidden',
             backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {loading ? (
