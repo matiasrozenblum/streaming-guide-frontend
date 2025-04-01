@@ -12,7 +12,7 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 
 const MotionBox = motion(Box);
 
-export default function Home() {
+export default function VerticalLayout() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(true);
   const { mode } = useThemeContext();

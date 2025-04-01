@@ -17,7 +17,7 @@ interface Props {
   schedules: Schedule[];
 }
 
-export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
+export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
