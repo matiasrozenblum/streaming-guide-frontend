@@ -28,6 +28,12 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
   const currentMinute = now.minute();
   const numberOfColumns = channels.length + 2;
 
+  // Now Indicator offset calculation
+  const rowHeight = 36; // Height of each row in pixels
+  const minuteHeight = rowHeight / 60; // Height of each minute in pixels
+  const channelLabelHeight = 76; // Height of the channel label row + padding
+  const nowIndicatorOffset = (currentHour * rowHeight) + (currentMinute * minuteHeight) + channelLabelHeight;
+
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
     { label: 'M', value: 'tuesday' },
@@ -452,9 +458,9 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
             <Box
               sx={{
                 position: 'absolute',
-                top: `${(currentHour * 60) + (currentMinute / 60 * 60)}px`,
+                top: `${nowIndicatorOffset}px`,
                 left: 0,
-                width: `${numberOfColumns * 74}px`, //replace this with `${numberOfColumns * 74}px` if you want to make it responsive
+                width: `${numberOfColumns * 74}px`,
                 height: '2px',
                 backgroundColor: '#f44336',
                 zIndex: 3,
