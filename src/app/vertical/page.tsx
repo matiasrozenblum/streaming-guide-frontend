@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Container, CircularProgress, Typography } from '@mui/material';
-import { Calendar, Clock, Tv2 } from 'lucide-react';
+import { Tv2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { Schedule } from '@/types/schedule';

@@ -200,7 +200,7 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
               </Typography>
             </Box>
 
-            {channels.map((channel, index) => (
+            {channels.map((channel) => (
               <Box
                 key={channel.id}
                 sx={{
