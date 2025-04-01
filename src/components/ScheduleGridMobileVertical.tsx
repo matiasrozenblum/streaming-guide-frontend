@@ -26,6 +26,7 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
   const now = dayjs();
   const currentHour = now.hour();
   const currentMinute = now.minute();
+  const numberOfColumns = channels.length + 2;
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -453,14 +454,14 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
                 position: 'absolute',
                 top: `${(currentHour * 60) + (currentMinute / 60 * 60)}px`,
                 left: 0,
-                right: 0,
+                width: `${numberOfColumns * 74}px`, //replace this with `${numberOfColumns * 74}px` if you want to make it responsive
                 height: '2px',
                 backgroundColor: '#f44336',
                 zIndex: 3,
                 '&::after': {
                   content: '""',
                   position: 'absolute',
-                  right: 0,
+                  left: 0,
                   top: '-4px',
                   width: '10px',
                   height: '10px',
