@@ -10,6 +10,8 @@ export const getChannelBackground = (channelName: string): string => {
         return '#ffffff'; // white for transparent logos
       case 'gelatina':
         return '#000000'; // black
+      case 'urbana play':
+        return '#000000'; // black
       default:
         return '#f1f5f9'; // fallback gray
     }
