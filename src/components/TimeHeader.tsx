@@ -25,8 +25,8 @@ export const TimeHeader = () => {
       zIndex={1000}
       sx={{ 
         boxShadow: mode === 'light'
-          ? '0 2px 4px rgba(0,0,0,0.05)'
-          : '0 2px 4px rgba(0,0,0,0.2)'
+          ? '0 1px 2px rgba(0,0,0,0.05)'
+          : '0 1px 2px rgba(0,0,0,0.2)'
       }}
     >
       <Box
@@ -37,12 +37,36 @@ export const TimeHeader = () => {
         position="sticky"
         left={0}
         zIndex={2}
+        p={2}
         sx={{
+          width: `${channelLabelWidth}px`,
+          minWidth: `${channelLabelWidth}px`,
+          maxWidth: `${channelLabelWidth}px`,
+          borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+          bgcolor: mode === 'light' ? 'white' : '#1e293b',
+          position: 'sticky',
+          left: 0,
+          zIndex: 2,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
           boxShadow: mode === 'light'
-            ? '2px 0 4px rgba(0,0,0,0.05)'
-            : '2px 0 4px rgba(0,0,0,0.2)',
+            ? '1px 0 2px rgba(0,0,0,0.05)'
+            : '1px 0 2px rgba(0,0,0,0.2)',
         }}
-      />
+      >
+        <Typography
+          variant="caption"
+          sx={{
+            color: mode === 'light' ? '#64748b' : '#94a3b8',
+            fontWeight: 500,
+            fontSize: '0.75rem',
+            mr: '22px',
+          }}
+        >
+          Channel
+        </Typography>
+      </Box>
       
       <Box 
         display="flex" 

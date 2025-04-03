@@ -1,15 +1,15 @@
 import { useMediaQuery, useTheme } from '@mui/material';
 
 export const PIXELS_PER_MINUTE = 2;
-export const TIME_HEADER_HEIGHT = 50;
+export const TIME_HEADER_HEIGHT = 40;
 export const ROW_HEIGHT = {
-  mobile: 80,
-  desktop: 100,
+  mobile: 60,
+  desktop: 80,
 };
 
 export const CHANNEL_LABEL_WIDTH = {
-  mobile: 160,
-  desktop: 193,
+  mobile: 122,
+  desktop: 160,
 };
 
 // Custom hook to get layout values based on screen size

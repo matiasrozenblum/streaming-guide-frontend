@@ -62,7 +62,7 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
       <Box 
         display="flex" 
         gap={1} 
-        mb={2} 
+        mb={2}
         p={2}
         sx={{
           background: mode === 'light'
@@ -80,10 +80,10 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
             sx={{
-              minWidth: '44px',
-              height: '44px',
+              minWidth: '40px',
+              height: '40px',
               padding: '0',
-              borderRadius: '10px',
+              borderRadius: '8px',
             }}
           >
             {day.label}
@@ -94,11 +94,25 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
       <Box
         ref={scrollRef}
         sx={{
+          flex: 1,
           overflowX: 'auto',
           overflowY: 'hidden',
-          width: '100%',
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
+          '&::-webkit-scrollbar': {
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: mode === 'light' ? '#f1f5f9' : '#1e293b',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'light' ? '#cbd5e1' : '#475569',
+            borderRadius: '4px',
+            '&:hover': {
+              background: mode === 'light' ? '#94a3b8' : '#64748b',
+            },
+          },
         }}
       >
         <Box

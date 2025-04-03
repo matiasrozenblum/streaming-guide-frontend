@@ -37,7 +37,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       display="flex" 
       alignItems="center" 
       borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
-      position="relative" 
+      position="relative"
       height={`${rowHeight}px`}
       sx={{
         '&:hover': {
@@ -71,8 +71,8 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
             alt={channelName}
             variant="rounded"
             sx={{
-              width: isMobile ? 122 : 130,
-              height: isMobile ? 60 : 68,
+              width: isMobile ? 112 : 130,
+              height: isMobile ? 50 : 68,
               mx: 'auto',
               backgroundColor: getChannelBackground(channelName),
               boxShadow: mode === 'light'

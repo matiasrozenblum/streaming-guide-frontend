@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Container, CircularProgress, Typography } from '@mui/material';
-import { Calendar, Clock, Tv2 } from 'lucide-react';
+import { Tv2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { Schedule } from '@/types/schedule';
@@ -47,11 +47,12 @@ export default function Home() {
     <Box 
       sx={{ 
         minHeight: '100vh',
+        maxWidth: '100vw',
+        overflow: 'hidden',
         background: mode === 'light' 
           ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
           : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        py: { xs: 2, sm: 4 },
-        px: { xs: 1, sm: 2 },
+        py: { xs: 1, sm: 2 },
         position: 'relative',
         '&::before': {
           content: '""',
@@ -71,42 +72,48 @@ export default function Home() {
       <Box
         sx={{
           position: 'fixed',
-          top: 16,
-          right: 16,
+          top: 8,
+          right: 8,
           zIndex: 1000,
         }}
       >
         <ThemeToggle />
       </Box>
 
-      <Container maxWidth="xl">
+      <Container 
+        maxWidth="xl"
+        sx={{
+          px: { xs: 0.5, sm: 1 },
+          height: '100%',
+          overflow: 'hidden',
+        }}
+      >
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
           sx={{ 
-            mb: 6,
             position: 'relative',
             zIndex: 1,
+            mb: { xs: 1, sm: 2 },
           }}
         >
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
             gap: 2, 
-            mb: 2,
             background: mode === 'light'
               ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
               : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
-            p: 3,
-            borderRadius: 3,
+            p: { xs: 2, sm: 3 },
+            borderRadius: 2,
             boxShadow: mode === 'light'
               ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             backdropFilter: 'blur(8px)',
           }}>
             <Tv2 
-              size={40} 
+              size={32} 
               style={{ 
                 color: mode === 'light' ? '#2563eb' : '#3b82f6',
                 strokeWidth: 1.5 
@@ -114,62 +121,19 @@ export default function Home() {
             />
             <Box>
               <Typography variant="h1" sx={{ 
-                fontSize: '2.25rem', 
+                fontSize: { xs: '1.5rem', sm: '2rem' }, 
                 fontWeight: 700, 
                 color: mode === 'light' ? '#111827' : '#f1f5f9',
-                mb: 1 
+                mb: 0.5 
               }}>
                 TV Schedule
               </Typography>
               <Typography variant="subtitle1" sx={{ 
+                fontSize: { xs: '0.875rem', sm: '1rem' },
                 color: mode === 'light' ? '#4B5563' : '#94a3b8',
                 fontWeight: 400 
               }}>
                 Your complete guide to weekly programming
-              </Typography>
-            </Box>
-          </Box>
-          
-          <Box sx={{ 
-            display: 'flex', 
-            gap: 4, 
-            flexWrap: 'wrap',
-            mt: 4,
-            p: 3,
-            borderRadius: 3,
-            background: mode === 'light'
-              ? 'rgba(255,255,255,0.5)'
-              : 'rgba(30,41,59,0.5)',
-            backdropFilter: 'blur(8px)',
-          }}>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Calendar 
-                size={20} 
-                style={{ 
-                  color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                  strokeWidth: 1.5 
-                }} 
-              />
-              <Typography sx={{ 
-                color: mode === 'light' ? '#374151' : '#e2e8f0',
-                fontWeight: 500 
-              }}>
-                Weekly Programming
-              </Typography>
-            </Box>
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Clock 
-                size={20} 
-                style={{ 
-                  color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                  strokeWidth: 1.5 
-                }} 
-              />
-              <Typography sx={{ 
-                color: mode === 'light' ? '#374151' : '#e2e8f0',
-                fontWeight: 500 
-              }}>
-                Live Updates
               </Typography>
             </Box>
           </Box>
@@ -183,12 +147,13 @@ export default function Home() {
             background: mode === 'light'
               ? 'rgba(255,255,255,0.9)'
               : 'rgba(30,41,59,0.9)',
-            borderRadius: 3,
+            borderRadius: 2,
             boxShadow: mode === 'light'
               ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             overflow: 'hidden',
             backdropFilter: 'blur(8px)',
+            height: 'calc(100vh - 140px)',
           }}
         >
           {loading ? (
