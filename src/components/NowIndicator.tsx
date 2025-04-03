@@ -36,3 +36,5 @@ export const NowIndicator = forwardRef<HTMLDivElement>((_, ref) => {
     />
   );
 });
+
+NowIndicator.displayName = 'NowIndicator';

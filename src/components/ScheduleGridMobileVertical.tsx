@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Typography, Button, Avatar, useTheme, Tooltip } from '@mui/material';
+import { Box, Typography, Button, Avatar } from '@mui/material';
 import { useEffect, useState, useRef } from 'react';
 import dayjs from 'dayjs';
 import { Channel } from '@/types/channel';
@@ -9,7 +9,7 @@ import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
-import { OpenInNew, AccessTime } from '@mui/icons-material';
+import { AccessTime } from '@mui/icons-material';
 import { useInView } from 'react-intersection-observer';
 
 interface Props {
@@ -23,7 +23,6 @@ export const ScheduleGridMobileVertical = ({ channels, schedules }: Props) => {
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
   const { mode } = useThemeContext();
-  const theme = useTheme();
   const now = dayjs();
   const currentHour = now.hour();
   const currentMinute = now.minute();
