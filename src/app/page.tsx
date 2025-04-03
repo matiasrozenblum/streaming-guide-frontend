@@ -127,14 +127,14 @@ export default function Home() {
                 color: mode === 'light' ? '#111827' : '#f1f5f9',
                 mb: 0.5 
               }}>
-                TV Schedule
+                La Guía del Streaming
               </Typography>
               <Typography variant="subtitle1" sx={{ 
                 fontSize: { xs: '0.875rem', sm: '1rem' },
                 color: mode === 'light' ? '#4B5563' : '#94a3b8',
                 fontWeight: 400 
               }}>
-                Your complete guide to weekly programming
+                Tu guia al streaming semanal
               </Typography>
             </Box>
           </Box>

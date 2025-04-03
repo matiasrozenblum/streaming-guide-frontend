@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, IconButton } from '@mui/material';
 import { useRef, useEffect, useState } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
@@ -11,7 +11,9 @@ import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { AccessTime } from '@mui/icons-material';
 import weekday from 'dayjs/plugin/weekday';
+import { useInView } from 'react-intersection-observer';
 
 dayjs.extend(weekday);
 
@@ -30,6 +32,15 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const isToday = selectedDay === today;
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
 
+  const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
+  const { ref: observerRef, inView } = useInView({ threshold: 0 });
+
+  useEffect(() => {
+    if (nowIndicatorRef.current) {
+      observerRef(nowIndicatorRef.current);
+    }
+  }, [observerRef]);
+
   const daysOfWeek = [
     { label: 'Lun', value: 'monday' },
     { label: 'Mar', value: 'tuesday' },
@@ -40,16 +51,18 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     { label: 'Dom', value: 'sunday' },
   ];
 
+  const scrollToNow = () => {
+    const now = dayjs();
+    const minutesFromStart = (now.hour() * 60) + now.minute();
+    const scrollPosition = (minutesFromStart * pixelsPerMinute) - 200;
+    scrollRef.current?.scrollTo({
+      left: scrollPosition,
+      behavior: 'smooth',
+    });
+  };
+
   useEffect(() => {
-    if (isToday) {
-      const now = dayjs();
-      const minutesFromStart = (now.hour() * 60) + now.minute();
-      const scrollPosition = (minutesFromStart * pixelsPerMinute) - 200;
-      scrollRef.current?.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth',
-      });
-    }
+    if (isToday) scrollToNow();
   }, [isToday, pixelsPerMinute]);
 
   if (!channels.length || !schedules.length) {
@@ -61,16 +74,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     schedulesForDay.filter((s) => s.program.channel.id === channelId);
 
   return (
-    <Box sx={{ 
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100%',
-      overflow: 'hidden',
-    }}>
-      <Box 
-        display="flex" 
-        gap={1} 
-        p={2}
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+      <Box display="flex" gap={1} p={2} alignItems="center"
         sx={{
           background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
@@ -84,14 +89,26 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
-            sx={{
-              minWidth: '80px',
-              height: '40px',
-            }}
+            sx={{ minWidth: '80px', height: '40px' }}
           >
             {day.label}
           </Button>
         ))}
+        {isToday && !inView && (
+          <Button
+            onClick={scrollToNow}
+            variant="outlined"
+            startIcon={<AccessTime />}
+            sx={{
+              ml: 'auto',
+              height: '40px',
+              fontWeight: 'bold',
+              textTransform: 'none',
+            }}
+          >
+            Volver al presente
+          </Button>
+        )}
       </Box>
 
       <Box
@@ -104,8 +121,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           width: '100%',
           maxWidth: '100vw',
           position: 'relative',
-          mr: '-8px',  // Compensate for the fixed scrollbar width
-          pr: '8px',   // Add padding to maintain content width
+          mr: '-8px',
+          pr: '8px',
           '&::-webkit-scrollbar': {
             width: '8px',
             height: '8px',
@@ -123,14 +140,9 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           },
         }}
       >
-        <Box
-          sx={{
-            width: `${totalGridWidth}px`,
-            position: 'relative',
-          }}
-        >
+        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader />
-          {isToday && <NowIndicator />}
+          {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {channels.map((channel, index) => (
             <ScheduleRow
               key={channel.id}

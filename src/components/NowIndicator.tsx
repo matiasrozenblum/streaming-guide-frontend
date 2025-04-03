@@ -1,8 +1,9 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
+import { forwardRef } from 'react';
 
-export const NowIndicator = () => {
+export const NowIndicator = forwardRef<HTMLDivElement>((_, ref) => {
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const now = dayjs();
   const startOfDay = now.startOf('day');
@@ -11,6 +12,7 @@ export const NowIndicator = () => {
 
   return (
     <Box
+      ref={ref}
       position="absolute"
       top={0}
       left={`${offsetPx}px`}
@@ -33,4 +35,4 @@ export const NowIndicator = () => {
       }}
     />
   );
-};
+});

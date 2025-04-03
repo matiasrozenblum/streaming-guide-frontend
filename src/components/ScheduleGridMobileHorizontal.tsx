@@ -1,7 +1,8 @@
 'use client';
 
-import { Box, Typography, Button } from '@mui/material';
-import { useEffect, useState, useRef } from 'react';
+import { Box, Typography, Button, Fab } from '@mui/material';
+import AccessTimeIcon from '@mui/icons-material/AccessTime';
+import { useEffect, useState, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import { Channel } from '@/types/channel';
@@ -19,11 +20,13 @@ interface Props {
 
 export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
+  const [showScrollButton, setShowScrollButton] = useState(false);
+
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
-
   const isToday = selectedDay === today;
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
 
@@ -37,17 +40,50 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
     { label: 'D', value: 'sunday' },
   ];
 
+  const scrollToNow = () => {
+    const now = dayjs();
+    const minutesFromStart = now.hour() * 60 + now.minute();
+    const scrollPosition = (minutesFromStart * pixelsPerMinute) - 100;
+    scrollRef.current?.scrollTo({
+      left: scrollPosition,
+      behavior: 'smooth',
+    });
+  };
+
+  const checkNowIndicatorVisibility = useCallback(() => {
+    const indicator = nowIndicatorRef.current;
+    const container = scrollRef.current;
+    if (!indicator || !container) return;
+
+    const indicatorRect = indicator.getBoundingClientRect();
+    const containerRect = container.getBoundingClientRect();
+
+    const isVisible = indicatorRect.left >= containerRect.left && indicatorRect.right <= containerRect.right;
+    setShowScrollButton(!isVisible);
+  }, []);
+
   useEffect(() => {
     if (isToday) {
-      const now = dayjs();
-      const minutesFromStart = (now.hour() * 60) + now.minute();
-      const scrollPosition = (minutesFromStart * pixelsPerMinute) - 100;
-      scrollRef.current?.scrollTo({
-        left: scrollPosition,
-        behavior: 'smooth',
-      });
+      scrollToNow();
     }
   }, [isToday, pixelsPerMinute]);
+
+  useEffect(() => {
+    if (!isToday) {
+      setShowScrollButton(false);
+      return;
+    }
+
+    const container = scrollRef.current;
+    if (!container) return;
+
+    container.addEventListener('scroll', checkNowIndicatorVisibility);
+    checkNowIndicatorVisibility(); // Initial check
+
+    return () => {
+      container.removeEventListener('scroll', checkNowIndicatorVisibility);
+    };
+  }, [checkNowIndicatorVisibility, isToday]);
 
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
@@ -58,11 +94,11 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
     schedulesForDay.filter((s) => s.program.channel.id === channelId);
 
   return (
-    <Box>
+    <Box sx={{ position: 'relative' }}>
+      {/* Día Selector */}
       <Box 
         display="flex" 
         gap={1} 
-
         p={2}
         sx={{
           background: mode === 'light'
@@ -91,6 +127,7 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
         ))}
       </Box>
 
+      {/* Contenedor scrollable */}
       <Box
         ref={scrollRef}
         sx={{
@@ -99,30 +136,11 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
           overflowY: 'hidden',
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
-          '&::-webkit-scrollbar': {
-            height: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: mode === 'light' ? '#f1f5f9' : '#1e293b',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' ? '#cbd5e1' : '#475569',
-            borderRadius: '4px',
-            '&:hover': {
-              background: mode === 'light' ? '#94a3b8' : '#64748b',
-            },
-          },
         }}
       >
-        <Box
-          sx={{
-            width: `${totalGridWidth}px`,
-            position: 'relative',
-          }}
-        >
+        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader />
-          {isToday && <NowIndicator />}
+          {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {channels.map((channel, index) => (
             <ScheduleRow
               key={channel.id}
@@ -145,6 +163,33 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
           ))}
         </Box>
       </Box>
+
+      {/* Botón flotante */}
+      {isToday && showScrollButton && (
+        <Fab
+          variant="extended"
+          size="medium"
+          onClick={scrollToNow}
+          sx={{
+            position: 'fixed',
+            bottom: '20vh',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            backgroundColor: mode === 'light' ? '#2563eb' : '#3b82f6',
+            color: '#ffffff',
+            opacity: 0.85,
+            textTransform: 'none',
+            zIndex: 1000,
+            '&:hover': {
+              backgroundColor: mode === 'light' ? '#1d4ed8' : '#2563eb',
+              opacity: 1,
+            },
+          }}
+        >
+          <AccessTimeIcon sx={{ mr: 1 }} />
+          Volver al presente
+        </Fab>
+      )}
     </Box>
   );
 };
