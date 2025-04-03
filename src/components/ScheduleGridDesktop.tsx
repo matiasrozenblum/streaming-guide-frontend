@@ -26,6 +26,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const [selectedDay, setSelectedDay] = useState(today);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const [scrollX, setScrollX] = useState(0);
 
   const isToday = selectedDay === today;
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
@@ -52,6 +53,12 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     }
   }, [isToday, pixelsPerMinute]);
 
+  const handleScroll = () => {
+    if (scrollRef.current) {
+      setScrollX(scrollRef.current.scrollLeft);
+    }
+  };
+
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
   }
@@ -61,7 +68,12 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     schedulesForDay.filter((s) => s.program.channel.id === channelId);
 
   return (
-    <>
+    <Box sx={{ 
+      display: 'flex',
+      flexDirection: 'column',
+      height: '100%',
+      overflow: 'hidden',
+    }}>
       <Box 
         display="flex" 
         gap={1} 
@@ -92,11 +104,30 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
 
       <Box
         ref={scrollRef}
+        onScroll={handleScroll}
         sx={{
-          overflow: 'auto',
+          flex: 1,
+          minHeight: 0,
+          overflowX: 'auto',
+          overflowY: 'auto',
           width: '100%',
           maxWidth: '100vw',
           position: 'relative',
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: mode === 'light' ? '#f1f5f9' : '#1e293b',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'light' ? '#cbd5e1' : '#475569',
+            borderRadius: '4px',
+            '&:hover': {
+              background: mode === 'light' ? '#94a3b8' : '#64748b',
+            },
+          },
         }}
       >
         <Box
@@ -129,6 +160,6 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           ))}
         </Box>
       </Box>
-    </>
+    </Box>
   );
 };
