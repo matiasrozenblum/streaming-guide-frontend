@@ -62,7 +62,7 @@ export const ScheduleGridMobileHorizontal = ({ channels, schedules }: Props) => 
       <Box 
         display="flex" 
         gap={1} 
-        mb={2}
+
         p={2}
         sx={{
           background: mode === 'light'
