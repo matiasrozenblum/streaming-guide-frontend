@@ -6,6 +6,7 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '../constants/layout';
 import { OpenInNew } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useState, useEffect } from 'react';
 
 dayjs.extend(customParseFormat);
 
@@ -37,6 +38,14 @@ export const ProgramBlock = ({
 }: Props) => {
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const [isMobile, setIsMobile] = useState(false);
+  const [openTooltip, setOpenTooltip] = useState(false);
+
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
+    }
+  }, []);
 
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
@@ -58,61 +67,70 @@ export const ProgramBlock = ({
   const handleClick = () => {
     if (!youtube_url) return;
     const url = isLive ? live_url : youtube_url;
-    console.log('url', url, 'live_url', live_url, 'youtube_url', youtube_url);
     const newTab = window.open(url, '_blank');
     newTab?.focus();
   };
 
+  const tooltipContent = (
+    <Box sx={{ p: 1 }}>
+      <Typography variant="subtitle1" fontWeight="bold" color="white">
+        {name}
+      </Typography>
+      <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+        {start} - {end}
+      </Typography>
+      {description && (
+        <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+          {description}
+        </Typography>
+      )}
+      {panelists?.length ? (
+        <Box sx={{ mt: 1 }}>
+          <Typography variant="body2" fontWeight="bold" color="white">
+            Panelistas:
+          </Typography>
+          <Typography variant="body2" color="rgba(255,255,255,0.9)">
+            {panelists.map((p) => p.name).join(', ')}
+          </Typography>
+        </Box>
+      ) : null}
+      {youtube_url && (
+        <Button
+          onClick={handleClick}
+          variant="contained"
+          size="small"
+          startIcon={<OpenInNew />}
+          sx={{
+            mt: 2,
+            backgroundColor: '#FF0000',
+            '&:hover': { backgroundColor: '#cc0000' },
+            fontWeight: 'bold',
+            textTransform: 'none',
+            fontSize: '0.8rem',
+            boxShadow: 'none',
+          }}
+        >
+          {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+        </Button>
+      )}
+    </Box>
+  );
+
   return (
     <Tooltip
-      title={
-        <Box sx={{ p: 1 }}>
-          <Typography variant="subtitle1" fontWeight="bold" color="white">
-            {name}
-          </Typography>
-          <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
-            {start} - {end}
-          </Typography>
-          {description && (
-            <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
-              {description}
-            </Typography>
-          )}
-          {panelists?.length ? (
-            <Box sx={{ mt: 1 }}>
-              <Typography variant="body2" fontWeight="bold" color="white">
-                Panelistas:
-              </Typography>
-              <Typography variant="body2" color="rgba(255,255,255,0.9)">
-                {panelists.map((p) => p.name).join(', ')}
-              </Typography>
-            </Box>
-          ) : null}
-          {youtube_url && (
-            <Button
-              onClick={handleClick}
-              variant="contained"
-              size="small"
-              startIcon={<OpenInNew />}
-              sx={{
-                mt: 2,
-                backgroundColor: '#FF0000',
-                '&:hover': { backgroundColor: '#cc0000' },
-                fontWeight: 'bold',
-                textTransform: 'none',
-                fontSize: '0.8rem',
-                boxShadow: 'none',
-              }}
-            >
-              {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-            </Button>
-          )}
-        </Box>
-      }
+      title={tooltipContent}
       arrow
       placement="top"
+      open={openTooltip}
+      onOpen={() => !isMobile && setOpenTooltip(true)}
+      onClose={() => setOpenTooltip(false)}
+      disableTouchListener={isMobile}
+      disableFocusListener={isMobile}
     >
       <Box
+        onMouseEnter={() => !isMobile && setOpenTooltip(true)}
+        onMouseLeave={() => !isMobile && setOpenTooltip(false)}
+        onClick={() => isMobile && setOpenTooltip(!openTooltip)}
         position="absolute"
         left={`${offsetPx}px`}
         width={`${widthPx}px`}
@@ -152,6 +170,7 @@ export const ProgramBlock = ({
                 padding: '2px 6px',
                 borderRadius: '4px',
                 fontWeight: 'bold',
+                zIndex: 5,
               }}
             >
               LIVE
