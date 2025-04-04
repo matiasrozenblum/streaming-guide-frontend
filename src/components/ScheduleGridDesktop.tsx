@@ -94,9 +94,16 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             {day.label}
           </Button>
         ))}
-        {isToday && !inView && (
+        {!inView && (
           <Button
-            onClick={scrollToNow}
+          onClick={() => {
+            if (selectedDay !== today) {
+              setSelectedDay(today);
+              setTimeout(() => scrollToNow(), 100);
+            } else {
+              scrollToNow();
+            }
+          }}
             variant="outlined"
             startIcon={<AccessTime />}
             sx={{
@@ -106,7 +113,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
               textTransform: 'none',
             }}
           >
-            Volver al presente
+            En vivo
           </Button>
         )}
       </Box>
