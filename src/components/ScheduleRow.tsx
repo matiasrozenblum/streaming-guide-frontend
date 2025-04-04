@@ -62,7 +62,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
-            backgroundColor: getChannelBackground(channelName),
+            background: getChannelBackground(channelName),
             boxShadow: mode === 'light'
               ? '0 2px 4px rgba(0,0,0,0.1)'
               : '0 2px 4px rgba(0,0,0,0.2)',
