@@ -1,6 +1,7 @@
 'use client';
 
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
+import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -31,6 +32,138 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
+  const pathname = usePathname();
+  const isLegalPage = pathname === '/legal';
+
+  const StandardLayout = (
+    <Box
+      width={`${channelLabelWidth}px`}
+      minWidth={`${channelLabelWidth}px`}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      position="sticky"
+      left={0}
+      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      height="100%"
+      zIndex={2}
+      sx={{ 
+        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+        boxShadow: mode === 'light' 
+          ? '2px 0 4px rgba(0,0,0,0.05)'
+          : '2px 0 4px rgba(0,0,0,0.2)',
+      }}
+    >
+      {channelLogo ? (
+        <Avatar 
+          src={channelLogo} 
+          alt={channelName}
+          variant="rounded"
+          sx={{
+            width: isMobile ? 112 : 130,
+            height: isMobile ? 50 : 68,
+            backgroundColor: getChannelBackground(channelName),
+            boxShadow: mode === 'light'
+              ? '0 2px 4px rgba(0,0,0,0.1)'
+              : '0 2px 4px rgba(0,0,0,0.2)',
+            '& img': {
+              objectFit: 'contain',
+              width: '100%',
+              height: '100%',
+            }
+          }}
+        />
+      ) : (
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 600,
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            color: mode === 'light' ? '#374151' : '#f1f5f9',
+            textAlign: 'center',
+          }}
+        >
+          {channelName}
+        </Typography>
+      )}
+    </Box>
+  );
+
+  const LegalLayout = (
+    <Box
+      width={`${channelLabelWidth}px`}
+      minWidth={`${channelLabelWidth}px`}
+      display="flex"
+      alignItems="center"
+      justifyContent="center"
+      position="sticky"
+      left={0}
+      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      height="100%"
+      zIndex={2}
+      sx={{ 
+        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+        boxShadow: mode === 'light' 
+          ? '2px 0 4px rgba(0,0,0,0.05)'
+          : '2px 0 4px rgba(0,0,0,0.2)',
+        position: 'relative',
+        overflow: 'hidden',
+      }}
+    >
+      {/* Blurred Logo Background */}
+      {channelLogo && (
+        <Box
+          sx={{
+            position: 'absolute',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+            width: isMobile ? '112px' : '130px',
+            height: isMobile ? '50px' : '68px',
+            backgroundImage: `url(${channelLogo})`,
+            backgroundSize: 'contain',
+            backgroundPosition: 'center',
+            backgroundRepeat: 'no-repeat',
+            filter: 'blur(4px)',
+            opacity: 0.15,
+          }}
+        />
+      )}
+
+      {/* Content Container */}
+      <Box
+        sx={{
+          position: 'relative',
+          zIndex: 1,
+          width: '100%',
+          height: '100%',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 1,
+          padding: 1,
+        }}
+      >
+        {/* Channel Name */}
+        <Typography
+          variant="subtitle1"
+          sx={{
+            fontWeight: 700,
+            fontSize: isMobile ? '0.875rem' : '1rem',
+            lineHeight: 1.2,
+            color: mode === 'light' ? '#1e293b' : '#f1f5f9',
+            textAlign: 'center',
+            letterSpacing: '0.02em',
+            textTransform: 'uppercase',
+            marginBottom: 0.5,
+          }}
+        >
+          {channelName}
+        </Typography>
+      </Box>
+    </Box>
+  );
 
   return (
     <Box 
@@ -47,61 +180,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         },
       }}
     >
-      <Box
-        width={`${channelLabelWidth}px`}
-        minWidth={`${channelLabelWidth}px`}
-        display="flex"
-        alignItems="center"
-        gap={isMobile ? 1 : 2}
-        position="sticky"
-        left={0}
-        bgcolor={mode === 'light' ? 'white' : '#1e293b'}
-        height="100%"
-        zIndex={2}
-        sx={{ 
-          borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-          boxShadow: mode === 'light' 
-            ? '2px 0 4px rgba(0,0,0,0.05)'
-            : '2px 0 4px rgba(0,0,0,0.2)',
-        }}
-      >
-        {channelLogo ? (
-          <Avatar 
-            src={channelLogo} 
-            alt={channelName}
-            variant="rounded"
-            sx={{
-              width: isMobile ? 112 : 130,
-              height: isMobile ? 50 : 68,
-              mx: 'auto',
-              background: getChannelBackground(channelName),
-              boxShadow: mode === 'light'
-                ? '0 2px 4px rgba(0,0,0,0.1)'
-                : '0 2px 4px rgba(0,0,0,0.2)',
-              overflow: 'hidden',
-              '& img': {
-                objectFit: 'contain',
-                width: '100%',
-                height: '100%',
-              }
-            }}
-          />
-        ) : (
-          <Typography
-            variant="subtitle2"
-            textAlign="center"
-            px={1}
-            sx={{
-              fontWeight: 'bold',
-              fontSize: isMobile ? '0.7rem' : '0.8rem',
-              lineHeight: 1.1,
-              color: mode === 'light' ? '#374151' : '#f1f5f9',
-            }}
-          >
-            {channelName}
-          </Typography>
-        )}
-      </Box>
+      {isLegalPage ? LegalLayout : StandardLayout}
 
       <Box position="relative" flex="1" height="100%">
         {programs.map((p) => (
