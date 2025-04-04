@@ -46,7 +46,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       left={0}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       height="100%"
-      zIndex={2}
+      zIndex={6}
       sx={{ 
         borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
         boxShadow: mode === 'light' 
