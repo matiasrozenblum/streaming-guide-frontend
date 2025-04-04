@@ -2,7 +2,6 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Container, CircularProgress, Typography } from '@mui/material';
-import { Tv2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { Schedule } from '@/types/schedule';
@@ -17,6 +16,8 @@ export default function Home() {
   const [loading, setLoading] = useState(true);
   const { mode } = useThemeContext();
   const [mounted, setMounted] = useState(false);
+
+  const logo = mode === 'light' ? '/img/logo.png' : '/img/logo-dark.png';
   
   useEffect(() => {
     setMounted(true);
@@ -48,13 +49,13 @@ export default function Home() {
       sx={{ 
         minHeight: '100vh',
         maxWidth: '100vw',
-        overflow: 'hidden',
-        height : '100%',
         background: mode === 'light' 
           ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
           : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
         py: { xs: 1, sm: 2 },
         position: 'relative',
+        display: 'flex',
+        flexDirection: 'column',
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -85,8 +86,10 @@ export default function Home() {
         maxWidth="xl"
         sx={{
           px: { xs: 0.5, sm: 1 },
-          height: '100%',
-          overflow: 'hidden',
+          flex: 1,
+          display: 'flex',
+          flexDirection: 'column',
+          minHeight: 0,
         }}
       >
         <MotionBox
@@ -113,30 +116,17 @@ export default function Home() {
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             backdropFilter: 'blur(8px)',
           }}>
-            <Tv2 
-              size={32} 
-              style={{ 
-                color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                strokeWidth: 1.5 
-              }} 
+            <Box
+              component="img"
+              src={logo}
+              alt="La Guía del Streaming"
+              sx={{
+                width: '100%',
+                height: 'auto',
+                maxWidth: { xs: '280px', sm: '400px' },
+
+              }}
             />
-            <Box>
-              <Typography variant="h1" sx={{ 
-                fontSize: { xs: '1.5rem', sm: '2rem' }, 
-                fontWeight: 700, 
-                color: mode === 'light' ? '#111827' : '#f1f5f9',
-                mb: 0.5 
-              }}>
-                La Guía del Streaming
-              </Typography>
-              <Typography variant="subtitle1" sx={{ 
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                color: mode === 'light' ? '#4B5563' : '#94a3b8',
-                fontWeight: 400 
-              }}>
-                Tu guia al streaming semanal
-              </Typography>
-            </Box>
           </Box>
         </MotionBox>
         
@@ -145,6 +135,8 @@ export default function Home() {
           animate={{ opacity: 1 }}
           transition={{ duration: 0.5, delay: 0.2 }}
           sx={{
+            flex: 1,
+            minHeight: 0,
             background: mode === 'light'
               ? 'rgba(255,255,255,0.9)'
               : 'rgba(30,41,59,0.9)',
@@ -154,7 +146,8 @@ export default function Home() {
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             overflow: 'hidden',
             backdropFilter: 'blur(8px)',
-            height: 'calc(100vh - 140px)',
+            display: 'flex',
+            flexDirection: 'column',
           }}
         >
           {loading ? (

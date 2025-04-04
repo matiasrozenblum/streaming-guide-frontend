@@ -189,17 +189,45 @@ export const ProgramBlock = ({
               }}
             />
           ) : (
-            <Typography
-              variant="caption"
+            <Box
               sx={{
-                fontWeight: 'bold',
-                fontSize: '0.75rem',
-                textAlign: 'center',
-                color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 0.5,
               }}
             >
-              {name}
-            </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: '0.75rem',
+                  textAlign: 'center',
+                  color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                }}
+              >
+                {name}
+              </Typography>
+              {(panelists ?? []).length > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.65rem',
+                    textAlign: 'center',
+                    color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
+                    lineHeight: 1.2,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {(panelists ?? []).map(p => p.name).join(', ')}
+                </Typography>
+              )}
+            </Box>
           )}
         </Box>
       </Box>

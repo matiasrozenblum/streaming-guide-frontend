@@ -106,8 +106,6 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         boxShadow: mode === 'light' 
           ? '2px 0 4px rgba(0,0,0,0.05)'
           : '2px 0 4px rgba(0,0,0,0.2)',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
       {/* Blurred Logo Background */}
