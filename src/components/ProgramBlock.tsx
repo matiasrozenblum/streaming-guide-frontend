@@ -6,7 +6,8 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '../constants/layout';
 import { OpenInNew } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
+import { event as gaEvent } from '@/lib/gtag';
 
 dayjs.extend(customParseFormat);
 
@@ -40,6 +41,7 @@ export const ProgramBlock = ({
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -64,15 +66,46 @@ export const ProgramBlock = ({
   const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
-  const handleClick = () => {
+  const handleClick = (e: React.MouseEvent) => {
+    e.stopPropagation();
     if (!youtube_url) return;
     const url = isLive ? live_url : youtube_url;
+
+    // Track GA event
+    gaEvent({
+      action: 'click_youtube',
+      category: 'program',
+      label: name,
+      value: isLive ? 1 : 0,
+    });
+
     const newTab = window.open(url, '_blank');
     newTab?.focus();
   };
 
+  const handleTooltipOpen = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+    }
+    if (!isMobile) {
+      setOpenTooltip(true);
+    }
+  };
+
+  const handleTooltipClose = () => {
+    if (!isMobile) {
+      closeTimeoutRef.current = setTimeout(() => {
+        setOpenTooltip(false);
+      }, 100);
+    }
+  };
+
   const tooltipContent = (
-    <Box sx={{ p: 1 }}>
+    <Box 
+      sx={{ p: 1 }}
+      onMouseEnter={handleTooltipOpen}
+      onMouseLeave={handleTooltipClose}
+    >
       <Typography variant="subtitle1" fontWeight="bold" color="white">
         {name}
       </Typography>
@@ -122,14 +155,18 @@ export const ProgramBlock = ({
       arrow
       placement="top"
       open={openTooltip}
-      onOpen={() => !isMobile && setOpenTooltip(true)}
-      onClose={() => setOpenTooltip(false)}
+      onOpen={handleTooltipOpen}
+      onClose={handleTooltipClose}
       disableTouchListener={isMobile}
       disableFocusListener={isMobile}
+      PopperProps={{
+        onMouseEnter: handleTooltipOpen,
+        onMouseLeave: handleTooltipClose,
+      }}
     >
       <Box
-        onMouseEnter={() => !isMobile && setOpenTooltip(true)}
-        onMouseLeave={() => !isMobile && setOpenTooltip(false)}
+        onMouseEnter={handleTooltipOpen}
+        onMouseLeave={handleTooltipClose}
         onClick={() => isMobile && setOpenTooltip(!openTooltip)}
         position="absolute"
         left={`${offsetPx}px`}
@@ -189,17 +226,45 @@ export const ProgramBlock = ({
               }}
             />
           ) : (
-            <Typography
-              variant="caption"
+            <Box
               sx={{
-                fontWeight: 'bold',
-                fontSize: '0.75rem',
-                textAlign: 'center',
-                color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                gap: 0.5,
               }}
             >
-              {name}
-            </Typography>
+              <Typography
+                variant="caption"
+                sx={{
+                  fontWeight: 'bold',
+                  fontSize: '0.75rem',
+                  textAlign: 'center',
+                  color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                }}
+              >
+                {name}
+              </Typography>
+              {(panelists ?? []).length > 0 && (
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontSize: '0.65rem',
+                    textAlign: 'center',
+                    color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
+                    lineHeight: 1.2,
+                    maxWidth: '100%',
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                  }}
+                >
+                  {(panelists?.map(p => p.name).join(', ')) ?? ''}
+                </Typography>
+              )}
+            </Box>
           )}
         </Box>
       </Box>
