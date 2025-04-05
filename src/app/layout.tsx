@@ -2,6 +2,7 @@ import { CustomThemeProvider } from '@/contexts/ThemeContext';
 import '@/styles/globals.css';
 import Script from 'next/script';
 import { GA_TRACKING_ID } from '@/lib/gtag';
+import { HotjarLoader } from '@/components/HotjarLoader';
 
 export const metadata = {
   title: 'TV Schedule',
@@ -32,6 +33,7 @@ export default function RootLayout({
         }}
         />
       <body suppressHydrationWarning>
+      <HotjarLoader />
         <CustomThemeProvider>
           {children}
         </CustomThemeProvider>
