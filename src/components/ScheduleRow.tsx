@@ -106,8 +106,6 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         boxShadow: mode === 'light' 
           ? '2px 0 4px rgba(0,0,0,0.05)'
           : '2px 0 4px rgba(0,0,0,0.2)',
-        position: 'relative',
-        overflow: 'hidden',
       }}
     >
       {/* Blurred Logo Background */}
@@ -180,7 +178,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         },
       }}
     >
-      {isLegalPage ? LegalLayout : StandardLayout}
+      {isLegalPage ? StandardLayout : LegalLayout}
 
       <Box position="relative" flex="1" height="100%">
         {programs.map((p) => (
