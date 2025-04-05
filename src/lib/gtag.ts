@@ -2,7 +2,11 @@ export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
 declare global {
   interface Window {
-    gtag: (...args: any[]) => void;
+    gtag: (
+      command: 'config' | 'event',
+      targetId: string,
+      config?: Record<string, unknown>
+    ) => void;
   }
 }
 
