@@ -10,10 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 
 ### Changed
+- Program names to uppercase
+- Program logos + names
 
 ### Removed
 
 ### Fixed
+- Fixed release script
 
 ---
 
