@@ -49,6 +49,25 @@ export const ProgramBlock = ({
     }
   }, []);
 
+  useEffect(() => {
+    if (isMobile && openTooltip) {
+      const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
+        // Check if the click is outside the program block
+        if (!event.target || !(event.target as HTMLElement).closest('.program-block')) {
+          setOpenTooltip(false);
+        }
+      };
+  
+      document.addEventListener('mousedown', handleOutsideClick);
+      document.addEventListener('touchstart', handleOutsideClick);
+  
+      return () => {
+        document.removeEventListener('mousedown', handleOutsideClick);
+        document.removeEventListener('touchstart', handleOutsideClick);
+      };
+    }
+  }, [isMobile, openTooltip]);
+
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
   const minutesFromMidnightStart = (startHours * 60) + startMinutes;
