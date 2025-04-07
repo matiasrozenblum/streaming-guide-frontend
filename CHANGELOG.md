@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.0.7] - 2025-04-07
+
+### Changed
+- Program names to uppercase
+- Program logos + names
+
 ## [0.0.6] - 2025-04-07
 
 ### Fixed

@@ -232,24 +232,34 @@ export const ProgramBlock = ({
               LIVE
             </Box>
           )}
-          {logo_url ? (
-            <Box
-              component="img"
-              src={logo_url}
-              alt={name}
-              sx={{
-                width: '100%',
-                height: '100%',
-                objectFit: 'contain',
-                opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
-              }}
-            />
-          ) : (
+          <Box
+            sx={{
+              display: 'flex',
+              flexDirection: 'row',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              gap: 1, // Adds spacing between the logo and the name
+            }}
+          >
+            {logo_url && (
+              <Box
+                component="img"
+                src={logo_url}
+                alt={name}
+                sx={{
+                  width: '40px', // Adjust the size of the logo
+                  height: '40px',
+                  objectFit: 'contain',
+                  opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                }}
+              />
+            )}
             <Box
               sx={{
                 display: 'flex',
                 flexDirection: 'column',
-                alignItems: 'center',
+                alignItems: logo_url ? 'flex-start' : 'center', // Align text differently if there's a logo
                 gap: 0.5,
               }}
             >
@@ -258,18 +268,18 @@ export const ProgramBlock = ({
                 sx={{
                   fontWeight: 'bold',
                   fontSize: '0.75rem',
-                  textAlign: 'center',
+                  textAlign: logo_url ? 'left' : 'center', // Align text differently if there's a logo
                   color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
                 }}
               >
-                {name}
+                {name.toUpperCase()}
               </Typography>
               {(panelists ?? []).length > 0 && (
                 <Typography
                   variant="caption"
                   sx={{
                     fontSize: '0.65rem',
-                    textAlign: 'center',
+                    textAlign: logo_url ? 'left' : 'center', // Align text differently if there's a logo
                     color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
                     lineHeight: 1.2,
                     maxWidth: '100%',
@@ -280,11 +290,11 @@ export const ProgramBlock = ({
                     WebkitBoxOrient: 'vertical',
                   }}
                 >
-                  {(panelists?.map(p => p.name).join(', ')) ?? ''}
+                  {(panelists?.map((p) => p.name).join(', ')) ?? ''}
                 </Typography>
               )}
             </Box>
-          )}
+          </Box>
         </Box>
       </Box>
     </Tooltip>

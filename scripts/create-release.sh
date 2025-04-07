@@ -25,7 +25,15 @@ TAG="v$VERSION"
 echo "📝 Updating CHANGELOG.md..."
 
 DATE=$(date +"%Y-%m-%d")
-echo -e "\n## v$VERSION - $DATE\n\n- Describe los cambios acá.\n" >> CHANGELOG.md
+
+# Extract the content of the "Unreleased" section
+UNRELEASED_CONTENT=$(awk '/## \[Unreleased\]/,/^---/' CHANGELOG.md | sed '1d;$d')
+
+# Remove the "Unreleased" content from the changelog
+awk '/## \[Unreleased\]/,/^---/ {next} {print}' CHANGELOG.md > CHANGELOG.tmp && mv CHANGELOG.tmp CHANGELOG.md
+
+# Add a new section for the release version with the extracted content
+sed -i '' "s|^---|## [$VERSION] - $DATE\n\n$UNRELEASED_CONTENT\n\n---|" CHANGELOG.md
 
 git add CHANGELOG.md
 git commit -m "docs: update changelog for v$VERSION"
