@@ -5,20 +5,6 @@ Todas las modificaciones importantes de este proyecto se documentarán en este a
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
-## [Unreleased]
-
-### Added
-
-### Changed
-- Program names to uppercase
-- Program logos + names
-
-### Removed
-
-### Fixed
-- Fixed release script
-
----
 
 ## [0.0.6] - 2025-04-07
 
