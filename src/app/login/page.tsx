@@ -36,6 +36,7 @@ export default function LoginPage() {
         setError('Contraseña incorrecta');
       }
     } catch (err) {
+      console.error('Error in login page:', err);
       setError('Error al autenticar');
     }
   };

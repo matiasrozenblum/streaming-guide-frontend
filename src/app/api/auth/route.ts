@@ -26,6 +26,7 @@ export async function POST(request: NextRequest) {
 
     return response;
   } catch (error) {
+    console.error('Error in auth route:', error);
     return new NextResponse(
       JSON.stringify({ error: 'Internal server error' }),
       { status: 500 }
