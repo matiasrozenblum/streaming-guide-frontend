@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.0.8] - 2025-04-09
+
+### Added
+- Added password screen with env variable comparison
+
 ## [0.0.7] - 2025-04-07
 
 ### Changed
