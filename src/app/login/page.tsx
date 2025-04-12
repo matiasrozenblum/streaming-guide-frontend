@@ -17,7 +17,7 @@ export default function LoginPage() {
     try {
       await AuthService.login(password, false);
       router.push('/');
-    } catch (err) {
+    } catch {
       setError('Contraseña incorrecta');
     }
   };

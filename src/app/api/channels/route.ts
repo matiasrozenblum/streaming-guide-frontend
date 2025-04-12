@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server';
-import { authService } from '@/services/auth';
 
 export async function GET() {
   try {

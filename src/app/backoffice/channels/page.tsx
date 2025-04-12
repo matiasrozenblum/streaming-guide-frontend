@@ -24,6 +24,7 @@ import {
 } from '@mui/material';
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Channel } from '@/types/channel';
+import Image from 'next/image';
 
 export default function ChannelsPage() {
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -180,13 +181,13 @@ export default function ChannelsPage() {
             {channels.map((channel) => (
               <TableRow key={channel.id}>
                 <TableCell>
-                  {channel.logo_url && (
-                    <img 
-                      src={channel.logo_url} 
-                      alt={channel.name} 
-                      style={{ width: 50, height: 50, objectFit: 'contain' }} 
-                    />
-                  )}
+                  <Image 
+                    src={channel.logo_url || '/placeholder.png'} 
+                    alt={channel.name}
+                    width={50}
+                    height={50}
+                    style={{ objectFit: 'contain' }}
+                  />
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>

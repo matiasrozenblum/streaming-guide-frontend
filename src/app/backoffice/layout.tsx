@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton, useTheme, ListItemButton } from '@mui/material';
+import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton, ListItemButton } from '@mui/material';
 import { Menu as MenuIcon, Dashboard, LiveTv, People, Schedule } from '@mui/icons-material';
 import { AuthService } from '@/services/auth';
 
@@ -14,7 +14,6 @@ export default function BackofficeLayout({
   const [mobileOpen, setMobileOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
-  const theme = useTheme();
 
   useEffect(() => {
     console.log('Checking authentication for path:', pathname);

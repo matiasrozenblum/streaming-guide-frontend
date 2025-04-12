@@ -29,6 +29,7 @@ import {
 import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
+import Image from 'next/image';
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -262,10 +263,12 @@ export default function ProgramsPage() {
                 <TableRow key={program.id}>
                   <TableCell>
                     {program.logo_url && (
-                      <img 
-                        src={program.logo_url} 
-                        alt={program.name} 
-                        style={{ width: 50, height: 50, objectFit: 'contain' }} 
+                      <Image 
+                        src={program.logo_url || '/placeholder.png'} 
+                        alt={program.name}
+                        width={50}
+                        height={50}
+                        style={{ objectFit: 'contain' }}
                       />
                     )}
                   </TableCell>

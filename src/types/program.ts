@@ -4,13 +4,12 @@ import { Channel } from './channel';
 export interface Program {
   id: number;
   name: string;
-  description: string | null;
-  start_time: string | null;
-  end_time: string | null;
-  channel_id: number;
-  channel?: Channel;
-  logo_url: string | null;
-  youtube_url: string | null;
+  description?: string;
+  start_time?: string;
+  end_time?: string;
+  channel_id?: number;
+  logo_url?: string;
+  youtube_url?: string;
   created_at: string;
   updated_at: string;
 }

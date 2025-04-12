@@ -65,6 +65,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     if (isToday) scrollToNow();
   }, [isToday, pixelsPerMinute]);
 
+  useEffect(() => {
+    scrollToNow();
+  }, [scrollToNow]);
+
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
   }

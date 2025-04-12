@@ -63,10 +63,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (isToday) {
-      scrollToNow();
-    }
-  }, [isToday, pixelsPerMinute]);
+    scrollToNow();
+  }, [scrollToNow]);
 
   useEffect(() => {
     const container = scrollRef.current;
