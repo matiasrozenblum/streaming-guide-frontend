@@ -1,6 +1,3 @@
-import { Panelist } from './panelist';
-import { Channel } from './channel';
-
 export interface Program {
   id: number;
   name: string;
