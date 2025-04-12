@@ -8,6 +8,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Added backoffice views with auth and CRUD operations for channels and programs
 
 ### Changed
 
