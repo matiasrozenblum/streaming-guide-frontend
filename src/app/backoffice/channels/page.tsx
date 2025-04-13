@@ -34,7 +34,7 @@ export default function ChannelsPage() {
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
-    youtube_url: '',
+    streaming_url: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -65,14 +65,14 @@ export default function ChannelsPage() {
       setFormData({
         name: channel.name,
         logo_url: channel.logo_url || '',
-        youtube_url: channel.youtube_url || '',
+        streaming_url: channel.streaming_url || '',
       });
     } else {
       setEditingChannel(null);
       setFormData({
         name: '',
         logo_url: '',
-        youtube_url: '',
+        streaming_url: '',
       });
     }
     setOpenDialog(true);
@@ -84,7 +84,7 @@ export default function ChannelsPage() {
     setFormData({
       name: '',
       logo_url: '',
-      youtube_url: '',
+      streaming_url: '',
     });
   };
 
@@ -94,7 +94,7 @@ export default function ChannelsPage() {
         ? `/api/channels/${editingChannel.id}`
         : '/api/channels';
       
-      const method = editingChannel ? 'PUT' : 'POST';
+      const method = editingChannel ? 'PATCH' : 'POST';
       
       const response = await fetch(url, {
         method,
@@ -106,7 +106,7 @@ export default function ChannelsPage() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.details || 'Error al guardar el canal');
+        throw new Error(errorData.details || errorData.error || 'Error al guardar el canal');
       }
 
       await fetchChannels();
@@ -191,9 +191,9 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
-                  {channel.youtube_url && (
+                  {channel.streaming_url && (
                     <a 
-                      href={channel.youtube_url} 
+                      href={channel.streaming_url} 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >
@@ -236,8 +236,8 @@ export default function ChannelsPage() {
             />
             <TextField
               label="URL de YouTube"
-              value={formData.youtube_url}
-              onChange={(e) => setFormData({ ...formData, youtube_url: e.target.value })}
+              value={formData.streaming_url}
+              onChange={(e) => setFormData({ ...formData, streaming_url: e.target.value })}
               fullWidth
             />
           </Box>

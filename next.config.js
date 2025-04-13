@@ -32,6 +32,31 @@ const nextConfig = {
         hostname: 'img.youtube.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'acdn-us.mitiendanube.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'encrypted-tbn0.gstatic.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'fotos.perfil.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'yt3.googleusercontent.com',
+        pathname: '/**',
+      },
+      {
+        protocol: 'https',
+        hostname: 'pbs.twimg.com',
+        pathname: '/**',
+      },
     ],
   },
 }

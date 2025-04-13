@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { getServerToken } from '@/utils/auth-server';
 
 export async function PATCH(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = await getServerToken(true);
@@ -14,7 +14,8 @@ export async function PATCH(
     }
 
     const body = await request.json();
-    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/programs/${params.id}`;
+    const { id } = await params;
+    const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/programs/${id}`;
     
     console.log('API Request details:', {
       url: apiUrl,
@@ -55,8 +56,8 @@ export async function PATCH(
 }
 
 export async function DELETE(
-  request: Request,
-  { params }: { params: { id: string } }
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const token = await getServerToken(true);
@@ -66,7 +67,8 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs/${params.id}`, {
+    const { id } = await params;
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -82,4 +84,4 @@ export async function DELETE(
     console.error('Error deleting program:', error);
     return NextResponse.json({ error: 'Failed to delete program' }, { status: 500 });
   }
-} 
+}
