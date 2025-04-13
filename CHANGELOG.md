@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added password screen with env variable comparison
 
 ### Changed
 
@@ -17,6 +16,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.0.9] - 2025-04-13
+
+### Added
+- Added backoffice views with auth and CRUD operations for channels and programs
+
+## [0.0.8] - 2025-04-09
+
+### Added
+- Added password screen with env variable comparison
 
 ## [0.0.7] - 2025-04-07
 
