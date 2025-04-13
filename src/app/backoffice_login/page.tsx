@@ -1,23 +1,34 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
 import { AuthService } from '@/services/auth';
 
-export default function LoginPage() {
+export default function BackofficeLoginPage() {
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const router = useRouter();
+
+  useEffect(() => {
+    // Check if already authenticated
+    if (AuthService.isAuthenticated(true)) {
+      console.log('Already authenticated, redirecting to backoffice');
+      router.push('/backoffice');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
     try {
-      await AuthService.login(password, false);
-      router.push('/');
-    } catch {
+      console.log('Attempting backoffice login');
+      await AuthService.login(password, true);
+      console.log('Login successful, redirecting to backoffice');
+      router.push('/backoffice');
+    } catch (err) {
+      console.error('Login error:', err);
       setError('Contraseña incorrecta');
     }
   };
@@ -44,7 +55,7 @@ export default function LoginPage() {
         }}
       >
         <Typography variant="h4" component="h1" align="center" gutterBottom>
-          Acceso Público
+          Acceso Backoffice
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField

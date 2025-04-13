@@ -1,7 +1,8 @@
 export interface Channel {
-    id: string;
-    name: string;
-    description: string;
-    streaming_url?: string;
-    logo_url?: string;
-  }
+  id: number;
+  name: string;
+  logo_url: string | null;
+  streaming_url: string | null;
+  created_at: string;
+  updated_at: string;
+}
