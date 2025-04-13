@@ -153,7 +153,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 description: s.program.description || undefined,
                 logo_url: s.program.logo_url || undefined,
                 youtube_url: s.program.youtube_url || undefined,
-                live_url: channel.youtube_url || undefined,
+                live_url: channel.streaming_url || undefined,
               }))}
               color={getColorForChannel(index)}
               isToday={isToday}
