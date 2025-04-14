@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Table,
   TableBody,
@@ -24,6 +24,7 @@ import {
 import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
+import Image from 'next/image';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -44,12 +45,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   });
   const [selectedPrograms, setSelectedPrograms] = useState<Program[]>([]);
 
-  useEffect(() => {
-    fetchPanelists();
-    fetchPrograms();
-  }, []);
-
-  const fetchPanelists = async () => {
+  const fetchPanelists = useCallback(async () => {
     try {
       const response = await fetch(`${API_URL}/panelists`, {
         headers: {
@@ -65,9 +61,9 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [onError]);
 
-  const fetchPrograms = async () => {
+  const fetchPrograms = useCallback(async () => {
     try {
       const response = await fetch('/api/programs');
       if (!response.ok) throw new Error('Failed to fetch programs');
@@ -77,7 +73,12 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       onError('Error loading programs');
       console.error('Error:', error);
     }
-  };
+  }, [onError]);
+
+  useEffect(() => {
+    fetchPanelists();
+    fetchPrograms();
+  }, [fetchPanelists, fetchPrograms]);
 
   const handleOpenDialog = (panelist?: Panelist) => {
     if (panelist) {
@@ -254,10 +255,12 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                 <TableCell>{panelist.name}</TableCell>
                 <TableCell>
                   {panelist.avatar_url && (
-                    <img
+                    <Image
                       src={panelist.avatar_url}
                       alt={panelist.name}
-                      style={{ width: 50, height: 50, objectFit: 'cover' }}
+                      width={50}
+                      height={50}
+                      style={{ objectFit: 'cover' }}
                     />
                   )}
                 </TableCell>
