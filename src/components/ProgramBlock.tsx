@@ -85,8 +85,9 @@ export const ProgramBlock = ({
   const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
-  const handleClick = (e: React.MouseEvent) => {
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
+    e.preventDefault();
     if (!youtube_url) return;
     const url = isLive ? live_url : youtube_url;
     if (!url) return;
@@ -100,10 +101,8 @@ export const ProgramBlock = ({
     });
 
     if (isMobile) {
-      // For mobile, use window.location to ensure the link opens
       window.location.href = url;
     } else {
-      // For desktop, open in new tab
       const newTab = window.open(url, '_blank');
       newTab?.focus();
     }
@@ -156,9 +155,11 @@ export const ProgramBlock = ({
       {youtube_url && (
         <Button
           onClick={handleClick}
+          onTouchStart={handleClick}
           variant="contained"
           size="small"
           startIcon={<OpenInNew />}
+          className="youtube-button"
           sx={{
             mt: 2,
             backgroundColor: '#FF0000',
@@ -167,6 +168,7 @@ export const ProgramBlock = ({
             textTransform: 'none',
             fontSize: '0.8rem',
             boxShadow: 'none',
+            touchAction: 'manipulation', // Optimize for touch
           }}
         >
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
