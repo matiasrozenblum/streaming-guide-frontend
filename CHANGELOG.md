@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added panelists text below program name
 
 ### Changed
 
@@ -17,6 +16,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.0.11] - 2025-04-14
+
+### Added
+- Added panelists text below program name
 
 ## [0.0.11] - 2025-04-14
 
