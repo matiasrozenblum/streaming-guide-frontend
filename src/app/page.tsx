@@ -53,7 +53,6 @@ export default function Home() {
         background: mode === 'light' 
           ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
           : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
-        py: { xs: 1, sm: 2 },
         position: 'relative',
         '&::before': {
           content: '""',

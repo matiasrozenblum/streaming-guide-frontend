@@ -161,6 +161,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
                 description: s.program.description || undefined,
+                panelists: s.program.panelists || undefined,
                 logo_url: s.program.logo_url || undefined,
                 youtube_url: s.program.youtube_url || undefined,
                 live_url: channel.streaming_url || undefined,

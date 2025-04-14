@@ -277,18 +277,18 @@ export const ProgramBlock = ({
                 sx={{
                   fontWeight: 'bold',
                   fontSize: '0.75rem',
-                  textAlign: logo_url ? 'left' : 'center', // Align text differently if there's a logo
+                  textAlign: logo_url ? 'left' : 'center',
                   color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
                 }}
               >
                 {name.toUpperCase()}
               </Typography>
-              {(panelists ?? []).length > 0 && (
+              {panelists && panelists.length > 0 && (
                 <Typography
                   variant="caption"
                   sx={{
                     fontSize: '0.65rem',
-                    textAlign: logo_url ? 'left' : 'center', // Align text differently if there's a logo
+                    textAlign: logo_url ? 'left' : 'center',
                     color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
                     lineHeight: 1.2,
                     maxWidth: '100%',
@@ -299,7 +299,7 @@ export const ProgramBlock = ({
                     WebkitBoxOrient: 'vertical',
                   }}
                 >
-                  {(panelists?.map((p) => p.name).join(', ')) ?? ''}
+                  {panelists.map(p => p.name).join(', ')}
                 </Typography>
               )}
             </Box>
