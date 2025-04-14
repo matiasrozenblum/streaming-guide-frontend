@@ -2,6 +2,11 @@ import CredentialsProvider from 'next-auth/providers/credentials';
 import { JWT } from 'next-auth/jwt';
 import { Session } from 'next-auth';
 
+interface AuthUser {
+  id: string;
+  accessToken: string;
+}
+
 export const authOptions = {
   providers: [
     CredentialsProvider({
@@ -34,7 +39,7 @@ export const authOptions = {
           return {
             id: '1',
             accessToken: data.access_token,
-          };
+          } as AuthUser;
         } catch (error) {
           console.error('Auth error:', error);
           return null;
@@ -43,7 +48,7 @@ export const authOptions = {
     }),
   ],
   callbacks: {
-    async jwt({ token, user }: { token: JWT; user?: any }) {
+    async jwt({ token, user }: { token: JWT; user?: AuthUser }) {
       if (user) {
         token.accessToken = user.accessToken;
       }
