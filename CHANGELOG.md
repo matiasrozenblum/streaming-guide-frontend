@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added panelist backoffice functionality
 
 ### Changed
 
@@ -17,6 +16,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.0.11] - 2025-04-14
+
+### Added
+- Added panelist backoffice functionality
 
 ## [0.0.9] - 2025-04-14
 
