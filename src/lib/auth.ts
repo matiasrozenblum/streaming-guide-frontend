@@ -1,9 +1,7 @@
 import CredentialsProvider from 'next-auth/providers/credentials';
-import { JWT } from 'next-auth/jwt';
-import { Session } from 'next-auth';
 import { AuthOptions } from 'next-auth';
 
-interface AuthUser {
+interface UserWithToken {
   id: string;
   accessToken: string;
 }
@@ -17,30 +15,16 @@ export const authOptions: AuthOptions = {
         isBackoffice: { label: 'Is Backoffice', type: 'boolean' }
       },
       async authorize(credentials) {
-        if (!credentials?.password) {
-          return null;
-        }
-
+        if (!credentials?.password) return null;
         try {
           const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/${credentials.isBackoffice ? 'backoffice' : 'public'}/login`, {
             method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              password: credentials.password,
-            }),
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ password: credentials.password }),
           });
-
-          if (!response.ok) {
-            return null;
-          }
-
+          if (!response.ok) return null;
           const data = await response.json();
-          return {
-            id: '1',
-            accessToken: data.access_token,
-          } as AuthUser;
+          return { id: '1', accessToken: data.access_token };
         } catch (error) {
           console.error('Auth error:', error);
           return null;
@@ -51,7 +35,7 @@ export const authOptions: AuthOptions = {
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.accessToken = (user as any).accessToken;
+        token.accessToken = (user as UserWithToken).accessToken;
       }
       return token;
     },
