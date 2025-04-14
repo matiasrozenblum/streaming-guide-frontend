@@ -4,17 +4,18 @@ import { authOptions } from '@/lib/auth';
 
 export async function PUT(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const { id } = await params;
 
   try {
     const body = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${params.id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
       method: 'PUT',
       headers: {
         'Authorization': `Bearer ${session.accessToken}`,
@@ -37,16 +38,17 @@ export async function PUT(
 
 export async function DELETE(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const session = await getServerSession(authOptions);
 
   if (!session) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const { id } = await params;
 
   try {
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${params.id}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${session.accessToken}`,
