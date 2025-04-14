@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, useTheme } from '@mui/material';
+import { Box, Typography, Paper, useTheme, Snackbar, Alert } from '@mui/material';
 import ProtectedRoute from '@/components/ProtectedRoute';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
@@ -22,6 +22,7 @@ export default function DashboardPage() {
     panelists: 0,
     schedules: 0,
   });
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchStats = async () => {
@@ -34,14 +35,21 @@ export default function DashboardPage() {
         if (response.ok) {
           const data = await response.json();
           setStats(data);
+        } else {
+          throw new Error('Failed to fetch stats');
         }
       } catch (error) {
+        setError('Error loading dashboard statistics');
         console.error('Error fetching stats:', error);
       }
     };
 
     fetchStats();
   }, []);
+
+  const handleCloseError = () => {
+    setError(null);
+  };
 
   return (
     <ProtectedRoute>
@@ -126,6 +134,17 @@ export default function DashboardPage() {
           </Paper>
         </Box>
       </Box>
+
+      <Snackbar
+        open={!!error}
+        autoHideDuration={6000}
+        onClose={handleCloseError}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+      >
+        <Alert onClose={handleCloseError} severity="error" sx={{ width: '100%' }}>
+          {error}
+        </Alert>
+      </Snackbar>
     </ProtectedRoute>
   );
 } 
