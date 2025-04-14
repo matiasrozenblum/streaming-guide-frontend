@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.0.9] - 2025-04-14
+
+### Fixed
+- Fixed mobile tooltip behaviour
+
 ## [0.0.9] - 2025-04-13
 
 ### Added
