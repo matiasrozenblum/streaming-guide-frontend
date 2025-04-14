@@ -89,6 +89,7 @@ export const ProgramBlock = ({
     e.stopPropagation();
     if (!youtube_url) return;
     const url = isLive ? live_url : youtube_url;
+    if (!url) return;
 
     // Track GA event
     gaEvent({
@@ -98,8 +99,14 @@ export const ProgramBlock = ({
       value: isLive ? 1 : 0,
     });
 
-    const newTab = window.open(url, '_blank');
-    newTab?.focus();
+    if (isMobile) {
+      // For mobile, use window.location to ensure the link opens
+      window.location.href = url;
+    } else {
+      // For desktop, open in new tab
+      const newTab = window.open(url, '_blank');
+      newTab?.focus();
+    }
   };
 
   const handleTooltipOpen = () => {
