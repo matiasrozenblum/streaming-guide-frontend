@@ -2,16 +2,17 @@ import { NextResponse } from 'next/server';
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string; programId: string } }
+  { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
   const authHeader = request.headers.get('Authorization');
   if (!authHeader) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+  const { id, programId } = await params;
 
   try {
     const response = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/panelists/${params.id}/programs/${params.programId}`,
+      `${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}/programs/${programId}`,
       {
         method: 'POST',
         headers: {
