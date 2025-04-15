@@ -120,21 +120,6 @@ export function SchedulesTable() {
     }
   };
 
-  const handleOpenDialog = () => {
-    setEditingSchedule(null);
-    setFormData({
-      dayOfWeek: '',
-      startTime: '',
-      endTime: '',
-      programId: '',
-    });
-  };
-
-  const handleCloseDialog = () => {
-    setSelectedProgram(null);
-    setEditingSchedule(null);
-  };
-
   const handleOpenEditDialog = (schedule: ScheduleType) => {
     setEditingSchedule(schedule);
     setFormData({
