@@ -8,15 +8,20 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Added schedule backoffice feature
 
 ### Changed
-- Now fetching schedule for today first, then all schedules in the background
 
 ### Removed
 
 ### Fixed
 
 ---
+
+## [0.0.15] - 2025-04-15
+
+### Changed
+- Now fetching schedule for today first, then all schedules in the background
 
 ## [0.0.14] - 2025-04-15
 
