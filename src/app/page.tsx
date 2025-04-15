@@ -26,7 +26,7 @@ export default function Home() {
     api.get('/schedules')
       .then((res) => {
         console.log('📦 Schedules from backend:', res.data);
-        setSchedules(res.data);
+        setSchedules(res.data.data);
       })
       .catch((err) => console.error(err))
       .finally(() => setLoading(false));

@@ -17,7 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.0.11] - 2025-04-14
+## [0.0.13] - 2025-04-15
+
+### Fixed
+- Fixed backend response parsing
+
+## [0.0.12] - 2025-04-14
 
 ### Added
 - Added panelists text below program name
