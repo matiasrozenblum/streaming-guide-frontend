@@ -19,7 +19,7 @@ import {
   Typography,
   Chip,
 } from '@mui/material';
-import { Edit, Delete, Add, Schedule } from '@mui/icons-material';
+import { Edit, Delete, Add } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';

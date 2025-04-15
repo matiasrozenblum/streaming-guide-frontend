@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Container, Typography, Paper, useTheme, Snackbar, Alert } from '@mui/material';
+import { Box, Typography, Paper, useTheme, Snackbar, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PanelistsTable from '@/components/backoffice/PanelistsTable';
