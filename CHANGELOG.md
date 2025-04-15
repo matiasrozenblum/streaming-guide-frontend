@@ -10,6 +10,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 
 ### Changed
+- Now fetching schedule for today first, then all schedules in the background
 
 ### Removed
 
