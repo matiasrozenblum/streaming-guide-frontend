@@ -23,13 +23,28 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
-    api.get('/schedules')
-      .then((res) => {
-        console.log('📦 Schedules from backend:', res.data);
-        setSchedules(res.data.data);
-      })
-      .catch((err) => console.error(err))
-      .finally(() => setLoading(false));
+    const fetchSchedules = async () => {
+      try {
+        setLoading(true);
+        // First fetch today's schedules
+        const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+        const todayResponse = await api.get(`/schedules?day=${today}`);
+        console.log('📦 Today\'s schedules:', todayResponse.data);
+        setSchedules(todayResponse.data);
+        setLoading(false); // Stop loading after today's schedules are loaded
+
+        // Then fetch all schedules in the background
+        const allResponse = await api.get('/schedules');
+        console.log('📦 All schedules:', allResponse.data);
+        setSchedules(allResponse.data);
+      } catch (err) {
+        console.error('Error fetching schedules:', err);
+        setSchedules([]);
+        setLoading(false);
+      }
+    };
+
+    fetchSchedules();
   }, []);
 
   if (!mounted) {
