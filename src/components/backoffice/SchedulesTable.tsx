@@ -50,6 +50,15 @@ export function SchedulesTable() {
     endTime: '',
     programId: '',
   });
+  const [error, setError] = useState<string | null>(null);
+  const [openProgramDialog, setOpenProgramDialog] = useState(false);
+  const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
+  const [programFormData, setProgramFormData] = useState({
+    dayOfWeek: '',
+    startTime: '',
+    endTime: '',
+    programId: '',
+  });
 
   useEffect(() => {
     fetchSchedules();
@@ -57,10 +66,16 @@ export function SchedulesTable() {
 
   const fetchSchedules = async () => {
     try {
+      setLoading(true);
       const cookies = document.cookie.split(';');
       const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
       const token = tokenCookie?.split('=')[1];
-      const [schedulesResponse, programsResponse] = await Promise.all([
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const [schedulesRes, programsRes] = await Promise.all([
         api.get('/schedules', {
           headers: {
             Authorization: `Bearer ${token}`,
@@ -73,8 +88,8 @@ export function SchedulesTable() {
         }),
       ]);
 
-      const schedules = schedulesResponse.data || [];
-      const programs = programsResponse.data || [];
+      const schedules = schedulesRes.data || [];
+      const programs = programsRes.data || [];
 
       // Group schedules by program
       const programsWithSchedules = programs.map((program: Program) => ({
@@ -85,6 +100,7 @@ export function SchedulesTable() {
       setPrograms(programsWithSchedules);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setError('Error al cargar los datos');
       setPrograms([]);
     } finally {
       setLoading(false);
@@ -121,56 +137,176 @@ export function SchedulesTable() {
       const cookies = document.cookie.split(';');
       const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
       const token = tokenCookie?.split('=')[1];
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
       if (editingSchedule) {
         await api.put(`/schedules/${editingSchedule.id}`, formData, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        // Refresh the selected program's schedules
-        if (selectedProgram) {
-          const updatedProgram = await api.get(`/programs/${selectedProgram.id}`, {
+      } else {
+        // Validate required fields
+        if (!formData.programId || !formData.dayOfWeek || !formData.startTime || !formData.endTime) {
+          throw new Error('Todos los campos son requeridos');
+        }
+
+        // Format the data for creating a new schedule
+        const scheduleData = {
+          programId: formData.programId.toString(),
+          channelId: formData.programId.toString(), // Using programId as channelId for now
+          dayOfWeek: formData.dayOfWeek,
+          startTime: formData.startTime,
+          endTime: formData.endTime,
+        };
+
+        console.log('Form Data:', formData);
+        console.log('Schedule Data:', scheduleData);
+        console.log('Token:', token);
+
+        try {
+          const response = await api.post('/schedules', scheduleData, {
             headers: {
               Authorization: `Bearer ${token}`,
+              'Content-Type': 'application/json',
             },
           });
-          setSelectedProgram(updatedProgram.data);
+          console.log('API Response:', response.data);
+        } catch (error: any) {
+          console.error('Full Error:', error);
+          console.error('Error Response:', error.response?.data);
+          
+          // Handle validation errors
+          if (error.response?.data?.message) {
+            const validationErrors = error.response.data.message;
+            const errorMessage = Array.isArray(validationErrors) 
+              ? validationErrors.join('\n')
+              : validationErrors;
+            throw new Error(errorMessage);
+          }
+          
+          throw error;
         }
-      } else {
-        if (!formData.programId) {
-          throw new Error('Debe seleccionar un programa');
-        }
-        await api.post('/schedules', {
-          ...formData,
-          programId: formData.programId,
-        }, {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        });
       }
-      fetchSchedules();
-      handleCloseEditDialog();
+      await fetchSchedules();
+      handleCloseDialog();
     } catch (error) {
       console.error('Error saving schedule:', error);
-      alert(error instanceof Error ? error.message : 'Error al guardar el horario');
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Error al guardar el horario');
+      }
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (window.confirm('¿Estás seguro de que deseas eliminar este horario?')) {
-      try {
-        const cookies = document.cookie.split(';');
-        const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-        const token = tokenCookie?.split('=')[1];
-        await api.delete(`/schedules/${id}`, {
+    if (!window.confirm('¿Estás seguro de que deseas eliminar este horario?')) {
+      return;
+    }
+
+    try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      await api.delete(`/schedules/${id}`, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      });
+      await fetchSchedules();
+    } catch (error) {
+      console.error('Error deleting schedule:', error);
+      setError('Error al eliminar el horario');
+    }
+  };
+
+  const handleOpenProgramDialog = (program: ProgramWithSchedules) => {
+    setSelectedProgram(program);
+    setProgramFormData({
+      ...programFormData,
+      programId: program.id.toString(),
+    });
+    setOpenProgramDialog(true);
+    setShowAddScheduleForm(false);
+  };
+
+  const handleCloseProgramDialog = () => {
+    setOpenProgramDialog(false);
+    setSelectedProgram(null);
+    setShowAddScheduleForm(false);
+  };
+
+  const handleShowAddScheduleForm = () => {
+    setShowAddScheduleForm(true);
+  };
+
+  const handleAddProgramSchedule = async () => {
+    try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      // Validate required fields
+      if (!programFormData.dayOfWeek || !programFormData.startTime || !programFormData.endTime) {
+        throw new Error('Todos los campos son requeridos');
+      }
+
+      const scheduleData = {
+        programId: programFormData.programId,
+        channelId: programFormData.programId,
+        dayOfWeek: programFormData.dayOfWeek,
+        startTime: programFormData.startTime,
+        endTime: programFormData.endTime,
+      };
+
+      const response = await api.post('/schedules', scheduleData, {
+        headers: {
+          Authorization: `Bearer ${token}`,
+          'Content-Type': 'application/json',
+        },
+      });
+
+      // Update only the selected program's schedules
+      if (selectedProgram) {
+        const updatedProgram = await api.get(`/programs/${selectedProgram.id}?include=schedules`, {
           headers: {
             Authorization: `Bearer ${token}`,
           },
         });
-        fetchSchedules();
-      } catch (error) {
-        console.error('Error deleting schedule:', error);
+        setSelectedProgram(updatedProgram.data);
+        
+        // Update the program in the main list
+        setPrograms(programs.map(p => 
+          p.id === selectedProgram.id ? updatedProgram.data : p
+        ));
+      }
+
+      // Reset form
+      setProgramFormData({
+        ...programFormData,
+        dayOfWeek: '',
+        startTime: '',
+        endTime: '',
+      });
+    } catch (error) {
+      console.error('Error adding schedule:', error);
+      if (error instanceof Error) {
+        setError(error.message);
+      } else {
+        setError('Error al agregar el horario');
       }
     }
   };
@@ -232,7 +368,7 @@ export function SchedulesTable() {
                   <Button
                     variant="contained"
                     color="primary"
-                    onClick={() => handleOpenDialog(program)}
+                    onClick={() => handleOpenProgramDialog(program)}
                   >
                     Gestionar
                   </Button>
@@ -244,30 +380,24 @@ export function SchedulesTable() {
       </TableContainer>
 
       {/* Program Schedules Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <Dialog open={openProgramDialog} onClose={handleCloseProgramDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {selectedProgram ? `Horarios de ${selectedProgram.name}` : 'Nuevo Horario'}
         </DialogTitle>
         <DialogContent>
-          {selectedProgram ? (
+          {selectedProgram && (
             <Box>
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h6">Horarios actuales</Typography>
-                <Button
-                  variant="outlined"
-                  startIcon={<Add />}
-                  onClick={() => {
-                    setEditingSchedule(null);
-                    setFormData({
-                      dayOfWeek: '',
-                      startTime: '',
-                      endTime: '',
-                      programId: selectedProgram.id.toString(),
-                    });
-                  }}
-                >
-                  Agregar Horario
-                </Button>
+                {!showAddScheduleForm && (
+                  <Button
+                    variant="outlined"
+                    startIcon={<Add />}
+                    onClick={handleShowAddScheduleForm}
+                  >
+                    Agregar Horario
+                  </Button>
+                )}
               </Box>
               <TableContainer component={Paper}>
                 <Table>
@@ -280,7 +410,7 @@ export function SchedulesTable() {
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {selectedProgram.schedules.map((schedule) => (
+                    {(selectedProgram.schedules || []).map((schedule) => (
                       <TableRow key={schedule.id}>
                         <TableCell>{schedule.day_of_week}</TableCell>
                         <TableCell>{schedule.start_time}</TableCell>
@@ -298,65 +428,64 @@ export function SchedulesTable() {
                   </TableBody>
                 </Table>
               </TableContainer>
-            </Box>
-          ) : (
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
-              <TextField
-                select
-                label="Día de la semana"
-                value={formData.dayOfWeek}
-                onChange={(e) =>
-                  setFormData({ ...formData, dayOfWeek: e.target.value })
-                }
-              >
-                {DAYS_OF_WEEK.map((day) => (
-                  <MenuItem key={day} value={day}>
-                    {day}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                select
-                label="Programa"
-                value={formData.programId}
-                onChange={(e) =>
-                  setFormData({ ...formData, programId: e.target.value })
-                }
-              >
-                {programs.map((program) => (
-                  <MenuItem key={program.id} value={program.id}>
-                    {program.name}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <TextField
-                label="Hora de inicio"
-                type="time"
-                value={formData.startTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, startTime: e.target.value })
-                }
-                InputLabelProps={{ shrink: true }}
-              />
-              <TextField
-                label="Hora de fin"
-                type="time"
-                value={formData.endTime}
-                onChange={(e) =>
-                  setFormData({ ...formData, endTime: e.target.value })
-                }
-                InputLabelProps={{ shrink: true }}
-              />
+
+              {/* Add Schedule Form */}
+              {showAddScheduleForm && (
+                <Box sx={{ mt: 3 }}>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+                    <Typography variant="h6">Agregar Nuevo Horario</Typography>
+                    <Button
+                      variant="text"
+                      onClick={() => setShowAddScheduleForm(false)}
+                    >
+                      Cancelar
+                    </Button>
+                  </Box>
+                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                    <TextField
+                      select
+                      label="Día de la semana"
+                      value={programFormData.dayOfWeek}
+                      onChange={(e) => setProgramFormData({ ...programFormData, dayOfWeek: e.target.value })}
+                      fullWidth
+                    >
+                      {DAYS_OF_WEEK.map((day) => (
+                        <MenuItem key={day} value={day}>
+                          {day}
+                        </MenuItem>
+                      ))}
+                    </TextField>
+                    <TextField
+                      label="Hora de inicio"
+                      type="time"
+                      value={programFormData.startTime}
+                      onChange={(e) => setProgramFormData({ ...programFormData, startTime: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                    />
+                    <TextField
+                      label="Hora de fin"
+                      type="time"
+                      value={programFormData.endTime}
+                      onChange={(e) => setProgramFormData({ ...programFormData, endTime: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                    />
+                    <Button
+                      variant="contained"
+                      onClick={handleAddProgramSchedule}
+                      sx={{ alignSelf: 'flex-end' }}
+                    >
+                      Agregar
+                    </Button>
+                  </Box>
+                </Box>
+              )}
             </Box>
           )}
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog}>Cerrar</Button>
-          {!selectedProgram && (
-            <Button onClick={handleSubmit} variant="contained">
-              Crear
-            </Button>
-          )}
+          <Button onClick={handleCloseProgramDialog}>Cerrar</Button>
         </DialogActions>
       </Dialog>
 
@@ -369,9 +498,7 @@ export function SchedulesTable() {
               select
               label="Día de la semana"
               value={formData.dayOfWeek}
-              onChange={(e) =>
-                setFormData({ ...formData, dayOfWeek: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
             >
               {DAYS_OF_WEEK.map((day) => (
                 <MenuItem key={day} value={day}>
@@ -383,18 +510,14 @@ export function SchedulesTable() {
               label="Hora de inicio"
               type="time"
               value={formData.startTime}
-              onChange={(e) =>
-                setFormData({ ...formData, startTime: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
               InputLabelProps={{ shrink: true }}
             />
             <TextField
               label="Hora de fin"
               type="time"
               value={formData.endTime}
-              onChange={(e) =>
-                setFormData({ ...formData, endTime: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
               InputLabelProps={{ shrink: true }}
             />
           </Box>
