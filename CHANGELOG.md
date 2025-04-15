@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added panelist "bulk" creation from program edit dialog to create and add it to the program directly
 
 ### Changed
 
@@ -17,6 +16,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.0.14] - 2025-04-15
+
+### Added
+- Added panelist "bulk" creation from program edit dialog to create and add it to the program directly
 
 ## [0.0.13] - 2025-04-15
 
