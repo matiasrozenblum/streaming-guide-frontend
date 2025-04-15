@@ -79,7 +79,7 @@ export default function ProgramsPage() {
       }
       
       const data = await response.json();
-      setPrograms(data);
+      setPrograms(data || []);
     } catch (error) {
       console.error('Error fetching programs:', error);
       setError('Error al cargar los programas');
@@ -96,10 +96,11 @@ export default function ProgramsPage() {
         throw new Error('Failed to fetch channels');
       }
       const data = await response.json();
-      setChannels(data);
+      setChannels(data || []);
     } catch (error) {
       console.error('Error fetching channels:', error);
       setError('Error al cargar los canales');
+      setChannels([]);
     }
   };
 
@@ -268,46 +269,57 @@ export default function ProgramsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {programs.map((program) => {
-              const channel = channels.find(c => c.id === program.channel_id);
-              return (
-                <TableRow key={program.id}>
-                  <TableCell>
-                    {program.logo_url && (
-                      <Image 
-                        src={program.logo_url || '/placeholder.png'} 
-                        alt={program.name}
-                        width={50}
-                        height={50}
-                        style={{ objectFit: 'contain' }}
-                      />
-                    )}
-                  </TableCell>
-                  <TableCell>{program.name}</TableCell>
-                  <TableCell>{channel?.name}</TableCell>
-                  <TableCell>
-                    {program.start_time && program.end_time ? (
-                      `${program.start_time} - ${program.end_time}`
-                    ) : 'No especificado'}
-                  </TableCell>
-                  <TableCell>
-                    {program.youtube_url && (
-                      <a href={program.youtube_url} target="_blank" rel="noopener noreferrer">
-                        Ver en YouTube
-                      </a>
-                    )}
-                  </TableCell>
-                  <TableCell>
-                    <IconButton onClick={() => handleOpenDialog(program)}>
-                      <EditIcon />
-                    </IconButton>
-                    <IconButton onClick={() => handleDelete(program.id)}>
-                      <DeleteIcon />
-                    </IconButton>
-                  </TableCell>
-                </TableRow>
-              );
-            })}
+            {(programs || []).map((program) => (
+              <TableRow key={program.id}>
+                <TableCell>
+                  {program.logo_url && (
+                    <Image
+                      src={program.logo_url}
+                      alt={program.name}
+                      width={50}
+                      height={50}
+                      style={{ objectFit: 'contain' }}
+                    />
+                  )}
+                </TableCell>
+                <TableCell>{program.name}</TableCell>
+                <TableCell>
+                  {channels.find(c => c.id === program.channel_id)?.name || 'Sin canal'}
+                </TableCell>
+                <TableCell>
+                  {program.start_time && program.end_time
+                    ? `${program.start_time} - ${program.end_time}`
+                    : 'Sin horario'}
+                </TableCell>
+                <TableCell>
+                  {program.youtube_url ? (
+                    <a
+                      href={program.youtube_url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      Ver en YouTube
+                    </a>
+                  ) : (
+                    'Sin enlace'
+                  )}
+                </TableCell>
+                <TableCell>
+                  <IconButton onClick={() => handleOpenDialog(program)}>
+                    <EditIcon />
+                  </IconButton>
+                  <IconButton onClick={() => handleDelete(program.id)}>
+                    <DeleteIcon />
+                  </IconButton>
+                  <IconButton onClick={() => {
+                    setEditingProgram(program);
+                    handleOpenPanelistsDialog();
+                  }}>
+                    <GroupIcon />
+                  </IconButton>
+                </TableCell>
+              </TableRow>
+            ))}
           </TableBody>
         </Table>
       </TableContainer>
