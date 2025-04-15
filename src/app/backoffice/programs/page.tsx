@@ -26,10 +26,11 @@ import {
   FormControl,
   InputLabel
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, Group as GroupIcon } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
+import ProgramPanelistsDialog from '@/components/backoffice/ProgramPanelistsDialog';
 
 export default function ProgramsPage() {
   const [programs, setPrograms] = useState<Program[]>([]);
@@ -48,6 +49,7 @@ export default function ProgramsPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [openPanelistsDialog, setOpenPanelistsDialog] = useState(false);
 
   useEffect(() => {
     fetchPrograms();
@@ -223,6 +225,15 @@ export default function ProgramsPage() {
     setSuccess(null);
   };
 
+  const handleOpenPanelistsDialog = () => {
+    if (!editingProgram) return;
+    setOpenPanelistsDialog(true);
+  };
+
+  const handleClosePanelistsDialog = () => {
+    setOpenPanelistsDialog(false);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -367,12 +378,28 @@ export default function ProgramsPage() {
           </Box>
         </DialogContent>
         <DialogActions>
+          {editingProgram && (
+            <Button
+              startIcon={<GroupIcon />}
+              onClick={handleOpenPanelistsDialog}
+              variant="outlined"
+            >
+              Panelistas
+            </Button>
+          )}
           <Button onClick={handleCloseDialog}>Cancelar</Button>
           <Button onClick={handleSubmit} variant="contained">
             {editingProgram ? 'Actualizar' : 'Crear'}
           </Button>
         </DialogActions>
       </Dialog>
+
+      <ProgramPanelistsDialog
+        open={openPanelistsDialog}
+        onClose={handleClosePanelistsDialog}
+        program={editingProgram!}
+        onError={setError}
+      />
 
       <Snackbar
         open={!!error || !!success}
