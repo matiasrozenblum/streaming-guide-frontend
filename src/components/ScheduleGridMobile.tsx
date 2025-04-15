@@ -119,6 +119,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               height: '40px',
               padding: '0',
               borderRadius: '8px',
+              backgroundColor: selectedDay === day.value ? '#558eaa' : undefined,
+              '&:hover': {
+                backgroundColor: selectedDay === day.value ? '#558eaa' : undefined,
+              }
             }}
           >
             {day.label}

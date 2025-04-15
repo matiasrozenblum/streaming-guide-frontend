@@ -2,13 +2,13 @@
 
 import { useEffect, useState } from 'react';
 import { Box, Container, CircularProgress, Typography } from '@mui/material';
-import { Tv2 } from 'lucide-react';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { Schedule } from '@/types/schedule';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
+import Image from 'next/image';
 
 const MotionBox = motion(Box);
 
@@ -101,6 +101,7 @@ export default function Home() {
           <Box sx={{ 
             display: 'flex', 
             alignItems: 'center', 
+            justifyContent: 'left',
             gap: 2, 
             background: mode === 'light'
               ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
@@ -111,29 +112,42 @@ export default function Home() {
               ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
               : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
             backdropFilter: 'blur(8px)',
+            minHeight: '120px',
           }}>
-            <Tv2 
-              size={32} 
-              style={{ 
-                color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                strokeWidth: 1.5 
-              }} 
-            />
-            <Box>
-              <Typography variant="h1" sx={{ 
-                fontSize: { xs: '1.5rem', sm: '2rem' }, 
-                fontWeight: 700, 
-                color: mode === 'light' ? '#111827' : '#f1f5f9',
-                mb: 0.5 
+            <Box sx={{ 
+              display: 'flex',
+              alignItems: 'center',
+              gap: 0,
+              width: '100%',
+            }}>
+              {/* Logo */}
+              <Box sx={{ 
+                width: 'auto',
+                height: '100px',
+                position: 'relative',
+                display: 'flex',
+                alignItems: 'center',
               }}>
-                La Guía del Streaming
-              </Typography>
-              <Typography variant="subtitle1" sx={{ 
-                fontSize: { xs: '0.875rem', sm: '1rem' },
-                color: mode === 'light' ? '#4B5563' : '#94a3b8',
-                fontWeight: 400 
-              }}>
-                Tu guia al streaming semanal
+                <Image
+                  src={mode === 'light' ? '/LOGO-LA-GUIA-COMPLETO-WEB.gif' : '/LOGO-LA-GUIA-FRASEBLANCA-WEB.gif'}
+                  alt="Logo"
+                  width={80}
+                  height={80}
+                  priority
+                  style={{
+                    objectFit: 'contain',
+                  }}
+                />
+              </Box>
+              <Typography
+                variant="h6"
+                sx={{
+                  ml: 2,
+                  color: mode === 'light' ? 'text.primary' : 'text.secondary',
+                  fontWeight: 500,
+                }}
+              >
+                Tu guía al streaming semanal
               </Typography>
             </Box>
           </Box>

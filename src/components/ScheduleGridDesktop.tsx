@@ -89,7 +89,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
-            sx={{ minWidth: '80px', height: '40px' }}
+            sx={{ 
+              minWidth: '80px', 
+              height: '40px',
+              backgroundColor: selectedDay === day.value ? '#558eaa' : undefined,
+              '&:hover': {
+                backgroundColor: selectedDay === day.value ? '#558eaa' : undefined,
+              }
+            }}
           >
             {day.label}
           </Button>
