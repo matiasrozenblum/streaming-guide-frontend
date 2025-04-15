@@ -25,6 +25,7 @@ import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
 import Image from 'next/image';
+import { PanelistsService } from '@/services/panelists';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -47,13 +48,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
 
   const fetchPanelists = useCallback(async () => {
     try {
-      const response = await fetch(`${API_URL}/panelists`, {
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch panelists');
-      const data = await response.json();
+      const data = await PanelistsService.getAll();
       setPanelists(data);
     } catch (error) {
       onError('Error loading panelists');
@@ -167,25 +162,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleAddToProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(
-        `/api/panelists/${editingPanelist.id}/programs/${programId}`,
-        {
-          method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to add panelist to program');
+      await PanelistsService.addToProgram(editingPanelist.id, programId);
       fetchPanelists();
     } catch (error) {
       onError('Error adding panelist to program');
@@ -196,25 +173,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleRemoveFromProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch(
-        `/api/panelists/${editingPanelist.id}/programs/${programId}`,
-        {
-          method: 'DELETE',
-          headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`,
-          },
-        }
-      );
-      if (!response.ok) throw new Error('Failed to remove panelist from program');
+      await PanelistsService.removeFromProgram(editingPanelist.id, programId);
       fetchPanelists();
     } catch (error) {
       onError('Error removing panelist from program');
