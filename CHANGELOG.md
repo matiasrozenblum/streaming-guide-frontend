@@ -14,6 +14,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Removed
 
 ### Fixed
+- Fixed backend response parsing
 
 ---
 
