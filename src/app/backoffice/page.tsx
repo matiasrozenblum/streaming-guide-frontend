@@ -1,8 +1,9 @@
 'use client';
 
+import { Box, Container, Typography, Paper, useTheme, Snackbar, Alert } from '@mui/material';
 import { useEffect, useState } from 'react';
-import { Box, Typography, Paper, useTheme, Snackbar, Alert } from '@mui/material';
 import ProtectedRoute from '@/components/ProtectedRoute';
+import PanelistsTable from '@/components/backoffice/PanelistsTable';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
@@ -66,6 +67,7 @@ export default function DashboardPage() {
               md: 'repeat(4, 1fr)',
             },
             gap: 3,
+            mb: 4,
           }}
         >
           <Paper
@@ -123,7 +125,12 @@ export default function DashboardPage() {
               flexDirection: 'column',
               height: 140,
               backgroundColor: isDark ? 'grey.800' : 'grey.100',
+              cursor: 'pointer',
+              '&:hover': {
+                backgroundColor: isDark ? 'grey.700' : 'grey.200',
+              },
             }}
+            onClick={() => window.location.href = '/backoffice/schedules'}
           >
             <Typography variant="h6" gutterBottom>
               Horarios
@@ -133,6 +140,11 @@ export default function DashboardPage() {
             </Typography>
           </Paper>
         </Box>
+
+        <Typography variant="h5" gutterBottom>
+          Panelistas
+        </Typography>
+        <PanelistsTable onError={(error) => console.error(error)} />
       </Box>
 
       <Snackbar

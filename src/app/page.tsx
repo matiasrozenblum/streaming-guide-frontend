@@ -54,9 +54,9 @@ export default function Home() {
   // Get unique channels from schedules
   const channels = Array.from(
     new Map(
-      schedules.map((s) => [s.program.channel.id, s.program.channel])
+      (schedules || []).map((s) => [s.program?.channel?.id, s.program?.channel])
     ).values()
-  );
+  ).filter(Boolean);
 
   return (
     <Box 

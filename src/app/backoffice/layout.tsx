@@ -40,6 +40,7 @@ export default function BackofficeLayout({
     { text: 'Canales', icon: <LiveTv />, path: '/backoffice/channels' },
     { text: 'Programas', icon: <Schedule />, path: '/backoffice/programs' },
     { text: 'Panelistas', icon: <People />, path: '/backoffice/panelists' },
+    { text: 'Horarios', icon: <Schedule />, path: '/backoffice/schedules' },
   ];
 
   const drawer = (
