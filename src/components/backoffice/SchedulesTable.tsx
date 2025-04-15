@@ -54,7 +54,6 @@ interface ProgramWithSchedules extends Program {
 export function SchedulesTable() {
   const [programs, setPrograms] = useState<ProgramWithSchedules[]>([]);
   const [loading, setLoading] = useState(true);
-  const [openDialog, setOpenDialog] = useState(false);
   const [selectedProgram, setSelectedProgram] = useState<ProgramWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleType | null>(null);
   const [formData, setFormData] = useState({
@@ -129,11 +128,9 @@ export function SchedulesTable() {
       endTime: '',
       programId: '',
     });
-    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
-    setOpenDialog(false);
     setSelectedProgram(null);
     setEditingSchedule(null);
   };
