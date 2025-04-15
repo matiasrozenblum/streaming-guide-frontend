@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Dialog,
   DialogTitle,
@@ -31,7 +31,7 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
   const [loading, setLoading] = useState(false);
   const [selectedPanelists, setSelectedPanelists] = useState<Panelist[]>([]);
 
-  const fetchPanelists = async () => {
+  const fetchPanelists = useCallback(async () => {
     try {
       setLoading(true);
       const data = await PanelistsService.getAll();
@@ -42,7 +42,7 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
     } finally {
       setLoading(false);
     }
-  };
+  }, [onError]);
 
   useEffect(() => {
     if (open && program) {
