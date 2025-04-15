@@ -31,13 +31,6 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
   const [loading, setLoading] = useState(false);
   const [selectedPanelists, setSelectedPanelists] = useState<Panelist[]>([]);
 
-  useEffect(() => {
-    if (open && program) {
-      fetchPanelists();
-      setSelectedPanelists(program.panelists || []);
-    }
-  }, [open, program]);
-
   const fetchPanelists = async () => {
     try {
       setLoading(true);
@@ -50,6 +43,13 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (open && program) {
+      fetchPanelists();
+      setSelectedPanelists(program.panelists || []);
+    }
+  }, [open, program, fetchPanelists]);
 
   const handleAddPanelist = async (panelist: Panelist) => {
     try {

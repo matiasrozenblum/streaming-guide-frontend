@@ -1,5 +1,3 @@
-import { Panelist } from '@/types/panelist';
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class PanelistsService {
