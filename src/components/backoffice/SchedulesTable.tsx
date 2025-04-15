@@ -73,18 +73,19 @@ export function SchedulesTable() {
         }),
       ]);
 
-      const schedules = schedulesResponse.data;
-      const programs = programsResponse.data;
+      const schedules = schedulesResponse.data || [];
+      const programs = programsResponse.data || [];
 
       // Group schedules by program
       const programsWithSchedules = programs.map((program: Program) => ({
         ...program,
-        schedules: schedules.filter((schedule: ScheduleType) => schedule.program.id === program.id),
+        schedules: (schedules || []).filter((schedule: ScheduleType) => schedule.program?.id === program.id),
       }));
 
       setPrograms(programsWithSchedules);
     } catch (error) {
       console.error('Error fetching data:', error);
+      setPrograms([]);
     } finally {
       setLoading(false);
     }
@@ -211,13 +212,13 @@ export function SchedulesTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {programs.map((program) => (
+            {(programs || []).map((program) => (
               <TableRow key={program.id}>
                 <TableCell>{program.name}</TableCell>
                 <TableCell>{program.channel?.name || 'Sin canal'}</TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {program.schedules.map((schedule) => (
+                    {(program.schedules || []).map((schedule) => (
                       <Chip
                         key={schedule.id}
                         label={`${schedule.day_of_week} ${schedule.start_time}-${schedule.end_time}`}
