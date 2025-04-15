@@ -12,7 +12,6 @@ import {
   Autocomplete,
   Chip,
   Typography,
-  CircularProgress,
 } from '@mui/material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
