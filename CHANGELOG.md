@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added schedule backoffice feature
 
 ### Changed
 
@@ -17,6 +16,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.0.17] - 2025-04-15
+
+### Added
+- Added legal footer
+
+## [0.0.16] - 2025-04-15
+
+### Added
+- Added schedule backoffice feature
 
 ## [0.0.15] - 2025-04-15
 
