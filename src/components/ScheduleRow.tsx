@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState } from 'react';
-import { Box, Avatar, Typography, useTheme, useMediaQuery, Tooltip, IconButton } from '@mui/material';
+import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
@@ -33,7 +33,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { channelLabelWidth, rowHeight, pixelsPerMinute } = useLayoutValues();
+  const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
@@ -49,17 +49,6 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
     if (videoId) {
       setSelectedVideoId(videoId);
     }
-  };
-
-  const getPosition = (time: string) => {
-    const [hours, minutes] = time.split(':').map(Number);
-    return (hours * 60 + minutes) * pixelsPerMinute;
-  };
-
-  const getDuration = (start: string, end: string) => {
-    const startTime = getPosition(start);
-    const endTime = getPosition(end);
-    return endTime - startTime;
   };
 
   const StandardLayout = (
