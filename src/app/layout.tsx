@@ -3,22 +3,27 @@ import '@/styles/globals.css';
 import Script from 'next/script';
 import { GA_TRACKING_ID } from '@/lib/gtag';
 import { HotjarLoader } from '@/components/HotjarLoader';
+import type { Metadata } from "next";
+import { Inter } from "next/font/google";
+import Footer from "@/components/Footer";
 
-export const metadata = {
-  title: 'TV Schedule',
-  description: 'Your complete guide to weekly programming',
+const inter = Inter({ subsets: ["latin"] });
+
+export const metadata: Metadata = {
+  title: "La Guía del Streaming",
+  description: "Guía de programación de streaming",
 };
 
 export default function RootLayout({
   children,
-}: {
+}: Readonly<{
   children: React.ReactNode;
-}) {
+}>) {
   return (
-    <html lang="en" suppressHydrationWarning>
+    <html lang="es" suppressHydrationWarning>
         <Script
         strategy="afterInteractive"
-        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`} // Reemplazá con tu ID
+        src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
         />
         <Script
         id="gtag-init"
@@ -32,10 +37,13 @@ export default function RootLayout({
             `,
         }}
         />
-      <body suppressHydrationWarning>
+      <body suppressHydrationWarning className={inter.className}>
       <HotjarLoader />
         <CustomThemeProvider>
-          {children}
+          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            {children}
+            <Footer />
+          </div>
         </CustomThemeProvider>
       </body>
     </html>
