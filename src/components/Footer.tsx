@@ -19,7 +19,7 @@ const Footer: React.FC = () => {
         color="text.secondary"
         align="center"
         sx={{
-          fontSize: '0.65rem',
+          fontSize: '0.5rem',
           lineHeight: 1.2,
           display: 'block',
           mb: 0.5,
@@ -32,7 +32,7 @@ const Footer: React.FC = () => {
         color="text.secondary"
         align="center"
         sx={{
-          fontSize: '0.65rem',
+          fontSize: '0.5rem',
           lineHeight: 1.2,
           display: 'block',
         }}

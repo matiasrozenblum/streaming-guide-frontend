@@ -65,6 +65,41 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     if (isToday) scrollToNow();
   }, [isToday, scrollToNow]);
 
+  useEffect(() => {
+    const gridElement = scrollRef.current;
+    if (!gridElement) return;
+
+    const handleWheel = (e: WheelEvent) => {
+      // Only handle the event if we're directly over the grid or its children
+      const target = e.target as HTMLElement;
+      if (target === gridElement || gridElement.contains(target)) {
+        // Check if we can scroll in the direction of the wheel event
+        const canScrollVertically = 
+          (e.deltaY > 0 && gridElement.scrollTop < gridElement.scrollHeight - gridElement.clientHeight) ||
+          (e.deltaY < 0 && gridElement.scrollTop > 0);
+        
+        const canScrollHorizontally = 
+          (e.deltaX > 0 && gridElement.scrollLeft < gridElement.scrollWidth - gridElement.clientWidth) ||
+          (e.deltaX < 0 && gridElement.scrollLeft > 0);
+
+        // Only prevent default if we can actually scroll in that direction
+        if ((e.shiftKey || Math.abs(e.deltaX) > Math.abs(e.deltaY)) && canScrollHorizontally) {
+          e.preventDefault();
+          gridElement.scrollLeft += e.deltaX || e.deltaY;
+        } else if (canScrollVertically) {
+          e.preventDefault();
+          gridElement.scrollTop += e.deltaY;
+        }
+      }
+    };
+
+    window.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
   }
