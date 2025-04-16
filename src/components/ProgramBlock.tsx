@@ -1,6 +1,7 @@
 'use client';
 
-import { Box, Tooltip, Typography, alpha, Button } from '@mui/material';
+import React from 'react';
+import { Box, Tooltip, Typography, alpha, Button, IconButton } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '../constants/layout';
@@ -8,6 +9,7 @@ import { OpenInNew } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
+import YouTubeIcon from '@mui/icons-material/YouTube';
 
 dayjs.extend(customParseFormat);
 
@@ -23,9 +25,10 @@ interface Props {
   isToday?: boolean;
   youtube_url?: string;
   live_url?: string;
+  onYouTubeClick?: (url: string) => void;
 }
 
-export const ProgramBlock = ({
+export const ProgramBlock: React.FC<Props> = ({
   name,
   start,
   end,
@@ -36,7 +39,8 @@ export const ProgramBlock = ({
   isToday,
   youtube_url,
   live_url,
-}: Props) => {
+  onYouTubeClick,
+}) => {
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
@@ -88,7 +92,7 @@ export const ProgramBlock = ({
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!youtube_url) return;
+    
     const url = isLive ? live_url : youtube_url;
     if (!url) return;
 
@@ -100,11 +104,14 @@ export const ProgramBlock = ({
       value: isLive ? 1 : 0,
     });
 
-    if (isMobile) {
-      window.location.href = url;
+    // For live URLs, we need to extract the video ID if it's a channel live URL
+    if (isLive && url.includes('@')) {
+      // If it's a channel live URL, we'll use the channel's live stream URL
+      const channelId = url.split('@')[1].split('/')[0];
+      const liveStreamUrl = `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
+      onYouTubeClick?.(liveStreamUrl);
     } else {
-      const newTab = window.open(url, '_blank');
-      newTab?.focus();
+      onYouTubeClick?.(url);
     }
   };
 
