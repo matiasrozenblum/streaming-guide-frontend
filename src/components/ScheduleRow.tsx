@@ -1,11 +1,14 @@
 'use client';
 
-import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
+import React, { useState } from 'react';
+import { Box, Avatar, Typography, useTheme, useMediaQuery, Tooltip, IconButton } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
+import YouTubeIcon from '@mui/icons-material/YouTube';
+import YouTubeModal from './YouTubeModal';
 
 interface Program {
   id: string;
@@ -31,9 +34,34 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { channelLabelWidth, rowHeight } = useLayoutValues();
+  const { channelLabelWidth, rowHeight, pixelsPerMinute } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
+  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+
+  const extractVideoId = (url: string) => {
+    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
+    const match = url.match(regExp);
+    return (match && match[2].length === 11) ? match[2] : null;
+  };
+
+  const handleYouTubeClick = (url: string) => {
+    const videoId = extractVideoId(url);
+    if (videoId) {
+      setSelectedVideoId(videoId);
+    }
+  };
+
+  const getPosition = (time: string) => {
+    const [hours, minutes] = time.split(':').map(Number);
+    return (hours * 60 + minutes) * pixelsPerMinute;
+  };
+
+  const getDuration = (start: string, end: string) => {
+    const startTime = getPosition(start);
+    const endTime = getPosition(end);
+    return endTime - startTime;
+  };
 
   const StandardLayout = (
     <Box
@@ -164,40 +192,48 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   );
 
   return (
-    <Box 
-      display="flex" 
-      alignItems="center" 
-      borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
-      position="relative"
-      height={`${rowHeight}px`}
-      sx={{
-        '&:hover': {
-          backgroundColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.02)' 
-            : 'rgba(255, 255, 255, 0.02)',
-        },
-      }}
-    >
-      {isLegalPage ? StandardLayout : LegalLayout}
+    <>
+      <Box 
+        display="flex" 
+        alignItems="center" 
+        borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
+        position="relative"
+        height={`${rowHeight}px`}
+        sx={{
+          '&:hover': {
+            backgroundColor: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.02)' 
+              : 'rgba(255, 255, 255, 0.02)',
+          },
+        }}
+      >
+        {isLegalPage ? StandardLayout : LegalLayout}
 
-      <Box position="relative" flex="1" height="100%">
-        {programs.map((p) => (
-          <ProgramBlock
-            key={p.id}
-            name={p.name}
-            start={p.start_time}
-            end={p.end_time}
-            description={p.description}
-            panelists={p.panelists}
-            logo_url={p.logo_url}
-            channelName={channelName}
-            color={color}
-            isToday={isToday}
-            youtube_url={p.youtube_url}
-            live_url={p.live_url}
-          />
-        ))}
+        <Box position="relative" flex="1" height="100%">
+          {programs.map((p) => (
+            <ProgramBlock
+              key={p.id}
+              name={p.name}
+              start={p.start_time}
+              end={p.end_time}
+              description={p.description}
+              panelists={p.panelists}
+              logo_url={p.logo_url}
+              channelName={channelName}
+              color={color}
+              isToday={isToday}
+              youtube_url={p.youtube_url}
+              live_url={p.live_url}
+              onYouTubeClick={handleYouTubeClick}
+            />
+          ))}
+        </Box>
       </Box>
-    </Box>
+      <YouTubeModal
+        open={!!selectedVideoId}
+        onClose={() => setSelectedVideoId(null)}
+        videoId={selectedVideoId || ''}
+      />
+    </>
   );
 };
