@@ -7,7 +7,6 @@ import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
-import YouTubeIcon from '@mui/icons-material/YouTube';
 import YouTubeModal from './YouTubeModal';
 
 interface Program {
