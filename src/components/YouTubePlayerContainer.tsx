@@ -57,11 +57,13 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   }, [handleMove]);
 
   const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!dragging) return;
+    e.preventDefault();
     const touch = e.touches[0];
     if (touch) {
       handleMove(touch.clientX, touch.clientY);
     }
-  }, [handleMove]);
+  }, [dragging, handleMove]);
 
   const handleEnd = useCallback(() => {
     if (dragging) {
@@ -91,7 +93,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
     window.addEventListener('touchend', handleEnd);
 
     return () => {
