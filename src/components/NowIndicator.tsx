@@ -1,13 +1,26 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
-import { forwardRef } from 'react';
+import { forwardRef, useEffect, useState } from 'react';
 
 export const NowIndicator = forwardRef<HTMLDivElement>((_, ref) => {
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
-  const now = dayjs();
-  const startOfDay = now.startOf('day');
-  const minutesFromMidnight = now.diff(startOfDay, 'minute');
+  const [minutesFromMidnight, setMinutesFromMidnight] = useState(() => {
+    const now = dayjs();
+    return now.diff(now.startOf('day'), 'minute');
+  });
+
+  useEffect(() => {
+    const updatePosition = () => {
+      const now = dayjs();
+      setMinutesFromMidnight(now.diff(now.startOf('day'), 'minute'));
+    };
+
+    // Update every minute
+    const intervalId = setInterval(updatePosition, 60000);
+    return () => clearInterval(intervalId);
+  }, []);
+
   const offsetPx = channelLabelWidth + (minutesFromMidnight * pixelsPerMinute);
 
   return (

@@ -9,6 +9,7 @@ import { OpenInNew } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useState, useEffect, useRef } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 dayjs.extend(customParseFormat);
 

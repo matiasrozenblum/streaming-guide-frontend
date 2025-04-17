@@ -8,6 +8,7 @@ import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
 import YouTubeModal from './YouTubeModal';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 interface Program {
   id: string;
@@ -33,10 +34,11 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { channelLabelWidth, rowHeight } = useLayoutValues();
+  const { channelLabelWidth, rowHeight, pixelsPerMinute } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
+  const { liveStatus } = useLiveStatus();
 
   const extractVideoId = (url: string) => {
     // If it's a channel live URL (e.g., https://www.youtube.com/@luzutv/live)
@@ -210,23 +212,34 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
         {isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p) => (
-            <ProgramBlock
-              key={p.id}
-              name={p.name}
-              start={p.start_time}
-              end={p.end_time}
-              description={p.description}
-              panelists={p.panelists}
-              logo_url={p.logo_url}
-              channelName={channelName}
-              color={color}
-              isToday={isToday}
-              stream_url={p.stream_url}
-              is_live={p.is_live}
-              onYouTubeClick={handleYouTubeClick}
-            />
-          ))}
+          {programs.map((p) => {
+            const [startHours, startMinutes] = p.start_time.split(':').map(Number);
+            const minutesFromMidnight = (startHours * 60) + startMinutes;
+            const offsetPx = minutesFromMidnight * pixelsPerMinute;
+
+            // Get live status from context
+            const currentLiveStatus = liveStatus[p.id];
+            const isLive = currentLiveStatus?.is_live || p.is_live;
+            const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            return (
+              <ProgramBlock
+                key={p.id}
+                name={p.name}
+                start={p.start_time}
+                end={p.end_time}
+                description={p.description}
+                panelists={p.panelists}
+                logo_url={p.logo_url}
+                channelName={channelName}
+                color={color}
+                isToday={isToday}
+                stream_url={currentStreamUrl}
+                is_live={isLive}
+                onYouTubeClick={handleYouTubeClick}
+              />
+            );
+          })}
         </Box>
       </Box>
       <YouTubeModal

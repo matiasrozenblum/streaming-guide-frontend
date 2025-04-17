@@ -10,16 +10,12 @@ interface Props {
 export default function YouTubeModal({ open, onClose, videoId }: Props) {
   // Check if it's a channel live URL
   const isChannelLive = videoId.includes('@');
-  console.log('Original videoId:', videoId);
-  console.log('Is channel live:', isChannelLive);
   
   const channelId = isChannelLive ? videoId.split('@')[1].split('/')[0] : videoId;
-  console.log('Extracted channelId:', channelId);
   
   const embedUrl = isChannelLive 
     ? `https://www.youtube.com/embed?channel=${channelId}`
     : `https://www.youtube.com/embed/${videoId}?autoplay=1`;
-  console.log('Final embed URL:', embedUrl);
 
   return (
     <Dialog
