@@ -1,13 +1,12 @@
 'use client';
 
-import React, { useState } from 'react';
+import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
-import YouTubeModal from './YouTubeModal';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 interface Program {
@@ -28,8 +27,6 @@ interface Props {
   programs: Program[];
   color?: string;
   isToday?: boolean;
-  onModalOpen?: () => void;
-  onModalClose?: () => void;
 }
 
 export const ScheduleRow = ({ 
@@ -38,48 +35,15 @@ export const ScheduleRow = ({
   programs, 
   color, 
   isToday,
-  onModalOpen,
-  onModalClose
 }: Props) => {
+  console.log('[SCHEDULE ROW] Rendering ScheduleRow');
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
-  const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const { liveStatus } = useLiveStatus();
-
-  const extractVideoId = (url: string) => {
-    // If it's a channel live URL (e.g., https://www.youtube.com/@luzutv/live)
-    if (url.includes('@')) {
-      return url;
-    }
-    
-    // For embedded URLs (e.g., https://www.youtube.com/embed/7Yssk7558EI?autoplay=1)
-    if (url.includes('/embed/')) {
-      const match = url.match(/\/embed\/([^?]+)/);
-      return match ? match[1] : null;
-    }
-    
-    // For regular YouTube video URLs with or without playlist
-    const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
-    const match = url.match(regExp);
-    return (match && match[2].length === 11) ? match[2] : null;
-  };
-
-  const handleYouTubeClick = (url: string) => {
-    if (onModalOpen) onModalOpen();
-    const videoId = extractVideoId(url);
-    if (videoId) {
-      setSelectedVideoId(videoId);
-    }
-  };
-
-  const handleCloseModal = () => {
-    setSelectedVideoId(null);
-    if (onModalClose) onModalClose();
-  };
 
   const StandardLayout = (
     <Box
@@ -249,17 +213,11 @@ export const ScheduleRow = ({
                 isToday={isToday}
                 stream_url={currentStreamUrl}
                 is_live={isLive}
-                onYouTubeClick={handleYouTubeClick}
               />
             );
           })}
         </Box>
       </Box>
-      <YouTubeModal
-        open={!!selectedVideoId}
-        onClose={handleCloseModal}
-        videoId={selectedVideoId || ''}
-      />
     </>
   );
 };

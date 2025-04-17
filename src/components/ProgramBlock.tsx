@@ -7,8 +7,10 @@ import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
 import { OpenInNew } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useState, useEffect, useRef } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
+import { extractVideoId } from '@/utils/extractVideoId';
 
 dayjs.extend(customParseFormat);
 
@@ -24,7 +26,6 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
-  onYouTubeClick?: (url: string) => void;
 }
 
 export const ProgramBlock: React.FC<Props> = ({
@@ -38,13 +39,13 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
-  onYouTubeClick,
 }) => {
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const { openPlayer } = useYouTubePlayer();
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -89,9 +90,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    
+  
     if (!stream_url) return;
-
+  
     // Track GA event
     gaEvent({
       action: 'click_youtube',
@@ -99,9 +100,13 @@ export const ProgramBlock: React.FC<Props> = ({
       label: name,
       value: is_live ? 1 : 0,
     });
-
+  
     console.log('ProgramBlock - URL being passed:', stream_url);
-    onYouTubeClick?.(stream_url);
+  
+    const videoId = extractVideoId(stream_url);
+    if (videoId) {
+      openPlayer(videoId); // 👈 abrir usando el context
+    }
   };
 
   const handleTooltipOpen = () => {
