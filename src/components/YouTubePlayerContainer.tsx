@@ -116,6 +116,20 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     };
   }, [handleMouseMove, handleTouchMove, handleEnd]);
 
+  useEffect(() => {
+    if (dragging) {
+      // Bloquear scroll de la página
+      document.body.style.overflow = 'hidden';
+    } else {
+      // Restaurar scroll de la página
+      document.body.style.overflow = '';
+    }
+  
+    return () => {
+      document.body.style.overflow = '';
+    };
+  }, [dragging]);
+
   const iframeElement = useMemo(() => (
     <iframe
       ref={iframeRef}
