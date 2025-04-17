@@ -1,11 +1,10 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Box, IconButton, Modal, Button } from '@mui/material';
+import { Box, IconButton, Modal } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
-import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
-import DoneIcon from '@mui/icons-material/Done';
+import { useMediaQuery } from '@mui/material';
 
 interface YouTubePlayerContainerProps {
   videoId: string;
@@ -15,38 +14,39 @@ interface YouTubePlayerContainerProps {
 
 const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = ({ videoId, open, onClose }) => {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isMoving, setIsMoving] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const offset = useRef({ x: 0, y: 0 });
 
+  const isMobile = useMediaQuery('(max-width:600px)');
+
   const snapThreshold = 100;
 
-  const handleMinimize = () => setIsMinimized(true);
+  const handleMinimize = () => {
+    setIsMinimized(true);
+
+    if (isMobile) {
+      // Si es mobile, anclar fijo en esquina derecha abajo
+      const width = 340;
+      const height = 200;
+      setPosition({
+        x: window.innerWidth - width - 20,
+        y: window.innerHeight - height - 20,
+      });
+    }
+  };
+
   const handleMaximize = () => setIsMinimized(false);
-  const handleStartMove = () => setIsMoving(true);
-  const handleEndMove = () => setIsMoving(false);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return;
-    if (!isMoving) return;
+    if (isMobile) return; // 🚫 no permitir drag en mobile
     setDragging(true);
     offset.current = {
       x: e.clientX - position.x,
       y: e.clientY - position.y,
-    };
-  };
-
-  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button')) return;
-    if (!isMoving) return;
-    const touch = e.touches[0];
-    setDragging(true);
-    offset.current = {
-      x: touch.clientX - position.x,
-      y: touch.clientY - position.y,
     };
   };
 
@@ -62,15 +62,6 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   const handleMouseMove = useCallback((e: MouseEvent) => {
     handleMove(e.clientX, e.clientY);
   }, [handleMove]);
-
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!dragging) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    if (touch) {
-      handleMove(touch.clientX, touch.clientY);
-    }
-  }, [dragging, handleMove]);
 
   const handleEnd = useCallback(() => {
     if (dragging) {
@@ -98,18 +89,16 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   };
 
   useEffect(() => {
+    if (isMobile) return; // 🚫 no registrar eventos en mobile
+
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleEnd);
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleEnd);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleEnd);
     };
-  }, [handleMouseMove, handleTouchMove, handleEnd]);
+  }, [handleMouseMove, handleEnd, isMobile]);
 
   const iframeElement = useMemo(() => (
     <iframe
@@ -130,7 +119,6 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     <Box
       ref={containerRef}
       onMouseDown={handleMouseDown}
-      onTouchStart={handleTouchStart}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
@@ -146,8 +134,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         overflow: 'hidden',
         zIndex: 1300,
         userSelect: dragging ? 'none' : 'auto',
-        touchAction: isMoving ? 'none' : 'auto',
-        cursor: isMoving ? 'grabbing' : 'default',
+        cursor: dragging ? 'grabbing' : 'default',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.3s ease',
@@ -158,53 +145,24 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   );
 
   const Controls = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
-      <Box sx={{ display: 'flex', gap: 1 }}>
-        {isMinimized ? (
-          <IconButton onClick={handleMaximize} size="small" sx={{ bgcolor: 'white' }}>
-            <CropSquareIcon fontSize="small" />
-          </IconButton>
-        ) : (
-          <IconButton onClick={handleMinimize} size="small" sx={{ bgcolor: 'white' }}>
-            <CropSquareIcon fontSize="small" />
-          </IconButton>
-        )}
-        <IconButton onClick={onClose} size="small" sx={{ bgcolor: 'white' }}>
-          <CloseIcon fontSize="small" />
+    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
+      {isMinimized ? (
+        <IconButton onClick={handleMaximize} size="small" sx={{ bgcolor: 'white' }}>
+          <CropSquareIcon fontSize="small" />
         </IconButton>
-      </Box>
-      <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
-        {!isMoving ? (
-          <Button onClick={handleStartMove} startIcon={<DragIndicatorIcon />} variant="contained" size="small">
-            Mover
-          </Button>
-        ) : (
-          <Button onClick={handleEndMove} startIcon={<DoneIcon />} variant="contained" size="small" color="success">
-            Listo
-          </Button>
-        )}
-      </Box>
+      ) : (
+        <IconButton onClick={handleMinimize} size="small" sx={{ bgcolor: 'white' }}>
+          <CropSquareIcon fontSize="small" />
+        </IconButton>
+      )}
+      <IconButton onClick={onClose} size="small" sx={{ bgcolor: 'white' }}>
+        <CloseIcon fontSize="small" />
+      </IconButton>
     </Box>
   );
 
   return (
     <>
-      {isMoving && (
-        <Box
-          onTouchMove={(e) => e.preventDefault()}
-          sx={{
-            position: 'fixed',
-            top: 0,
-            left: 0,
-            width: '100vw',
-            height: '100vh',
-            zIndex: 1299,
-            backgroundColor: 'transparent',
-            cursor: 'grabbing',
-          }}
-        />
-      )}
-
       {isMinimized ? (
         <Wrapper>
           <Controls />
