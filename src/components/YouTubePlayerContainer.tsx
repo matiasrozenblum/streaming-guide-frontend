@@ -100,23 +100,16 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleEnd);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
     };
-  }, [handleMouseMove, handleEnd]);
-
-  // 🔥 Manejar touchmove manualmente
-  useEffect(() => {
-    if (isMoving) {
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    } else {
-      document.removeEventListener('touchmove', handleTouchMove);
-    }
-    return () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
-  }, [isMoving, handleTouchMove]);
+  }, [handleMouseMove, handleTouchMove, handleEnd]);
 
   const iframeElement = useMemo(() => (
     <iframe
@@ -154,7 +147,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         zIndex: 1300,
         userSelect: dragging ? 'none' : 'auto',
         touchAction: isMoving ? 'none' : 'auto',
-        cursor: isMoving ? 'move' : 'default',
+        cursor: isMoving ? 'grabbing' : 'default',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.3s ease',
@@ -180,28 +173,13 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
           <CloseIcon fontSize="small" />
         </IconButton>
       </Box>
-
-      {/* Botón mover solo en mobile */}
       <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
         {!isMoving ? (
-          <Button
-            onClick={handleStartMove}
-            startIcon={<DragIndicatorIcon />}
-            variant="contained"
-            size="small"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button onClick={handleStartMove} startIcon={<DragIndicatorIcon />} variant="contained" size="small">
             Mover
           </Button>
         ) : (
-          <Button
-            onClick={handleEndMove}
-            startIcon={<DoneIcon />}
-            variant="contained"
-            size="small"
-            color="success"
-            sx={{ textTransform: 'none' }}
-          >
+          <Button onClick={handleEndMove} startIcon={<DoneIcon />} variant="contained" size="small" color="success">
             Listo
           </Button>
         )}
@@ -211,6 +189,22 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 
   return (
     <>
+      {isMoving && (
+        <Box
+          onTouchMove={(e) => e.preventDefault()}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            zIndex: 1299,
+            backgroundColor: 'transparent',
+            cursor: 'grabbing',
+          }}
+        />
+      )}
+
       {isMinimized ? (
         <Wrapper>
           <Controls />
