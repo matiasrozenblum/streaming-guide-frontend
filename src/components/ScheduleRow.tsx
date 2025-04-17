@@ -28,9 +28,19 @@ interface Props {
   programs: Program[];
   color?: string;
   isToday?: boolean;
+  onModalOpen?: () => void;
+  onModalClose?: () => void;
 }
 
-export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
+export const ScheduleRow = ({ 
+  channelName, 
+  channelLogo, 
+  programs, 
+  color, 
+  isToday,
+  onModalOpen,
+  onModalClose
+}: Props) => {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -39,6 +49,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const isLegalPage = pathname === '/legal';
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const { liveStatus } = useLiveStatus();
+  const [openModal, setOpenModal] = useState(false);
 
   const extractVideoId = (url: string) => {
     // If it's a channel live URL (e.g., https://www.youtube.com/@luzutv/live)
@@ -52,17 +63,25 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       return match ? match[1] : null;
     }
     
-    // For regular YouTube video URLs
+    // For regular YouTube video URLs with or without playlist
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
   };
 
   const handleYouTubeClick = (url: string) => {
+    if (onModalOpen) onModalOpen();
     const videoId = extractVideoId(url);
     if (videoId) {
       setSelectedVideoId(videoId);
+      setOpenModal(true);
     }
+  };
+
+  const handleCloseModal = () => {
+    setOpenModal(false);
+    setSelectedVideoId(null);
+    if (onModalClose) onModalClose();
   };
 
   const StandardLayout = (
@@ -244,7 +263,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       </Box>
       <YouTubeModal
         open={!!selectedVideoId}
-        onClose={() => setSelectedVideoId(null)}
+        onClose={handleCloseModal}
         videoId={selectedVideoId || ''}
       />
     </>

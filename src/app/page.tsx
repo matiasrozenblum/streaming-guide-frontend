@@ -28,11 +28,17 @@ export default function Home() {
   const fetchSchedules = async () => {
     try {
       setLoading(true);
+      // First fetch today's schedules for immediate display
       const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-      const response = await api.get(`/schedules?day=${today}`);
-      console.log('📦 Today\'s schedules:', response.data);
-      setSchedules(response.data);
+      const todayResponse = await api.get(`/schedules?day=${today}`);
+      console.log('📦 Today\'s schedules:', todayResponse.data);
+      setSchedules(todayResponse.data);
       setLoading(false);
+
+      // Then fetch all schedules in the background
+      const allResponse = await api.get('/schedules');
+      console.log('📦 All schedules loaded:', allResponse.data);
+      setSchedules(allResponse.data);
     } catch (err) {
       console.error('Error fetching schedules:', err);
       setSchedules([]);

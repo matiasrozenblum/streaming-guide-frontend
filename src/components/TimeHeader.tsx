@@ -8,27 +8,33 @@ import { useEffect, useState } from 'react';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
-export const TimeHeader = () => {
+interface Props {
+  isModalOpen?: boolean;
+}
+
+export const TimeHeader = ({ isModalOpen }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
   const [currentHour, setCurrentHour] = useState(dayjs().hour());
   const totalWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
 
   useEffect(() => {
-    const updateCurrentHour = () => {
-      const newHour = dayjs().hour();
-      console.log('⏰ TimeHeader hour updated:', {
-        oldHour: currentHour,
-        newHour,
-        timestamp: new Date().toISOString()
-      });
-      setCurrentHour(newHour);
-    };
+    if (!isModalOpen) {
+      const updateCurrentHour = () => {
+        const newHour = dayjs().hour();
+        console.log('⏰ TimeHeader hour updated:', {
+          oldHour: currentHour,
+          newHour,
+          timestamp: new Date().toISOString()
+        });
+        setCurrentHour(newHour);
+      };
 
-    // Update every minute
-    const intervalId = setInterval(updateCurrentHour, 60000);
-    return () => clearInterval(intervalId);
-  }, [currentHour]);
+      // Update every minute
+      const intervalId = setInterval(updateCurrentHour, 60000);
+      return () => clearInterval(intervalId);
+    }
+  }, [currentHour, isModalOpen]);
   
   return (
     <Box 

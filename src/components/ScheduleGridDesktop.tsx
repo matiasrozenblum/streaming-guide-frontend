@@ -28,6 +28,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const [selectedDay, setSelectedDay] = useState(today);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const [isModalOpen, setIsModalOpen] = useState(false);
 
   const isToday = selectedDay === today;
   const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
@@ -36,14 +37,16 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
 
   useEffect(() => {
-    console.log('🔄 ScheduleGridDesktop re-rendered with:', {
-      channelsCount: channels.length,
-      schedulesCount: schedules.length,
-      selectedDay,
-      isToday,
-      timestamp: new Date().toISOString()
-    });
-  }, [channels, schedules, selectedDay, isToday]);
+    if (!isModalOpen) {
+      console.log('🔄 ScheduleGridDesktop re-rendered with:', {
+        channelsCount: channels.length,
+        schedulesCount: schedules.length,
+        selectedDay,
+        isToday,
+        timestamp: new Date().toISOString()
+      });
+    }
+  }, [channels, schedules, selectedDay, isToday, isModalOpen]);
 
   useEffect(() => {
     if (nowIndicatorRef.current) {
@@ -178,6 +181,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
               }))}
               color={getColorForChannel(index)}
               isToday={isToday}
+              onModalOpen={() => setIsModalOpen(true)}
+              onModalClose={() => setIsModalOpen(false)}
             />
           ))}
         </Box>
