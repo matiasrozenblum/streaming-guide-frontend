@@ -24,16 +24,37 @@ export const YouTubeGlobalPlayer = () => {
     };
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const touch = e.touches[0];
+    setDragging(true);
+    offset.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    };
+  };
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
     if (dragging) {
       setPosition({
-        x: e.clientX - offset.current.x,
-        y: e.clientY - offset.current.y,
+        x: clientX - offset.current.x,
+        y: clientY - offset.current.y,
       });
     }
   }, [dragging]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    handleMove(e.clientX, e.clientY);
+  }, [handleMove]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    const touch = e.touches[0];
+    if (touch) {
+      handleMove(touch.clientX, touch.clientY);
+    }
+  }, [handleMove]);
+
+  const handleEnd = useCallback(() => {
     if (dragging) {
       setDragging(false);
       snapToEdge();
@@ -42,7 +63,6 @@ export const YouTubeGlobalPlayer = () => {
 
   const snapToEdge = () => {
     if (!containerRef.current) return;
-
     const windowWidth = window.innerWidth;
     const windowHeight = window.innerHeight;
     const rect = containerRef.current.getBoundingClientRect();
@@ -61,21 +81,25 @@ export const YouTubeGlobalPlayer = () => {
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleEnd);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [handleMouseMove, handleTouchMove, handleEnd]);
 
-  if (!open || !videoId) {
-    return null;
-  }
+  if (!open || !videoId) return null;
 
   return (
     <Box
       ref={containerRef}
       onMouseDown={handleMouseDown}
+      onTouchStart={handleTouchStart}
       sx={{
         position: 'fixed',
         top: minimized ? position.y : '50%',

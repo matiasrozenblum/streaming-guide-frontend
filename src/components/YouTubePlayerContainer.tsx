@@ -1,3 +1,5 @@
+'use client';
+
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
 import { Box, IconButton, Modal } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -31,16 +33,37 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     };
   };
 
-  const handleMouseMove = useCallback((e: MouseEvent) => {
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const touch = e.touches[0];
+    setDragging(true);
+    offset.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    };
+  };
+
+  const handleMove = useCallback((clientX: number, clientY: number) => {
     if (dragging) {
       setPosition({
-        x: e.clientX - offset.current.x,
-        y: e.clientY - offset.current.y,
+        x: clientX - offset.current.x,
+        y: clientY - offset.current.y,
       });
     }
   }, [dragging]);
 
-  const handleMouseUp = useCallback(() => {
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    handleMove(e.clientX, e.clientY);
+  }, [handleMove]);
+
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    const touch = e.touches[0];
+    if (touch) {
+      handleMove(touch.clientX, touch.clientY);
+    }
+  }, [handleMove]);
+
+  const handleEnd = useCallback(() => {
     if (dragging) {
       setDragging(false);
       snapToEdge();
@@ -67,12 +90,17 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('mouseup', handleEnd);
+    window.addEventListener('touchmove', handleTouchMove);
+    window.addEventListener('touchend', handleEnd);
+
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
-      window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('mouseup', handleEnd);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleEnd);
     };
-  }, [handleMouseMove, handleMouseUp]);
+  }, [handleMouseMove, handleTouchMove, handleEnd]);
 
   const iframeElement = useMemo(() => (
     <iframe
@@ -93,13 +121,12 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     <Box
       ref={containerRef}
       onMouseDown={handleMouseDown}
-      onClick={(e) => e.stopPropagation()}
+      onTouchStart={handleTouchStart}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
         left: isMinimized ? position.x : '50%',
         transform: isMinimized ? 'none' : 'translate(-50%, -50%)',
-        transition: 'top 0.3s ease, left 0.3s ease, transform 0.3s ease',
         width: isMinimized ? 340 : '80%',
         maxWidth: isMinimized ? undefined : 800,
         height: isMinimized ? 200 : 500,
@@ -113,6 +140,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         cursor: isMinimized ? 'move' : 'default',
         display: 'flex',
         flexDirection: 'column',
+        transition: 'all 0.3s ease',
       }}
     >
       {children}
