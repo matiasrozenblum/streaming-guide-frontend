@@ -82,7 +82,6 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
-  const parsedStartWithDate = dayjs(`${currentDate} ${start}`, 'YYYY-MM-DD HH:mm');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
 
   const isPast = isToday && now.isAfter(parsedEndWithDate);
