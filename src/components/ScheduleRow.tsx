@@ -17,8 +17,8 @@ interface Program {
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
-  youtube_url?: string;
-  live_url?: string;
+  stream_url?: string;
+  is_live?: boolean;
 }
 
 interface Props {
@@ -39,6 +39,18 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
 
   const extractVideoId = (url: string) => {
+    // If it's a channel live URL (e.g., https://www.youtube.com/@luzutv/live)
+    if (url.includes('@')) {
+      return url;
+    }
+    
+    // For embedded URLs (e.g., https://www.youtube.com/embed/7Yssk7558EI?autoplay=1)
+    if (url.includes('/embed/')) {
+      const match = url.match(/\/embed\/([^?]+)/);
+      return match ? match[1] : null;
+    }
+    
+    // For regular YouTube video URLs
     const regExp = /^.*(youtu.be\/|v\/|u\/\w\/|embed\/|watch\?v=|&v=)([^#&?]*).*/;
     const match = url.match(regExp);
     return (match && match[2].length === 11) ? match[2] : null;
@@ -210,8 +222,8 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
               channelName={channelName}
               color={color}
               isToday={isToday}
-              youtube_url={p.youtube_url}
-              live_url={p.live_url}
+              stream_url={p.stream_url}
+              is_live={p.is_live}
               onYouTubeClick={handleYouTubeClick}
             />
           ))}

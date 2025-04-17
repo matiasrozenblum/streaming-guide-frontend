@@ -11,6 +11,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 
 const MotionBox = motion(Box);
+const POLLING_INTERVAL = 30000; // 30 seconds
 
 export default function Home() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
@@ -22,29 +23,35 @@ export default function Home() {
     setMounted(true);
   }, []);
 
+  const fetchSchedules = async () => {
+    try {
+      setLoading(true);
+      // First fetch today's schedules
+      const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+      const todayResponse = await api.get(`/schedules?day=${today}`);
+      console.log('📦 Today\'s schedules:', todayResponse.data);
+      setSchedules(todayResponse.data);
+      setLoading(false); // Stop loading after today's schedules are loaded
+
+      // Then fetch all schedules in the background
+      const allResponse = await api.get('/schedules');
+      console.log('📦 All schedules:', allResponse.data);
+      setSchedules(allResponse.data);
+    } catch (err) {
+      console.error('Error fetching schedules:', err);
+      setSchedules([]);
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
-    const fetchSchedules = async () => {
-      try {
-        setLoading(true);
-        // First fetch today's schedules
-        const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-        const todayResponse = await api.get(`/schedules?day=${today}`);
-        console.log('📦 Today\'s schedules:', todayResponse.data);
-        setSchedules(todayResponse.data);
-        setLoading(false); // Stop loading after today's schedules are loaded
-
-        // Then fetch all schedules in the background
-        const allResponse = await api.get('/schedules');
-        console.log('📦 All schedules:', allResponse.data);
-        setSchedules(allResponse.data);
-      } catch (err) {
-        console.error('Error fetching schedules:', err);
-        setSchedules([]);
-        setLoading(false);
-      }
-    };
-
     fetchSchedules();
+
+    // Set up polling
+    const intervalId = setInterval(fetchSchedules, POLLING_INTERVAL);
+
+    // Clean up interval on unmount
+    return () => clearInterval(intervalId);
   }, []);
 
   if (!mounted) {

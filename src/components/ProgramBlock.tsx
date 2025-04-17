@@ -22,8 +22,8 @@ interface Props {
   color?: string;
   channelName?: string;
   isToday?: boolean;
-  youtube_url?: string;
-  live_url?: string;
+  is_live?: boolean;
+  stream_url?: string | null;
   onYouTubeClick?: (url: string) => void;
 }
 
@@ -36,8 +36,8 @@ export const ProgramBlock: React.FC<Props> = ({
   logo_url,
   color = '#2196F3',
   isToday,
-  youtube_url,
-  live_url,
+  is_live,
+  stream_url,
   onYouTubeClick,
 }) => {
   const { pixelsPerMinute } = useLayoutValues();
@@ -85,33 +85,24 @@ export const ProgramBlock: React.FC<Props> = ({
   const parsedStartWithDate = dayjs(`${currentDate} ${start}`, 'YYYY-MM-DD HH:mm');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
 
-  const isLive = isToday && now.isAfter(parsedStartWithDate) && now.isBefore(parsedEndWithDate);
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     e.preventDefault();
     
-    const url = isLive ? live_url : youtube_url;
-    if (!url) return;
+    if (!stream_url) return;
 
     // Track GA event
     gaEvent({
       action: 'click_youtube',
       category: 'program',
       label: name,
-      value: isLive ? 1 : 0,
+      value: is_live ? 1 : 0,
     });
 
-    // For live URLs, we need to extract the video ID if it's a channel live URL
-    if (isLive && url.includes('@')) {
-      // If it's a channel live URL, we'll use the channel's live stream URL
-      const channelId = url.split('@')[1].split('/')[0];
-      const liveStreamUrl = `https://www.youtube.com/embed/live_stream?channel=${channelId}`;
-      onYouTubeClick?.(liveStreamUrl);
-    } else {
-      onYouTubeClick?.(url);
-    }
+    console.log('ProgramBlock - URL being passed:', stream_url);
+    onYouTubeClick?.(stream_url);
   };
 
   const handleTooltipOpen = () => {
@@ -158,7 +149,7 @@ export const ProgramBlock: React.FC<Props> = ({
           </Typography>
         </Box>
       ) : null}
-      {youtube_url && (
+      {stream_url && (
         <Button
           onClick={handleClick}
           onTouchStart={handleClick}
@@ -177,7 +168,7 @@ export const ProgramBlock: React.FC<Props> = ({
             touchAction: 'manipulation', // Optimize for touch
           }}
         >
-          {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+          {is_live ? 'Ver en vivo' : 'Ver en YouTube'}
         </Button>
       )}
     </Box>
@@ -207,14 +198,14 @@ export const ProgramBlock: React.FC<Props> = ({
         width={`${widthPx}px`}
         height="100%"
         sx={{
-          backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
+          backgroundColor: alpha(color, isPast ? 0.05 : is_live ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
           border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
           borderRadius: 1,
           transition: 'all 0.2s ease-in-out',
           cursor: 'pointer',
           overflow: 'hidden',
           '&:hover': {
-            backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
+            backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : is_live ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
             transform: 'scale(1.01)',
           },
         }}
@@ -229,7 +220,7 @@ export const ProgramBlock: React.FC<Props> = ({
             position: 'relative',
           }}
         >
-          {isLive && (
+          {is_live && (
             <Box
               sx={{
                 position: 'absolute',
@@ -254,7 +245,7 @@ export const ProgramBlock: React.FC<Props> = ({
               alignItems: 'center',
               justifyContent: 'center',
               height: '100%',
-              gap: 1, // Adds spacing between the logo and the name
+              gap: 1,
             }}
           >
             {logo_url && (
@@ -263,7 +254,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 src={logo_url}
                 alt={name}
                 sx={{
-                  width: '40px', // Adjust the size of the logo
+                  width: '40px',
                   height: '40px',
                   objectFit: 'contain',
                   opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,

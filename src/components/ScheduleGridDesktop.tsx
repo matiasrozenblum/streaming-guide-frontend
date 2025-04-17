@@ -198,8 +198,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 description: s.program.description || undefined,
                 panelists: s.program.panelists || undefined,
                 logo_url: s.program.logo_url || undefined,
-                youtube_url: s.program.youtube_url || undefined,
-                live_url: channel.streaming_url || undefined,
+                is_live: s.program.is_live,
+                stream_url: s.program.stream_url || undefined,
               }))}
               color={getColorForChannel(index)}
               isToday={isToday}

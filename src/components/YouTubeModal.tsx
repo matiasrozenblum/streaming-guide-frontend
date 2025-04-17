@@ -1,62 +1,45 @@
 import React from 'react';
-import { Dialog, IconButton, Box } from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
+import { Dialog, DialogContent } from '@mui/material';
 
-interface YouTubeModalProps {
+interface Props {
   open: boolean;
   onClose: () => void;
   videoId: string;
 }
 
-const YouTubeModal: React.FC<YouTubeModalProps> = ({ open, onClose, videoId }) => {
+export default function YouTubeModal({ open, onClose, videoId }: Props) {
+  // Check if it's a channel live URL
+  const isChannelLive = videoId.includes('@');
+  console.log('Original videoId:', videoId);
+  console.log('Is channel live:', isChannelLive);
+  
+  const channelId = isChannelLive ? videoId.split('@')[1].split('/')[0] : videoId;
+  console.log('Extracted channelId:', channelId);
+  
+  const embedUrl = isChannelLive 
+    ? `https://www.youtube.com/embed?channel=${channelId}`
+    : `https://www.youtube.com/embed/${videoId}?autoplay=1`;
+  console.log('Final embed URL:', embedUrl);
+
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="lg"
+      maxWidth="md"
       fullWidth
-      sx={{
-        '& .MuiDialog-paper': {
-          backgroundColor: 'transparent',
-          boxShadow: 'none',
-        },
-      }}
     >
-      <Box sx={{ position: 'relative', paddingTop: '56.25%' }}>
-        <IconButton
-          onClick={onClose}
-          sx={{
-            position: 'absolute',
-            top: 8,
-            right: 8,
-            backgroundColor: 'rgba(0, 0, 0, 0.5)',
-            color: 'white',
-            '&:hover': {
-              backgroundColor: 'rgba(0, 0, 0, 0.7)',
-            },
-          }}
-        >
-          <CloseIcon />
-        </IconButton>
+      <DialogContent sx={{ p: 0, '&.MuiDialogContent-root': { padding: 0 } }}>
         <iframe
           width="100%"
-          height="100%"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1`}
+          height="500"
+          src={embedUrl}
           title="YouTube video player"
           frameBorder="0"
           allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
           allowFullScreen
-          style={{
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            width: '100%',
-            height: '100%',
-          }}
+          sandbox="allow-same-origin allow-scripts allow-popups allow-forms"
         />
-      </Box>
+      </DialogContent>
     </Dialog>
   );
-};
-
-export default YouTubeModal; 
+} 
