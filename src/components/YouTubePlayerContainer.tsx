@@ -117,33 +117,26 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   }, [handleMouseMove, handleTouchMove, handleEnd]);
 
   useEffect(() => {
-    if (dragging) {
-      // Bloquear scroll de la página
-      document.body.style.overflow = 'hidden';
-    } else {
-      // Restaurar scroll de la página
-      document.body.style.overflow = '';
-    }
-  
-    return () => {
-      document.body.style.overflow = '';
+    const preventTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
     };
-  }, [dragging]);
-
-  useEffect(() => {
-    if (open) {
+  
+    if (dragging) {
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
+      document.addEventListener('touchmove', preventTouchMove, { passive: false });
     } else {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
+      document.removeEventListener('touchmove', preventTouchMove);
     }
   
     return () => {
       document.body.style.overflow = '';
       document.body.style.touchAction = '';
+      document.removeEventListener('touchmove', preventTouchMove);
     };
-  }, [open]);
+  }, [dragging]);
 
   const iframeElement = useMemo(() => (
     <iframe
