@@ -44,12 +44,11 @@ export const ScheduleRow = ({
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { channelLabelWidth, rowHeight, pixelsPerMinute } = useLayoutValues();
+  const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const [selectedVideoId, setSelectedVideoId] = useState<string | null>(null);
   const { liveStatus } = useLiveStatus();
-  const [openModal, setOpenModal] = useState(false);
 
   const extractVideoId = (url: string) => {
     // If it's a channel live URL (e.g., https://www.youtube.com/@luzutv/live)
@@ -74,12 +73,10 @@ export const ScheduleRow = ({
     const videoId = extractVideoId(url);
     if (videoId) {
       setSelectedVideoId(videoId);
-      setOpenModal(true);
     }
   };
 
   const handleCloseModal = () => {
-    setOpenModal(false);
     setSelectedVideoId(null);
     if (onModalClose) onModalClose();
   };
@@ -232,9 +229,6 @@ export const ScheduleRow = ({
 
         <Box position="relative" flex="1" height="100%">
           {programs.map((p) => {
-            const [startHours, startMinutes] = p.start_time.split(':').map(Number);
-            const minutesFromMidnight = (startHours * 60) + startMinutes;
-            const offsetPx = minutesFromMidnight * pixelsPerMinute;
 
             // Get live status from context
             const currentLiveStatus = liveStatus[p.id];

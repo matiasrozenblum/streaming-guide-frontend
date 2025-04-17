@@ -9,6 +9,14 @@ interface LiveStatus {
   };
 }
 
+interface ScheduleData {
+  id: string;
+  program: {
+    is_live: boolean;
+    stream_url: string | null;
+  };
+}
+
 interface LiveStatusContextType {
   liveStatus: LiveStatus;
   updateLiveStatus: (scheduleId: string, status: { is_live: boolean; stream_url: string | null }) => void;
@@ -51,7 +59,7 @@ export const LiveStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
         const response = await api.get(`/schedules?day=${today}&live_status=true`);
         
         const newStatus: LiveStatus = {};
-        response.data.forEach((schedule: any) => {
+        response.data.forEach((schedule: ScheduleData) => {
           newStatus[schedule.id] = {
             is_live: schedule.program.is_live,
             stream_url: schedule.program.stream_url

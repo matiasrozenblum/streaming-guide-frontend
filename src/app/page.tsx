@@ -12,8 +12,6 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
 
 const MotionBox = motion(Box);
-const POLLING_INTERVAL = 30000; // 30 seconds
-const LIVE_STATUS_POLLING_INTERVAL = 10000; // 10 seconds for live status
 
 export default function Home() {
   const [schedules, setSchedules] = useState<Schedule[]>([]);
