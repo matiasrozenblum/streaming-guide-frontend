@@ -65,6 +65,18 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     }
   }, [dragging, handleMove]);
 
+  const handleTouchMoveBox = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touch) {
+      setPosition({
+        x: touch.clientX - offset.current.x,
+        y: touch.clientY - offset.current.y,
+      });
+    }
+  };
+
   const handleEnd = useCallback(() => {
     if (dragging) {
       setDragging(false);
@@ -124,6 +136,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
+      onTouchMove={handleTouchMoveBox}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
@@ -139,6 +152,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         overflow: 'hidden',
         zIndex: 1300,
         userSelect: dragging ? 'none' : 'auto',
+        touchAction: 'none',
         cursor: isMinimized ? 'move' : 'default',
         display: 'flex',
         flexDirection: 'column',
