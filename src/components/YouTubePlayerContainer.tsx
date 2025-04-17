@@ -63,15 +63,14 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     handleMove(e.clientX, e.clientY);
   }, [handleMove]);
 
-  const handleTouchMoveCapture = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (isMoving && dragging) {
-      e.preventDefault();
-      const touch = e.touches[0];
-      if (touch) {
-        handleMove(touch.clientX, touch.clientY);
-      }
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    if (touch) {
+      handleMove(touch.clientX, touch.clientY);
     }
-  };
+  }, [dragging, handleMove]);
 
   const handleEnd = useCallback(() => {
     if (dragging) {
@@ -107,6 +106,18 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     };
   }, [handleMouseMove, handleEnd]);
 
+  // 🔥 Manejar touchmove manualmente
+  useEffect(() => {
+    if (isMoving) {
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    } else {
+      document.removeEventListener('touchmove', handleTouchMove);
+    }
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [isMoving, handleTouchMove]);
+
   const iframeElement = useMemo(() => (
     <iframe
       ref={iframeRef}
@@ -127,7 +138,6 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onTouchMoveCapture={handleTouchMoveCapture}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
@@ -171,7 +181,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         </IconButton>
       </Box>
 
-      {/* Botón Mover solo en mobile */}
+      {/* Botón mover solo en mobile */}
       <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
         {!isMoving ? (
           <Button
@@ -225,4 +235,3 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 export const YouTubePlayerContainer = React.memo(YouTubePlayerContainerComponent, (prevProps, nextProps) => {
   return prevProps.videoId === nextProps.videoId && prevProps.open === nextProps.open;
 });
-
