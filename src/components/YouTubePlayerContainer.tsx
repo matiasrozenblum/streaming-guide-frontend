@@ -15,7 +15,7 @@ interface YouTubePlayerContainerProps {
 
 const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = ({ videoId, open, onClose }) => {
   const [isMinimized, setIsMinimized] = useState(false);
-  const [isMoving, setIsMoving] = useState(false); // 🚀 NUEVO estado
+  const [isMoving, setIsMoving] = useState(false);
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -63,14 +63,15 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
     handleMove(e.clientX, e.clientY);
   }, [handleMove]);
 
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!dragging) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    if (touch) {
-      handleMove(touch.clientX, touch.clientY);
+  const handleTouchMoveCapture = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (isMoving && dragging) {
+      e.preventDefault();
+      const touch = e.touches[0];
+      if (touch) {
+        handleMove(touch.clientX, touch.clientY);
+      }
     }
-  }, [dragging, handleMove]);
+  };
 
   const handleEnd = useCallback(() => {
     if (dragging) {
@@ -100,38 +101,11 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   useEffect(() => {
     window.addEventListener('mousemove', handleMouseMove);
     window.addEventListener('mouseup', handleEnd);
-    window.addEventListener('touchmove', handleTouchMove, { passive: false });
-    window.addEventListener('touchend', handleEnd);
-
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleEnd);
-      window.removeEventListener('touchmove', handleTouchMove);
-      window.removeEventListener('touchend', handleEnd);
     };
-  }, [handleMouseMove, handleTouchMove, handleEnd]);
-
-  useEffect(() => {
-    const preventTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-  
-    if (dragging || isMoving) {
-      document.body.style.overflow = 'hidden';
-      document.body.style.touchAction = 'none';
-      document.addEventListener('touchmove', preventTouchMove, { passive: false });
-    } else {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.removeEventListener('touchmove', preventTouchMove);
-    }
-  
-    return () => {
-      document.body.style.overflow = '';
-      document.body.style.touchAction = '';
-      document.removeEventListener('touchmove', preventTouchMove);
-    };
-  }, [dragging, isMoving]);
+  }, [handleMouseMove, handleEnd]);
 
   const iframeElement = useMemo(() => (
     <iframe
@@ -153,7 +127,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchStart}
+      onTouchMoveCapture={handleTouchMoveCapture}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
@@ -197,7 +171,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         </IconButton>
       </Box>
 
-      {/* 🚀 Botón mover solo en mobile */}
+      {/* Botón Mover solo en mobile */}
       <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
         {!isMoving ? (
           <Button
@@ -251,3 +225,4 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 export const YouTubePlayerContainer = React.memo(YouTubePlayerContainerComponent, (prevProps, nextProps) => {
   return prevProps.videoId === nextProps.videoId && prevProps.open === nextProps.open;
 });
+
