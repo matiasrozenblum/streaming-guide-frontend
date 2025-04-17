@@ -1,9 +1,11 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Box, IconButton, Modal } from '@mui/material';
+import { Box, IconButton, Modal, Button } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
+import DragIndicatorIcon from '@mui/icons-material/DragIndicator';
+import DoneIcon from '@mui/icons-material/Done';
 
 interface YouTubePlayerContainerProps {
   videoId: string;
@@ -13,6 +15,7 @@ interface YouTubePlayerContainerProps {
 
 const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = ({ videoId, open, onClose }) => {
   const [isMinimized, setIsMinimized] = useState(false);
+  const [isMoving, setIsMoving] = useState(false); // 🚀 NUEVO estado
   const [position, setPosition] = useState({ x: 20, y: 20 });
   const [dragging, setDragging] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -23,9 +26,12 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 
   const handleMinimize = () => setIsMinimized(true);
   const handleMaximize = () => setIsMinimized(false);
+  const handleStartMove = () => setIsMoving(true);
+  const handleEndMove = () => setIsMoving(false);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    if (!isMoving) return;
     setDragging(true);
     offset.current = {
       x: e.clientX - position.x,
@@ -35,6 +41,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
     if ((e.target as HTMLElement).closest('button')) return;
+    if (!isMoving) return;
     const touch = e.touches[0];
     setDragging(true);
     offset.current = {
@@ -64,18 +71,6 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       handleMove(touch.clientX, touch.clientY);
     }
   }, [dragging, handleMove]);
-
-  const handleTouchMoveBox = (e: React.TouchEvent<HTMLDivElement>) => {
-    if (!dragging) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    if (touch) {
-      setPosition({
-        x: touch.clientX - offset.current.x,
-        y: touch.clientY - offset.current.y,
-      });
-    }
-  };
 
   const handleEnd = useCallback(() => {
     if (dragging) {
@@ -121,7 +116,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       e.preventDefault();
     };
   
-    if (dragging) {
+    if (dragging || isMoving) {
       document.body.style.overflow = 'hidden';
       document.body.style.touchAction = 'none';
       document.addEventListener('touchmove', preventTouchMove, { passive: false });
@@ -136,7 +131,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       document.body.style.touchAction = '';
       document.removeEventListener('touchmove', preventTouchMove);
     };
-  }, [dragging]);
+  }, [dragging, isMoving]);
 
   const iframeElement = useMemo(() => (
     <iframe
@@ -158,7 +153,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
       ref={containerRef}
       onMouseDown={handleMouseDown}
       onTouchStart={handleTouchStart}
-      onTouchMove={handleTouchMoveBox}
+      onTouchMove={handleTouchStart}
       sx={{
         position: 'fixed',
         top: isMinimized ? position.y : '50%',
@@ -174,8 +169,8 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         overflow: 'hidden',
         zIndex: 1300,
         userSelect: dragging ? 'none' : 'auto',
-        touchAction: 'none',
-        cursor: isMinimized ? 'move' : 'default',
+        touchAction: isMoving ? 'none' : 'auto',
+        cursor: isMoving ? 'move' : 'default',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.3s ease',
@@ -186,19 +181,47 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   );
 
   const Controls = () => (
-    <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1 }}>
-      {isMinimized ? (
-        <IconButton onClick={handleMaximize} size="small" sx={{ bgcolor: 'white' }}>
-          <CropSquareIcon fontSize="small" />
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+      <Box sx={{ display: 'flex', gap: 1 }}>
+        {isMinimized ? (
+          <IconButton onClick={handleMaximize} size="small" sx={{ bgcolor: 'white' }}>
+            <CropSquareIcon fontSize="small" />
+          </IconButton>
+        ) : (
+          <IconButton onClick={handleMinimize} size="small" sx={{ bgcolor: 'white' }}>
+            <CropSquareIcon fontSize="small" />
+          </IconButton>
+        )}
+        <IconButton onClick={onClose} size="small" sx={{ bgcolor: 'white' }}>
+          <CloseIcon fontSize="small" />
         </IconButton>
-      ) : (
-        <IconButton onClick={handleMinimize} size="small" sx={{ bgcolor: 'white' }}>
-          <CropSquareIcon fontSize="small" />
-        </IconButton>
-      )}
-      <IconButton onClick={onClose} size="small" sx={{ bgcolor: 'white' }}>
-        <CloseIcon fontSize="small" />
-      </IconButton>
+      </Box>
+
+      {/* 🚀 Botón mover solo en mobile */}
+      <Box sx={{ display: { xs: 'flex', sm: 'none' }, gap: 1 }}>
+        {!isMoving ? (
+          <Button
+            onClick={handleStartMove}
+            startIcon={<DragIndicatorIcon />}
+            variant="contained"
+            size="small"
+            sx={{ textTransform: 'none' }}
+          >
+            Mover
+          </Button>
+        ) : (
+          <Button
+            onClick={handleEndMove}
+            startIcon={<DoneIcon />}
+            variant="contained"
+            size="small"
+            color="success"
+            sx={{ textTransform: 'none' }}
+          >
+            Listo
+          </Button>
+        )}
+      </Box>
     </Box>
   );
 
