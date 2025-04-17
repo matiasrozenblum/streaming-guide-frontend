@@ -1,10 +1,9 @@
 'use client';
 
 import React, { useState, useRef, useEffect, useMemo, useCallback } from 'react';
-import { Box, IconButton, Modal } from '@mui/material';
+import { Box, IconButton, Modal, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
-import { useMediaQuery } from '@mui/material';
 
 interface YouTubePlayerContainerProps {
   videoId: string;
@@ -13,6 +12,7 @@ interface YouTubePlayerContainerProps {
 }
 
 const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = ({ videoId, open, onClose }) => {
+  const isMobile = useMediaQuery('(max-width:600px)');
   const [isMinimized, setIsMinimized] = useState(false);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -20,28 +20,30 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   const iframeRef = useRef<HTMLIFrameElement>(null);
   const offset = useRef({ x: 0, y: 0 });
 
-  const isMobile = useMediaQuery('(max-width:600px)');
-
-  const snapThreshold = 100;
-  const minimizedWidth = 340;
-  const minimizedHeight = 200;
+  const minimizedWidth = isMobile ? 300 : 340;
+  const minimizedHeight = isMobile ? 170 : 200;
   const margin = 20;
 
   const handleMinimize = () => {
+    if (isMobile) {
+      setPosition({
+        x: (window.innerWidth - minimizedWidth) / 2, // centro horizontal
+        y: window.innerHeight - minimizedHeight - margin, // abajo con margen
+      });
+    } else {
+      setPosition({
+        x: window.innerWidth - minimizedWidth - margin,
+        y: window.innerHeight - minimizedHeight - margin,
+      });
+    }
     setIsMinimized(true);
-
-    // ✅ Al minimizar, en mobile o desktop, setear posición bottom right
-    setPosition({
-      x: window.innerWidth - minimizedWidth - margin,
-      y: window.innerHeight - minimizedHeight - margin,
-    });
   };
 
   const handleMaximize = () => setIsMinimized(false);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if ((e.target as HTMLElement).closest('button')) return;
     if (isMobile) return; // No arrastrar en mobile
+    if ((e.target as HTMLElement).closest('button')) return;
     setDragging(true);
     offset.current = {
       x: e.clientX - position.x,
@@ -65,27 +67,8 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
   const handleEnd = useCallback(() => {
     if (dragging) {
       setDragging(false);
-      snapToEdge();
     }
   }, [dragging]);
-
-  const snapToEdge = () => {
-    if (!containerRef.current) return;
-    const windowWidth = window.innerWidth;
-    const windowHeight = window.innerHeight;
-    const rect = containerRef.current.getBoundingClientRect();
-
-    let newX = position.x;
-    let newY = position.y;
-
-    if (rect.left < snapThreshold) newX = margin;
-    else if (windowWidth - (rect.left + rect.width) < snapThreshold) newX = windowWidth - rect.width - margin;
-
-    if (rect.top < snapThreshold) newY = margin;
-    else if (windowHeight - (rect.top + rect.height) < snapThreshold) newY = windowHeight - rect.height - margin;
-
-    setPosition({ x: newX, y: newY });
-  };
 
   useEffect(() => {
     if (isMobile) return;
@@ -133,7 +116,7 @@ const YouTubePlayerContainerComponent: React.FC<YouTubePlayerContainerProps> = (
         overflow: 'hidden',
         zIndex: 1300,
         userSelect: dragging ? 'none' : 'auto',
-        cursor: dragging ? 'grabbing' : 'default',
+        cursor: isMobile ? 'default' : dragging ? 'grabbing' : 'default',
         display: 'flex',
         flexDirection: 'column',
         transition: 'all 0.3s ease',
