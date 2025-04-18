@@ -17,7 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.0] - 2025-04-15
+## [0.1.1] - 2025-04-15
+
+### Removed
+- Removed start_time and end_time fields from program type
+
+## [0.1.0] - 2025-04-18
 
 ### Changed
 - Now youtube link opens embedded modal
