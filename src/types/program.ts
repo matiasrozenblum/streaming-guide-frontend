@@ -5,8 +5,6 @@ export interface Program {
   id: number;
   name: string;
   description?: string;
-  start_time?: string;
-  end_time?: string;
   channel_id?: number;
   channel?: Channel;
   panelists?: Panelist[];
