@@ -5,10 +5,12 @@ import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useEffect, useRef, useState, useCallback } from 'react';
+import { useTheme } from '@mui/material/styles';
 
 export const YouTubeGlobalPlayer = () => {
   const { videoId, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
   const isMobile = useMediaQuery('(max-width:600px)');
+  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -18,6 +20,8 @@ export const YouTubeGlobalPlayer = () => {
   const minimizedHeight = isMobile ? 170 : 200;
   const margin = 20;
   const paddingCompensation = 32;
+
+  const buttonBgColor = theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5';
 
   useEffect(() => {
     if (minimized) {
@@ -161,15 +165,15 @@ export const YouTubeGlobalPlayer = () => {
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
           {minimized ? (
-            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
+            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           ) : (
-            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
+            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           )}
-          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
+          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
