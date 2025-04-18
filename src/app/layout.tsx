@@ -6,8 +6,8 @@ import { HotjarLoader } from '@/components/HotjarLoader';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Footer from "@/components/Footer";
-import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext'; // 👈 ojo, nuevo path
-import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer'; // 👈 nuevo
+import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
+import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 
 const inter = Inter({ subsets: ["latin"] });
 

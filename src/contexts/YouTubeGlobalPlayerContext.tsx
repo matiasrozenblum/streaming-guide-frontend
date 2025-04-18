@@ -2,7 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 
-interface YouTubePlayerContextProps {
+interface YouTubeGlobalPlayerContextType {
   videoId: string | null;
   open: boolean;
   minimized: boolean;
@@ -12,9 +12,9 @@ interface YouTubePlayerContextProps {
   maximizePlayer: () => void;
 }
 
-const YouTubePlayerContext = createContext<YouTubePlayerContextProps | undefined>(undefined);
+const YouTubeGlobalPlayerContext = createContext<YouTubeGlobalPlayerContextType | undefined>(undefined);
 
-export const YouTubePlayerProvider = ({ children }: { children: React.ReactNode }) => {
+export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
   const [videoId, setVideoId] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
@@ -40,16 +40,16 @@ export const YouTubePlayerProvider = ({ children }: { children: React.ReactNode 
   };
 
   return (
-    <YouTubePlayerContext.Provider
+    <YouTubeGlobalPlayerContext.Provider
       value={{ videoId, open, minimized, openPlayer, closePlayer, minimizePlayer, maximizePlayer }}
     >
       {children}
-    </YouTubePlayerContext.Provider>
+    </YouTubeGlobalPlayerContext.Provider>
   );
 };
 
 export const useYouTubePlayer = () => {
-  const context = useContext(YouTubePlayerContext);
+  const context = useContext(YouTubeGlobalPlayerContext);
   if (!context) {
     throw new Error('useYouTubePlayer must be used within a YouTubePlayerProvider');
   }
