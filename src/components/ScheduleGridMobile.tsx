@@ -40,7 +40,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
     { label: 'D', value: 'sunday' },
   ];
 
-  const scrollToNow = () => {
+  const scrollToNow = useCallback(() => {
     const now = dayjs();
     const minutesFromStart = now.hour() * 60 + now.minute();
     const scrollPosition = (minutesFromStart * pixelsPerMinute) - 100;
@@ -48,7 +48,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       left: scrollPosition,
       behavior: 'smooth',
     });
-  };
+  }, [pixelsPerMinute]);
 
   const checkNowIndicatorVisibility = useCallback(() => {
     const indicator = nowIndicatorRef.current;
@@ -63,10 +63,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   }, []);
 
   useEffect(() => {
-    if (isToday) {
-      scrollToNow();
-    }
-  }, [isToday, pixelsPerMinute]);
+    scrollToNow();
+  }, [scrollToNow]);
 
   useEffect(() => {
     const container = scrollRef.current;
@@ -91,7 +89,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   }
 
   const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
-  const getSchedulesForChannel = (channelId: string) =>
+  const getSchedulesForChannel = (channelId: number) =>
     schedulesForDay.filter((s) => s.program.channel.id === channelId);
 
   return (
@@ -146,17 +144,17 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
             <ScheduleRow
               key={channel.id}
               channelName={channel.name}
-              channelLogo={channel.logo_url}
+              channelLogo={channel.logo_url || undefined}
               programs={getSchedulesForChannel(channel.id).map((s) => ({
                 id: s.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
-                description: s.program.description,
-                panelists: s.program.panelists,
-                logo_url: s.program.logo_url,
-                youtube_url: s.program.youtube_url,
-                live_url: channel.streaming_url,
+                description: s.program.description || undefined,
+                panelists: s.program.panelists || undefined,
+                logo_url: s.program.logo_url || undefined,
+                is_live: s.program.is_live,
+                stream_url: s.program.stream_url || undefined,
               }))}
               color={getColorForChannel(index)}
               isToday={isToday}

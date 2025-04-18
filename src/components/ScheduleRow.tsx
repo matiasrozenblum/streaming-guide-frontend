@@ -1,11 +1,13 @@
 'use client';
 
+import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 interface Program {
   id: string;
@@ -15,8 +17,8 @@ interface Program {
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
-  youtube_url?: string;
-  live_url?: string;
+  stream_url?: string;
+  is_live?: boolean;
 }
 
 interface Props {
@@ -27,13 +29,20 @@ interface Props {
   isToday?: boolean;
 }
 
-export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday }: Props) => {
+export const ScheduleRow = ({ 
+  channelName, 
+  channelLogo, 
+  programs, 
+  color, 
+  isToday,
+}: Props) => {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
+  const { liveStatus } = useLiveStatus();
 
   const StandardLayout = (
     <Box
@@ -46,7 +55,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       left={0}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       height="100%"
-      zIndex={2}
+      zIndex={6}
       sx={{ 
         borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
         boxShadow: mode === 'light' 
@@ -62,7 +71,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
-            backgroundColor: getChannelBackground(channelName),
+            background: getChannelBackground(channelName),
             boxShadow: mode === 'light'
               ? '0 2px 4px rgba(0,0,0,0.1)'
               : '0 2px 4px rgba(0,0,0,0.2)',
@@ -100,7 +109,7 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
       left={0}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       height="100%"
-      zIndex={2}
+      zIndex={6}
       sx={{ 
         borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
         boxShadow: mode === 'light' 
@@ -164,40 +173,50 @@ export const ScheduleRow = ({ channelName, channelLogo, programs, color, isToday
   );
 
   return (
-    <Box 
-      display="flex" 
-      alignItems="center" 
-      borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
-      position="relative"
-      height={`${rowHeight}px`}
-      sx={{
-        '&:hover': {
-          backgroundColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.02)' 
-            : 'rgba(255, 255, 255, 0.02)',
-        },
-      }}
-    >
-      {isLegalPage ? LegalLayout : StandardLayout}
+    <>
+      <Box 
+        display="flex" 
+        alignItems="center" 
+        borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
+        position="relative"
+        height={`${rowHeight}px`}
+        sx={{
+          '&:hover': {
+            backgroundColor: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.02)' 
+              : 'rgba(255, 255, 255, 0.02)',
+          },
+        }}
+      >
+        {isLegalPage ? StandardLayout : LegalLayout}
 
-      <Box position="relative" flex="1" height="100%">
-        {programs.map((p) => (
-          <ProgramBlock
-            key={p.id}
-            name={p.name}
-            start={p.start_time}
-            end={p.end_time}
-            description={p.description}
-            panelists={p.panelists}
-            logo_url={p.logo_url}
-            channelName={channelName}
-            color={color}
-            isToday={isToday}
-            youtube_url={p.youtube_url}
-            live_url={p.live_url}
-          />
-        ))}
+        <Box position="relative" flex="1" height="100%">
+          {programs.map((p) => {
+
+            // Get live status from context
+            const currentLiveStatus = liveStatus[p.id];
+            const isLive = currentLiveStatus?.is_live || p.is_live;
+            const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            return (
+              <ProgramBlock
+                key={p.id}
+                name={p.name}
+                start={p.start_time}
+                end={p.end_time}
+                description={p.description}
+                panelists={p.panelists}
+                logo_url={p.logo_url}
+                channelName={channelName}
+                color={color}
+                isToday={isToday}
+                stream_url={currentStreamUrl}
+                is_live={isLive}
+              />
+            );
+          })}
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };

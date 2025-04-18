@@ -4,14 +4,37 @@ import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useEffect, useState } from 'react';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
-export const TimeHeader = () => {
+interface Props {
+  isModalOpen?: boolean;
+}
+
+export const TimeHeader = ({ isModalOpen }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
-  const now = dayjs();
+  const [currentHour, setCurrentHour] = useState(dayjs().hour());
   const totalWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
+
+  useEffect(() => {
+    if (!isModalOpen) {
+      const updateCurrentHour = () => {
+        const newHour = dayjs().hour();
+        console.log('⏰ TimeHeader hour updated:', {
+          oldHour: currentHour,
+          newHour,
+          timestamp: new Date().toISOString()
+        });
+        setCurrentHour(newHour);
+      };
+
+      // Update every minute
+      const intervalId = setInterval(updateCurrentHour, 60000);
+      return () => clearInterval(intervalId);
+    }
+  }, [currentHour, isModalOpen]);
   
   return (
     <Box 
@@ -75,7 +98,7 @@ export const TimeHeader = () => {
       >
         {hours.map((hour) => {
           const hourTime = dayjs().startOf('day').add(hour, 'hour');
-          const isPast = now.isAfter(hourTime);
+          const isPast = hour < currentHour;
           
           return (
             <Box
@@ -106,8 +129,8 @@ export const TimeHeader = () => {
               <Typography 
                 variant="body2"
                 sx={{
-                  fontWeight: hour === now.hour() ? 'bold' : 'normal',
-                  color: hour === now.hour() 
+                  fontWeight: hour === currentHour ? 'bold' : 'normal',
+                  color: hour === currentHour 
                     ? theme.palette.primary.main
                     : mode === 'light' ? '#374151' : '#f1f5f9',
                 }}
