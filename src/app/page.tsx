@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Container, CircularProgress, Typography } from '@mui/material';
+import { Box, Container, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { Schedule } from '@/types/schedule';
