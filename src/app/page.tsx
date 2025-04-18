@@ -18,7 +18,8 @@ export default function Home() {
   const { mode } = useThemeContext();
   const [mounted, setMounted] = useState(false);
 
-  const logo = mode === 'light' ? '/img/logo.png' : '/img/logo-dark.png';
+  const logo = '/img/logo.png';
+  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   
   useEffect(() => {
     setMounted(true);
@@ -141,7 +142,7 @@ export default function Home() {
             <Box
               component="img"
               src={logo}
-              alt="La Guía del Streaming"
+              alt="La Guía del Streaming Logo"
               sx={{
                 width: 'auto',
                 height: '11vh',
@@ -149,7 +150,20 @@ export default function Home() {
                 objectFit: 'contain',
               }}
             />
+            <Box
+              component="img"
+              src={text}
+              alt="La Guía del Streaming Text"
+              sx={{
+                paddingLeft: { xs: 1, sm: 2 },
+                width: 'auto',
+                height: '11vh',
+                maxWidth: '100%',
+                objectFit: 'contain',
+              }}
+            />
           </Box>
+          
         </MotionBox>
         
         <MotionBox
