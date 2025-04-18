@@ -124,7 +124,8 @@ export default function Home() {
                 width: '100%',
                 height: 'auto',
                 maxWidth: { xs: '280px', sm: '400px' },
-
+                objectFit: 'contain',
+                maxHeight: '100%',
               }}
             />
           </Box>
