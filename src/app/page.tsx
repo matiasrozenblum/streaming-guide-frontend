@@ -101,84 +101,87 @@ export default function Home() {
       </Box>
 
       <Container 
-      maxWidth="xl"
-      sx={{
-        px: { xs: 0.5, sm: 1 },
-        flex: 1,
-        display: 'flex',
-        flexDirection: 'column',
-        minHeight: 0,
-      }}
-    >
-      <MotionBox
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        transition={{ duration: 0.5 }}
-        sx={{ 
-          position: 'relative',
-          zIndex: 1,
-          mb: { xs: 1, sm: 2 },
-        }}
-      >
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          gap: 2, 
-          background: mode === 'light'
-            ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
-            : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
-          p: { xs: 2, sm: 3 },
-          borderRadius: 2,
-          boxShadow: mode === 'light'
-            ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-            : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
-          backdropFilter: 'blur(8px)',
-        }}>
-          <Box
-            component="img"
-            src={logo}
-            alt="La Guía del Streaming"
-            sx={{
-              width: '100%',
-              height: 'auto',
-              maxWidth: { xs: '280px', sm: '400px' },
-              objectFit: 'contain',
-              maxHeight: '100%',
-            }}
-          />
-        </Box>
-      </MotionBox>
-      
-      <MotionBox
-        initial={{ opacity: 0 }}
-        animate={{ opacity: 1 }}
-        transition={{ duration: 0.5, delay: 0.2 }}
+        maxWidth="xl"
+        disableGutters
         sx={{
+          px: 0,
           flex: 1,
-          minHeight: 0,
-          background: mode === 'light'
-            ? 'rgba(255,255,255,0.9)'
-            : 'rgba(30,41,59,0.9)',
-          borderRadius: 2,
-          boxShadow: mode === 'light'
-            ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-            : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
-          overflow: 'hidden',
-          backdropFilter: 'blur(8px)',
           display: 'flex',
           flexDirection: 'column',
+          minHeight: 0,
+        }}
+      >
+        <MotionBox
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          sx={{ 
+            position: 'relative',
+            zIndex: 1,
+            mb: { xs: 1, sm: 2 },
+          }}
+        >
+          <Box
+            sx={{
+              height: '13vh',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'left',
+              background: mode === 'light'
+                ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
+                : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
+              borderRadius: 2,
+              boxShadow: mode === 'light'
+                ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+              backdropFilter: 'blur(8px)',
+              paddingLeft: { xs: 1, sm: 2 },
             }}
           >
-            {loading ? (
-              <Box display="flex" justifyContent="center" alignItems="center" p={4}>
-                <CircularProgress />
-              </Box>
-            ) : (
-              <ScheduleGrid channels={channels} schedules={schedules} />
-            )}
-          </MotionBox>
-        </Container>
-      </Box>
-    </LiveStatusProvider>
-  );
+            <Box
+              component="img"
+              src={logo}
+              alt="La Guía del Streaming"
+              sx={{
+                width: 'auto',
+                height: '11vh',
+                maxWidth: '100%',
+                objectFit: 'contain',
+              }}
+            />
+          </Box>
+        </MotionBox>
+        
+        <MotionBox
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          sx={{
+            flex: 1,
+            minHeight: 0,
+            background: mode === 'light'
+              ? 'rgba(255,255,255,0.9)'
+              : 'rgba(30,41,59,0.9)',
+            borderRadius: 2,
+            boxShadow: mode === 'light'
+              ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+              : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+            overflow: 'hidden',
+            backdropFilter: 'blur(8px)',
+            display: 'flex',
+            flexDirection: 'column',
+          }}
+        >
+          {loading ? (
+            <Box display="flex" justifyContent="center" alignItems="center" p={4}>
+              <CircularProgress />
+            </Box>
+          ) : (
+            <ScheduleGrid channels={channels} schedules={schedules} />
+          )}
+        </MotionBox>
+      </Container>
+    </Box>
+  </LiveStatusProvider>
+);
 }
