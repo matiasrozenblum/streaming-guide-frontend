@@ -6,6 +6,8 @@ import { HotjarLoader } from '@/components/HotjarLoader';
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import Footer from "@/components/Footer";
+import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
+import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 
 const inter = Inter({ subsets: ["latin"] });
 
@@ -21,29 +23,32 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="es" suppressHydrationWarning>
-        <Script
+      <Script
         strategy="afterInteractive"
         src={`https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`}
-        />
-        <Script
+      />
+      <Script
         id="gtag-init"
         strategy="afterInteractive"
         dangerouslySetInnerHTML={{
-            __html: `
+          __html: `
             window.dataLayer = window.dataLayer || [];
             function gtag(){dataLayer.push(arguments);}
             gtag('js', new Date());
             gtag('config', '${GA_TRACKING_ID}');
-            `,
+          `,
         }}
-        />
+      />
       <body suppressHydrationWarning className={inter.className}>
-      <HotjarLoader />
+        <HotjarLoader />
         <CustomThemeProvider>
-          <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-            {children}
-            <Footer />
-          </div>
+          <YouTubePlayerProvider>
+            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+              {children}
+              <Footer />
+            </div>
+            <YouTubeGlobalPlayer />
+          </YouTubePlayerProvider>
         </CustomThemeProvider>
       </body>
     </html>
