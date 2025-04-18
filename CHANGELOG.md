@@ -17,7 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.1] - 2025-04-15
+## [0.1.2] - 2025-04-18
+
+### Added
+- Added reorder channel feature to the channels backoffice
+- Added backend set order for the channels in the grid
+
+## [0.1.1] - 2025-04-18
 
 ### Removed
 - Removed start_time and end_time fields from program type
