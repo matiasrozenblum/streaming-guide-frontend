@@ -23,7 +23,6 @@ interface Props {
 }
 
 export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
-  console.log('[SCHEDULE GRID DESKTOP] Rendering ScheduleGridDesktop');
   const scrollRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);

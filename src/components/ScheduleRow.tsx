@@ -36,7 +36,6 @@ export const ScheduleRow = ({
   color, 
   isToday,
 }: Props) => {
-  console.log('[SCHEDULE ROW] Rendering ScheduleRow');
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

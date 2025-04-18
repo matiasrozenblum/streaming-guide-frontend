@@ -65,12 +65,6 @@ export const LiveStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
             stream_url: schedule.program.stream_url
           };
         });
-
-        console.log('📺 LiveStatus updated:', {
-          scheduleCount: Object.keys(newStatus).length,
-          liveCount: Object.values(newStatus).filter(s => s.is_live).length,
-          timestamp: new Date().toISOString()
-        });
         
         setLiveStatus(newStatus);
       } catch (err) {

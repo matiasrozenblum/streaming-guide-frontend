@@ -56,11 +56,12 @@ export const YouTubeGlobalPlayer = () => {
 
   const moveTo = useCallback((clientX: number, clientY: number) => {
     if (!dragging) return;
-    setPosition({
-      x: clientX - offset.current.x,
-      y: clientY - offset.current.y,
-    });
-  }, [dragging]);
+    
+    const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
+    const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
+    
+    setPosition({ x: clampedX, y: clampedY });
+  }, [dragging, minimizedWidth, minimizedHeight]);
 
   const handleMouseMove = (e: MouseEvent) => {
     moveTo(e.clientX, e.clientY);
@@ -160,15 +161,15 @@ export const YouTubeGlobalPlayer = () => {
       >
         <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
           {minimized ? (
-            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: 'white' }}>
+            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           ) : (
-            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: 'white' }}>
+            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           )}
-          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: 'white' }}>
+          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: '#1e293b' }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
