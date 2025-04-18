@@ -4,7 +4,7 @@ import { Box, IconButton, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 
 export const YouTubeGlobalPlayer = () => {
   const { videoId, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
@@ -36,7 +36,6 @@ export const YouTubeGlobalPlayer = () => {
   }, [minimized, isMobile, minimizedWidth, minimizedHeight]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
-    if (isMobile) return;
     if ((e.target as HTMLElement).closest('button')) return;
     setDragging(true);
     offset.current = {
@@ -45,12 +44,33 @@ export const YouTubeGlobalPlayer = () => {
     };
   };
 
-  const handleMouseMove = (e: MouseEvent) => {
+  const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    const touch = e.touches[0];
+    setDragging(true);
+    offset.current = {
+      x: touch.clientX - position.x,
+      y: touch.clientY - position.y,
+    };
+  };
+
+  const moveTo = useCallback((clientX: number, clientY: number) => {
     if (!dragging) return;
     setPosition({
-      x: e.clientX - offset.current.x,
-      y: e.clientY - offset.current.y,
+      x: clientX - offset.current.x,
+      y: clientY - offset.current.y,
     });
+  }, [dragging]);
+
+  const handleMouseMove = (e: MouseEvent) => {
+    moveTo(e.clientX, e.clientY);
+  };
+
+  const handleTouchMove = (e: TouchEvent) => {
+    if (!dragging) return;
+    e.preventDefault(); // 🚀 Clave para que no haga pull-to-refresh
+    const touch = e.touches[0];
+    moveTo(touch.clientX, touch.clientY);
   };
 
   const handleMouseUp = () => {
@@ -60,69 +80,111 @@ export const YouTubeGlobalPlayer = () => {
   };
 
   useEffect(() => {
-    if (isMobile) return;
-    window.addEventListener('mousemove', handleMouseMove);
-    window.addEventListener('mouseup', handleMouseUp);
+    if (!open) return;
+
+    if (dragging) {
+      window.addEventListener('mousemove', handleMouseMove);
+      window.addEventListener('mouseup', handleMouseUp);
+      window.addEventListener('touchmove', handleTouchMove, { passive: false });
+      window.addEventListener('touchend', handleMouseUp);
+    }
 
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
+      window.removeEventListener('touchmove', handleTouchMove);
+      window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [dragging, isMobile]);
+  }, [dragging, open]);
+
+  useEffect(() => {
+    const handleTouchMove = (e: TouchEvent) => {
+      e.preventDefault();
+    };
+  
+    if (dragging) {
+      document.addEventListener('touchmove', handleTouchMove, { passive: false });
+    }
+  
+    return () => {
+      document.removeEventListener('touchmove', handleTouchMove);
+    };
+  }, [dragging]);
 
   if (!open || !videoId) return null;
 
   return (
-    <Box
-      ref={containerRef}
-      onMouseDown={handleMouseDown}
-      sx={{
-        position: 'fixed',
-        top: minimized ? position.y : '50%',
-        left: minimized ? position.x : '50%',
-        transform: minimized ? 'none' : 'translate(-50%, -50%)',
-        width: minimized ? minimizedWidth : '80%',
-        maxWidth: minimized ? undefined : 800,
-        height: minimized ? minimizedHeight : 500,
-        bgcolor: 'background.paper',
-        borderRadius: 3,
-        boxShadow: 24,
-        p: 2,
-        overflow: 'hidden',
-        zIndex: 2000,
-        userSelect: 'none',
-        cursor: isMobile ? 'default' : dragging ? 'grabbing' : 'default',
-        display: 'flex',
-        flexDirection: 'column',
-        transition: 'all 0.3s ease',
-      }}
-    >
-      <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
-        {minimized ? (
-          <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: 'white' }}>
-            <CropSquareIcon fontSize="small" />
-          </IconButton>
-        ) : (
-          <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: 'white' }}>
-            <CropSquareIcon fontSize="small" />
-          </IconButton>
-        )}
-        <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: 'white' }}>
-          <CloseIcon fontSize="small" />
-        </IconButton>
-      </Box>
+    <>
+      {minimized && dragging && (
+         <Box
+         onTouchStart={(e) => e.preventDefault()}
+         onTouchMove={(e) => e.preventDefault()}
+         onTouchEnd={(e) => e.preventDefault()}
+         onMouseDown={(e) => e.preventDefault()}
+         sx={{
+           position: 'fixed',
+           top: 0,
+           left: 0,
+           width: '100vw',
+           height: '100vh',
+           backgroundColor: 'rgba(0, 0, 0, 0.2)',
+           zIndex: 1999,
+         }}
+       />
+      )}
 
-      <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
-        <iframe
-          width="100%"
-          height="100%"
-          src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
-          frameBorder="0"
-          allow="autoplay; encrypted-media"
-          allowFullScreen
-          style={{ borderRadius: 8 }}
-        />
+      <Box
+        ref={containerRef}
+        onMouseDown={handleMouseDown}
+        onTouchStart={handleTouchStart}
+        sx={{
+          position: 'fixed',
+          top: minimized ? position.y : '50%',
+          left: minimized ? position.x : '50%',
+          transform: minimized ? 'none' : 'translate(-50%, -50%)',
+          width: minimized ? minimizedWidth : '80%',
+          maxWidth: minimized ? undefined : 800,
+          height: minimized ? minimizedHeight : 500,
+          bgcolor: 'background.paper',
+          borderRadius: 3,
+          boxShadow: 24,
+          p: 2,
+          overflow: 'hidden',
+          zIndex: 2000,
+          userSelect: 'none',
+          cursor: dragging ? 'grabbing' : 'default',
+          display: 'flex',
+          flexDirection: 'column',
+          transition: 'all 0.3s ease',
+        }}
+      >
+        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
+          {minimized ? (
+            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: 'white' }}>
+              <CropSquareIcon fontSize="small" />
+            </IconButton>
+          ) : (
+            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: 'white' }}>
+              <CropSquareIcon fontSize="small" />
+            </IconButton>
+          )}
+          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: 'white' }}>
+            <CloseIcon fontSize="small" />
+          </IconButton>
+        </Box>
+
+        <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
+          <iframe
+            width="100%"
+            height="100%"
+            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
+            frameBorder="0"
+            allow="autoplay; encrypted-media"
+            allowFullScreen
+            style={{ borderRadius: 8 }}
+          />
+        </Box>
       </Box>
-    </Box>
+    </>
   );
 };
