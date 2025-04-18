@@ -244,22 +244,38 @@ export default function ChannelsPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{index + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(index)}>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveUp(index)} 
+                      disabled={index === 0}
+                    >
                       <ArrowUpward fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(index)}>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveDown(index)} 
+                      disabled={index === channels.length - 1}
+                    >
                       <ArrowDownward fontSize="small" />
                     </IconButton>
                   </Box>
                 </TableCell>
                 <TableCell>
+                {channel.logo_url ? (
                   <Image 
-                    src={channel.logo_url || '/placeholder.png'} 
+                    src={channel.logo_url} 
                     alt={channel.name}
                     width={50}
                     height={50}
                     style={{ objectFit: 'contain' }}
                   />
+                ) : (
+                  <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
+                    <Typography variant="caption" color="textSecondary">
+                      Sin logo
+                    </Typography>
+                  </Box>
+                )}
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>

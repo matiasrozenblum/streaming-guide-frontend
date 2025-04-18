@@ -56,7 +56,14 @@ export const LiveStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
     const fetchLiveStatus = async () => {
       try {
         const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-        const response = await api.get(`/schedules?day=${today}&live_status=true`);
+        const cookies = document.cookie.split(';');
+        const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+        const token = tokenCookie?.split('=')[1];
+        const response = await api.get(`/schedules?day=${today}&live_status=true`, {
+          headers: {
+            'Authorization': `Bearer ${token}`,
+          },
+        });
         
         const newStatus: LiveStatus = {};
         response.data.forEach((schedule: ScheduleData) => {
