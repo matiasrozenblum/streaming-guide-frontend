@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.0] - 2025-04-15
+
+### Changed
+- Now youtube link opens embedded modal
+
+
 ## [0.0.17] - 2025-04-15
 
 ### Added
