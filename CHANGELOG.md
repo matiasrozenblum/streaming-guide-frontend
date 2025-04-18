@@ -8,8 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added reorder channel feature to the channels backoffice
-- Added backend set order for the channels in the grid
 
 ### Changed
 
@@ -18,8 +16,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
-
-## [0.1.2] - 2025-04-15
 
 ## [0.1.1] - 2025-04-15
 
