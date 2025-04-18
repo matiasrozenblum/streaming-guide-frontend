@@ -41,8 +41,6 @@ export default function ProgramsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    start_time: '',
-    end_time: '',
     channel_id: '',
     logo_url: '',
     youtube_url: '',
@@ -110,8 +108,6 @@ export default function ProgramsPage() {
       setFormData({
         name: program.name,
         description: program.description || '',
-        start_time: program.start_time || '',
-        end_time: program.end_time || '',
         channel_id: program.channel_id?.toString() || '',
         logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
@@ -121,8 +117,6 @@ export default function ProgramsPage() {
       setFormData({
         name: '',
         description: '',
-        start_time: '',
-        end_time: '',
         channel_id: '',
         logo_url: '',
         youtube_url: '',
@@ -137,8 +131,6 @@ export default function ProgramsPage() {
     setFormData({
       name: '',
       description: '',
-      start_time: '',
-      end_time: '',
       channel_id: '',
       logo_url: '',
       youtube_url: '',
@@ -263,7 +255,6 @@ export default function ProgramsPage() {
               <TableCell>Logo</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Canal</TableCell>
-              <TableCell>Horario</TableCell>
               <TableCell>YouTube</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
@@ -285,11 +276,6 @@ export default function ProgramsPage() {
                 <TableCell>{program.name}</TableCell>
                 <TableCell>
                   {channels.find(c => c.id === program.channel_id)?.name || 'Sin canal'}
-                </TableCell>
-                <TableCell>
-                  {program.start_time && program.end_time
-                    ? `${program.start_time} - ${program.end_time}`
-                    : 'Sin horario'}
                 </TableCell>
                 <TableCell>
                   {program.youtube_url ? (
@@ -344,22 +330,6 @@ export default function ProgramsPage() {
               fullWidth
               multiline
               rows={3}
-            />
-            <TextField
-              label="Hora de inicio"
-              type="time"
-              value={formData.start_time}
-              onChange={(e) => setFormData({ ...formData, start_time: e.target.value })}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
-            />
-            <TextField
-              label="Hora de fin"
-              type="time"
-              value={formData.end_time}
-              onChange={(e) => setFormData({ ...formData, end_time: e.target.value })}
-              fullWidth
-              InputLabelProps={{ shrink: true }}
             />
             <FormControl fullWidth>
               <InputLabel>Canal</InputLabel>
