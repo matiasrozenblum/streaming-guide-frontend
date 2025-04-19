@@ -1,5 +1,3 @@
-const API_URL = ''; // Ahora no apuntamos directo a Railway, sino que usamos rutas locales (/api/*)
-
 export class PanelistsService {
   static async getAll() {
     const response = await fetch(`/api/panelists`, {
