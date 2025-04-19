@@ -12,4 +12,5 @@ export interface Program {
   youtube_url?: string;
   created_at: string;
   updated_at: string;
+  channel_name?: string;
 }
