@@ -87,7 +87,7 @@ export const TimeHeader = ({ isModalOpen }: Props) => {
             mr: '22px',
           }}
         >
-          Channel
+          Canal
         </Typography>
       </Box>
       
