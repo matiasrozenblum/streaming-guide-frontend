@@ -394,7 +394,7 @@ export function SchedulesTable() {
             {(programs || []).map((program) => (
               <TableRow key={program.id}>
                 <TableCell>{program.name}</TableCell>
-                <TableCell>{program.channel?.name || 'Sin canal'}</TableCell>
+                <TableCell> {program.channel_name || 'Sin canal'} </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {(program.schedules || []).map((schedule) => (
