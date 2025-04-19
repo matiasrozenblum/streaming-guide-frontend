@@ -1,14 +1,18 @@
+import { AuthService } from '@/utils/auth'; // corregí el import según donde esté tu auth.ts
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class PanelistsService {
-  static async getAll() {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
+  static getTokenOrThrow(): string {
+    const token = AuthService.getCorrectToken(true);
     if (!token) {
       throw new Error('No authentication token found');
     }
+    return token;
+  }
+
+  static async getAll() {
+    const token = this.getTokenOrThrow();
 
     const response = await fetch(`${API_URL}/panelists`, {
       headers: {
@@ -24,13 +28,7 @@ export class PanelistsService {
   }
 
   static async create(name: string) {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+    const token = this.getTokenOrThrow();
 
     const response = await fetch(`${API_URL}/panelists`, {
       method: 'POST',
@@ -54,13 +52,7 @@ export class PanelistsService {
   }
 
   static async addToProgram(panelistId: string, programId: number) {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+    const token = this.getTokenOrThrow();
 
     const response = await fetch(
       `${API_URL}/panelists/${panelistId}/programs/${programId}`,
@@ -77,7 +69,6 @@ export class PanelistsService {
       throw new Error('Failed to add panelist to program');
     }
 
-    // Check if response has content before trying to parse JSON
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return response.json();
@@ -86,13 +77,7 @@ export class PanelistsService {
   }
 
   static async removeFromProgram(panelistId: string, programId: number) {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
+    const token = this.getTokenOrThrow();
 
     const response = await fetch(
       `${API_URL}/panelists/${panelistId}/programs/${programId}`,
@@ -109,11 +94,10 @@ export class PanelistsService {
       throw new Error('Failed to remove panelist from program');
     }
 
-    // Check if response has content before trying to parse JSON
     const contentType = response.headers.get('content-type');
     if (contentType && contentType.includes('application/json')) {
       return response.json();
     }
     return null;
   }
-} 
+}
