@@ -41,6 +41,7 @@ export default function BackofficeLayout({
     { text: 'Programas', icon: <Schedule />, path: '/backoffice/programs' },
     { text: 'Panelistas', icon: <People />, path: '/backoffice/panelists' },
     { text: 'Horarios', icon: <Schedule />, path: '/backoffice/schedules' },
+    { text: 'Configuraciones', icon: <Schedule />, path: '/backoffice/configs' },
   ];
 
   const drawer = (

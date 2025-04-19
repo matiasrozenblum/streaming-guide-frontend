@@ -57,6 +57,11 @@ const nextConfig = {
         hostname: 'pbs.twimg.com',
         pathname: '/**',
       },
+      {
+        protocol: 'https',
+        hostname: 'bjfgpzfszvcfzuiisocj.supabase.co',
+        pathname: '/**',
+      },
     ],
   },
 }

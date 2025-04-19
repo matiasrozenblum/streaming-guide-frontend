@@ -22,7 +22,7 @@ import {
   Alert,
   Snackbar
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon } from '@mui/icons-material';
+import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward } from '@mui/icons-material';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
 
@@ -38,6 +38,7 @@ export default function ChannelsPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   useEffect(() => {
     fetchChannels();
@@ -45,7 +46,21 @@ export default function ChannelsPage() {
 
   const fetchChannels = async () => {
     try {
-      const response = await fetch('/api/channels');
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      console.log('Token:', token);
+      
+      if (!token) {
+        throw new Error('No authentication token found');
+      }
+
+      const response = await fetch('/api/channels', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
+      
       if (!response.ok) {
         throw new Error('Failed to fetch channels');
       }
@@ -56,6 +71,41 @@ export default function ChannelsPage() {
       setError('Error al cargar los canales');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const newChannels = [...channels];
+    [newChannels[index - 1], newChannels[index]] = [newChannels[index], newChannels[index - 1]];
+    setChannels(newChannels);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === channels.length - 1) return;
+    const newChannels = [...channels];
+    [newChannels[index], newChannels[index + 1]] = [newChannels[index + 1], newChannels[index]];
+    setChannels(newChannels);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      setSavingOrder(true);
+      const ids = channels.map(channel => channel.id);
+      const response = await fetch('/api/channels/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!response.ok) {
+        throw new Error('Error al guardar el orden');
+      }
+      setSuccess('Orden guardado correctamente');
+    } catch (error) {
+      console.error('Error saving order:', error);
+      setError(error instanceof Error ? error.message : 'Error al guardar el orden');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -90,6 +140,11 @@ export default function ChannelsPage() {
 
   const handleSubmit = async () => {
     try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      console.log('Token:', token);
+
       const url = editingChannel 
         ? `/api/channels/${editingChannel.id}`
         : '/api/channels';
@@ -100,6 +155,7 @@ export default function ChannelsPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -124,8 +180,16 @@ export default function ChannelsPage() {
     }
 
     try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      console.log('Token:', token);
+      
       const response = await fetch(`/api/channels/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {
@@ -167,10 +231,21 @@ export default function ChannelsPage() {
         </Button>
       </Box>
 
+      <Button 
+        variant="contained" 
+        color="primary" 
+        onClick={handleSaveOrder} 
+        disabled={savingOrder}
+        sx={{ mb: 2 }}
+      >
+        {savingOrder ? 'Guardando...' : 'Guardar Orden'}
+      </Button>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Orden</TableCell>
               <TableCell>Logo</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>YouTube</TableCell>
@@ -178,16 +253,43 @@ export default function ChannelsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {channels.map((channel) => (
+            {channels.map((channel, index) => (
               <TableRow key={channel.id}>
                 <TableCell>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    #{index + 1}
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveUp(index)} 
+                      disabled={index === 0}
+                    >
+                      <ArrowUpward fontSize="small" />
+                    </IconButton>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveDown(index)} 
+                      disabled={index === channels.length - 1}
+                    >
+                      <ArrowDownward fontSize="small" />
+                    </IconButton>
+                  </Box>
+                </TableCell>
+                <TableCell>
+                {channel.logo_url ? (
                   <Image 
-                    src={channel.logo_url || '/placeholder.png'} 
+                    src={channel.logo_url} 
                     alt={channel.name}
                     width={50}
                     height={50}
                     style={{ objectFit: 'contain' }}
                   />
+                ) : (
+                  <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
+                    <Typography variant="caption" color="textSecondary">
+                      Sin logo
+                    </Typography>
+                  </Box>
+                )}
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
@@ -265,4 +367,4 @@ export default function ChannelsPage() {
       </Snackbar>
     </Box>
   );
-} 
+}

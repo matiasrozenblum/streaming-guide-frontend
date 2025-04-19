@@ -30,13 +30,24 @@ export default function Home() {
       setLoading(true);
       // First fetch today's schedules for immediate display
       const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-      const todayResponse = await api.get(`/schedules?day=${today}`);
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      const todayResponse = await api.get(`/schedules?day=${today}`, {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       console.log('📦 Today\'s schedules:', todayResponse.data);
       setSchedules(todayResponse.data);
       setLoading(false);
 
       // Then fetch all schedules in the background
-      const allResponse = await api.get('/schedules');
+      const allResponse = await api.get('/schedules', {
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
+      });
       console.log('📦 All schedules loaded:', allResponse.data);
       setSchedules(allResponse.data);
     } catch (err) {
