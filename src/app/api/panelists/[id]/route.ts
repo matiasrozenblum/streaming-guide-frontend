@@ -16,7 +16,7 @@ export async function PATCH(
   try {
     const body = await request.json();
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
-      method: 'PUT',
+      method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${session.accessToken}`,
         'Content-Type': 'application/json',
