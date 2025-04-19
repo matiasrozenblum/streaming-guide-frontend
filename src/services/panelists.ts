@@ -1,22 +1,11 @@
-import { AuthService } from '@/services/auth'; // corregí el import según donde esté tu auth.ts
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
+const API_URL = ''; // Ahora no apuntamos directo a Railway, sino que usamos rutas locales (/api/*)
 
 export class PanelistsService {
-  static getTokenOrThrow(): string {
-    const token = AuthService.getCorrectToken(true);
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    return token;
-  }
-
   static async getAll() {
-    const token = this.getTokenOrThrow();
-
-    const response = await fetch(`${API_URL}/panelists`, {
+    const response = await fetch(`/api/panelists`, {
+      method: 'GET',
       headers: {
-        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json',
       },
     });
 
@@ -28,13 +17,10 @@ export class PanelistsService {
   }
 
   static async create(name: string) {
-    const token = this.getTokenOrThrow();
-
-    const response = await fetch(`${API_URL}/panelists`, {
+    const response = await fetch(`/api/panelists`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
       },
       body: JSON.stringify({ name }),
     });
@@ -52,18 +38,12 @@ export class PanelistsService {
   }
 
   static async addToProgram(panelistId: string, programId: number) {
-    const token = this.getTokenOrThrow();
-
-    const response = await fetch(
-      `${API_URL}/panelists/${panelistId}/programs/${programId}`,
-      {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`/api/panelists/${panelistId}/programs/${programId}`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       throw new Error('Failed to add panelist to program');
@@ -77,18 +57,12 @@ export class PanelistsService {
   }
 
   static async removeFromProgram(panelistId: string, programId: number) {
-    const token = this.getTokenOrThrow();
-
-    const response = await fetch(
-      `${API_URL}/panelists/${panelistId}/programs/${programId}`,
-      {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
-      }
-    );
+    const response = await fetch(`/api/panelists/${panelistId}/programs/${programId}`, {
+      method: 'DELETE',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+    });
 
     if (!response.ok) {
       throw new Error('Failed to remove panelist from program');
