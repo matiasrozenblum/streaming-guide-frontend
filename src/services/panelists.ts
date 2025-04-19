@@ -1,4 +1,4 @@
-import { AuthService } from '@/utils/auth'; // corregí el import según donde esté tu auth.ts
+import { AuthService } from '@/services/auth'; // corregí el import según donde esté tu auth.ts
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
