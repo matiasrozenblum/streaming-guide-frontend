@@ -1,9 +1,11 @@
-import { getServerToken } from "@/utils/auth-server";
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export class PanelistsService {
   static async getAll() {
-    const token = await getServerToken(true);
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+    const token = tokenCookie?.split('=')[1];
+
     if (!token) {
       throw new Error('No authentication token found');
     }
@@ -22,7 +24,9 @@ export class PanelistsService {
   }
 
   static async create(name: string) {
-    const token = await getServerToken(true);
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+    const token = tokenCookie?.split('=')[1];
 
     if (!token) {
       throw new Error('No authentication token found');
@@ -50,7 +54,9 @@ export class PanelistsService {
   }
 
   static async addToProgram(panelistId: string, programId: number) {
-    const token = await getServerToken(true);
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+    const token = tokenCookie?.split('=')[1];
 
     if (!token) {
       throw new Error('No authentication token found');
@@ -80,7 +86,9 @@ export class PanelistsService {
   }
 
   static async removeFromProgram(panelistId: string, programId: number) {
-    const token = await getServerToken(true);
+    const cookies = document.cookie.split(';');
+    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+    const token = tokenCookie?.split('=')[1];
 
     if (!token) {
       throw new Error('No authentication token found');
