@@ -28,7 +28,6 @@ import { Edit, Delete, Add, Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';
-import { Channel } from '@/types/channel';
 
 const formatTime = (time: string) => {
   if (!time) return '';
@@ -54,7 +53,6 @@ interface ProgramWithSchedules extends Program {
 
 export function SchedulesTable() {
   const [programs, setPrograms] = useState<ProgramWithSchedules[]>([]);
-  const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedProgram, setSelectedProgram] = useState<ProgramWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleType | null>(null);
@@ -396,9 +394,7 @@ export function SchedulesTable() {
             {(programs || []).map((program) => (
               <TableRow key={program.id}>
                 <TableCell>{program.name}</TableCell>
-                <TableCell>
-                  {channels.find(c => c.id === program.channel_id)?.name || 'Sin canal'}
-                </TableCell>
+                <TableCell> {program.channel_name || 'Sin canal'} </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {(program.schedules || []).map((schedule) => (
