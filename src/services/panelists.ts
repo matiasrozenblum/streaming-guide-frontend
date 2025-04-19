@@ -1,10 +1,7 @@
 export class PanelistsService {
   static async getAll() {
-    const response = await fetch(`/api/panelists`, {
+    const response = await fetch('/api/panelists', {
       method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-      },
     });
 
     if (!response.ok) {
@@ -15,7 +12,7 @@ export class PanelistsService {
   }
 
   static async create(name: string) {
-    const response = await fetch(`/api/panelists`, {
+    const response = await fetch('/api/panelists', {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -27,12 +24,7 @@ export class PanelistsService {
       throw new Error('Failed to create panelist');
     }
 
-    const data = await response.json();
-    if (!data || !data.id) {
-      throw new Error('Invalid response from server');
-    }
-
-    return data;
+    return response.json();
   }
 
   static async addToProgram(panelistId: string, programId: number) {
