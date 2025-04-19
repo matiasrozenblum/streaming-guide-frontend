@@ -25,9 +25,6 @@ import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
 import Image from 'next/image';
-import { PanelistsService } from '@/services/panelists';
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 interface PanelistsTableProps {
   onError: (message: string) => void;
@@ -40,15 +37,14 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const [openProgramsDialog, setOpenProgramsDialog] = useState(false);
   const [editingPanelist, setEditingPanelist] = useState<Panelist | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    avatar_url: '',
-  });
+  const [formData, setFormData] = useState({ name: '', avatar_url: '' });
   const [selectedPrograms, setSelectedPrograms] = useState<Program[]>([]);
 
   const fetchPanelists = useCallback(async () => {
     try {
-      const data = await PanelistsService.getAll();
+      const response = await fetch('/api/panelists');
+      if (!response.ok) throw new Error('Failed to fetch panelists');
+      const data = await response.json();
       setPanelists(data);
     } catch (error) {
       onError('Error loading panelists');
@@ -85,10 +81,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       setSelectedPrograms(panelist.programs || []);
     } else {
       setEditingPanelist(null);
-      setFormData({
-        name: '',
-        avatar_url: '',
-      });
+      setFormData({ name: '', avatar_url: '' });
       setSelectedPrograms([]);
     }
     setOpenDialog(true);
@@ -103,10 +96,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingPanelist(null);
-    setFormData({
-      name: '',
-      avatar_url: '',
-    });
+    setFormData({ name: '', avatar_url: '' });
     setSelectedPrograms([]);
   };
 
@@ -120,15 +110,14 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     e.preventDefault();
     try {
       const url = editingPanelist
-        ? `${API_URL}/panelists/${editingPanelist.id}`
-        : `${API_URL}/panelists`;
+        ? `/api/panelists/${editingPanelist.id}`
+        : `/api/panelists`;
       const method = editingPanelist ? 'PATCH' : 'POST';
 
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
         },
         body: JSON.stringify(formData),
       });
@@ -145,10 +134,10 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this panelist?')) return;
     try {
-      const response = await fetch(`${API_URL}/panelists/${id}`, {
+      const response = await fetch(`/api/panelists/${id}`, {
         method: 'DELETE',
         headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`,
+          'Content-Type': 'application/json',
         },
       });
       if (!response.ok) throw new Error('Failed to delete panelist');
@@ -162,7 +151,13 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleAddToProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      await PanelistsService.addToProgram(editingPanelist.id, programId);
+      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to add panelist to program');
       fetchPanelists();
     } catch (error) {
       onError('Error adding panelist to program');
@@ -173,7 +168,13 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleRemoveFromProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      await PanelistsService.removeFromProgram(editingPanelist.id, programId);
+      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to remove panelist from program');
       fetchPanelists();
     } catch (error) {
       onError('Error removing panelist from program');
@@ -189,11 +190,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
         <Typography variant="h6">Panelists</Typography>
-        <Button
-          variant="contained"
-          startIcon={<Add />}
-          onClick={() => handleOpenDialog()}
-        >
+        <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
           Add Panelist
         </Button>
       </Box>
@@ -251,10 +248,10 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         </Table>
       </TableContainer>
 
+      {/* Dialogs */}
+      {/* Add/Edit Panelist */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
-          {editingPanelist ? 'Edit Panelist' : 'Add Panelist'}
-        </DialogTitle>
+        <DialogTitle>{editingPanelist ? 'Edit Panelist' : 'Add Panelist'}</DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
             <TextField
@@ -263,9 +260,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
               label="Name"
               fullWidth
               value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               required
             />
             <TextField
@@ -273,9 +268,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
               label="Avatar URL"
               fullWidth
               value={formData.avatar_url}
-              onChange={(e) =>
-                setFormData({ ...formData, avatar_url: e.target.value })
-              }
+              onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
             />
           </DialogContent>
           <DialogActions>
@@ -287,15 +280,13 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         </form>
       </Dialog>
 
+      {/* Manage Programs Dialog */}
       <Dialog open={openProgramsDialog} onClose={handleCloseProgramsDialog}>
         <DialogTitle>Manage Programs</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Autocomplete
-              options={programs.filter(
-                (program) =>
-                  !selectedPrograms.some((p) => p.id === program.id)
-              )}
+              options={programs.filter((program) => !selectedPrograms.some((p) => p.id === program.id))}
               getOptionLabel={(option) => option.name}
               renderInput={(params) => (
                 <TextField {...params} label="Add to Program" fullWidth />
@@ -324,4 +315,4 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       </Dialog>
     </Box>
   );
-} 
+}
