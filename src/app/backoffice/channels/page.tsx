@@ -140,6 +140,11 @@ export default function ChannelsPage() {
 
   const handleSubmit = async () => {
     try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      console.log('Token:', token);
+
       const url = editingChannel 
         ? `/api/channels/${editingChannel.id}`
         : '/api/channels';
@@ -150,6 +155,7 @@ export default function ChannelsPage() {
         method,
         headers: {
           'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`,
         },
         body: JSON.stringify(formData),
       });
@@ -174,8 +180,16 @@ export default function ChannelsPage() {
     }
 
     try {
+      const cookies = document.cookie.split(';');
+      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+      const token = tokenCookie?.split('=')[1];
+      console.log('Token:', token);
+      
       const response = await fetch(`/api/channels/${id}`, {
         method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`,
+        },
       });
 
       if (!response.ok) {

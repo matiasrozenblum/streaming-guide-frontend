@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.4] - 2025-04-19
+
+### Fixed
+- Added token to un-authenticated requests in channels backoffice
+- Fixed channel not showing correctly in schedules backoffice
+
 ## [0.1.3] - 2025-04-18
 
 ### Changed
