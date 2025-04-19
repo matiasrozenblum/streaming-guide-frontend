@@ -1,14 +1,13 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerToken } from '@/utils/auth-server';
 
 export async function PATCH(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const token = await getServerToken(true);
 
-  if (!session) {
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await params;
@@ -18,7 +17,7 @@ export async function PATCH(
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
       method: 'PATCH',
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),
@@ -40,9 +39,9 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string }> }
 ) {
-  const session = await getServerSession(authOptions);
+  const token = await getServerToken(true);
 
-  if (!session) {
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await params;
@@ -51,7 +50,7 @@ export async function DELETE(
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
       method: 'DELETE',
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${token}`,
       },
     });
 
