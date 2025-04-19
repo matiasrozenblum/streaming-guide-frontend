@@ -9,6 +9,7 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
+import { AuthService } from '@/services/auth';
 
 const MotionBox = motion(Box);
 
@@ -30,9 +31,7 @@ export default function Home() {
       setLoading(true);
       // First fetch today's schedules for immediate display
       const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
+      const token = AuthService.getCorrectToken(false);
       const todayResponse = await api.get(`/schedules?day=${today}`, {
         headers: {
           'Authorization': `Bearer ${token}`,
