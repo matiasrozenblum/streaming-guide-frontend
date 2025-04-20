@@ -94,7 +94,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       if (!isDown) return;
       e.preventDefault();
       const x = e.pageX - scrollContainer.offsetLeft;
-      const walk = (x - startX) * 2; // *2 para que se mueva un poco más rápido
+      const walk = (x - startX) * 1.2;
       scrollContainer.scrollLeft = scrollLeft - walk;
     };
   
@@ -176,6 +176,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           position: 'relative',
           mr: '-8px',
           pr: '8px',
+          userSelect: 'none',
+          WebkitUserDrag: 'none',
           '&::-webkit-scrollbar': {
             width: '8px',
             height: '8px',
