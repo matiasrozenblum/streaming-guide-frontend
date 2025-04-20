@@ -19,14 +19,36 @@ import {
 import { Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
 
+interface ProgramChangeData {
+  name?: string;
+  logo_url?: string;
+}
+
+interface ScheduleChangeData {
+  day_of_week?: string;
+  start_time?: string;
+  end_time?: string;
+}
+
+type ChangeData = ProgramChangeData | ScheduleChangeData;
+
 interface ProposedChange {
   id: number;
   channelName: string;
   programName: string;
   action: 'create' | 'update' | 'delete';
-  before?: any;
-  after: any;
+  entityType: 'program' | 'schedule'; // 🔥 Para saber qué tipo de cambio es
+  before?: ChangeData;
+  after: ChangeData;
 }
+
+const FIELD_LABELS: Record<string, string> = {
+    day_of_week: 'Día',
+    start_time: 'Inicio',
+    end_time: 'Fin',
+    name: 'Nombre',
+    logo_url: 'Logo',
+  };
 
 export default function ProposedChangesTable() {
   const [changes, setChanges] = useState<ProposedChange[]>([]);
@@ -80,20 +102,22 @@ export default function ProposedChangesTable() {
     }
   };
 
-  const renderBeforeField = (field: string, beforeValue: any, afterValue: any) => {
+  const renderBeforeField = (field: string, beforeValue?: string, afterValue?: string) => {
     const isDifferent = beforeValue !== afterValue;
+    const label = FIELD_LABELS[field] || field;
     return (
       <Typography variant="body2" sx={{ color: isDifferent ? 'error.main' : 'text.primary' }}>
-        <strong>{field}:</strong> {beforeValue ?? '-'}
+        <strong>{label}:</strong> {beforeValue ?? '-'}
       </Typography>
     );
   };
-
-  const renderAfterField = (field: string, beforeValue: any, afterValue: any) => {
+  
+  const renderAfterField = (field: string, beforeValue?: string, afterValue?: string) => {
     const isDifferent = beforeValue !== afterValue;
+    const label = FIELD_LABELS[field] || field;
     return (
       <Typography variant="body2" sx={{ color: isDifferent ? 'success.main' : 'text.primary' }}>
-        <strong>{field}:</strong> {afterValue ?? '-'}
+        <strong>{label}:</strong> {afterValue ?? '-'}
       </Typography>
     );
   };
@@ -136,9 +160,18 @@ export default function ProposedChangesTable() {
                   <TableCell>
                     {change.before ? (
                       <Box sx={{ whiteSpace: 'pre-line' }}>
-                        {renderBeforeField('Día', change.before.day_of_week, change.after?.day_of_week)}
-                        {renderBeforeField('Inicio', change.before.start_time, change.after?.start_time)}
-                        {renderBeforeField('Fin', change.before.end_time, change.after?.end_time)}
+                        {change.entityType === 'schedule' ? (
+                        <>
+                            {renderBeforeField('day_of_week', (change.before as ScheduleChangeData)?.day_of_week, (change.after as ScheduleChangeData)?.day_of_week)}
+                            {renderBeforeField('start_time', (change.before as ScheduleChangeData)?.start_time, (change.after as ScheduleChangeData)?.start_time)}
+                            {renderBeforeField('end_time', (change.before as ScheduleChangeData)?.end_time, (change.after as ScheduleChangeData)?.end_time)}
+                        </>
+                        ) : (
+                        <>
+                            {renderBeforeField('name', (change.before as ProgramChangeData)?.name, (change.after as ProgramChangeData)?.name)}
+                            {renderBeforeField('logo_url', (change.before as ProgramChangeData)?.logo_url, (change.after as ProgramChangeData)?.logo_url)}
+                        </>
+                        )}
                       </Box>
                     ) : (
                       '-'
@@ -147,9 +180,18 @@ export default function ProposedChangesTable() {
                   <TableCell>
                     {change.after ? (
                       <Box sx={{ whiteSpace: 'pre-line' }}>
-                        {renderAfterField('Día', change.before?.day_of_week, change.after.day_of_week)}
-                        {renderAfterField('Inicio', change.before?.start_time, change.after.start_time)}
-                        {renderAfterField('Fin', change.before?.end_time, change.after.end_time)}
+                        {change.entityType === 'schedule' ? (
+                        <>
+                            {renderAfterField('day_of_week', (change.before as ScheduleChangeData)?.day_of_week, (change.after as ScheduleChangeData)?.day_of_week)}
+                            {renderAfterField('start_time', (change.before as ScheduleChangeData)?.start_time, (change.after as ScheduleChangeData)?.start_time)}
+                            {renderAfterField('end_time', (change.before as ScheduleChangeData)?.end_time, (change.after as ScheduleChangeData)?.end_time)}
+                        </>
+                        ) : (
+                        <>
+                            {renderAfterField('name', (change.before as ProgramChangeData)?.name, (change.after as ProgramChangeData)?.name)}
+                            {renderAfterField('logo_url', (change.before as ProgramChangeData)?.logo_url, (change.after as ProgramChangeData)?.logo_url)}
+                        </>
+                        )}
                       </Box>
                     ) : (
                       '-'
