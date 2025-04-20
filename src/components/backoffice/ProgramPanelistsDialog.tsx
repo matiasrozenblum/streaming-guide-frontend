@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
-import { PanelistsService } from '@/services/panelists';
 
 interface Props {
   open: boolean;
@@ -33,7 +32,9 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
   const fetchPanelists = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await PanelistsService.getAll();
+      const response = await fetch('/api/panelists');
+      if (!response.ok) throw new Error('Failed to fetch panelists');
+      const data = await response.json();
       setPanelists(data);
     } catch (error) {
       onError('Error loading panelists');
@@ -52,7 +53,14 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
 
   const handleAddPanelist = async (panelist: Panelist) => {
     try {
-      await PanelistsService.addToProgram(panelist.id, program.id);
+      const response = await fetch(`/api/panelists/${panelist.id}/programs/${program.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to add panelist to program');
+
       setSelectedPanelists([...selectedPanelists, panelist]);
       setSearchQuery('');
     } catch (error) {
@@ -63,7 +71,14 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
 
   const handleRemovePanelist = async (panelist: Panelist) => {
     try {
-      await PanelistsService.removeFromProgram(panelist.id, program.id);
+      const response = await fetch(`/api/panelists/${panelist.id}/programs/${program.id}`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+      if (!response.ok) throw new Error('Failed to remove panelist from program');
+
       setSelectedPanelists(selectedPanelists.filter(p => p.id !== panelist.id));
     } catch (error) {
       onError('Error removing panelist from program');
@@ -76,13 +91,31 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
 
     try {
       setLoading(true);
-      // First create the panelist
-      const newPanelist = await PanelistsService.create(searchQuery);
-      
-      // Then add it to the program
-      await PanelistsService.addToProgram(newPanelist.id, program.id);
-      
-      // Update the local state
+
+      // 1. Crear el panelista
+      const createResponse = await fetch('/api/panelists', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ name: searchQuery.trim() }),
+      });
+
+      if (!createResponse.ok) throw new Error('Failed to create panelist');
+
+      const newPanelist = await createResponse.json();
+
+      // 2. Agregarlo al programa
+      const addResponse = await fetch(`/api/panelists/${newPanelist.id}/programs/${program.id}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (!addResponse.ok) throw new Error('Failed to add new panelist to program');
+
+      // 3. Actualizar estado
       setPanelists([...panelists, newPanelist]);
       setSelectedPanelists([...selectedPanelists, newPanelist]);
       setSearchQuery('');
@@ -95,7 +128,7 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
   };
 
   const filteredPanelists = panelists.filter(
-    panelist => 
+    (panelist) =>
       panelist.name.toLowerCase().includes(searchQuery.toLowerCase()) &&
       !selectedPanelists.some(p => p.id === panelist.id)
   );
@@ -173,4 +206,4 @@ export default function ProgramPanelistsDialog({ open, onClose, program, onError
       </DialogActions>
     </Dialog>
   );
-} 
+}

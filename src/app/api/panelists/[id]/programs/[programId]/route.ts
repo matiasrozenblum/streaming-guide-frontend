@@ -1,13 +1,15 @@
+import { getServerToken } from '@/utils/auth-server';
 import { NextResponse } from 'next/server';
 
 export async function POST(
   request: Request,
   { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader) {
+  const token = await getServerToken(true);
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
   const { id, programId } = await params;
 
   try {
@@ -16,7 +18,7 @@ export async function POST(
       {
         method: 'POST',
         headers: {
-          'Authorization': authHeader,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }
@@ -39,10 +41,11 @@ export async function DELETE(
   request: Request,
   { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
-  const authHeader = request.headers.get('Authorization');
-  if (!authHeader) {
+  const token = await getServerToken(true);
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
+
   const { id, programId } = await params;
 
   try {
@@ -51,7 +54,7 @@ export async function DELETE(
       {
         method: 'DELETE',
         headers: {
-          'Authorization': authHeader,
+          'Authorization': `Bearer ${token}`,
           'Content-Type': 'application/json',
         },
       }
@@ -68,4 +71,4 @@ export async function DELETE(
     console.error('Error removing panelist from program:', error);
     return NextResponse.json({ error: 'Failed to remove panelist from program' }, { status: 500 });
   }
-} 
+}

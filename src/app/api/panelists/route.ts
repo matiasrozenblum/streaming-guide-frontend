@@ -1,18 +1,17 @@
 import { NextResponse } from 'next/server';
-import { getServerSession } from 'next-auth';
-import { authOptions } from '@/lib/auth';
+import { getServerToken } from '@/utils/auth-server';
 
 export async function GET() {
-  const session = await getServerSession(authOptions);
+  const token = await getServerToken(true);
 
-  if (!session) {
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
   try {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists`, {
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${token}`,
       },
     });
 
@@ -29,9 +28,9 @@ export async function GET() {
 }
 
 export async function POST(request: Request) {
-  const session = await getServerSession(authOptions);
+  const token = await getServerToken(true);
 
-  if (!session) {
+  if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
@@ -40,7 +39,7 @@ export async function POST(request: Request) {
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists`, {
       method: 'POST',
       headers: {
-        'Authorization': `Bearer ${session.accessToken}`,
+        'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
       body: JSON.stringify(body),

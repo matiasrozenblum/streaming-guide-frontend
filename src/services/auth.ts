@@ -63,4 +63,8 @@ export class AuthService {
       return null;
     }
   }
+
+  static getCorrectToken(isBackoffice: boolean = false): string | null {
+    return this.getToken(isBackoffice);
+  }
 } 

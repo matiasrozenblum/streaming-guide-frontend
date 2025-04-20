@@ -8,6 +8,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Made grid horizontally draggable for trackpadless PCs
 
 ### Changed
 
@@ -17,10 +18,31 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.3] - 2025-04-18
+## [0.1.7] - 2025-04-19
 
 ### Added
-- Made grid horizontally draggable for trackpadless PCs
+- Added favicon
+
+## [0.1.6] - 2025-04-19
+
+### Added
+- Added logo
+
+## [0.1.5] - 2025-04-19
+
+### Added
+- Added configs backoffice
+
+## [0.1.4] - 2025-04-19
+
+### Fixed
+- Added token to un-authenticated requests in channels backoffice
+- Fixed channel not showing correctly in schedules backoffice
+
+## [0.1.3] - 2025-04-18
+
+### Changed
+- Changed Channel for Canal
 
 ## [0.1.2] - 2025-04-18
 
