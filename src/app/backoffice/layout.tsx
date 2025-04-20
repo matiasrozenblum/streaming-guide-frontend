@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Box, Drawer, AppBar, Toolbar, Typography, List, ListItem, ListItemIcon, ListItemText, IconButton, ListItemButton } from '@mui/material';
-import { Menu as MenuIcon, Dashboard, LiveTv, People, Schedule } from '@mui/icons-material';
+import { Menu as MenuIcon, Dashboard, LiveTv, People, Schedule, ScheduleTwoTone } from '@mui/icons-material';
 import { AuthService } from '@/services/auth';
 
 export default function BackofficeLayout({
@@ -42,6 +42,7 @@ export default function BackofficeLayout({
     { text: 'Panelistas', icon: <People />, path: '/backoffice/panelists' },
     { text: 'Horarios', icon: <Schedule />, path: '/backoffice/schedules' },
     { text: 'Configuraciones', icon: <Schedule />, path: '/backoffice/configs' },
+    { text: 'Cambios Propuestos', icon: <ScheduleTwoTone />, path: '/backoffice/changes' },
   ];
 
   const drawer = (

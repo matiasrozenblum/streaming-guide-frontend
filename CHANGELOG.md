@@ -17,7 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.8] - 2025-04-19
+## [0.1.9] - 2025-04-20
+
+### Added
+- Added proposed changes backoffice section
+
+## [0.1.8] - 2025-04-20
 
 ### Added
 - Made grid horizontally draggable for trackpadless PCs
