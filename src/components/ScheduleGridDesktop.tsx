@@ -65,6 +65,52 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     if (isToday) scrollToNow();
   }, [isToday, scrollToNow]);
 
+  useEffect(() => {
+    const scrollContainer = scrollRef.current;
+    if (!scrollContainer) return;
+  
+    let isDown = false;
+    let startX = 0;
+    let scrollLeft = 0;
+  
+    const onMouseDown = (e: MouseEvent) => {
+      isDown = true;
+      scrollContainer.classList.add('dragging');
+      startX = e.pageX - scrollContainer.offsetLeft;
+      scrollLeft = scrollContainer.scrollLeft;
+    };
+  
+    const onMouseLeave = () => {
+      isDown = false;
+      scrollContainer.classList.remove('dragging');
+    };
+  
+    const onMouseUp = () => {
+      isDown = false;
+      scrollContainer.classList.remove('dragging');
+    };
+  
+    const onMouseMove = (e: MouseEvent) => {
+      if (!isDown) return;
+      e.preventDefault();
+      const x = e.pageX - scrollContainer.offsetLeft;
+      const walk = (x - startX) * 1.2;
+      scrollContainer.scrollLeft = scrollLeft - walk;
+    };
+  
+    scrollContainer.addEventListener('mousedown', onMouseDown);
+    scrollContainer.addEventListener('mouseleave', onMouseLeave);
+    scrollContainer.addEventListener('mouseup', onMouseUp);
+    scrollContainer.addEventListener('mousemove', onMouseMove);
+  
+    return () => {
+      scrollContainer.removeEventListener('mousedown', onMouseDown);
+      scrollContainer.removeEventListener('mouseleave', onMouseLeave);
+      scrollContainer.removeEventListener('mouseup', onMouseUp);
+      scrollContainer.removeEventListener('mousemove', onMouseMove);
+    };
+  }, []);
+
   if (!channels.length || !schedules.length) {
     return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
   }
@@ -130,6 +176,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           position: 'relative',
           mr: '-8px',
           pr: '8px',
+          userSelect: 'none',
+          WebkitUserDrag: 'none',
           '&::-webkit-scrollbar': {
             width: '8px',
             height: '8px',
@@ -144,6 +192,12 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             '&:hover': {
               background: mode === 'light' ? '#94a3b8' : '#64748b',
             },
+          },
+          '&.dragging': {
+            cursor: 'grabbing',
+          },
+          '&': {
+            cursor: 'grab',
           },
         }}
       >
