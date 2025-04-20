@@ -14,6 +14,9 @@ const inter = Inter({ subsets: ["latin"] });
 export const metadata: Metadata = {
   title: "La Guía del Streaming",
   description: "Guía de programación de streaming",
+  icons: {
+    icon: '/favicon.png',
+  },
 };
 
 export default function RootLayout({
