@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.10] - 2025-04-21
+
+### Changed
+- Improved requests to backend, for better performance and avoid stuttering.
+
 ## [0.1.9] - 2025-04-20
 
 ### Added
