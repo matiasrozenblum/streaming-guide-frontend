@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.11] - 2025-04-23
+
+### Added
+- Added GTM integration
+
 ## [0.1.10] - 2025-04-21
 
 ### Changed
