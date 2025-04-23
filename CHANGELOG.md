@@ -18,6 +18,29 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.11] - 2025-04-23
+
+### Added
+- Added GTM integration
+
+## [0.1.10] - 2025-04-21
+
+### Changed
+- Improved requests to backend, for better performance and avoid stuttering.
+
+## [0.1.9] - 2025-04-20
+
+### Added
+- Added proposed changes backoffice section
+
+## [0.1.8] - 2025-04-20
+
+### Added
+- Made grid horizontally draggable for trackpadless PCs
+
+### Changed
+- Reduced logo blurry effect
+
 ## [0.1.7] - 2025-04-19
 
 ### Added

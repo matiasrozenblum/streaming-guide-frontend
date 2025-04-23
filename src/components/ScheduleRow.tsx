@@ -131,7 +131,7 @@ export const ScheduleRow = ({
             backgroundSize: 'contain',
             backgroundPosition: 'center',
             backgroundRepeat: 'no-repeat',
-            filter: 'blur(4px)',
+            filter: 'blur(2px)',
             opacity: 0.15,
           }}
         />
