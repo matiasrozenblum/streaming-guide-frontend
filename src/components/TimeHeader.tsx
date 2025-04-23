@@ -49,7 +49,10 @@ export const TimeHeader = ({ isModalOpen }: Props) => {
       sx={{ 
         boxShadow: mode === 'light'
           ? '0 1px 2px rgba(0,0,0,0.05)'
-          : '0 1px 2px rgba(0,0,0,0.2)'
+          : '0 1px 2px rgba(0,0,0,0.2)',
+        position: 'sticky',
+        top: 0,
+        zIndex: 1000,
       }}
     >
       <Box
