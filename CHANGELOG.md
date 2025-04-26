@@ -18,10 +18,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.11] - 2025-04-23
+## [0.1.11] - 2025-04-26
 
-### Added
-- Added GTM integration
+### Changed
+- Changed vertical scrolling. Now only the grid scrolls, not just the whole webpage
+- Added a delay to the tooltip showing up logic
 
 ## [0.1.10] - 2025-04-21
 

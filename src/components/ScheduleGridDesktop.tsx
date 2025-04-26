@@ -24,39 +24,25 @@ interface Props {
 
 export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
+  const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
-
   const isToday = selectedDay === today;
-  const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
+  const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
 
-  const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
-
   useEffect(() => {
-    if (nowIndicatorRef.current) {
-      observerRef(nowIndicatorRef.current);
-    }
+    if (nowIndicatorRef.current) observerRef(nowIndicatorRef.current);
   }, [observerRef]);
 
-  const daysOfWeek = [
-    { label: 'Lun', value: 'monday' },
-    { label: 'Mar', value: 'tuesday' },
-    { label: 'Mié', value: 'wednesday' },
-    { label: 'Jue', value: 'thursday' },
-    { label: 'Vie', value: 'friday' },
-    { label: 'Sáb', value: 'saturday' },
-    { label: 'Dom', value: 'sunday' },
-  ];
-
+  // Scroll to now
   const scrollToNow = useCallback(() => {
     const now = dayjs();
-    const minutesFromStart = (now.hour() * 60) + now.minute();
-    const scrollPosition = (minutesFromStart * pixelsPerMinute) - 200;
+    const minutes = now.hour() * 60 + now.minute();
     scrollRef.current?.scrollTo({
-      left: scrollPosition,
+      left: minutes * pixelsPerMinute - 200,
       behavior: 'smooth',
     });
   }, [pixelsPerMinute]);
@@ -65,63 +51,68 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     if (isToday) scrollToNow();
   }, [isToday, scrollToNow]);
 
+  // Horizontal drag logic
   useEffect(() => {
-    const scrollContainer = scrollRef.current;
-    if (!scrollContainer) return;
-  
+    const container = scrollRef.current;
+    if (!container) return;
     let isDown = false;
     let startX = 0;
     let scrollLeft = 0;
-  
+
     const onMouseDown = (e: MouseEvent) => {
       isDown = true;
-      scrollContainer.classList.add('dragging');
-      startX = e.pageX - scrollContainer.offsetLeft;
-      scrollLeft = scrollContainer.scrollLeft;
+      container.classList.add('dragging');
+      startX = e.pageX - container.offsetLeft;
+      scrollLeft = container.scrollLeft;
     };
-  
-    const onMouseLeave = () => {
-      isDown = false;
-      scrollContainer.classList.remove('dragging');
-    };
-  
+
     const onMouseUp = () => {
       isDown = false;
-      scrollContainer.classList.remove('dragging');
+      container.classList.remove('dragging');
     };
-  
+
+    const onMouseLeave = onMouseUp;
+
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
       e.preventDefault();
-      const x = e.pageX - scrollContainer.offsetLeft;
-      const walk = (x - startX) * 1.2;
-      scrollContainer.scrollLeft = scrollLeft - walk;
+      const x = e.pageX - container.offsetLeft;
+      container.scrollLeft = scrollLeft - (x - startX) * 1.2;
     };
-  
-    scrollContainer.addEventListener('mousedown', onMouseDown);
-    scrollContainer.addEventListener('mouseleave', onMouseLeave);
-    scrollContainer.addEventListener('mouseup', onMouseUp);
-    scrollContainer.addEventListener('mousemove', onMouseMove);
-  
+
+    container.addEventListener('mousedown', onMouseDown);
+    container.addEventListener('mouseup', onMouseUp);
+    container.addEventListener('mouseleave', onMouseLeave);
+    container.addEventListener('mousemove', onMouseMove);
     return () => {
-      scrollContainer.removeEventListener('mousedown', onMouseDown);
-      scrollContainer.removeEventListener('mouseleave', onMouseLeave);
-      scrollContainer.removeEventListener('mouseup', onMouseUp);
-      scrollContainer.removeEventListener('mousemove', onMouseMove);
+      container.removeEventListener('mousedown', onMouseDown);
+      container.removeEventListener('mouseup', onMouseUp);
+      container.removeEventListener('mouseleave', onMouseLeave);
+      container.removeEventListener('mousemove', onMouseMove);
     };
   }, []);
 
   if (!channels.length || !schedules.length) {
-    return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
+    return (
+      <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>
+        Sin datos disponibles
+      </Typography>
+    );
   }
 
-  const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
-  const getSchedulesForChannel = (channelId: number) =>
-    schedulesForDay.filter((s) => s.program.channel.id === channelId);
+  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
+  const getSchedulesForChannel = (id: number) =>
+    schedulesForDay.filter(s => s.program.channel.id === id);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
-      <Box display="flex" gap={1} p={2} alignItems="center"
+    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
+
+      {/* Day selector & Live button */}
+      <Box
+        display="flex"
+        gap={1}
+        p={2}
+        alignItems="center"
         sx={{
           background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
@@ -130,7 +121,15 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           backdropFilter: 'blur(8px)',
         }}
       >
-        {daysOfWeek.map((day) => (
+        {[
+          { label: 'Lun', value: 'monday' },
+          { label: 'Mar', value: 'tuesday' },
+          { label: 'Mié', value: 'wednesday' },
+          { label: 'Jue', value: 'thursday' },
+          { label: 'Vie', value: 'friday' },
+          { label: 'Sáb', value: 'saturday' },
+          { label: 'Dom', value: 'sunday' },
+        ].map(day => (
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
@@ -146,70 +145,42 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
               if (selectedDay !== today) {
                 setSelectedDay(today);
                 setTimeout(() => scrollToNow(), 100);
-              } else {
-                scrollToNow();
-              }
+              } else scrollToNow();
             }}
             variant="outlined"
             startIcon={<AccessTime />}
-            sx={{
-              ml: 'auto',
-              height: '40px',
-              fontWeight: 'bold',
-              textTransform: 'none',
-            }}
+            sx={{ ml: 'auto', height: '40px', fontWeight: 'bold', textTransform: 'none' }}
           >
             En vivo
           </Button>
         )}
       </Box>
 
+      {/* Grid with its own vertical scroll */}
       <Box
         ref={scrollRef}
         sx={{
           flex: 1,
-          minHeight: 0,
+          overflowY: 'auto',
           overflowX: 'auto',
-          overflowY: 'scroll',
-          width: '100%',
-          maxWidth: '100vw',
           position: 'relative',
-          mr: '-8px',
-          pr: '8px',
           userSelect: 'none',
           WebkitUserDrag: 'none',
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: mode === 'light' ? '#f1f5f9' : '#1e293b',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' ? '#cbd5e1' : '#475569',
-            borderRadius: '4px',
-            '&:hover': {
-              background: mode === 'light' ? '#94a3b8' : '#64748b',
-            },
-          },
+          cursor: 'grab',
           '&.dragging': {
             cursor: 'grabbing',
-          },
-          '&': {
-            cursor: 'grab',
           },
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
-          {channels.map((channel, index) => (
+          {channels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
-              programs={getSchedulesForChannel(channel.id).map((s) => ({
+              programs={getSchedulesForChannel(channel.id).map(s => ({
                 id: s.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
@@ -220,7 +191,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 is_live: s.program.is_live,
                 stream_url: s.program.stream_url || undefined,
               }))}
-              color={getColorForChannel(index)}
+              color={getColorForChannel(idx)}
               isToday={isToday}
             />
           ))}
