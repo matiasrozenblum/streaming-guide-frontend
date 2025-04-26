@@ -44,81 +44,47 @@ export const ProgramBlock: React.FC<Props> = ({
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
+
+  // Refs para controlar delay de apertura y cierre
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openPlayer } = useYouTubePlayer();
 
+  // Detectar mobile
   useEffect(() => {
     if (typeof window !== 'undefined') {
       setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
     }
   }, []);
 
+  // Limpieza de timeouts al desmontar
   useEffect(() => {
-    if (isMobile && openTooltip) {
-      const handleOutsideClick = (event: MouseEvent | TouchEvent) => {
-        // Check if the click is outside the program block
-        if (!event.target || !(event.target as HTMLElement).closest('.program-block')) {
-          setOpenTooltip(false);
-        }
-      };
-  
-      document.addEventListener('mousedown', handleOutsideClick);
-      document.addEventListener('touchstart', handleOutsideClick);
-  
-      return () => {
-        document.removeEventListener('mousedown', handleOutsideClick);
-        document.removeEventListener('touchstart', handleOutsideClick);
-      };
-    }
-  }, [isMobile, openTooltip]);
+    return () => {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
 
-  const [startHours, startMinutes] = start.split(':').map(Number);
-  const [endHours, endMinutes] = end.split(':').map(Number);
-  const minutesFromMidnightStart = (startHours * 60) + startMinutes;
-  const minutesFromMidnightEnd = (endHours * 60) + endMinutes;
-
-  const offsetPx = (minutesFromMidnightStart * pixelsPerMinute);
-  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * pixelsPerMinute - 1;
-
-  const now = dayjs();
-  const currentDate = now.format('YYYY-MM-DD');
-  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
-
-  const isPast = isToday && now.isAfter(parsedEndWithDate);
-
-  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
-    e.stopPropagation();
-    e.preventDefault();
-  
-    if (!stream_url) return;
-  
-    // Track GA event
-    gaEvent({
-      action: 'click_youtube',
-      category: 'program',
-      label: name,
-      value: is_live ? 1 : 0,
-    });
-  
-    console.log('ProgramBlock - URL being passed:', stream_url);
-  
-    const videoId = extractVideoId(stream_url);
-    if (videoId) {
-      openPlayer(videoId); // 👈 abrir usando el context
-    }
-  };
-
+  // Apertura retardada 5s
   const handleTooltipOpen = () => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
     }
     if (!isMobile) {
-      setOpenTooltip(true);
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = setTimeout(() => {
+        setOpenTooltip(true);
+      }, 500);
     }
   };
 
+  // Cierre rápido
   const handleTooltipClose = () => {
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
         setOpenTooltip(false);
@@ -126,8 +92,39 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  // Cálculo de posición y tamaño
+  const [startHours, startMinutes] = start.split(':').map(Number);
+  const [endHours, endMinutes] = end.split(':').map(Number);
+  const minutesFromMidnightStart = startHours * 60 + startMinutes;
+  const minutesFromMidnightEnd = endHours * 60 + endMinutes;
+  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
+  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  const widthPx = duration * pixelsPerMinute - 1;
+
+  const now = dayjs();
+  const currentDate = now.format('YYYY-MM-DD');
+  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  const isPast = isToday && now.isAfter(parsedEndWithDate);
+
+  // Manejo de click en YouTube
+  const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
+    e.stopPropagation();
+    e.preventDefault();
+    if (!stream_url) return;
+    gaEvent({
+      action: 'click_youtube',
+      category: 'program',
+      label: name,
+      value: is_live ? 1 : 0,
+    });
+    console.log('ProgramBlock - URL being passed:', stream_url);
+    const videoId = extractVideoId(stream_url);
+    if (videoId) openPlayer(videoId);
+  };
+
+  // Contenido del tooltip
   const tooltipContent = (
-    <Box 
+    <Box
       sx={{ p: 1 }}
       onMouseEnter={handleTooltipOpen}
       onMouseLeave={handleTooltipClose}
@@ -149,7 +146,7 @@ export const ProgramBlock: React.FC<Props> = ({
             Panelistas:
           </Typography>
           <Typography variant="body2" color="rgba(255,255,255,0.9)">
-            {panelists.map((p) => p.name).join(', ')}
+            {panelists.map(p => p.name).join(', ')}
           </Typography>
         </Box>
       ) : null}
@@ -169,7 +166,7 @@ export const ProgramBlock: React.FC<Props> = ({
             textTransform: 'none',
             fontSize: '0.8rem',
             boxShadow: 'none',
-            touchAction: 'manipulation', // Optimize for touch
+            touchAction: 'manipulation',
           }}
         >
           {is_live ? 'Ver en vivo' : 'Ver en YouTube'}
@@ -188,12 +185,10 @@ export const ProgramBlock: React.FC<Props> = ({
       onClose={handleTooltipClose}
       disableTouchListener={isMobile}
       disableFocusListener={isMobile}
-      PopperProps={{
-        onMouseEnter: handleTooltipOpen,
-        onMouseLeave: handleTooltipClose,
-      }}
+      PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
     >
       <Box
+        className="program-block"
         onMouseEnter={handleTooltipOpen}
         onMouseLeave={handleTooltipClose}
         onClick={() => isMobile && setOpenTooltip(!openTooltip)}
