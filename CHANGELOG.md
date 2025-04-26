@@ -18,6 +18,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.13] - 2025-04-26
+
+### Fixed
+- Fixed grid vertical scrolling not showing all the channels
+
 ## [0.1.12] - 2025-04-26
 
 ### Added
