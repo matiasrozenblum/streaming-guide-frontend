@@ -28,7 +28,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
-  const totalGridWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
+  const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -43,11 +43,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const scrollToNow = useCallback(() => {
     const now = dayjs();
     const minutesFromStart = now.hour() * 60 + now.minute();
-    const scrollPosition = (minutesFromStart * pixelsPerMinute) - 100;
-    scrollRef.current?.scrollTo({
-      left: scrollPosition,
-      behavior: 'smooth',
-    });
+    const scrollPosition = minutesFromStart * pixelsPerMinute - 100;
+    scrollRef.current?.scrollTo({ left: scrollPosition, behavior: 'smooth' });
   }, [pixelsPerMinute]);
 
   const checkNowIndicatorVisibility = useCallback(() => {
@@ -58,68 +55,78 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
     const indicatorRect = indicator.getBoundingClientRect();
     const containerRect = container.getBoundingClientRect();
 
-    const isVisible = indicatorRect.left >= containerRect.left && indicatorRect.right <= containerRect.right;
+    const isVisible =
+      indicatorRect.left >= containerRect.left &&
+      indicatorRect.right <= containerRect.right;
     setShowScrollButton(!isVisible);
   }, []);
 
-  useEffect(() => {
-    scrollToNow();
-  }, [scrollToNow]);
+  useEffect(() => { scrollToNow(); }, [scrollToNow]);
 
   useEffect(() => {
     const container = scrollRef.current;
-  
     if (!container) return;
-  
+
     if (selectedDay !== today) {
-      setShowScrollButton(true); // Mostrar botón si no es el día actual
+      setShowScrollButton(true);
       return;
     }
-  
+
     container.addEventListener('scroll', checkNowIndicatorVisibility);
-    checkNowIndicatorVisibility(); // Chequear inicialmente
-  
+    checkNowIndicatorVisibility();
+
     return () => {
       container.removeEventListener('scroll', checkNowIndicatorVisibility);
     };
   }, [checkNowIndicatorVisibility, selectedDay, today]);
 
   if (!channels.length || !schedules.length) {
-    return <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>Sin datos disponibles</Typography>;
+    return (
+      <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>
+        Sin datos disponibles
+      </Typography>
+    );
   }
 
-  const schedulesForDay = schedules.filter((s) => s.day_of_week === selectedDay);
+  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
   const getSchedulesForChannel = (channelId: number) =>
-    schedulesForDay.filter((s) => s.program.channel.id === channelId);
+    schedulesForDay.filter(s => s.program.channel.id === channelId);
 
   return (
-    <Box sx={{ position: 'relative' }}>
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {/* Día Selector */}
-      <Box 
-        display="flex" 
-        gap={1} 
+      <Box
+        display="flex"
+        gap={1}
         p={2}
         sx={{
-          background: mode === 'light'
-            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
+          background:
+            mode === 'light'
+              ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
+              : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
           borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
         }}
       >
-        {daysOfWeek.map((day) => (
+        {daysOfWeek.map(day => (
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => setSelectedDay(day.value)}
-            sx={{
-              minWidth: '40px',
-              height: '40px',
-              padding: '0',
-              borderRadius: '8px',
-            }}
+            sx={{ minWidth: '40px', height: '40px', padding: 0, borderRadius: '8px' }}
           >
             {day.label}
           </Button>
@@ -132,20 +139,26 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         sx={{
           flex: 1,
           overflowX: 'auto',
-          overflowY: 'hidden',
+          overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
+          userSelect: 'none',
+          WebkitUserDrag: 'none',
+          cursor: 'grab',
+          '&.dragging': {
+            cursor: 'grabbing',
+          },
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
-          {channels.map((channel, index) => (
+          {channels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
-              programs={getSchedulesForChannel(channel.id).map((s) => ({
+              programs={getSchedulesForChannel(channel.id).map(s => ({
                 id: s.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
@@ -156,7 +169,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 is_live: s.program.is_live,
                 stream_url: s.program.stream_url || undefined,
               }))}
-              color={getColorForChannel(index)}
+              color={getColorForChannel(idx)}
               isToday={isToday}
             />
           ))}
@@ -172,9 +185,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
             if (selectedDay !== today) {
               setSelectedDay(today);
               setTimeout(() => scrollToNow(), 100);
-            } else {
-              scrollToNow();
-            }
+            } else scrollToNow();
           }}
           sx={{
             position: 'fixed',
