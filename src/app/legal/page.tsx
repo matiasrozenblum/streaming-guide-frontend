@@ -1,11 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Container, CircularProgress, Typography } from '@mui/material';
-import { Tv2 } from 'lucide-react';
+import { Box, Container, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
-import { Schedule } from '@/types/schedule';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
