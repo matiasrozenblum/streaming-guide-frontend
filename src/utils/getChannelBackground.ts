@@ -16,6 +16,14 @@ export const getChannelBackground = (channelName: string): string => {
         return '#4a22d2'; // purple
       case 'la casa streaming':
         return 'linear-gradient(to bottom, #030917, #263A45)';
+      case 'un poco de ruido':
+        return '#fedf1d'; // yellow
+      case 'carajo':
+        return '#ffffff'; // white
+      case 'republica z':
+        return '#000000'; // black
+      case 'futurock':
+        return '#76e8ab'; // water green
       default:
         return '#f1f5f9'; // fallback gray
     }
