@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.12] - 2025-04-26
+
+### Added
+- Added background colors to new channels
+
+### Fixed
+- Updated legal layout with normal layout changes
+
 ## [0.1.11] - 2025-04-26
 
 ### Changed
