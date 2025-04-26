@@ -138,6 +138,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         ref={scrollRef}
         sx={{
           flex: 1,
+          minHeight: 0,
           overflowX: 'auto',
           overflowY: 'auto',
           WebkitOverflowScrolling: 'touch',

@@ -32,12 +32,13 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const isToday = selectedDay === today;
   const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
 
+  // IntersectionObserver para el botón 'En vivo'
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
   useEffect(() => {
     if (nowIndicatorRef.current) observerRef(nowIndicatorRef.current);
   }, [observerRef]);
 
-  // Scroll to now
+  // Scroll al momento actual
   const scrollToNow = useCallback(() => {
     const now = dayjs();
     const minutes = now.hour() * 60 + now.minute();
@@ -51,7 +52,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     if (isToday) scrollToNow();
   }, [isToday, scrollToNow]);
 
-  // Horizontal drag logic
+  // Lógica de arrastre horizontal
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
@@ -65,14 +66,11 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       startX = e.pageX - container.offsetLeft;
       scrollLeft = container.scrollLeft;
     };
-
     const onMouseUp = () => {
       isDown = false;
       container.classList.remove('dragging');
     };
-
     const onMouseLeave = onMouseUp;
-
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
       e.preventDefault();
@@ -105,8 +103,18 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     schedulesForDay.filter(s => s.program.channel.id === id);
 
   return (
-    <Box sx={{ display: 'flex', flexDirection: 'column', height: '100vh', overflow: 'hidden' }}>
-
+    <Box
+      sx={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        bottom: 0,
+        display: 'flex',
+        flexDirection: 'column',
+        overflow: 'hidden',
+      }}
+    >
       {/* Day selector & Live button */}
       <Box
         display="flex"
@@ -156,13 +164,15 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         )}
       </Box>
 
-      {/* Grid with its own vertical scroll */}
+      {/* Grid scrollable area */}
       <Box
         ref={scrollRef}
         sx={{
           flex: 1,
+          minHeight: 0,
           overflowY: 'auto',
           overflowX: 'auto',
+          WebkitOverflowScrolling: 'touch',
           position: 'relative',
           userSelect: 'none',
           WebkitUserDrag: 'none',
