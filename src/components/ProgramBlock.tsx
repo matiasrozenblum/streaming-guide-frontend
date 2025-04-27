@@ -11,10 +11,12 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useState, useEffect, useRef } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 dayjs.extend(customParseFormat);
 
 interface Props {
+  id: string;
   name: string;
   start: string;
   end: string;
@@ -29,6 +31,7 @@ interface Props {
 }
 
 export const ProgramBlock: React.FC<Props> = ({
+  id,
   name,
   start,
   end,
@@ -40,6 +43,10 @@ export const ProgramBlock: React.FC<Props> = ({
   is_live,
   stream_url,
 }) => {
+  const { liveStatus } = useLiveStatus();
+  const dynamic = liveStatus[id] ?? { is_live, stream_url };
+  const isLive = dynamic.is_live;
+  const streamUrl = dynamic.stream_url;
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
@@ -110,18 +117,18 @@ export const ProgramBlock: React.FC<Props> = ({
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
     e.stopPropagation();
     e.preventDefault();
-    if (!stream_url) return;
+    if (!streamUrl) return;
 
     gaEvent({
       action: 'click_youtube',
       category: 'program',
       label: name,
-      value: is_live ? 1 : 0,
+      value: isLive ? 1 : 0,
     });
 
     // Si la URL tiene un parámetro "list", es una playlist
     try {
-      const url = new URL(stream_url);
+      const url = new URL(streamUrl);
       const listId = url.searchParams.get('list');
       if (listId) {
         // Abrimos la playlist embebida
@@ -133,7 +140,7 @@ export const ProgramBlock: React.FC<Props> = ({
     }
 
     // Si no es playlist, extraemos videoId normal
-    const videoId = extractVideoId(stream_url);
+    const videoId = extractVideoId(streamUrl);
     if (videoId) {
       openVideo(videoId);
     }
@@ -167,7 +174,7 @@ export const ProgramBlock: React.FC<Props> = ({
           </Typography>
         </Box>
       ) : null}
-      {stream_url && (
+      {streamUrl && (
         <Button
           onClick={handleClick}
           onTouchStart={handleClick}
@@ -186,7 +193,7 @@ export const ProgramBlock: React.FC<Props> = ({
             touchAction: 'manipulation',
           }}
         >
-          {is_live ? 'Ver en vivo' : 'Ver en YouTube'}
+          {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
         </Button>
       )}
     </Box>
@@ -214,14 +221,14 @@ export const ProgramBlock: React.FC<Props> = ({
         width={`${widthPx}px`}
         height="100%"
         sx={{
-          backgroundColor: alpha(color, isPast ? 0.05 : is_live ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
+          backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
           border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
           borderRadius: 1,
           transition: 'all 0.2s ease-in-out',
           cursor: 'pointer',
           overflow: 'hidden',
           '&:hover': {
-            backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : is_live ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
+            backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
             transform: 'scale(1.01)',
           },
         }}
@@ -236,7 +243,7 @@ export const ProgramBlock: React.FC<Props> = ({
             position: 'relative',
           }}
         >
-          {is_live && (
+          {isLive && (
             <Box
               sx={{
                 position: 'absolute',

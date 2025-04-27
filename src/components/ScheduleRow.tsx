@@ -201,6 +201,7 @@ export const ScheduleRow = ({
             return (
               <ProgramBlock
                 key={p.id}
+                id={p.id}
                 name={p.name}
                 start={p.start_time}
                 end={p.end_time}
@@ -210,8 +211,6 @@ export const ScheduleRow = ({
                 channelName={channelName}
                 color={color}
                 isToday={isToday}
-                stream_url={currentStreamUrl}
-                is_live={isLive}
               />
             );
           })}
