@@ -3,10 +3,11 @@
 import React, { createContext, useContext, useState } from 'react';
 
 interface YouTubeGlobalPlayerContextType {
-  videoId: string | null;
+  embedPath: string | null;     // Aquí guardamos "VIDEO_ID" o "videoseries?list=PLAYLIST_ID"
   open: boolean;
   minimized: boolean;
-  openPlayer: (videoId: string) => void;
+  openVideo: (videoId: string) => void;
+  openPlaylist: (listId: string) => void;
   closePlayer: () => void;
   minimizePlayer: () => void;
   maximizePlayer: () => void;
@@ -15,33 +16,44 @@ interface YouTubeGlobalPlayerContextType {
 const YouTubeGlobalPlayerContext = createContext<YouTubeGlobalPlayerContextType | undefined>(undefined);
 
 export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [videoId, setVideoId] = useState<string | null>(null);
+  const [embedPath, setEmbedPath] = useState<string | null>(null);
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
-  const openPlayer = (id: string) => {
-    setVideoId(id);
+  const openVideo = (id: string) => {
+    setEmbedPath(id);
+    setOpen(true);
+    setMinimized(false);
+  };
+
+  const openPlaylist = (listId: string) => {
+    // “videoseries?list=” es exactamente lo que usaba /embed/videoseries?list=...
+    setEmbedPath(`videoseries?list=${listId}`);
     setOpen(true);
     setMinimized(false);
   };
 
   const closePlayer = () => {
     setOpen(false);
-    setVideoId(null);
+    setEmbedPath(null);
     setMinimized(false);
   };
 
-  const minimizePlayer = () => {
-    setMinimized(true);
-  };
-
-  const maximizePlayer = () => {
-    setMinimized(false);
-  };
+  const minimizePlayer = () => setMinimized(true);
+  const maximizePlayer = () => setMinimized(false);
 
   return (
     <YouTubeGlobalPlayerContext.Provider
-      value={{ videoId, open, minimized, openPlayer, closePlayer, minimizePlayer, maximizePlayer }}
+      value={{
+        embedPath,
+        open,
+        minimized,
+        openVideo,
+        openPlaylist,
+        closePlayer,
+        minimizePlayer,
+        maximizePlayer,
+      }}
     >
       {children}
     </YouTubeGlobalPlayerContext.Provider>
@@ -49,9 +61,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 };
 
 export const useYouTubePlayer = () => {
-  const context = useContext(YouTubeGlobalPlayerContext);
-  if (!context) {
-    throw new Error('useYouTubePlayer must be used within a YouTubePlayerProvider');
-  }
-  return context;
+  const ctx = useContext(YouTubeGlobalPlayerContext);
+  if (!ctx) throw new Error('useYouTubePlayer must be used within a YouTubePlayerProvider');
+  return ctx;
 };

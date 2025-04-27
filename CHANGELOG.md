@@ -18,6 +18,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.14] - 2025-04-27
+
+### Changed
+- Improved live periodic fetch
+- Now embedding youtube playlists
+
 ## [0.1.13] - 2025-04-26
 
 ### Fixed
