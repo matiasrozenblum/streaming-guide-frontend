@@ -37,48 +37,55 @@ export default function Home() {
     const response = await api.get(`/channels/with-schedules`, {
       headers: { Authorization: `Bearer ${token}` },
     });
-    setChannelsWithSchedules(response.data); // Sobrescribe toda la grilla
+    setChannelsWithSchedules(response.data);
   };
 
-  const flattenSchedules = (data: ChannelWithSchedules[]) => {
-    return data.flatMap((entry) => {
-      return entry.schedules.map((schedule) => ({
+  const flattenSchedules = (data: ChannelWithSchedules[]) =>
+    data.flatMap(entry =>
+      entry.schedules.map(schedule => ({
         ...schedule,
         program: {
           ...schedule.program,
           channel: entry.channel,
         },
-      }));
-    });
-  };
+      }))
+    );
 
   useEffect(() => {
     setMounted(true);
   }, []);
 
   useEffect(() => {
-    if (mounted) {
-      fetchTodaySchedules().then(() => {
-        fetchAllSchedulesInBackground();
-      });
-    }
+    if (!mounted) return;
+
+    // carga inicial
+    fetchTodaySchedules();
+
+    // refresco completo cada 60s
+    const fullGridInterval = setInterval(() => {
+      console.log('refetching full grid');
+      fetchAllSchedulesInBackground();
+    }, 60_000);
+
+    return () => clearInterval(fullGridInterval);
   }, [mounted]);
 
   if (!mounted) {
     return null;
   }
 
-  const channels = (channelsWithSchedules || []).map((c) => c.channel);
+  const channels = channelsWithSchedules.map(c => c.channel);
 
   return (
     <LiveStatusProvider>
-      <Box 
-        sx={{ 
+      <Box
+        sx={{
           minHeight: '100vh',
           maxWidth: '100vw',
-          background: mode === 'light' 
-            ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
-            : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
+          background:
+            mode === 'light'
+              ? 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)'
+              : 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)',
           py: { xs: 1, sm: 2 },
           position: 'relative',
           display: 'flex',
@@ -90,26 +97,20 @@ export default function Home() {
             left: 0,
             right: 0,
             height: '400px',
-            background: mode === 'light'
-              ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
-              : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            background:
+              mode === 'light'
+                ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
+                : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
             opacity: 0.05,
             zIndex: 0,
           },
         }}
       >
-        <Box
-          sx={{
-            position: 'fixed',
-            top: 8,
-            right: 8,
-            zIndex: 1000,
-          }}
-        >
+        <Box sx={{ position: 'fixed', top: 8, right: 8, zIndex: 1000 }}>
           <ThemeToggle />
         </Box>
 
-        <Container 
+        <Container
           maxWidth="xl"
           disableGutters
           sx={{
@@ -124,11 +125,7 @@ export default function Home() {
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            sx={{ 
-              position: 'relative',
-              zIndex: 1,
-              mb: { xs: 1, sm: 2 },
-            }}
+            sx={{ position: 'relative', zIndex: 1, mb: { xs: 1, sm: 2 } }}
           >
             <Box
               sx={{
@@ -136,13 +133,15 @@ export default function Home() {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'left',
-                background: mode === 'light'
-                  ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
-                  : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
+                background:
+                  mode === 'light'
+                    ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
+                    : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
                 borderRadius: 2,
-                boxShadow: mode === 'light'
-                  ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                  : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+                boxShadow:
+                  mode === 'light'
+                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                    : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
                 backdropFilter: 'blur(8px)',
                 paddingLeft: { xs: 1, sm: 2 },
               }}
@@ -151,12 +150,7 @@ export default function Home() {
                 component="img"
                 src={logo}
                 alt="La Guía del Streaming Logo"
-                sx={{
-                  width: 'auto',
-                  height: '11vh',
-                  maxWidth: '100%',
-                  objectFit: 'contain',
-                }}
+                sx={{ width: 'auto', height: '11vh', maxWidth: '100%', objectFit: 'contain' }}
               />
               <Box
                 component="img"
@@ -180,13 +174,12 @@ export default function Home() {
             sx={{
               flex: 1,
               minHeight: 0,
-              background: mode === 'light'
-                ? 'rgba(255,255,255,0.9)'
-                : 'rgba(30,41,59,0.9)',
+              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
-              boxShadow: mode === 'light'
-                ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+              boxShadow:
+                mode === 'light'
+                  ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                  : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
               overflow: 'hidden',
               backdropFilter: 'blur(8px)',
               display: 'flex',
