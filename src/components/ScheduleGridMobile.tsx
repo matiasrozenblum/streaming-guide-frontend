@@ -12,6 +12,7 @@ import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { event as gaEvent } from '@/lib/gtag';
 
 interface Props {
   channels: Channel[];
@@ -125,7 +126,13 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
-            onClick={() => setSelectedDay(day.value)}
+            onClick={() => {
+              setSelectedDay(day.value);
+              gaEvent(
+                'day_change',
+                { day: day.value, client: 'mobile' }
+              );
+            }}
             sx={{ minWidth: '40px', height: '40px', padding: 0, borderRadius: '8px' }}
           >
             {day.label}
@@ -187,6 +194,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               setSelectedDay(today);
               setTimeout(() => scrollToNow(), 100);
             } else scrollToNow();
+            gaEvent(
+              'live_button_click',
+              { client: 'mobile' }
+            );
           }}
           sx={{
             position: 'fixed',

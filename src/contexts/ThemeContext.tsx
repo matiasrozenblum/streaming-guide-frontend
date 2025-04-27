@@ -3,6 +3,7 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, CircularProgress, Components } from '@mui/material';
 import type { ThemeOptions } from '@mui/material/styles';
+import { event as gaEvent } from '@/lib/gtag';
 
 type ThemeMode = 'light' | 'dark';
 
@@ -152,6 +153,12 @@ export const CustomThemeProvider = ({ children }: { children: React.ReactNode })
     setMode((prevMode) => {
       const newMode = prevMode === 'light' ? 'dark' : 'light';
       localStorage.setItem('themeMode', newMode);
+      gaEvent(
+        'theme_change',
+        {
+        new_mode: newMode,
+        old_mode: prevMode,
+      });
       return newMode;
     });
   };
