@@ -211,6 +211,8 @@ export const ScheduleRow = ({
                 channelName={channelName}
                 color={color}
                 isToday={isToday}
+                stream_url={currentStreamUrl}
+                is_live={isLive}
               />
             );
           })}
