@@ -48,7 +48,7 @@ export const ProgramBlock: React.FC<Props> = ({
   // Refs para controlar delay de apertura y cierre
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const { openPlayer } = useYouTubePlayer();
+  const { openVideo, openPlaylist } = useYouTubePlayer();
 
   // Detectar mobile
   useEffect(() => {
@@ -111,15 +111,32 @@ export const ProgramBlock: React.FC<Props> = ({
     e.stopPropagation();
     e.preventDefault();
     if (!stream_url) return;
+
     gaEvent({
       action: 'click_youtube',
       category: 'program',
       label: name,
       value: is_live ? 1 : 0,
     });
-    console.log('ProgramBlock - URL being passed:', stream_url);
+
+    // Si la URL tiene un parámetro "list", es una playlist
+    try {
+      const url = new URL(stream_url);
+      const listId = url.searchParams.get('list');
+      if (listId) {
+        // Abrimos la playlist embebida
+        openPlaylist(listId);
+        return;
+      }
+    } catch {
+      // stream_url podría no ser una URL válida, ignoramos
+    }
+
+    // Si no es playlist, extraemos videoId normal
     const videoId = extractVideoId(stream_url);
-    if (videoId) openPlayer(videoId);
+    if (videoId) {
+      openVideo(videoId);
+    }
   };
 
   // Contenido del tooltip
