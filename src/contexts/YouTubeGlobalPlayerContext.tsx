@@ -1,6 +1,7 @@
 'use client';
 
 import React, { createContext, useContext, useState } from 'react';
+import { event as gaEvent } from '@/lib/gtag';
 
 interface YouTubeGlobalPlayerContextType {
   embedPath: string | null;     // Aquí guardamos "VIDEO_ID" o "videoseries?list=PLAYLIST_ID"
@@ -39,9 +40,21 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
     setMinimized(false);
   };
 
-  const minimizePlayer = () => setMinimized(true);
-  const maximizePlayer = () => setMinimized(false);
+  const minimizePlayer = () => {
+    setMinimized(true);
+    gaEvent(
+      'minimize_youtube',
+      {}
+    );
+  };
 
+  const maximizePlayer = () => {
+    setMinimized(false);
+    gaEvent(
+      'maximize_youtube',
+      {}
+    );
+  };
   return (
     <YouTubeGlobalPlayerContext.Provider
       value={{

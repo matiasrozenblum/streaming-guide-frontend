@@ -18,19 +18,21 @@ export const pageview = (url: string) => {
   }
 };
 
-interface GTagEvent {
-  action: string;
-  category: string;
-  label: string;
-  value: number;
-}
-
-export const event = ({ action, category, label, value }: GTagEvent) => {
+/**
+ * Dispara un evento en GA4 con nombre `name` y parámetros `params`.
+ * En params puedes incluir lo que necesites: name, type, id, duration, index...
+ */
+export const event = (
+  name: string,
+  params: Record<string, unknown> = {}
+) => {
   if (typeof window.gtag === 'function') {
-    window.gtag('event', action, {
-      event_category: category,
-      event_label: label,
-      value,
+    window.gtag('event', name, {
+      ...params,
+      // si aún quieres mantener compatibilidad con UA:
+      // event_category: params.category,
+      // event_label: params.label,
+      // value: params.value,
     });
   }
 };

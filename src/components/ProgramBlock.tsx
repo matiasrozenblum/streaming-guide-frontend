@@ -81,6 +81,12 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
+        gaEvent(
+          isLive ? 'open_tooltip_live' : 'open_tooltip_deferred',
+          {
+          category: 'tooltip',
+          program_name: name,
+        });
         setOpenTooltip(true);
       }, 500);
     }
@@ -119,11 +125,11 @@ export const ProgramBlock: React.FC<Props> = ({
     e.preventDefault();
     if (!streamUrl) return;
 
-    gaEvent({
-      action: 'click_youtube',
+    gaEvent(
+      isLive ? 'click_youtube_live' : 'click_youtube_deferred',
+      {
       category: 'program',
-      label: name,
-      value: isLive ? 1 : 0,
+      program_name: name,
     });
 
     // Si la URL tiene un parámetro "list", es una playlist
