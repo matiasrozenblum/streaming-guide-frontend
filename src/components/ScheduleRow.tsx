@@ -201,6 +201,7 @@ export const ScheduleRow = ({
             return (
               <ProgramBlock
                 key={p.id}
+                id={p.id}
                 name={p.name}
                 start={p.start_time}
                 end={p.end_time}
