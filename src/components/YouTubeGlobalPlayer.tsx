@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '@mui/material/styles';
 
 export const YouTubeGlobalPlayer = () => {
-  const { videoId, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
+  const { embedPath, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
   const isMobile = useMediaQuery('(max-width:600px)');
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,7 +116,12 @@ export const YouTubeGlobalPlayer = () => {
     };
   }, [dragging]);
 
-  if (!open || !videoId) return null;
+  if (!open || !embedPath) return null;
+
+  const baseUrl = `https://www.youtube.com/embed/${embedPath}`;
+  const src = embedPath.includes('?')
+    ? `${baseUrl}&autoplay=1&enablejsapi=1`
+    : `${baseUrl}?autoplay=1&enablejsapi=1`;
 
   return (
     <>
@@ -182,7 +187,7 @@ export const YouTubeGlobalPlayer = () => {
           <iframe
             width="100%"
             height="100%"
-            src={`https://www.youtube.com/embed/${videoId}?autoplay=1&enablejsapi=1`}
+            src={src}
             frameBorder="0"
             allow="autoplay; encrypted-media"
             allowFullScreen
