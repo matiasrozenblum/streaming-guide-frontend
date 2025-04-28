@@ -73,19 +73,30 @@ export const ProgramBlock: React.FC<Props> = ({
   }, []);
 
   // Apertura retardada 5s
-  const handleTooltipOpen = () => {
+  const handleTooltipOpen = (event: React.SyntheticEvent) => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      const currentTarget = event.currentTarget;
       openTimeoutRef.current = setTimeout(() => {
         gaEvent(
           isLive ? 'open_tooltip_live' : 'open_tooltip_deferred',
           {
           category: 'tooltip',
           program_name: name,
+        });
+
+        // Close other tooltips
+        document.querySelectorAll('.program-block').forEach(block => {
+          if (block !== currentTarget) {
+            const blockComponent = block as any;
+            if (blockComponent.setOpenTooltip) {
+              blockComponent.setOpenTooltip(false);
+            }
+          }
         });
         setOpenTooltip(true);
       }, 500);
@@ -96,7 +107,7 @@ export const ProgramBlock: React.FC<Props> = ({
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       const target = event.target as HTMLElement;
-      if (openTooltip && target && !target.closest('.program-block')) {
+      if (openTooltip && target && !target.closest('.program-block') && !target.closest('.MuiTooltip-popper')) {
         setOpenTooltip(false);
       }
     };
