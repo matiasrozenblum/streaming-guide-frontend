@@ -14,6 +14,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { AccessTime } from '@mui/icons-material';
 import weekday from 'dayjs/plugin/weekday';
 import { useInView } from 'react-intersection-observer';
+import { event as gaEvent } from '@/lib/gtag';
 
 dayjs.extend(weekday);
 
@@ -141,7 +142,18 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           <Button
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
-            onClick={() => setSelectedDay(day.value)}
+            onClick={
+              () => {
+                setSelectedDay(day.value);
+                gaEvent(
+                  'day_change',
+                  { 
+                    day: day.value,
+                    client: 'desktop',
+                   }
+                );
+              }
+            }
             sx={{ minWidth: '80px', height: '40px' }}
           >
             {day.label}
@@ -150,6 +162,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         {!inView && (
           <Button
             onClick={() => {
+              gaEvent(
+                'live_button_click',
+                { client: 'desktop' }
+              );
               if (selectedDay !== today) {
                 setSelectedDay(today);
                 setTimeout(() => scrollToNow(), 100);

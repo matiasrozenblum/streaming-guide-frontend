@@ -8,6 +8,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Made grid horizontally draggable for trackpadless PCs
 
 ### Changed
 
@@ -16,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.1.15] - 2025-04-28
+
+### Fixed
+- Fixed mobile tooltip close behaviour
 
 ## [0.1.14] - 2025-04-27
 
