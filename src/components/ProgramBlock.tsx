@@ -30,6 +30,11 @@ interface Props {
   stream_url?: string | null;
 }
 
+// Define a type for elements with setOpenTooltip method
+type TooltipBlockElement = HTMLElement & {
+  setOpenTooltip: (open: boolean) => void;
+};
+
 export const ProgramBlock: React.FC<Props> = ({
   id,
   name,
@@ -92,7 +97,7 @@ export const ProgramBlock: React.FC<Props> = ({
         // Close other tooltips
         document.querySelectorAll('.program-block').forEach(block => {
           if (block !== currentTarget) {
-            const blockComponent = block as any;
+            const blockComponent = block as TooltipBlockElement;
             if (blockComponent.setOpenTooltip) {
               blockComponent.setOpenTooltip(false);
             }
