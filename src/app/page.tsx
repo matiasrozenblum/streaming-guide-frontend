@@ -59,7 +59,9 @@ export default function Home() {
     if (!mounted) return;
 
     // carga inicial
-    fetchTodaySchedules();
+    fetchTodaySchedules().then(() => {
+      fetchAllSchedulesInBackground();
+    });
 
     // refresco completo cada 60s
     const fullGridInterval = setInterval(() => {

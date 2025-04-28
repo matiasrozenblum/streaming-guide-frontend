@@ -92,7 +92,27 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
-  // Cierre rápido
+  // Add event listener for clicks outside the tooltip
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      const target = event.target as HTMLElement;
+      if (openTooltip && target && !target.closest('.program-block')) {
+        setOpenTooltip(false);
+      }
+    };
+
+    if (isMobile) {
+      document.addEventListener('click', handleClickOutside);
+    }
+
+    return () => {
+      if (isMobile) {
+        document.removeEventListener('click', handleClickOutside);
+      }
+    };
+  }, [openTooltip, isMobile]);
+
+  // Update handleTooltipClose to not handle mobile
   const handleTooltipClose = () => {
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);

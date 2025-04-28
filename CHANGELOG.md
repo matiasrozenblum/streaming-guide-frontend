@@ -18,6 +18,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.15] - 2025-04-28
+
+### Fixed
+- Fixed mobile tooltip close behaviour
+
 ## [0.1.14] - 2025-04-27
 
 ### Changed
