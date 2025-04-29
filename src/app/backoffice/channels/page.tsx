@@ -337,7 +337,7 @@ export default function ChannelsPage() {
               fullWidth
             />
             <TextField
-              label="URL de YouTube"
+              label="Handle de YouTube (@VorterixOficial sin arroba)"
               value={formData.handle}
               onChange={(e) => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
