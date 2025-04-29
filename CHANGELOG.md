@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Made grid horizontally draggable for trackpadless PCs
 
 ### Changed
 
@@ -17,6 +16,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [0.1.16] - 2025-04-28
+
+### Changed
+- Changed channel streaming_url field for handle field
 
 ## [0.1.15] - 2025-04-28
 

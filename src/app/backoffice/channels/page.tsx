@@ -34,7 +34,7 @@ export default function ChannelsPage() {
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
-    streaming_url: '',
+    handle: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -115,14 +115,14 @@ export default function ChannelsPage() {
       setFormData({
         name: channel.name,
         logo_url: channel.logo_url || '',
-        streaming_url: channel.streaming_url || '',
+        handle: channel.handle || '',
       });
     } else {
       setEditingChannel(null);
       setFormData({
         name: '',
         logo_url: '',
-        streaming_url: '',
+        handle: '',
       });
     }
     setOpenDialog(true);
@@ -134,7 +134,7 @@ export default function ChannelsPage() {
     setFormData({
       name: '',
       logo_url: '',
-      streaming_url: '',
+      handle: '',
     });
   };
 
@@ -293,9 +293,9 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
-                  {channel.streaming_url && (
+                  {channel.handle && (
                     <a 
-                      href={channel.streaming_url} 
+                      href={`https://www.youtube.com/${channel.handle}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >
@@ -317,36 +317,39 @@ export default function ChannelsPage() {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           {editingChannel ? 'Editar Canal' : 'Nuevo Canal'}
         </DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={2}>
+          <Box display="flex" flexDirection="column" gap={3} mt={2}>
             <TextField
               label="Nombre"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
               required
+              variant="outlined"
             />
             <TextField
               label="URL del Logo"
               value={formData.logo_url}
               onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
               fullWidth
+              variant="outlined"
             />
             <TextField
-              label="URL de YouTube"
-              value={formData.streaming_url}
-              onChange={(e) => setFormData({ ...formData, streaming_url: e.target.value })}
+              label="Handle de YouTube (@VorterixOficial sin arroba)"
+              value={formData.handle}
+              onChange={(e) => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
+              variant="outlined"
             />
           </Box>
         </DialogContent>
-        <DialogActions>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained">
+          <Button onClick={handleSubmit} variant="contained" color="primary">
             {editingChannel ? 'Guardar' : 'Crear'}
           </Button>
         </DialogActions>
