@@ -317,36 +317,39 @@ export default function ChannelsPage() {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog}>
-        <DialogTitle>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           {editingChannel ? 'Editar Canal' : 'Nuevo Canal'}
         </DialogTitle>
         <DialogContent>
-          <Box display="flex" flexDirection="column" gap={2} mt={2}>
+          <Box display="flex" flexDirection="column" gap={3} mt={2}>
             <TextField
               label="Nombre"
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               fullWidth
               required
+              variant="outlined"
             />
             <TextField
               label="URL del Logo"
               value={formData.logo_url}
               onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
               fullWidth
+              variant="outlined"
             />
             <TextField
-              label="URL de YouTube"
+              label="Handle de YouTube (@VorterixOficial sin arroba)"
               value={formData.handle}
               onChange={(e) => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
+              variant="outlined"
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained">
+        <DialogActions sx={{ p: 2 }}>
+          <Button onClick={handleCloseDialog} color="secondary">Cancelar</Button>
+          <Button onClick={handleSubmit} variant="contained" color="primary">
             {editingChannel ? 'Guardar' : 'Crear'}
           </Button>
         </DialogActions>
