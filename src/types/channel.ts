@@ -5,7 +5,7 @@ export interface Channel {
   name: string;
   description?: string;
   logo_url?: string | null;
-  streaming_url?: string | null;
+  handle?: string | null;
   youtube_channel_id?: string | null;
   order?: number | null;
   created_at?: string; // opcional si tu API devuelve esto

@@ -34,7 +34,7 @@ export default function ChannelsPage() {
   const [formData, setFormData] = useState({
     name: '',
     logo_url: '',
-    streaming_url: '',
+    handle: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -115,14 +115,14 @@ export default function ChannelsPage() {
       setFormData({
         name: channel.name,
         logo_url: channel.logo_url || '',
-        streaming_url: channel.streaming_url || '',
+        handle: channel.handle || '',
       });
     } else {
       setEditingChannel(null);
       setFormData({
         name: '',
         logo_url: '',
-        streaming_url: '',
+        handle: '',
       });
     }
     setOpenDialog(true);
@@ -134,7 +134,7 @@ export default function ChannelsPage() {
     setFormData({
       name: '',
       logo_url: '',
-      streaming_url: '',
+      handle: '',
     });
   };
 
@@ -293,9 +293,9 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
-                  {channel.streaming_url && (
+                  {channel.handle && (
                     <a 
-                      href={channel.streaming_url} 
+                      href={`https://www.youtube.com/${channel.handle}`} 
                       target="_blank" 
                       rel="noopener noreferrer"
                     >
@@ -338,8 +338,8 @@ export default function ChannelsPage() {
             />
             <TextField
               label="URL de YouTube"
-              value={formData.streaming_url}
-              onChange={(e) => setFormData({ ...formData, streaming_url: e.target.value })}
+              value={formData.handle}
+              onChange={(e) => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
             />
           </Box>
