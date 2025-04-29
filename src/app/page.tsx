@@ -10,6 +10,7 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
 import { ChannelWithSchedules } from '@/types/channel';
+import { NotificationBanner } from '@/components/Notification';
 
 const MotionBox = motion(Box);
 
@@ -129,44 +130,49 @@ export default function Home() {
             transition={{ duration: 0.5 }}
             sx={{ position: 'relative', zIndex: 1, mb: { xs: 1, sm: 2 } }}
           >
-            <Box
-              sx={{
-                height: '13vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'left',
-                background:
-                  mode === 'light'
-                    ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
-                    : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
-                borderRadius: 2,
-                boxShadow:
-                  mode === 'light'
-                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                    : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
-                backdropFilter: 'blur(8px)',
-                paddingLeft: { xs: 1, sm: 2 },
-              }}
-            >
               <Box
-                component="img"
-                src={logo}
-                alt="La Guía del Streaming Logo"
-                sx={{ width: 'auto', height: '11vh', maxWidth: '100%', objectFit: 'contain' }}
-              />
-              <Box
-                component="img"
-                src={text}
-                alt="La Guía del Streaming Text"
                 sx={{
+                  height: '13vh',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'space-between',
+                  background:
+                    mode === 'light'
+                      ? 'linear-gradient(135deg, rgba(255,255,255,0.9) 0%, rgba(255,255,255,0.8) 100%)'
+                      : 'linear-gradient(135deg, rgba(30,41,59,0.9) 0%, rgba(30,41,59,0.8) 100%)',
+                  borderRadius: 2,
+                  boxShadow:
+                    mode === 'light'
+                      ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                      : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+                  backdropFilter: 'blur(8px)',
                   paddingLeft: { xs: 1, sm: 2 },
-                  width: 'auto',
-                  height: '11vh',
-                  maxWidth: '100%',
-                  objectFit: 'contain',
                 }}
-              />
-            </Box>
+              >
+                <Box display="flex" alignItems="center">
+                  <Box
+                    component="img"
+                    src={logo}
+                    alt="La Guía del Streaming Logo"
+                    sx={{ width: 'auto', height: '11vh', maxWidth: '100%', objectFit: 'contain' }}
+                  />
+                  <Box
+                    component="img"
+                    src={text}
+                    alt="La Guía del Streaming Text"
+                    sx={{
+                      paddingLeft: { xs: 1, sm: 2 },
+                      width: 'auto',
+                      height: '11vh',
+                      maxWidth: '100%',
+                      objectFit: 'contain',
+                    }}
+                  />
+                </Box>
+                <Box display="flex" alignItems="center" sx={{ paddingRight: { xs: 1, sm: 2 }, }}>
+                  <NotificationBanner inline />
+                </Box>
+              </Box>
           </MotionBox>
 
           <MotionBox

@@ -8,6 +8,7 @@ import { Inter } from 'next/font/google';
 import Footer from '@/components/Footer';
 import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
+import { NotificationBanner } from '@/components/Notification';
 
 const inter = Inter({ subsets: ['latin'] });
 const GTM_ID = 'GTM-TCGNQB97';
