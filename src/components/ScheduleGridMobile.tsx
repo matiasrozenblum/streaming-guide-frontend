@@ -13,6 +13,7 @@ import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { event as gaEvent } from '@/lib/gtag';
+import Clarity from '@microsoft/clarity';
 
 interface Props {
   channels: Channel[];
@@ -128,6 +129,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => {
               setSelectedDay(day.value);
+              Clarity.setTag('selected_day', day.value);
+              Clarity.event('day_change');
               gaEvent(
                 'day_change',
                 { day: day.value, client: 'mobile' }
@@ -194,6 +197,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               setSelectedDay(today);
               setTimeout(() => scrollToNow(), 100);
             } else scrollToNow();
+            Clarity.event('live_button_click');
             gaEvent(
               'live_button_click',
               { client: 'mobile' }

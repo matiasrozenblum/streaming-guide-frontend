@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.17] - 2025-04-30
+
+### Added
+- Added Microsoft Clarity integration
+
+### Fixed
+- Fixed stats request missing auth token
+
 ## [0.1.16] - 2025-04-28
 
 ### Changed

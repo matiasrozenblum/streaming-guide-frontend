@@ -28,9 +28,12 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchStats = async () => {
       try {
+        const cookies = document.cookie.split(';');
+        const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
+        const token = tokenCookie?.split('=')[1];
         const response = await fetch(`${API_URL}/stats`, {
           headers: {
-            'Authorization': `Bearer ${localStorage.getItem('token')}`,
+            'Authorization': `Bearer ${token}`,
           },
         });
         if (response.ok) {
