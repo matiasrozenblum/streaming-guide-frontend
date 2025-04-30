@@ -11,6 +11,7 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
+import Clarity from '@microsoft/clarity';
 
 dayjs.extend(customParseFormat);
 
@@ -80,6 +81,8 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
+        Clarity.setTag('program_name', name);
+        Clarity.event(isLive ? 'open_tooltip_live' : 'open_tooltip_deferred');
         gaEvent(
           isLive ? 'open_tooltip_live' : 'open_tooltip_deferred',
           {
@@ -123,6 +126,9 @@ export const ProgramBlock: React.FC<Props> = ({
     e.stopPropagation();
     e.preventDefault();
     if (!streamUrl) return;
+
+    Clarity.setTag('program_name', name);
+    Clarity.event(isLive ? 'click_youtube_live' : 'click_youtube_deferred');
 
     gaEvent(
       isLive ? 'click_youtube_live' : 'click_youtube_deferred',
