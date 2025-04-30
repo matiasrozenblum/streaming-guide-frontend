@@ -2,6 +2,7 @@
 
 import React, { createContext, useContext, useState } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
+import Clarity from '@microsoft/clarity';
 
 interface YouTubeGlobalPlayerContextType {
   embedPath: string | null;     // Aquí guardamos "VIDEO_ID" o "videoseries?list=PLAYLIST_ID"
@@ -42,6 +43,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const minimizePlayer = () => {
     setMinimized(true);
+    Clarity.event('minimize_youtube')
     gaEvent(
       'minimize_youtube',
       {}
@@ -50,6 +52,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const maximizePlayer = () => {
     setMinimized(false);
+    Clarity.event('maximize_youtube')
     gaEvent(
       'maximize_youtube',
       {}

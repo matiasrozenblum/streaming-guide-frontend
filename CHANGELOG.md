@@ -8,7 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Made grid horizontally draggable for trackpadless PCs
 
 ### Changed
 

@@ -15,6 +15,7 @@ import { AccessTime } from '@mui/icons-material';
 import weekday from 'dayjs/plugin/weekday';
 import { useInView } from 'react-intersection-observer';
 import { event as gaEvent } from '@/lib/gtag';
+import Clarity from '@microsoft/clarity';
 
 dayjs.extend(weekday);
 
@@ -145,6 +146,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             onClick={
               () => {
                 setSelectedDay(day.value);
+                Clarity.setTag('selected_day', day.value);
+                Clarity.event('day_change');
                 gaEvent(
                   'day_change',
                   { 
@@ -162,6 +165,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         {!inView && (
           <Button
             onClick={() => {
+              Clarity.event('live_button_click');
               gaEvent(
                 'live_button_click',
                 { client: 'desktop' }

@@ -348,7 +348,7 @@ export default function ChannelsPage() {
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>
-          <Button onClick={handleCloseDialog} color="secondary">Cancelar</Button>
+          <Button onClick={handleCloseDialog}>Cancelar</Button>
           <Button onClick={handleSubmit} variant="contained" color="primary">
             {editingChannel ? 'Guardar' : 'Crear'}
           </Button>
