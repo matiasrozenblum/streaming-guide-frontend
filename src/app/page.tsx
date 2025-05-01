@@ -92,13 +92,6 @@ export default function Home() {
 
   return (
     <LiveStatusProvider>
-      {/* 3) banner de feriado */}
-      {isHoliday && (
-        <Alert severity="info" sx={{ textAlign: 'center' }}>
-          Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
-          podés ver las playlists de cada programa.
-        </Alert>
-      )}
       <Box
         sx={{
           minHeight: '100vh',
@@ -211,7 +204,7 @@ export default function Home() {
                 <CircularProgress />
               </Box>
             ) : (
-              <ScheduleGrid channels={channels} schedules={flattenSchedules(channelsWithSchedules)} />
+              <ScheduleGrid isHoliday={isHoliday} channels={channels} schedules={flattenSchedules(channelsWithSchedules)} />
             )}
           </MotionBox>
         </Container>

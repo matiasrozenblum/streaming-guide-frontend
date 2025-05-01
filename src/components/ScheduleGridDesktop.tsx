@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button } from '@mui/material';
+import { Box, Typography, Button, Alert } from '@mui/material';
 import { useRef, useEffect, useState, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
@@ -22,9 +22,10 @@ dayjs.extend(weekday);
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
+  isHoliday: boolean;
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, isHoliday }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -117,6 +118,13 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         overflow: 'hidden',
       }}
     >
+      {/* 3) banner de feriado */}
+      {isHoliday && (
+        <Alert severity="info" sx={{ textAlign: 'center' }}>
+          Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
+          podés ver las playlists de cada programa.
+        </Alert>
+      )}
       {/* Day selector & Live button */}
       <Box
         display="flex"
