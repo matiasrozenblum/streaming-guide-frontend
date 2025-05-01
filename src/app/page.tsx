@@ -94,7 +94,7 @@ export default function Home() {
     <LiveStatusProvider>
       {/* 3) banner de feriado */}
       {isHoliday && (
-        <Alert severity="info" sx={{ mb: 2, textAlign: 'center' }}>
+        <Alert severity="info" sx={{ textAlign: 'center' }}>
           Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
           podés ver las playlists de cada programa.
         </Alert>
