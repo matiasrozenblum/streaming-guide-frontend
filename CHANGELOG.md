@@ -17,7 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.1.18] - 2025-04-30
+## [0.1.19] - 2025-04-01
+
+### Changed
+- Moved theme button
+
+## [0.1.18] - 2025-04-01
 
 ### Added
 - Added holiday message
