@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.18] - 2025-04-30
+
+### Added
+- Added holiday message
+
 ## [0.1.17] - 2025-04-30
 
 ### Added
