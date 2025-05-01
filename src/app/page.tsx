@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { Box, Container, CircularProgress } from '@mui/material';
+import { Box, Container, CircularProgress, Alert } from '@mui/material';
 import { motion } from 'framer-motion';
 import { api } from '@/services/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -14,6 +14,7 @@ import { ChannelWithSchedules } from '@/types/channel';
 const MotionBox = motion(Box);
 
 export default function Home() {
+  const [isHoliday, setIsHoliday] = useState(false);
   const [channelsWithSchedules, setChannelsWithSchedules] = useState<ChannelWithSchedules[]>([]);
   const [loading, setLoading] = useState(true);
   const { mode } = useThemeContext();
@@ -56,6 +57,17 @@ export default function Home() {
   }, []);
 
   useEffect(() => {
+    const fetchHoliday = async () => {
+      const token = AuthService.getCorrectToken(false);
+      const response = await api.get(`/holiday`, {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      setIsHoliday(response.data.holiday);
+    };
+    fetchHoliday();
+  }, []);
+
+  useEffect(() => {
     if (!mounted) return;
 
     // carga inicial
@@ -80,6 +92,13 @@ export default function Home() {
 
   return (
     <LiveStatusProvider>
+      {/* 3) banner de feriado */}
+      {isHoliday && (
+        <Alert severity="info" sx={{ mb: 2, textAlign: 'center' }}>
+          Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
+          podés ver las playlists de cada programa.
+        </Alert>
+      )}
       <Box
         sx={{
           minHeight: '100vh',
