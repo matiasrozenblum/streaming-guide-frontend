@@ -127,10 +127,6 @@ export default function Home() {
           },
         }}
       >
-        <Box sx={{ position: 'fixed', top: 8, right: 8, zIndex: 1000 }}>
-          <ThemeToggle />
-        </Box>
-
         <Container
           maxWidth="xl"
           disableGutters
@@ -185,6 +181,9 @@ export default function Home() {
                   objectFit: 'contain',
                 }}
               />
+              <Box sx={{ position: 'fixed', right: 8, zIndex: 1000 }}>
+                <ThemeToggle />
+              </Box>
             </Box>
           </MotionBox>
 
