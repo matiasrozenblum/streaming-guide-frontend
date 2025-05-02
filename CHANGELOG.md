@@ -17,6 +17,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.20] - 2025-04-02
+
+### Added
+- Added search boxes in backoffice
+- Added mail button in footer for web
+
+### Changed
+- Changed holiday alert for dialog
+
 ## [0.1.19] - 2025-04-01
 
 ### Changed
