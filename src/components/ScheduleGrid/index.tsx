@@ -7,16 +7,15 @@ import { Schedule } from '@/types/schedule';
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
-  isHoliday: boolean; 
 }
 
-export const ScheduleGrid = ({ channels, schedules, isHoliday }: Props) => {
+export const ScheduleGrid = ({ channels, schedules }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return isMobile ? (
-    <ScheduleGridMobile isHoliday={isHoliday} channels={channels} schedules={schedules} />
+    <ScheduleGridMobile channels={channels} schedules={schedules} />
   ) : (
-    <ScheduleGridDesktop isHoliday={isHoliday} channels={channels} schedules={schedules} />
+    <ScheduleGridDesktop channels={channels} schedules={schedules} />
   );
 };

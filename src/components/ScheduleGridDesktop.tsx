@@ -22,10 +22,9 @@ dayjs.extend(weekday);
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
-  isHoliday: boolean;
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules, isHoliday }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -118,13 +117,6 @@ export const ScheduleGridDesktop = ({ channels, schedules, isHoliday }: Props) =
         overflow: 'hidden',
       }}
     >
-      {/* 3) banner de feriado */}
-      {isHoliday && (
-        <Alert severity="info" sx={{ textAlign: 'center' }}>
-          Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
-          podés ver las playlists de cada programa.
-        </Alert>
-      )}
       {/* Day selector & Live button */}
       <Box
         display="flex"

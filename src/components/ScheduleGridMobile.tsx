@@ -18,10 +18,9 @@ import Clarity from '@microsoft/clarity';
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
-  isHoliday: boolean;
 }
 
-export const ScheduleGridMobile = ({ channels, schedules, isHoliday }: Props) => {
+export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -108,13 +107,6 @@ export const ScheduleGridMobile = ({ channels, schedules, isHoliday }: Props) =>
         overflow: 'hidden',
       }}
     >
-      {/* 3) banner de feriado */}
-      {isHoliday && (
-        <Alert severity="info" sx={{ textAlign: 'center' }}>
-          Hoy es feriado en Argentina: las transmisiones en vivo pueden verse afectadas,
-          podés ver las playlists de cada programa.
-        </Alert>
-      )}
       {/* Día Selector */}
       <Box
         display="flex"

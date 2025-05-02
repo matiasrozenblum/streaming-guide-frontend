@@ -10,11 +10,13 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
 import { ChannelWithSchedules } from '@/types/channel';
+import HolidayDialog from '@/components/HolidayDialog';
 
 const MotionBox = motion(Box);
 
 export default function Home() {
   const [isHoliday, setIsHoliday] = useState(false);
+  const [showHoliday, setShowHoliday] = useState(false)
   const [channelsWithSchedules, setChannelsWithSchedules] = useState<ChannelWithSchedules[]>([]);
   const [loading, setLoading] = useState(true);
   const { mode } = useThemeContext();
@@ -63,6 +65,7 @@ export default function Home() {
         headers: { Authorization: `Bearer ${token}` },
       });
       setIsHoliday(response.data.holiday);
+      if (response.data.holiday) setShowHoliday(true)
     };
     fetchHoliday();
   }, []);
@@ -92,6 +95,7 @@ export default function Home() {
 
   return (
     <LiveStatusProvider>
+      {isHoliday && <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />}
       <Box
         sx={{
           minHeight: '100vh',
@@ -204,7 +208,7 @@ export default function Home() {
                 <CircularProgress />
               </Box>
             ) : (
-              <ScheduleGrid isHoliday={isHoliday} channels={channels} schedules={flattenSchedules(channelsWithSchedules)} />
+              <ScheduleGrid channels={channels} schedules={flattenSchedules(channelsWithSchedules)} />
             )}
           </MotionBox>
         </Container>
