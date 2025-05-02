@@ -3,7 +3,7 @@ import { Box, Typography, IconButton } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 const Footer: React.FC = () => {
-  const email = 'lguiadelstreaming@gmail.com';
+  const email = 'laguiadelstreaming@gmail.com';
 
   return (
     <Box
