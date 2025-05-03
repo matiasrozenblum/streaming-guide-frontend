@@ -12,17 +12,12 @@ import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
 import type { ChannelWithSchedules } from '@/types/channel';
 
-// Dynamic imports (Fase 2)
-import type { Channel } from '@/types/channel';
-import type { Schedule } from '@/types/schedule';
+// Dynamic imports for performance
 const HolidayDialog = dynamic(
-  () => import('@/components/HolidayDialog').then((mod) => mod.default),
+  () => import('@/components/HolidayDialog'),
   { ssr: false }
 );
-const ScheduleGrid = dynamic<{
-  channels: Channel[];
-  schedules: Schedule[];
-}>(
+const ScheduleGrid = dynamic(
   () => import('@/components/ScheduleGrid').then((mod) => mod.ScheduleGrid),
   {
     ssr: false,
@@ -41,14 +36,12 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-  // Asegurar array inicial
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
     ? initialData
     : Array.isArray((initialData as any).data)
     ? (initialData as any).data
     : [];
 
-  // Estados
   const [channelsWithSchedules, setChannelsWithSchedules] =
     useState<ChannelWithSchedules[]>(initArray);
   const [isHoliday, setIsHoliday] = useState(false);
@@ -56,7 +49,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [mounted, setMounted] = useState(false);
   const { mode } = useThemeContext();
 
-  // Memorizar datos para la grilla
   const channels = useMemo(
     () => channelsWithSchedules.map((c) => c.channel),
     [channelsWithSchedules]
@@ -75,7 +67,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
-  // Refresco de grilla en background
   const fetchAllSchedulesInBackground = async () => {
     const token = AuthService.getCorrectToken(false);
     const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
@@ -89,10 +80,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     setChannelsWithSchedules(data);
   };
 
-  // Mounted flag
   useEffect(() => setMounted(true), []);
 
-  // Polling y feriado
   useEffect(() => {
     if (!mounted) return;
     const fetchHoliday = async () => {
@@ -153,7 +142,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           disableGutters
           sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
         >
-          {/* Header */}
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -203,7 +191,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             </Box>
           </MotionBox>
 
-          {/* Grid */}
           <MotionBox
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
