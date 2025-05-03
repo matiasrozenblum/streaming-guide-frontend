@@ -4,14 +4,35 @@ import { useState, useEffect, useMemo } from 'react';
 import { Box, Container, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
 import Image from 'next/image';
+import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { LiveStatusProvider } from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
 import type { ChannelWithSchedules } from '@/types/channel';
-import HolidayDialog from '@/components/HolidayDialog';
-import { ScheduleGrid } from '@/components/ScheduleGrid';
+
+// Dynamic imports (Fase 2)
+import type { Channel } from '@/types/channel';
+import type { Schedule } from '@/types/schedule';
+const HolidayDialog = dynamic(
+  () => import('@/components/HolidayDialog').then((mod) => mod.default),
+  { ssr: false }
+);
+const ScheduleGrid = dynamic<{
+  channels: Channel[];
+  schedules: Schedule[];
+}>(
+  () => import('@/components/ScheduleGrid').then((mod) => mod.ScheduleGrid),
+  {
+    ssr: false,
+    loading: () => (
+      <Box display="flex" justifyContent="center" p={4}>
+        <CircularProgress />
+      </Box>
+    ),
+  }
+);
 
 const MotionBox = motion(Box);
 
@@ -176,7 +197,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   objectFit: 'contain',
                 }}
               />
-              <Box sx={{ position: 'fixed', right: 8, zIndex: 1000 }}>
+              <Box sx={{ position: 'absolute', top: '50%', right: { xs: 8, sm: 16 }, transform: 'translateY(-50%)' }}>
                 <ThemeToggle />
               </Box>
             </Box>
