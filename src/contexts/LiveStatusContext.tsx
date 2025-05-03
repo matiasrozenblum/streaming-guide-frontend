@@ -53,34 +53,53 @@ export const LiveStatusProvider: React.FC<{ children: React.ReactNode }> = ({ ch
 
   // Fetch live status periodically and when hour changes
   useEffect(() => {
+    let pollId: NodeJS.Timeout;
+
     const fetchLiveStatus = async () => {
       try {
         const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
         const token = AuthService.getCorrectToken(false);
-        const response = await api.get(`/schedules?day=${today}&live_status=true`, {
-          headers: {
-            'Authorization': `Bearer ${token}`,
-          },
+        const { data } = await api.get<ScheduleData[]>(`/schedules?day=${today}&live_status=true`, {
+          headers: { Authorization: `Bearer ${token}` },
         });
-        
         const newStatus: LiveStatus = {};
-        response.data.forEach((schedule: ScheduleData) => {
-          newStatus[schedule.id] = {
-            is_live: schedule.program.is_live,
-            stream_url: schedule.program.stream_url
+        data.forEach(sch => {
+          newStatus[sch.id] = {
+            is_live: sch.program.is_live,
+            stream_url: sch.program.stream_url,
           };
         });
-        
         setLiveStatus(newStatus);
-      } catch (err) {
-        console.error('Error fetching live status:', err);
+      } catch (e) {
+        console.error('Error fetching live status:', e);
       }
     };
 
-    fetchLiveStatus();
-    const intervalId = setInterval(fetchLiveStatus, 10000);
-    return () => clearInterval(intervalId);
-  }, [currentHour]); // Add currentHour as a dependency
+    // Arranca polling
+    const start = () => {
+      fetchLiveStatus();
+      pollId = setInterval(fetchLiveStatus, 60_000);
+    };
+    // Detiene polling
+    const stop = () => {
+      clearInterval(pollId);
+    };
+
+    // Si la pestaña está activa, arrancamos
+    if (document.visibilityState === 'visible') start();
+    // Escuchamos cambios de visibilidad
+    const onVis = () => {
+      if (document.visibilityState === 'visible') start();
+      else stop();
+    };
+    document.addEventListener('visibilitychange', onVis);
+
+    // Cleanup
+    return () => {
+      stop();
+      document.removeEventListener('visibilitychange', onVis);
+    };
+  }, [currentHour]);
 
   return (
     <LiveStatusContext.Provider value={{ liveStatus, updateLiveStatus }}>

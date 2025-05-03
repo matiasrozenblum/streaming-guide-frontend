@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.1.21] - 2025-04-02
+
+### Changed
+- Optimized loading times
+
 ## [0.1.20] - 2025-04-02
 
 ### Added
