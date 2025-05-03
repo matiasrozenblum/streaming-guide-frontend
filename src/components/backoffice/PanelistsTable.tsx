@@ -34,6 +34,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const [panelists, setPanelists] = useState<Panelist[]>([]);
   const [programs, setPrograms] = useState<Program[]>([]);
   const [loading, setLoading] = useState(true);
+  const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [openProgramsDialog, setOpenProgramsDialog] = useState(false);
   const [editingPanelist, setEditingPanelist] = useState<Panelist | null>(null);
@@ -186,6 +187,10 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     return <Typography>Loading...</Typography>;
   }
 
+  const filteredPanelists = panelists.filter(p =>
+    p.name.toLowerCase().includes(searchTerm.toLowerCase())
+  );
+
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
@@ -193,6 +198,31 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
           Add Panelist
         </Button>
+      </Box>
+
+      <Box sx={{ mb: 2 }}>
+        <TextField
+          label="Buscar panelista…"
+          variant="outlined"
+          size="small"
+          fullWidth
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          placeholder="Escribe para filtrar en vivo"
+          inputProps={{ style: { color: 'black' } }}
+          InputLabelProps={{ style: { color: 'black' } }}
+          sx={{
+            '& .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'black',
+            },
+            '&:hover .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'black',
+            },
+            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
+              borderColor: 'black',
+            },
+          }}
+        />
       </Box>
 
       <TableContainer component={Paper}>
@@ -206,7 +236,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
             </TableRow>
           </TableHead>
           <TableBody>
-            {panelists.map((panelist) => (
+            {filteredPanelists.map(panelist => (
               <TableRow key={panelist.id}>
                 <TableCell>{panelist.name}</TableCell>
                 <TableCell>
@@ -222,7 +252,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                    {panelist.programs?.map((program) => (
+                    {panelist.programs?.map(program => (
                       <Chip
                         key={program.id}
                         label={program.name}
@@ -249,7 +279,6 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       </TableContainer>
 
       {/* Dialogs */}
-      {/* Add/Edit Panelist */}
       <Dialog open={openDialog} onClose={handleCloseDialog}>
         <DialogTitle>{editingPanelist ? 'Edit Panelist' : 'Add Panelist'}</DialogTitle>
         <form onSubmit={handleSubmit}>
@@ -260,7 +289,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
               label="Name"
               fullWidth
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
               required
             />
             <TextField
@@ -268,7 +297,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
               label="Avatar URL"
               fullWidth
               value={formData.avatar_url}
-              onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
+              onChange={e => setFormData({ ...formData, avatar_url: e.target.value })}
             />
           </DialogContent>
           <DialogActions>
@@ -280,25 +309,20 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         </form>
       </Dialog>
 
-      {/* Manage Programs Dialog */}
       <Dialog open={openProgramsDialog} onClose={handleCloseProgramsDialog}>
         <DialogTitle>Manage Programs</DialogTitle>
         <DialogContent>
           <Box sx={{ mt: 2 }}>
             <Autocomplete
-              options={programs.filter((program) => !selectedPrograms.some((p) => p.id === program.id))}
-              getOptionLabel={(option) => option.name}
-              renderInput={(params) => (
-                <TextField {...params} label="Add to Program" fullWidth />
-              )}
+              options={programs.filter(p => !selectedPrograms.some(sp => sp.id === p.id))}
+              getOptionLabel={option => option.name}
+              renderInput={params => <TextField {...params} label="Add to Program" fullWidth />}
               onChange={(_, value) => {
-                if (value) {
-                  handleAddToProgram(value.id);
-                }
+                if (value) handleAddToProgram(value.id);
               }}
             />
             <Box sx={{ mt: 2 }}>
-              {selectedPrograms.map((program) => (
+              {selectedPrograms.map(program => (
                 <Chip
                   key={program.id}
                   label={program.name}
