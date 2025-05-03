@@ -196,7 +196,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   objectFit: 'contain',
                 }}
               />
-              <Box sx={{ position: 'absolute', top: '50%', right: { xs: 8, sm: 16 }, transform: 'translateY(-50%)' }}>
+              <Box sx={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)' }}>
                 <ThemeToggle />
               </Box>
             </Box>
