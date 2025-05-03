@@ -3,7 +3,6 @@
 import { useState, useEffect, useMemo } from 'react';
 import { Box, Container, CircularProgress } from '@mui/material';
 import { motion } from 'framer-motion';
-import Image from 'next/image';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
@@ -35,11 +34,23 @@ interface HomeClientProps {
   initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
 }
 
+interface HasData {
+  data: ChannelWithSchedules[];
+}
+
+function hasData(obj: unknown): obj is HasData {
+  return (
+    typeof obj === 'object' &&
+    obj !== null &&
+    Array.isArray((obj as HasData).data)
+  );
+}
+
 export default function HomeClient({ initialData }: HomeClientProps) {
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
     ? initialData
-    : Array.isArray((initialData as any).data)
-    ? (initialData as any).data
+    : hasData(initialData)
+    ? initialData.data
     : [];
 
   const [channelsWithSchedules, setChannelsWithSchedules] =
@@ -69,13 +80,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const fetchAllSchedulesInBackground = async () => {
     const token = AuthService.getCorrectToken(false);
-    const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+    const resp = await api.get<ChannelWithSchedules[] | { data: ChannelWithSchedules[] }>('/channels/with-schedules', {
       headers: { Authorization: `Bearer ${token}` },
     });
     const data = Array.isArray(resp.data)
       ? resp.data
-      : Array.isArray((resp.data as any).data)
-      ? (resp.data as any).data
+      : hasData(resp.data)
+      ? resp.data.data
       : [];
     setChannelsWithSchedules(data);
   };
