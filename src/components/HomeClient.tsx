@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Skeleton } from '@mui/material';
+import { Box, Container, Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
@@ -11,7 +11,6 @@ import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext'
 import { AuthService } from '@/services/auth';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
-import { useLayoutValues } from '@/constants/layout';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -43,8 +42,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
-  const { rowHeight, timeHeaderHeight } =
-    useLayoutValues();
 
   const channels = useMemo(
     () => channelsWithSchedules.map((c) => c.channel),
@@ -78,7 +75,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return resp.data;
   };
 
-  // arrancamos
   useEffect(() => {
     startRef.current = performance.now();
     setMounted(true);
@@ -87,7 +83,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    // holiday
     (async () => {
       const token = AuthService.getCorrectToken(false);
       const { data } = await api.get<{ holiday: boolean }>('/holiday', {
@@ -146,7 +141,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return () => clearInterval(id);
   }, [mounted, today, setLiveStatuses]);
 
-  // medir render final
   useEffect(() => {
     if (flattened.length > 0) {
       const total = performance.now() - startRef.current;
@@ -156,15 +150,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   if (!mounted) return null;
 
-  // Skeleton “lienzo completo”
-  const SkeletonGrid = () => {
-    const totalHeight = timeHeaderHeight + rowHeight * Math.min(channels.length, 8);
-    return (
-      <Box sx={{ width: '100%', height: totalHeight }}>
-        <Skeleton variant="rectangular" width="100%" height="100%" />
-      </Box>
-    );
-  };
+  // Skeleton full-area
+  const SkeletonGrid = () => (
+    <Box sx={{ width: '100%', height: '100%' }}>
+      <Skeleton variant="rectangular" width="100%" height="100%" />
+    </Box>
+  );
 
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
@@ -187,53 +178,92 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         }}
       >
         {/* HEADER */}
-        <MotionBox
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          sx={{ mb: 2 }}
+        <Container
+          maxWidth="xl"
+          disableGutters
+          sx={{ px: 0, mb: { xs: 1, sm: 2 } }}
         >
-          <Box
+          <MotionBox
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Box
+              sx={{
+                height: '13vh',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'left',
+                background:
+                  mode === 'light'
+                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
+                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                borderRadius: 2,
+                boxShadow:
+                  mode === 'light'
+                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                    : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
+                backdropFilter: 'blur(8px)',
+                paddingLeft: { xs: 1, sm: 2 },
+                position: 'relative',
+              }}
+            >
+              <Box
+                component="img"
+                src={logo}
+                alt="Logo"
+                sx={{ height: '11vh', width: 'auto', objectFit: 'contain' }}
+              />
+              <Box
+                component="img"
+                src={text}
+                alt="Texto"
+                sx={{
+                  paddingLeft: { xs: 1, sm: 2 },
+                  height: '11vh',
+                  width: 'auto',
+                  objectFit: 'contain',
+                }}
+              />
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: 8,
+                  transform: 'translateY(-50%)',
+                }}
+              >
+                <ThemeToggle />
+              </Box>
+            </Box>
+          </MotionBox>
+        </Container>
+
+        {/* GRID / SKELETON */}
+        <Container
+          maxWidth="xl"
+          disableGutters
+          sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
+        >
+          <MotionBox
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              px: 2,
-              py: 1,
-              background: mode === 'light' ? '#fff' : '#1e293b',
+              flex: 1,
+              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
+              overflow: 'hidden',
               backdropFilter: 'blur(8px)',
             }}
           >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box component="img" src={logo} alt="Logo" sx={{ height: 48 }} />
-              <Box component="img" src={text} alt="Texto" sx={{ height: 32 }} />
-            </Box>
-            <ThemeToggle />
-          </Box>
-        </MotionBox>
-
-        {/* GRID / SKELETON */}
-        <MotionBox
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          transition={{ duration: 0.5, delay: 0.2 }}
-          sx={{
-            flex: 1,
-            background: mode === 'light' ? '#fff' : '#1e293b',
-            borderRadius: 2,
-            overflow: 'hidden',
-            backdropFilter: 'blur(8px)',
-            px: 2,
-            pt: 2,
-          }}
-        >
-          {flattened.length === 0 ? (
-            <SkeletonGrid />
-          ) : (
-            <ScheduleGrid channels={channels} schedules={flattened} />
-          )}
-        </MotionBox>
+            {flattened.length === 0 ? (
+              <SkeletonGrid />
+            ) : (
+              <ScheduleGrid channels={channels} schedules={flattened} />
+            )}
+          </MotionBox>
+        </Container>
       </Box>
     </LiveStatusProvider>
   );
