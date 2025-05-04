@@ -83,7 +83,11 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
       </Box>
 
       {/* — Filas de canales — */}
-      <Box sx={{ position: 'relative' }}>
+      <Box sx={{
+            position: 'relative',
+            height: `${timeHeaderHeight + rowCount * rowHeight}px`,
+            overflow: 'hidden',      // para que no “se salgan” de la caja
+        }}>
         {Array.from({ length: rowCount }).map((_, r) => (
           <Box
             key={r}
@@ -129,6 +133,7 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
               height: b.height,
               borderRadius: theme.shape.borderRadius,
               bgcolor: alpha(theme.palette.background.paper, 0.1),
+              zIndex: 1
             }}
           />
         ))}
