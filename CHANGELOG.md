@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.0] - 2025-04-04
+
+### Added
+- Added sleketon loading grid
+
+### Changed
+- Optimized some backend requests
+
 ## [0.1.21] - 2025-04-02
 
 ### Changed
