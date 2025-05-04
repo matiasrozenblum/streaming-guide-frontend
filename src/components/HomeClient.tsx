@@ -1,42 +1,74 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Container, Skeleton } from '@mui/material';
+import React, {
+  useState,
+  useEffect,
+  useMemo,
+  useRef,
+} from 'react';
+import { Box, Container } from '@mui/material';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
+import {
+  LiveStatusProvider,
+  useLiveStatus,
+} from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
+import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 
-const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
+const HolidayDialog = dynamic(
+  () => import('@/components/HolidayDialog'),
+  { ssr: false }
+);
 const MotionBox = motion(Box);
 
 interface HomeClientProps {
-  initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
+  initialData:
+    | ChannelWithSchedules[]
+    | { data: ChannelWithSchedules[] };
 }
-interface HasData { data: ChannelWithSchedules[] }
+interface HasData {
+  data: ChannelWithSchedules[];
+}
 function hasData(x: unknown): x is HasData {
-  return typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    Array.isArray((x as HasData).data)
+  );
 }
-interface FetchParams { day?: string; live_status: boolean }
-type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
+interface FetchParams {
+  day?: string;
+  live_status: boolean;
+}
+type LiveMap = Record<
+  string,
+  { is_live: boolean; stream_url: string | null }
+>;
 
-export default function HomeClient({ initialData }: HomeClientProps) {
+export default function HomeClient({
+  initialData,
+}: HomeClientProps) {
   const startRef = useRef<number>(0);
 
-  // hydrate inicial
-  const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
+  // hydrate inicial desde SSR/ISR
+  const initArray: ChannelWithSchedules[] = Array.isArray(
+    initialData
+  )
     ? initialData
     : hasData(initialData)
     ? initialData.data
     : [];
 
-  const [channelsWithSchedules, setChannelsWithSchedules] =
-    useState<ChannelWithSchedules[]>(initArray);
+  const [
+    channelsWithSchedules,
+    setChannelsWithSchedules,
+  ] = useState<ChannelWithSchedules[]>(initArray);
   const [showHoliday, setShowHoliday] = useState(false);
   const [mounted, setMounted] = useState(false);
 
@@ -44,7 +76,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const { setLiveStatuses } = useLiveStatus();
 
   const channels = useMemo(
-    () => channelsWithSchedules.map((c) => c.channel),
+    () =>
+      channelsWithSchedules.map((c) => c.channel),
     [channelsWithSchedules]
   );
   const flattened = useMemo(
@@ -52,25 +85,37 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       channelsWithSchedules.flatMap((c) =>
         c.schedules.map((s) => ({
           ...s,
-          program: { ...s.program, channel: c.channel },
+          program: {
+            ...s.program,
+            channel: c.channel,
+          },
         }))
       ),
     [channelsWithSchedules]
   );
 
   const today = new Date()
-    .toLocaleString('en-US', { weekday: 'long' })
+    .toLocaleString('en-US', {
+      weekday: 'long',
+    })
     .toLowerCase();
 
   const fetchSchedules = async (day?: string) => {
     console.time(day ? 'fetchToday' : 'fetchWeek');
     const token = AuthService.getCorrectToken(false);
-    const params: FetchParams = { live_status: true };
+    const params: FetchParams = {
+      live_status: true,
+    };
     if (day) params.day = day;
-    const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
-      params,
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const resp = await api.get<ChannelWithSchedules[]>(
+      '/channels/with-schedules',
+      {
+        params,
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
+      }
+    );
     console.timeEnd(day ? 'fetchToday' : 'fetchWeek');
     return resp.data;
   };
@@ -83,15 +128,21 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
+    // Holiday (no bloquea grilla)
     (async () => {
       const token = AuthService.getCorrectToken(false);
-      const { data } = await api.get<{ holiday: boolean }>('/holiday', {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const { data } = await api.get<{ holiday: boolean }>(
+        '/holiday',
+        {
+          headers: {
+            Authorization: `Bearer ${token}`,
+          },
+        }
+      );
       if (data.holiday) setShowHoliday(true);
     })();
 
-    // 1) fetch rápido HOY
+    // 1) Carga rápida HOY
     (async () => {
       const todayData = await fetchSchedules(today);
       const liveMap: LiveMap = {};
@@ -107,7 +158,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(todayData);
     })();
 
-    // 2) precarga SEMANA background
+    // 2) Precarga SEMANA (background)
     (async () => {
       const weekData = await fetchSchedules();
       const liveMap: LiveMap = {};
@@ -123,7 +174,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(weekData);
     })();
 
-    // 3) polling SOLO hoy
+    // 3) Polling diario
     const id = setInterval(async () => {
       const tData = await fetchSchedules(today);
       const liveMap: LiveMap = {};
@@ -143,26 +194,30 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   useEffect(() => {
     if (flattened.length > 0) {
-      const total = performance.now() - startRef.current;
-      console.log(`🏁 Grid rendered in ${total.toFixed(2)} ms`);
+      const total =
+        performance.now() - startRef.current;
+      console.log(
+        `🏁 Grid rendered in ${total.toFixed(2)} ms`
+      );
     }
   }, [flattened]);
 
   if (!mounted) return null;
 
-  // Skeleton full-area
-  const SkeletonGrid = () => (
-    <Box sx={{ width: '100%', height: '100%' }}>
-      <Skeleton variant="rectangular" width="100%" height="100%" />
-    </Box>
-  );
-
   const logo = '/img/logo.png';
-  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
+  const text =
+    mode === 'light'
+      ? '/img/text.png'
+      : '/img/text-white.png';
 
   return (
     <LiveStatusProvider>
-      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
+      {showHoliday && (
+        <HolidayDialog
+          open
+          onClose={() => setShowHoliday(false)}
+        />
+      )}
 
       <Box
         sx={{
@@ -212,7 +267,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 component="img"
                 src={logo}
                 alt="Logo"
-                sx={{ height: '11vh', width: 'auto', objectFit: 'contain' }}
+                sx={{
+                  height: '11vh',
+                  width: 'auto',
+                  objectFit: 'contain',
+                }}
               />
               <Box
                 component="img"
@@ -243,24 +302,38 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <Container
           maxWidth="xl"
           disableGutters
-          sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
+          sx={{
+            px: 0,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
           <MotionBox
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+            transition={{
+              duration: 0.5,
+              delay: 0.2,
+            }}
             sx={{
               flex: 1,
-              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
+              background:
+                mode === 'light'
+                  ? 'rgba(255,255,255,0.9)'
+                  : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
               overflow: 'hidden',
               backdropFilter: 'blur(8px)',
             }}
           >
             {flattened.length === 0 ? (
-              <SkeletonGrid />
+              <SkeletonScheduleGrid />
             ) : (
-              <ScheduleGrid channels={channels} schedules={flattened} />
+              <ScheduleGrid
+                channels={channels}
+                schedules={flattened}
+              />
             )}
           </MotionBox>
         </Container>
