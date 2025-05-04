@@ -12,10 +12,7 @@ import { AuthService } from '@/services/auth';
 import type { ChannelWithSchedules } from '@/types/channel';
 
 // Dynamic imports for performance
-const HolidayDialog = dynamic(
-  () => import('@/components/HolidayDialog'),
-  { ssr: false }
-);
+const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const ScheduleGrid = dynamic(
   () => import('@/components/ScheduleGrid').then((mod) => mod.ScheduleGrid),
   {
@@ -37,7 +34,6 @@ interface HomeClientProps {
 interface HasData {
   data: ChannelWithSchedules[];
 }
-
 function hasData(obj: unknown): obj is HasData {
   return (
     typeof obj === 'object' &&
@@ -78,23 +74,28 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
-  const fetchAllSchedulesInBackground = async () => {
+  // Día actual para el query
+  const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+
+  // Trae TODO: schedules + live flags
+  const fetchAllSchedules = async () => {
     const token = AuthService.getCorrectToken(false);
-    const resp = await api.get<ChannelWithSchedules[] | { data: ChannelWithSchedules[] }>('/channels/with-schedules', {
+    const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+      params: { day: today, live_status: true },
       headers: { Authorization: `Bearer ${token}` },
     });
-    const data = Array.isArray(resp.data)
-      ? resp.data
-      : hasData(resp.data)
-      ? resp.data.data
-      : [];
-    setChannelsWithSchedules(data);
+    setChannelsWithSchedules(resp.data);
   };
 
-  useEffect(() => setMounted(true), []);
+  // mounted flag
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
+  // polling + feriado
   useEffect(() => {
     if (!mounted) return;
+
     const fetchHoliday = async () => {
       const token = AuthService.getCorrectToken(false);
       const resp = await api.get<{ holiday: boolean }>('/holiday', {
@@ -103,11 +104,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setIsHoliday(resp.data.holiday);
       if (resp.data.holiday) setShowHoliday(true);
     };
+
     fetchHoliday();
-    fetchAllSchedulesInBackground();
-    const intervalId = setInterval(fetchAllSchedulesInBackground, 60_000);
+    fetchAllSchedules();
+    const intervalId = setInterval(fetchAllSchedules, 60_000);
     return () => clearInterval(intervalId);
-  }, [mounted]);
+  }, [mounted, today]);
 
   if (!mounted) return null;
 
@@ -151,7 +153,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <Container
           maxWidth="xl"
           disableGutters
-          sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+          sx={{
+            px: 0,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0,
+          }}
         >
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
@@ -182,7 +190,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 component="img"
                 src={logo}
                 alt="La Guía del Streaming Logo"
-                sx={{ width: 'auto', height: '11vh', maxWidth: '100%', objectFit: 'contain' }}
+                sx={{
+                  width: 'auto',
+                  height: '11vh',
+                  maxWidth: '100%',
+                  objectFit: 'contain',
+                }}
               />
               <Box
                 component="img"
@@ -196,7 +209,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   objectFit: 'contain',
                 }}
               />
-              <Box sx={{ position: 'absolute', top: '50%', right: 8, transform: 'translateY(-50%)' }}>
+              <Box
+                sx={{
+                  position: 'absolute',
+                  top: '50%',
+                  right: { xs: 8, sm: 16 },
+                  transform: 'translateY(-50%)',
+                }}
+              >
                 <ThemeToggle />
               </Box>
             </Box>
@@ -211,9 +231,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               minHeight: 0,
               background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
-              boxShadow: mode === 'light'
-                ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+              boxShadow:
+                mode === 'light'
+                  ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                  : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
               overflow: 'hidden',
               backdropFilter: 'blur(8px)',
               display: 'flex',
