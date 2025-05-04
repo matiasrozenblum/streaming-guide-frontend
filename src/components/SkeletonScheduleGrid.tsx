@@ -25,8 +25,8 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
       // offset aleatorio entre 0 y 20 horas
       const startHour = Math.floor(Math.random() * 20);
       const startMin = startHour * 60 + Math.floor(Math.random() * 60);
-      // duración 60 minutos
-      const durMin = 60;
+      // duración entre 30 y 90 minutos
+      const durMin = 30 + Math.floor(Math.random() * 60);
       return {
         top: timeHeaderHeight + r * rowHeight + (rowHeight - rowHeight * 0.6) / 2,
         left: channelLabelWidth + startMin * pixelsPerMinute + 2,
