@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
 import { useLayoutValues } from '@/constants/layout';
 
 export const SkeletonScheduleGrid: React.FC = () => {
@@ -13,14 +13,14 @@ export const SkeletonScheduleGrid: React.FC = () => {
   } = useLayoutValues();
 
   const hours = 24;
-  const rows = 6; // cantidad de filas fantasma
+  const rows = 6; // muestro 6 filas de skeleton como ejemplo
   const times = Array.from({ length: hours });
   const channels = Array.from({ length: rows });
 
-  // Genera unos bloques "random" por fila
+  // Genero unos “bloques” random para simular programas
   const randomBlocks = channels.flatMap((_, rowIdx) => {
-    const blockCount = Math.random() > 0.5 ? 2 : 1;
-    return Array.from({ length: blockCount }).map(() => {
+    const count = Math.random() > 0.5 ? 2 : 1;
+    return Array.from({ length: count }).map(() => {
       const startHour = Math.floor(Math.random() * (hours - 2));
       const duration = 1 + Math.floor(Math.random() * 3);
       return {
@@ -43,9 +43,10 @@ export const SkeletonScheduleGrid: React.FC = () => {
           channelLabelWidth + hours * 60 * pixelsPerMinute,
         minHeight:
           timeHeaderHeight + rows * rowHeight,
+        bgcolor: 'transparent',
       }}
     >
-      {/* Header de horas */}
+      {/* 1. Encabezado de horas */}
       <Box
         sx={{
           display: 'grid',
@@ -54,18 +55,25 @@ export const SkeletonScheduleGrid: React.FC = () => {
           height: timeHeaderHeight,
         }}
       >
-        <Box />
+        {/* Celda “Canal” */}
+        <Skeleton
+          variant="text"
+          width={channelLabelWidth * 0.6}
+          height={timeHeaderHeight * 0.6}
+          sx={{ my: timeHeaderHeight * 0.2, mx: 1 }}
+        />
         {times.map((_, i) => (
-          <Box
-            key={i}
-            sx={{
-              borderRight: '1px solid rgba(255,255,255,0.1)',
-            }}
-          />
+          <Box key={i} sx={{ px: 1, pt: 1 }}>
+            <Skeleton
+              variant="text"
+              width={60 * pixelsPerMinute * 0.5}
+              height={timeHeaderHeight * 0.4}
+            />
+          </Box>
         ))}
       </Box>
 
-      {/* Filas fantasma */}
+      {/* 2. Filas de canales */}
       <Box
         sx={{
           position: 'absolute',
@@ -78,17 +86,33 @@ export const SkeletonScheduleGrid: React.FC = () => {
           gridAutoRows: `${rowHeight}px`,
         }}
       >
-        {channels.map((_, r) => (
-          <React.Fragment key={r}>
-            {/* etiqueta de canal */}
+        {channels.map((_, rowIdx) => (
+          <React.Fragment key={rowIdx}>
+            {/* Nombre del canal */}
             <Box
               sx={{
+                display: 'flex',
+                alignItems: 'center',
+                pl: 1,
                 borderTop: '1px solid rgba(255,255,255,0.1)',
               }}
-            />
-            {times.map((_, c) => (
+            >
+              <Skeleton
+                variant="circular"
+                width={rowHeight * 0.6}
+                height={rowHeight * 0.6}
+              />
+              <Skeleton
+                variant="text"
+                width={channelLabelWidth * 0.4}
+                height={rowHeight * 0.3}
+                sx={{ ml: 1 }}
+              />
+            </Box>
+            {/* Celdas horarias vacías */}
+            {times.map((_, colIdx) => (
               <Box
-                key={`${r}-${c}`}
+                key={colIdx}
                 sx={{
                   borderTop: '1px solid rgba(255,255,255,0.1)',
                   borderLeft: '1px solid rgba(255,255,255,0.1)',
@@ -99,17 +123,17 @@ export const SkeletonScheduleGrid: React.FC = () => {
         ))}
       </Box>
 
-      {/* Bloques aleatorios */}
+      {/* 3. Bloques aleatorios (skeleton de programas) */}
       {randomBlocks.map((blk, i) => (
-        <Box
+        <Skeleton
           key={i}
+          variant="rectangular"
           sx={{
             position: 'absolute',
             top: blk.top,
             left: blk.left,
             width: blk.width,
             height: blk.height,
-            bgcolor: 'rgba(255,255,255,0.1)',
             borderRadius: 1,
           }}
         />
