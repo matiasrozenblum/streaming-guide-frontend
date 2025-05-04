@@ -35,7 +35,11 @@ interface HasData {
   data: ChannelWithSchedules[];
 }
 function hasData(x: unknown): x is HasData {
-  return typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
+  return (
+    typeof x === 'object' &&
+    x !== null &&
+    Array.isArray((x as HasData).data)
+  );
 }
 
 interface FetchParams {
@@ -44,9 +48,10 @@ interface FetchParams {
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-  // marcar inicio de render
+  // Para medir tiempo total hasta que la grilla se monta
   const startRef = useRef<number>(0);
 
+  // "Hydrate" inicial desde SSR/ISR
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
     ? initialData
     : hasData(initialData)
@@ -60,19 +65,29 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
 
-  const channels = useMemo(() => channelsWithSchedules.map((c) => c.channel), [channelsWithSchedules]);
+  const channels = useMemo(
+    () => channelsWithSchedules.map((c) => c.channel),
+    [channelsWithSchedules]
+  );
   const flattened = useMemo(
     () =>
       channelsWithSchedules.flatMap((c) =>
-        c.schedules.map((s) => ({ ...s, program: { ...s.program, channel: c.channel } }))
+        c.schedules.map((s) => ({
+          ...s,
+          program: { ...s.program, channel: c.channel },
+        }))
       ),
     [channelsWithSchedules]
   );
 
-  const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+  // Día actual para el query
+  const today = new Date()
+    .toLocaleString('en-US', { weekday: 'long' })
+    .toLowerCase();
 
+  // Helper genérico
   const fetchSchedules = async (day?: string) => {
-    console.time('fetchSchedules');
+    console.time(day ? 'fetchToday' : 'fetchWeek');
     const token = AuthService.getCorrectToken(false);
     const params: FetchParams = { live_status: true };
     if (day) params.day = day;
@@ -80,12 +95,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       params,
       headers: { Authorization: `Bearer ${token}` },
     });
-    console.timeEnd('fetchSchedules');
+    console.timeEnd(day ? 'fetchToday' : 'fetchWeek');
     return resp.data;
   };
 
+  // Seteo mounted + arranque cronómetro
   useEffect(() => {
-    // registramos tiempo de inicio apenas montamos
     startRef.current = performance.now();
     setMounted(true);
   }, []);
@@ -93,21 +108,21 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    // Feriasdo
+    // 1) Holiday (no bloquea la grilla)
     (async () => {
-      const t = AuthService.getCorrectToken(false);
-      const h = await api.get<{ holiday: boolean }>('/holiday', {
-        headers: { Authorization: `Bearer ${t}` },
+      const token = AuthService.getCorrectToken(false);
+      const resp = await api.get<{ holiday: boolean }>('/holiday', {
+        headers: { Authorization: `Bearer ${token}` },
       });
-      setIsHoliday(h.data.holiday);
-      if (h.data.holiday) setShowHoliday(true);
+      setIsHoliday(resp.data.holiday);
+      if (resp.data.holiday) setShowHoliday(true);
     })();
 
-    // 1) Carga rápida del día de hoy
+    // 2) Fetch "rápido" del día de hoy
     (async () => {
       const todayData = await fetchSchedules(today);
 
-      // extraer live map
+      // extraer live-map
       const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
       todayData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
@@ -121,10 +136,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(todayData);
     })();
 
-    // 2) Pre-carga de toda la semana en background
+    // 3) Precarga de toda la semana en background (no bloqueante)
     (async () => {
       const weekData = await fetchSchedules();
-      // opcionalmente actualizar liveMap o sólo allSchedules
+      // actualizar solo si querés sobrescribir
       const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
       weekData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
@@ -138,8 +153,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(weekData);
     })();
 
-    // re-poll hoy cada 60s
-    const id = setInterval(async () => {
+    // 4) Poll sólo del día actual
+    const intervalId = setInterval(async () => {
       const todayData = await fetchSchedules(today);
       const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
       todayData.forEach((ch) =>
@@ -154,10 +169,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(todayData);
     }, 60_000);
 
-    return () => clearInterval(id);
+    return () => clearInterval(intervalId);
   }, [mounted, today, setLiveStatuses]);
 
-  // cuando la grilla ya aparece, medimos tiempo total
+  // Cuando la grilla ya tiene items, medimos render completo
   useEffect(() => {
     if (flattened.length > 0) {
       const total = performance.now() - startRef.current;
@@ -172,7 +187,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   return (
     <LiveStatusProvider>
-      {isHoliday && <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />}
+      {isHoliday && (
+        <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />
+      )}
 
       <Box
         sx={{
