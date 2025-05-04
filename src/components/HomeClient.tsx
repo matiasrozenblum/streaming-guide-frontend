@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Container, Skeleton } from '@mui/material';
+import { Box, Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
@@ -13,42 +13,23 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import { useLayoutValues } from '@/constants/layout';
 
-const HolidayDialog = dynamic(
-  () => import('@/components/HolidayDialog'),
-  { ssr: false }
-);
-
+const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
 
 interface HomeClientProps {
   initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
 }
-
-interface HasData {
-  data: ChannelWithSchedules[];
-}
+interface HasData { data: ChannelWithSchedules[] }
 function hasData(x: unknown): x is HasData {
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    Array.isArray((x as HasData).data)
-  );
+  return typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
 }
-
-interface FetchParams {
-  day?: string;
-  live_status: boolean;
-}
-
-type LiveMap = Record<
-  string,
-  { is_live: boolean; stream_url: string | null }
->;
+interface FetchParams { day?: string; live_status: boolean }
+type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef<number>(0);
 
-  // Hydrate inicial
+  // hydrate inicial
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
     ? initialData
     : hasData(initialData)
@@ -62,12 +43,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
-  const {
-    channelLabelWidth,
-    pixelsPerMinute,
-    rowHeight,
-    timeHeaderHeight,
-  } = useLayoutValues();
+  const { rowHeight, timeHeaderHeight } =
+    useLayoutValues();
 
   const channels = useMemo(
     () => channelsWithSchedules.map((c) => c.channel),
@@ -101,7 +78,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return resp.data;
   };
 
-  // mounting + cronómetro
+  // arrancamos
   useEffect(() => {
     startRef.current = performance.now();
     setMounted(true);
@@ -110,18 +87,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    // Holiday (no bloquea)
+    // holiday
     (async () => {
       const token = AuthService.getCorrectToken(false);
-      const resp = await api.get<{ holiday: boolean }>('/holiday', {
+      const { data } = await api.get<{ holiday: boolean }>('/holiday', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      if (resp.data.holiday) {
-        setShowHoliday(true);
-      }
+      if (data.holiday) setShowHoliday(true);
     })();
 
-    // 1) fetch rápido de HOY
+    // 1) fetch rápido HOY
     (async () => {
       const todayData = await fetchSchedules(today);
       const liveMap: LiveMap = {};
@@ -137,7 +112,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(todayData);
     })();
 
-    // 2) precarga toda la semana en background
+    // 2) precarga SEMANA background
     (async () => {
       const weekData = await fetchSchedules();
       const liveMap: LiveMap = {};
@@ -154,10 +129,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     })();
 
     // 3) polling SOLO hoy
-    const intervalId = setInterval(async () => {
-      const todayData = await fetchSchedules(today);
+    const id = setInterval(async () => {
+      const tData = await fetchSchedules(today);
       const liveMap: LiveMap = {};
-      todayData.forEach((ch) =>
+      tData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
             is_live: sch.program.is_live,
@@ -166,10 +141,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         })
       );
       setLiveStatuses(liveMap);
-      setChannelsWithSchedules(todayData);
+      setChannelsWithSchedules(tData);
     }, 60_000);
-
-    return () => clearInterval(intervalId);
+    return () => clearInterval(id);
   }, [mounted, today, setLiveStatuses]);
 
   // medir render final
@@ -182,45 +156,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   if (!mounted) return null;
 
-  // skeleton placeholder
+  // Skeleton “lienzo completo”
   const SkeletonGrid = () => {
-    const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
-    const rows = Math.min(channels.length, 6);
+    const totalHeight = timeHeaderHeight + rowHeight * Math.min(channels.length, 8);
     return (
-      <Box sx={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
-        {/* header */}
-        <Box display="flex">
-          <Skeleton
-            variant="rectangular"
-            width={channelLabelWidth}
-            height={timeHeaderHeight}
-          />
-          {Array.from({ length: 6 }).map((_, i) => (
-            <Skeleton
-              key={i}
-              variant="rectangular"
-              width={pixelsPerMinute * 60}
-              height={timeHeaderHeight}
-            />
-          ))}
-        </Box>
-        {/* filas */}
-        <Box>
-          {Array.from({ length: rows }).map((_, r) => (
-            <Box key={r} display="flex">
-              <Skeleton
-                variant="rectangular"
-                width={channelLabelWidth}
-                height={rowHeight}
-              />
-              <Skeleton
-                variant="rectangular"
-                width={totalGridWidth - channelLabelWidth}
-                height={rowHeight}
-              />
-            </Box>
-          ))}
-        </Box>
+      <Box sx={{ width: '100%', height: totalHeight }}>
+        <Skeleton variant="rectangular" width="100%" height="100%" />
       </Box>
     );
   };
@@ -230,12 +171,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   return (
     <LiveStatusProvider>
-      {showHoliday && (
-        <HolidayDialog
-          open
-          onClose={() => setShowHoliday(false)}
-        />
-      )}
+      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
       <Box
         sx={{
@@ -246,72 +182,58 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
               : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           py: { xs: 1, sm: 2 },
-          position: 'relative',
           display: 'flex',
           flexDirection: 'column',
         }}
       >
-        <Container
-          maxWidth="xl"
-          disableGutters
-          sx={{
-            px: 0,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
+        {/* HEADER */}
+        <MotionBox
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.5 }}
+          sx={{ mb: 2 }}
         >
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-            sx={{ position: 'relative', zIndex: 1, mb: 2 }}
-          >
-            <Box
-              sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
-                p: 2,
-                background:
-                  mode === 'light'
-                    ? 'rgba(255,255,255,0.9)'
-                    : 'rgba(30,41,59,0.9)',
-                borderRadius: 2,
-                backdropFilter: 'blur(8px)',
-              }}
-            >
-              <Box component="img" src={logo} alt="Logo" sx={{ height: 64 }} />
-              <Box component="img" src={text} alt="Text" sx={{ height: 64 }} />
-              <ThemeToggle />
-            </Box>
-          </MotionBox>
-
-          <MotionBox
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+          <Box
             sx={{
-              flex: 1,
-              minHeight: 0,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              px: 2,
+              py: 1,
               background: mode === 'light' ? '#fff' : '#1e293b',
               borderRadius: 2,
-              overflow: 'hidden',
               backdropFilter: 'blur(8px)',
-              display: 'flex',
-              flexDirection: 'column',
             }}
           >
-            {flattened.length === 0 ? (
-              <SkeletonGrid />
-            ) : (
-              <ScheduleGrid
-                channels={channels}
-                schedules={flattened}
-              />
-            )}
-          </MotionBox>
-        </Container>
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              <Box component="img" src={logo} alt="Logo" sx={{ height: 48 }} />
+              <Box component="img" src={text} alt="Texto" sx={{ height: 32 }} />
+            </Box>
+            <ThemeToggle />
+          </Box>
+        </MotionBox>
+
+        {/* GRID / SKELETON */}
+        <MotionBox
+          initial={{ opacity: 0 }}
+          animate={{ opacity: 1 }}
+          transition={{ duration: 0.5, delay: 0.2 }}
+          sx={{
+            flex: 1,
+            background: mode === 'light' ? '#fff' : '#1e293b',
+            borderRadius: 2,
+            overflow: 'hidden',
+            backdropFilter: 'blur(8px)',
+            px: 2,
+            pt: 2,
+          }}
+        >
+          {flattened.length === 0 ? (
+            <SkeletonGrid />
+          ) : (
+            <ScheduleGrid channels={channels} schedules={flattened} />
+          )}
+        </MotionBox>
       </Box>
     </LiveStatusProvider>
   );
