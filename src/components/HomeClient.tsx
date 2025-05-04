@@ -10,7 +10,11 @@ import { AuthService } from '@/services/auth';
 import type { ChannelWithSchedules } from '@/types/channel';
 
 // Dynamic imports
-const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
+const HolidayDialog = dynamic(
+  () => import('@/components/HolidayDialog'),
+  { ssr: false }
+);
+
 const ScheduleGrid = dynamic(
   () => import('@/components/ScheduleGrid').then((m) => m.ScheduleGrid),
   {
@@ -43,8 +47,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     ? initialData.data
     : [];
 
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState<ChannelWithSchedules[]>(initArray);
-  const [allSchedules, setAllSchedules] = useState<ChannelWithSchedules[]>(initArray);
+  const [channelsWithSchedules, setChannelsWithSchedules] =
+    useState<ChannelWithSchedules[]>(initArray);
   const [isHoliday, setIsHoliday] = useState(false);
   const [showHoliday, setShowHoliday] = useState(false);
   const [mounted, setMounted] = useState(false);
@@ -66,7 +70,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
-  const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
+  const today = new Date()
+    .toLocaleString('en-US', { weekday: 'long' })
+    .toLowerCase();
 
   const fetchSchedules = async (day?: string) => {
     const token = AuthService.getCorrectToken(false);
@@ -86,7 +92,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    // fetch holiday
+    // Feriado
     const fetchHoliday = async () => {
       const t = AuthService.getCorrectToken(false);
       const h = await api.get<{ holiday: boolean }>('/holiday', {
@@ -97,11 +103,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     };
     fetchHoliday();
 
-    // load today's schedules
+    // Carga inicial de hoy
     const loadToday = async () => {
-      const todaySchedules = await fetchSchedules(today);
+      const todayData = await fetchSchedules(today);
       const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-      todaySchedules.forEach((ch) =>
+      todayData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
             is_live: sch.program.is_live,
@@ -110,15 +116,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         })
       );
       setLiveStatuses(liveMap);
-      setChannelsWithSchedules(todaySchedules);
-      setAllSchedules(todaySchedules);
+      setChannelsWithSchedules(todayData);
     };
 
-    // load full week in background
+    // Pre-carga de toda la semana en background
     const loadAllWeek = async () => {
-      const weekSchedules = await fetchSchedules();
+      const weekData = await fetchSchedules();
       const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-      weekSchedules.forEach((ch) =>
+      weekData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
             is_live: sch.program.is_live,
@@ -127,8 +132,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         })
       );
       setLiveStatuses(liveMap);
-      setAllSchedules(weekSchedules);
-      setChannelsWithSchedules(weekSchedules);
+      setChannelsWithSchedules(weekData);
     };
 
     loadToday();
@@ -136,7 +140,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     const id = setInterval(loadToday, 60_000);
     return () => clearInterval(id);
-  }, [mounted, today]);
+  }, [mounted, today, setLiveStatuses]);
 
   if (!mounted) return null;
 
@@ -145,7 +149,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   return (
     <LiveStatusProvider>
-      {isHoliday && <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />}
+      {isHoliday && (
+        <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />
+      )}
 
       <Box
         sx={{
