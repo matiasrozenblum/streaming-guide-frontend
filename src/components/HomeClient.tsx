@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Container, CircularProgress } from '@mui/material';
+import { Box, Container, Skeleton } from '@mui/material';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
@@ -9,20 +9,13 @@ import { ThemeToggle } from '@/components/ThemeToggle';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
 import { AuthService } from '@/services/auth';
+import { ScheduleGrid } from '@/components/ScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
+import { useLayoutValues } from '@/constants/layout';
 
-// Dynamic imports
-const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
-const ScheduleGrid = dynamic(
-  () => import('@/components/ScheduleGrid').then((m) => m.ScheduleGrid),
-  {
-    ssr: false,
-    loading: () => (
-      <Box display="flex" justifyContent="center" p={4}>
-        <CircularProgress />
-      </Box>
-    ),
-  }
+const HolidayDialog = dynamic(
+  () => import('@/components/HolidayDialog'),
+  { ssr: false }
 );
 
 const MotionBox = motion(Box);
@@ -47,23 +40,34 @@ interface FetchParams {
   live_status: boolean;
 }
 
+type LiveMap = Record<
+  string,
+  { is_live: boolean; stream_url: string | null }
+>;
+
 export default function HomeClient({ initialData }: HomeClientProps) {
-  // Para medir tiempo total hasta que la grilla se monta
   const startRef = useRef<number>(0);
 
-  // "Hydrate" inicial desde SSR/ISR
+  // Hydrate inicial
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
     ? initialData
     : hasData(initialData)
     ? initialData.data
     : [];
 
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initArray);
-  const [isHoliday, setIsHoliday] = useState(false);
+  const [channelsWithSchedules, setChannelsWithSchedules] =
+    useState<ChannelWithSchedules[]>(initArray);
   const [showHoliday, setShowHoliday] = useState(false);
   const [mounted, setMounted] = useState(false);
+
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
+  const {
+    channelLabelWidth,
+    pixelsPerMinute,
+    rowHeight,
+    timeHeaderHeight,
+  } = useLayoutValues();
 
   const channels = useMemo(
     () => channelsWithSchedules.map((c) => c.channel),
@@ -80,12 +84,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
-  // Día actual para el query
   const today = new Date()
     .toLocaleString('en-US', { weekday: 'long' })
     .toLowerCase();
 
-  // Helper genérico
   const fetchSchedules = async (day?: string) => {
     console.time(day ? 'fetchToday' : 'fetchWeek');
     const token = AuthService.getCorrectToken(false);
@@ -99,7 +101,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return resp.data;
   };
 
-  // Seteo mounted + arranque cronómetro
+  // mounting + cronómetro
   useEffect(() => {
     startRef.current = performance.now();
     setMounted(true);
@@ -108,22 +110,21 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     if (!mounted) return;
 
-    // 1) Holiday (no bloquea la grilla)
+    // Holiday (no bloquea)
     (async () => {
       const token = AuthService.getCorrectToken(false);
       const resp = await api.get<{ holiday: boolean }>('/holiday', {
         headers: { Authorization: `Bearer ${token}` },
       });
-      setIsHoliday(resp.data.holiday);
-      if (resp.data.holiday) setShowHoliday(true);
+      if (resp.data.holiday) {
+        setShowHoliday(true);
+      }
     })();
 
-    // 2) Fetch "rápido" del día de hoy
+    // 1) fetch rápido de HOY
     (async () => {
       const todayData = await fetchSchedules(today);
-
-      // extraer live-map
-      const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+      const liveMap: LiveMap = {};
       todayData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
@@ -136,11 +137,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(todayData);
     })();
 
-    // 3) Precarga de toda la semana en background (no bloqueante)
+    // 2) precarga toda la semana en background
     (async () => {
       const weekData = await fetchSchedules();
-      // actualizar solo si querés sobrescribir
-      const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+      const liveMap: LiveMap = {};
       weekData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
@@ -153,10 +153,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       setChannelsWithSchedules(weekData);
     })();
 
-    // 4) Poll sólo del día actual
+    // 3) polling SOLO hoy
     const intervalId = setInterval(async () => {
       const todayData = await fetchSchedules(today);
-      const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+      const liveMap: LiveMap = {};
       todayData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
@@ -172,7 +172,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return () => clearInterval(intervalId);
   }, [mounted, today, setLiveStatuses]);
 
-  // Cuando la grilla ya tiene items, medimos render completo
+  // medir render final
   useEffect(() => {
     if (flattened.length > 0) {
       const total = performance.now() - startRef.current;
@@ -182,13 +182,59 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   if (!mounted) return null;
 
+  // skeleton placeholder
+  const SkeletonGrid = () => {
+    const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+    const rows = Math.min(channels.length, 6);
+    return (
+      <Box sx={{ position: 'relative', flex: 1, overflow: 'hidden' }}>
+        {/* header */}
+        <Box display="flex">
+          <Skeleton
+            variant="rectangular"
+            width={channelLabelWidth}
+            height={timeHeaderHeight}
+          />
+          {Array.from({ length: 6 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              width={pixelsPerMinute * 60}
+              height={timeHeaderHeight}
+            />
+          ))}
+        </Box>
+        {/* filas */}
+        <Box>
+          {Array.from({ length: rows }).map((_, r) => (
+            <Box key={r} display="flex">
+              <Skeleton
+                variant="rectangular"
+                width={channelLabelWidth}
+                height={rowHeight}
+              />
+              <Skeleton
+                variant="rectangular"
+                width={totalGridWidth - channelLabelWidth}
+                height={rowHeight}
+              />
+            </Box>
+          ))}
+        </Box>
+      </Box>
+    );
+  };
+
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
 
   return (
     <LiveStatusProvider>
-      {isHoliday && (
-        <HolidayDialog open={showHoliday} onClose={() => setShowHoliday(false)} />
+      {showHoliday && (
+        <HolidayDialog
+          open
+          onClose={() => setShowHoliday(false)}
+        />
       )}
 
       <Box
@@ -203,80 +249,41 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           position: 'relative',
           display: 'flex',
           flexDirection: 'column',
-          '&::before': {
-            content: '""',
-            position: 'absolute',
-            top: 0,
-            left: 0,
-            right: 0,
-            height: '400px',
-            background:
-              mode === 'light'
-                ? 'linear-gradient(135deg,#2563eb 0%,#1d4ed8 100%)'
-                : 'linear-gradient(135deg,#3b82f6 0%,#2563eb 100%)',
-            opacity: 0.05,
-            zIndex: 0,
-          },
         }}
       >
         <Container
           maxWidth="xl"
           disableGutters
-          sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}
+          sx={{
+            px: 0,
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+          }}
         >
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
-            sx={{ position: 'relative', zIndex: 1, mb: { xs: 1, sm: 2 } }}
+            sx={{ position: 'relative', zIndex: 1, mb: 2 }}
           >
             <Box
               sx={{
-                height: '13vh',
                 display: 'flex',
                 alignItems: 'center',
-                justifyContent: 'left',
+                justifyContent: 'space-between',
+                p: 2,
                 background:
                   mode === 'light'
-                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                    ? 'rgba(255,255,255,0.9)'
+                    : 'rgba(30,41,59,0.9)',
                 borderRadius: 2,
-                boxShadow:
-                  mode === 'light'
-                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                    : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
                 backdropFilter: 'blur(8px)',
-                paddingLeft: { xs: 1, sm: 2 },
               }}
             >
-              <Box
-                component="img"
-                src={logo}
-                alt="Logo"
-                sx={{ width: 'auto', height: '11vh', maxWidth: '100%', objectFit: 'contain' }}
-              />
-              <Box
-                component="img"
-                src={text}
-                alt="Text"
-                sx={{
-                  paddingLeft: { xs: 1, sm: 2 },
-                  width: 'auto',
-                  height: '11vh',
-                  maxWidth: '100%',
-                  objectFit: 'contain',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: { xs: 8, sm: 16 },
-                  transform: 'translateY(-50%)',
-                }}
-              >
-                <ThemeToggle />
-              </Box>
+              <Box component="img" src={logo} alt="Logo" sx={{ height: 64 }} />
+              <Box component="img" src={text} alt="Text" sx={{ height: 64 }} />
+              <ThemeToggle />
             </Box>
           </MotionBox>
 
@@ -287,12 +294,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               flex: 1,
               minHeight: 0,
-              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
+              background: mode === 'light' ? '#fff' : '#1e293b',
               borderRadius: 2,
-              boxShadow:
-                mode === 'light'
-                  ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                  : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
               overflow: 'hidden',
               backdropFilter: 'blur(8px)',
               display: 'flex',
@@ -300,11 +303,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             }}
           >
             {flattened.length === 0 ? (
-              <Box display="flex" justifyContent="center" alignItems="center" p={4}>
-                <CircularProgress />
-              </Box>
+              <SkeletonGrid />
             ) : (
-              <ScheduleGrid channels={channels} schedules={flattened} />
+              <ScheduleGrid
+                channels={channels}
+                schedules={flattened}
+              />
             )}
           </MotionBox>
         </Container>
