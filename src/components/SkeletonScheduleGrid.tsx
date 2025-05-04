@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { Box, Skeleton } from '@mui/material';
+import { alpha, Box, Skeleton, useTheme } from '@mui/material';
 import { useLayoutValues } from '@/constants/layout';
 
 interface Props {
@@ -9,6 +9,7 @@ interface Props {
 }
 
 export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
+  const theme = useTheme();
   const {
     channelLabelWidth,
     timeHeaderHeight,
@@ -18,40 +19,53 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // Generamos un bloque “programa” por fila (30' de ancho)  
-  const blocks = Array.from({ length: rowCount }).map((_, r) => {
-    const startMin = (r * 60) % (24 * 60);
-    const durMin = 30;
-    return {
-      top: timeHeaderHeight + r * rowHeight + (rowHeight - 30) / 2,
-      left: channelLabelWidth + startMin * pixelsPerMinute + 2,
-      width: durMin * pixelsPerMinute - 4,
-      height: 30,
-    };
+  // Generar 2 bloques aleatorios por fila
+  const blocks = Array.from({ length: rowCount }).flatMap((_, r) => {
+    return [0, 1].map(() => {
+      // offset aleatorio entre 0 y 20 horas
+      const startHour = Math.floor(Math.random() * 20);
+      const startMin = startHour * 60 + Math.floor(Math.random() * 60);
+      // duración 60 minutos
+      const durMin = 60;
+      return {
+        top: timeHeaderHeight + r * rowHeight + (rowHeight - rowHeight * 0.6) / 2,
+        left: channelLabelWidth + startMin * pixelsPerMinute + 2,
+        width: durMin * pixelsPerMinute - 4,
+        height: rowHeight * 0.6,
+      };
+    });
   });
 
   return (
     <Box>
-      {/* 1) Tabs de días */}
+      {/* — Días arriba — */}
       <Box display="flex" gap={1} p={2} alignItems="center">
         {Array.from({ length: 7 }).map((_, i) => (
-          <Skeleton key={i} variant="rectangular" width={80} height={40} />
+          <Skeleton
+            key={i}
+            variant="rectangular"
+            width={80}
+            height={40}
+            sx={{ borderRadius: theme.shape.borderRadius }}
+          />
         ))}
         <Box flex="1" />
-        <Skeleton variant="rectangular" width={100} height={40} />
+        <Skeleton
+          variant="rectangular"
+          width={100}
+          height={40}
+          sx={{ borderRadius: theme.shape.borderRadius }}
+        />
       </Box>
 
-      {/* 2) Fila de horas */}
-      <Box display="flex" sx={{ borderBottom: '1px solid rgba(255,255,255,0.12)' }}>
+      {/* — Header de horas — */}
+      <Box display="flex" sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Box sx={{ width: channelLabelWidth, minWidth: channelLabelWidth }}>
           <Skeleton
             variant="text"
             width={channelLabelWidth * 0.5}
             height={timeHeaderHeight * 0.4}
-            sx={{
-              mx: 'auto',
-              my: `${timeHeaderHeight * 0.3}px`,
-            }}
+            sx={{ mx: 'auto', my: `${timeHeaderHeight * 0.3}px` }}
           />
         </Box>
         <Box display="flex" flex="1">
@@ -61,17 +75,14 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
                 variant="text"
                 width={pixelsPerMinute * 60 * 0.3}
                 height={timeHeaderHeight * 0.4}
-                sx={{
-                  mx: 'auto',
-                  my: `${timeHeaderHeight * 0.3}px`,
-                }}
+                sx={{ mx: 'auto', my: `${timeHeaderHeight * 0.3}px` }}
               />
             </Box>
           ))}
         </Box>
       </Box>
 
-      {/* 3) Filas de canales */}
+      {/* — Filas de canales — */}
       <Box sx={{ position: 'relative' }}>
         {Array.from({ length: rowCount }).map((_, r) => (
           <Box
@@ -80,10 +91,10 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
             alignItems="center"
             sx={{
               height: rowHeight,
-              borderBottom: '1px solid rgba(255,255,255,0.08)',
+              borderBottom: `1px solid ${theme.palette.divider}`,
             }}
           >
-            {/* Primer columna: logo+nombre */}
+            {/* Logo difuso + texto */}
             <Box
               sx={{
                 width: channelLabelWidth,
@@ -95,14 +106,17 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
                 variant="rectangular"
                 width={channelLabelWidth * 0.6}
                 height={rowHeight * 0.6}
-                sx={{ mx: 'auto' }}
+                sx={{
+                  mx: 'auto',
+                  borderRadius: theme.shape.borderRadius,
+                }}
               />
             </Box>
             <Box flex="1" />
           </Box>
         ))}
 
-        {/* 4) Bloques de “programas” en cada fila */}
+        {/* — Bloques “programa” — */}
         {blocks.map((b, i) => (
           <Skeleton
             key={i}
@@ -113,7 +127,8 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
               left: b.left,
               width: b.width,
               height: b.height,
-              borderRadius: 1,
+              borderRadius: theme.shape.borderRadius,
+              bgcolor: alpha(theme.palette.background.paper, 0.1),
             }}
           />
         ))}
