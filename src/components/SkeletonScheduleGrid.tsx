@@ -1,7 +1,7 @@
 'use client';
 
 import React from 'react';
-import { alpha, Box, Skeleton, useTheme } from '@mui/material';
+import { Box, Skeleton, useTheme } from '@mui/material';
 import { useLayoutValues } from '@/constants/layout';
 
 interface Props {
