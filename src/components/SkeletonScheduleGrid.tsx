@@ -125,6 +125,7 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
           <Skeleton
             key={i}
             variant="rectangular"
+            animation="wave"
             sx={{
               position: 'absolute',
               top: b.top,
@@ -132,7 +133,6 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
               width: b.width,
               height: b.height,
               borderRadius: theme.shape.borderRadius,
-              bgcolor: alpha(theme.palette.background.paper, 0.1),
               zIndex: 1
             }}
           />
