@@ -4,97 +4,99 @@ import React from 'react';
 import { Box, Skeleton } from '@mui/material';
 import { useLayoutValues } from '@/constants/layout';
 
-export const SkeletonScheduleGrid: React.FC = () => {
+interface Props {
+  rowCount: number;
+}
+
+export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
   const {
     channelLabelWidth,
-    pixelsPerMinute,
     timeHeaderHeight,
     rowHeight,
+    pixelsPerMinute,
   } = useLayoutValues();
 
-  const hours = 24;
-  const rows = 6; // muestro 6 filas de skeleton como ejemplo
-  const times = Array.from({ length: hours });
-  const channels = Array.from({ length: rows });
+  const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  // Genero unos “bloques” random para simular programas
-  const randomBlocks = channels.flatMap((_, rowIdx) => {
-    const count = Math.random() > 0.5 ? 2 : 1;
-    return Array.from({ length: count }).map(() => {
-      const startHour = Math.floor(Math.random() * (hours - 2));
-      const duration = 1 + Math.floor(Math.random() * 3);
-      return {
-        top: timeHeaderHeight + rowIdx * rowHeight + 8,
-        left:
-          channelLabelWidth +
-          startHour * 60 * pixelsPerMinute +
-          8,
-        width: duration * 60 * pixelsPerMinute - 16,
-        height: rowHeight - 16,
-      };
-    });
+  // anchura total de la grilla
+  const totalWidth = channelLabelWidth + pixelsPerMinute * 60 * 24;
+  // altura total (header + filas)
+  const totalHeight = timeHeaderHeight + rowCount * rowHeight;
+
+  // Generar bloques “random” simulando programas
+  const blocks = Array.from({ length: rowCount }).map((_, r) => {
+    const startMin = Math.floor(Math.random() * (24 * 4)) * 15; // en múltiplos de 15'
+    const durMin = (1 + Math.floor(Math.random() * 3)) * 15;    // 15', 30' o 45'
+    return {
+      top: timeHeaderHeight + r * rowHeight + 4,
+      left: channelLabelWidth + startMin * pixelsPerMinute + 4,
+      width: durMin * pixelsPerMinute - 8,
+      height: rowHeight - 8,
+    };
   });
 
   return (
     <Box
       sx={{
         position: 'relative',
-        width:
-          channelLabelWidth + hours * 60 * pixelsPerMinute,
-        minHeight:
-          timeHeaderHeight + rows * rowHeight,
+        width: totalWidth,
+        minHeight: totalHeight,
         bgcolor: 'transparent',
       }}
     >
-      {/* 1. Encabezado de horas */}
+      {/* 1) Encabezado horario */}
       <Box
         sx={{
           display: 'grid',
-          gridTemplateColumns: `${channelLabelWidth}px repeat(${hours}, ${60 *
+          gridTemplateColumns: `${channelLabelWidth}px repeat(24, ${60 *
             pixelsPerMinute}px)`,
           height: timeHeaderHeight,
         }}
       >
-        {/* Celda “Canal” */}
+        {/* “Canal” */}
         <Skeleton
           variant="text"
-          width={channelLabelWidth * 0.6}
-          height={timeHeaderHeight * 0.6}
-          sx={{ my: timeHeaderHeight * 0.2, mx: 1 }}
+          width={channelLabelWidth * 0.5}
+          height={timeHeaderHeight * 0.4}
+          sx={{ mx: 'auto', my: `${timeHeaderHeight * 0.3}px` }}
         />
-        {times.map((_, i) => (
-          <Box key={i} sx={{ px: 1, pt: 1 }}>
+        {hours.map((h) => (
+          <Box key={h} sx={{ position: 'relative' }}>
             <Skeleton
               variant="text"
-              width={60 * pixelsPerMinute * 0.5}
-              height={timeHeaderHeight * 0.4}
+              width={pixelsPerMinute * 60 * 0.3}
+              height={timeHeaderHeight * 0.3}
+              sx={{
+                position: 'absolute',
+                top: timeHeaderHeight * 0.35,
+                left: `calc(50% - ${pixelsPerMinute * 60 * 0.15}px)`,
+              }}
             />
           </Box>
         ))}
       </Box>
 
-      {/* 2. Filas de canales */}
+      {/* 2) Filas de canales */}
       <Box
         sx={{
           position: 'absolute',
           top: timeHeaderHeight,
           left: 0,
-          right: 0,
           display: 'grid',
-          gridTemplateColumns: `${channelLabelWidth}px repeat(${hours}, ${60 *
+          gridTemplateColumns: `${channelLabelWidth}px repeat(24, ${60 *
             pixelsPerMinute}px)`,
           gridAutoRows: `${rowHeight}px`,
         }}
       >
-        {channels.map((_, rowIdx) => (
-          <React.Fragment key={rowIdx}>
-            {/* Nombre del canal */}
+        {Array.from({ length: rowCount }).map((_, r) => (
+          <React.Fragment key={r}>
+            {/* Logo + nombre */}
             <Box
               sx={{
                 display: 'flex',
                 alignItems: 'center',
                 pl: 1,
-                borderTop: '1px solid rgba(255,255,255,0.1)',
+                borderBottom: '1px solid rgba(255,255,255,0.08)',
               }}
             >
               <Skeleton
@@ -109,13 +111,14 @@ export const SkeletonScheduleGrid: React.FC = () => {
                 sx={{ ml: 1 }}
               />
             </Box>
-            {/* Celdas horarias vacías */}
-            {times.map((_, colIdx) => (
+
+            {/* Celdas vacías */}
+            {hours.map((h) => (
               <Box
-                key={colIdx}
+                key={h}
                 sx={{
-                  borderTop: '1px solid rgba(255,255,255,0.1)',
-                  borderLeft: '1px solid rgba(255,255,255,0.1)',
+                  borderBottom: '1px solid rgba(255,255,255,0.08)',
+                  borderLeft: '1px solid rgba(255,255,255,0.08)',
                 }}
               />
             ))}
@@ -123,17 +126,17 @@ export const SkeletonScheduleGrid: React.FC = () => {
         ))}
       </Box>
 
-      {/* 3. Bloques aleatorios (skeleton de programas) */}
-      {randomBlocks.map((blk, i) => (
+      {/* 3) Bloques simulados */}
+      {blocks.map((b, i) => (
         <Skeleton
           key={i}
           variant="rectangular"
           sx={{
             position: 'absolute',
-            top: blk.top,
-            left: blk.left,
-            width: blk.width,
-            height: blk.height,
+            top: b.top,
+            left: b.left,
+            width: b.width,
+            height: b.height,
             borderRadius: 1,
           }}
         />

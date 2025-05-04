@@ -328,7 +328,7 @@ export default function HomeClient({
             }}
           >
             {flattened.length === 0 ? (
-              <SkeletonScheduleGrid />
+              <SkeletonScheduleGrid rowCount={channels.length} />
             ) : (
               <ScheduleGrid
                 channels={channels}
