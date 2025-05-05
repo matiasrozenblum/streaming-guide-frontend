@@ -8,7 +8,7 @@ interface Props {
   rowCount: number;
 }
 
-export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
+export const SkeletonScheduleGridDesktop: React.FC<Props> = ({ rowCount }) => {
   const theme = useTheme();
   const {
     channelLabelWidth,
@@ -22,11 +22,9 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
   const blocks = Array.from({ length: rowCount }).flatMap((_, r) => {
     const MAX_MIN = 11 * 60;          // límite de inicio: 11:00 en minutos
     const DURS = [60, 120];           // posibles duraciones: 60' o 120'
-    const yTop =
-      timeHeaderHeight +
-      r * rowHeight +
-      (rowHeight - rowHeight * 0.6) / 2;
-    const h = rowHeight * 0.6;
+    const yTop = timeHeaderHeight +
+      r * rowHeight + rowHeight * 0.5;
+    const h = rowHeight - 1;
   
     // 1️⃣ Primer bloque
     const dur1 = DURS[Math.floor(Math.random() * DURS.length)];
