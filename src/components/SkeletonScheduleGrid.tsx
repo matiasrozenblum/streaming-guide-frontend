@@ -10,8 +10,6 @@ interface Props {
 
 export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const rows = isMobile ? 10 : rowCount;
   const {
     channelLabelWidth,
     timeHeaderHeight,
@@ -21,8 +19,8 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
 
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
-  const blocks = Array.from({ length: rows }).flatMap((_, r) => {
-    const MAX_MIN = isMobile ? 2 * 60 : 11 * 60;          // límite de inicio: 11:00 en minutos
+  const blocks = Array.from({ length: rowCount }).flatMap((_, r) => {
+    const MAX_MIN = 11 * 60;          // límite de inicio: 11:00 en minutos
     const DURS = [60, 120];           // posibles duraciones: 60' o 120'
     const yTop =
       timeHeaderHeight +
@@ -110,10 +108,10 @@ export const SkeletonScheduleGrid: React.FC<Props> = ({ rowCount }) => {
       {/* — Filas de canales — */}
       <Box sx={{
             position: 'relative',
-            height: `${timeHeaderHeight + rows * rowHeight}px`,
+            height: `${timeHeaderHeight + rowCount * rowHeight}px`,
             overflow: 'hidden',      // para que no “se salgan” de la caja
         }}>
-        {Array.from({ length: rows }).map((_, r) => (
+        {Array.from({ length: rowCount }).map((_, r) => (
           <Box
             key={r}
             display="flex"
