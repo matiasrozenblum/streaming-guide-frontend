@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.2.1] - 2025-04-05
+## [0.2.2] - 2025-04-05
 
 ### Changed
 - Made skeleton grid 10 rows for mobile
