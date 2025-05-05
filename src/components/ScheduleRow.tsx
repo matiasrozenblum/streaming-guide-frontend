@@ -188,7 +188,7 @@ export const ScheduleRow = ({
           },
         }}
       >
-        {isLegalPage ? StandardLayout : LegalLayout}
+        {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
           {programs.map((p) => {

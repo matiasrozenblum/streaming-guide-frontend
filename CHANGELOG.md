@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.1] - 2025-04-04
+
+### Changed
+- Reverted legal page condition to show real logos
+
 ## [0.2.0] - 2025-04-04
 
 ### Added
