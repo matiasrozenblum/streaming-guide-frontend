@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.3] - 2025-04-06
+
+### Changed
+- Made blur effect greater in legal layout
+- Separated skeleton grid into two, one web and one mobile
+- Added a bit more margin for the automatic scroll
+
 ## [0.2.2] - 2025-04-05
 
 ### Changed
