@@ -20,6 +20,7 @@ import { AuthService } from '@/services/auth';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
+import { PushProvider } from '@/contexts/PushContext';
 
 const HolidayDialog = dynamic(
   () => import('@/components/HolidayDialog'),
@@ -202,6 +203,12 @@ export default function HomeClient({
     }
   }, [flattened]);
 
+  useEffect(() => {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/sw.js');
+    }
+  }, []);
+
   if (!mounted) return null;
 
   const logo = '/img/logo.png';
@@ -210,134 +217,136 @@ export default function HomeClient({
       ? '/img/text.png'
       : '/img/text-white.png';
 
-  return (
-    <LiveStatusProvider>
-      {showHoliday && (
-        <HolidayDialog
-          open
-          onClose={() => setShowHoliday(false)}
-        />
-      )}
-
-      <Box
-        sx={{
-          minHeight: '100vh',
-          maxWidth: '100vw',
-          background:
-            mode === 'light'
-              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
-          display: 'flex',
-          flexDirection: 'column',
-        }}
-      >
-        {/* HEADER */}
-        <Container
-          maxWidth="xl"
-          disableGutters
-          sx={{ px: 0, mb: { xs: 1, sm: 2 } }}
-        >
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box
-              sx={{
-                height: '13vh',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'left',
-                background:
-                  mode === 'light'
-                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                borderRadius: 2,
-                boxShadow:
-                  mode === 'light'
-                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                    : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
-                backdropFilter: 'blur(8px)',
-                paddingLeft: { xs: 1, sm: 2 },
-                position: 'relative',
-              }}
-            >
-              <Box
-                component="img"
-                src={logo}
-                alt="Logo"
-                sx={{
-                  height: '11vh',
-                  width: 'auto',
-                  objectFit: 'contain',
-                }}
-              />
-              <Box
-                component="img"
-                src={text}
-                alt="Texto"
-                sx={{
-                  paddingLeft: { xs: 1, sm: 2 },
-                  height: '11vh',
-                  width: 'auto',
-                  objectFit: 'contain',
-                }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: 8,
-                  transform: 'translateY(-50%)',
-                }}
-              >
-                <ThemeToggle />
-              </Box>
-            </Box>
-          </MotionBox>
-        </Container>
-
-        {/* GRID / SKELETON */}
-        <Container
-          maxWidth="xl"
-          disableGutters
-          sx={{
-            px: 0,
-            flex: 1,
-            display: 'flex',
-            flexDirection: 'column',
-          }}
-        >
-          <MotionBox
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{
-              duration: 0.5,
-              delay: 0.2,
-            }}
-            sx={{
-              flex: 1,
-              background:
-                mode === 'light'
-                  ? 'rgba(255,255,255,0.9)'
-                  : 'rgba(30,41,59,0.9)',
-              borderRadius: 2,
-              overflow: 'hidden',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            {flattened.length === 0 ? (
-              <SkeletonScheduleGrid rowCount={10} />
-            ) : (
-              <ScheduleGrid
-                channels={channels}
-                schedules={flattened}
-              />
+    return (
+        <PushProvider>
+            <LiveStatusProvider>
+            {showHoliday && (
+                <HolidayDialog
+                    open
+                    onClose={() => setShowHoliday(false)}
+                />
             )}
-          </MotionBox>
-        </Container>
-      </Box>
-    </LiveStatusProvider>
-  );
+
+                <Box
+                    sx={{
+                    minHeight: '100vh',
+                    maxWidth: '100vw',
+                    background:
+                        mode === 'light'
+                        ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+                        : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+                    py: { xs: 1, sm: 2 },
+                    display: 'flex',
+                    flexDirection: 'column',
+                    }}
+                >
+                    {/* HEADER */}
+                    <Container
+                        maxWidth="xl"
+                        disableGutters
+                        sx={{ px: 0, mb: { xs: 1, sm: 2 } }}
+                    >
+                        <MotionBox
+                            initial={{ opacity: 0, y: 20 }}
+                            animate={{ opacity: 1, y: 0 }}
+                            transition={{ duration: 0.5 }}
+                        >
+                            <Box
+                                sx={{
+                                    height: '13vh',
+                                    display: 'flex',
+                                    alignItems: 'center',
+                                    justifyContent: 'left',
+                                    background:
+                                    mode === 'light'
+                                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
+                                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                                    borderRadius: 2,
+                                    boxShadow:
+                                    mode === 'light'
+                                        ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
+                                        : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
+                                    backdropFilter: 'blur(8px)',
+                                    paddingLeft: { xs: 1, sm: 2 },
+                                    position: 'relative',
+                                }}
+                            >
+                                <Box
+                                    component="img"
+                                    src={logo}
+                                    alt="Logo"
+                                    sx={{
+                                    height: '11vh',
+                                    width: 'auto',
+                                    objectFit: 'contain',
+                                    }}
+                                />
+                                <Box
+                                    component="img"
+                                    src={text}
+                                    alt="Texto"
+                                    sx={{
+                                    paddingLeft: { xs: 1, sm: 2 },
+                                    height: '11vh',
+                                    width: 'auto',
+                                    objectFit: 'contain',
+                                    }}
+                                />
+                                <Box
+                                    sx={{
+                                    position: 'absolute',
+                                    top: '50%',
+                                    right: 8,
+                                    transform: 'translateY(-50%)',
+                                    }}
+                                >
+                                    <ThemeToggle />
+                                </Box>
+                            </Box>
+                        </MotionBox>
+                    </Container>
+
+                    {/* GRID / SKELETON */}
+                    <Container
+                        maxWidth="xl"
+                        disableGutters
+                        sx={{
+                            px: 0,
+                            flex: 1,
+                            display: 'flex',
+                            flexDirection: 'column',
+                        }}
+                    >
+                        <MotionBox
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            transition={{
+                            duration: 0.5,
+                            delay: 0.2,
+                            }}
+                            sx={{
+                                flex: 1,
+                                background:
+                                    mode === 'light'
+                                    ? 'rgba(255,255,255,0.9)'
+                                    : 'rgba(30,41,59,0.9)',
+                                borderRadius: 2,
+                                overflow: 'hidden',
+                                backdropFilter: 'blur(8px)',
+                            }}
+                        >
+                            {flattened.length === 0 ? (
+                            <SkeletonScheduleGrid rowCount={10} />
+                            ) : (
+                            <ScheduleGrid
+                                channels={channels}
+                                schedules={flattened}
+                            />
+                            )}
+                        </MotionBox>
+                    </Container>
+                </Box>
+            </LiveStatusProvider>
+        </PushProvider>
+    );
 }
