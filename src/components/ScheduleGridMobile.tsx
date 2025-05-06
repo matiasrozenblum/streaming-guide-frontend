@@ -45,7 +45,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const scrollToNow = useCallback(() => {
     const now = dayjs();
     const minutesFromStart = now.hour() * 60 + now.minute();
-    const scrollPosition = minutesFromStart * pixelsPerMinute - 100;
+    const scrollPosition = minutesFromStart * pixelsPerMinute - 120;
     scrollRef.current?.scrollTo({ left: scrollPosition, behavior: 'smooth' });
   }, [pixelsPerMinute]);
 
