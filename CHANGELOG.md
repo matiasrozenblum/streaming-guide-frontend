@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.2.3] - 2025-04-05
+## [0.2.3] - 2025-04-06
 
 ### Changed
 - Made blur effect greater in legal layout
