@@ -3,7 +3,7 @@ export const dynamic = 'force-dynamic';
 
 import { ChannelWithSchedules } from '@/types/channel';
 import HomeClient from '@/components/HomeClient';
-
+import { useDeviceId } from '@/hooks/useDeviceId';
 
 export default async function Page() {
   // Calcula el día de la semana en inglés en minúsculas
@@ -12,6 +12,7 @@ export default async function Page() {
     .toLowerCase();
 
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const deviceId = useDeviceId();
 
   // Fetch inicial (ISR cada 60s), con fallback seguro en caso de fallo
   let initialData: ChannelWithSchedules[] = [];
