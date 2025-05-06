@@ -12,6 +12,8 @@ import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
+import { usePush } from '@/contexts/PushContext';
+
 
 dayjs.extend(customParseFormat);
 
@@ -56,6 +58,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
+  const { subscribeAndRegister, scheduleForProgram } = usePush();
 
   // Detectar mobile
   useEffect(() => {
@@ -156,37 +159,23 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const handleBellClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    // 1) Pedir permiso si hace falta
+    // 1) Permiso de notificación
     if (Notification.permission === 'default') {
       const permiso = await Notification.requestPermission();
-      if (permiso !== 'granted') {
-        console.warn('Usuario no concedió notificaciones');
-        return;
-      }
+      if (permiso !== 'granted') return;
     }
     if (Notification.permission === 'denied') {
       console.warn('Notificaciones bloqueadas');
       return;
     }
 
-    // 2) Programar notificación de prueba a 1 minuto
-    setTimeout(() => {
-      console.log(
-        '🔥 timeout fired, permission is',
-        Notification.permission
-      );
-      try {
-        const notif = new Notification(name, {
-          body: `En 10 minutos comienza ${name}`,
-        });
-        console.log('✅ Notification created', notif);
-      } catch (err) {
-        console.error('❌ Error mostrando notificación', err);
-      }
-    }, 60_000);
+    // 2) Suscríbete al Push Service (si no lo estabas ya)
+    await subscribeAndRegister();
 
-    // Puedes dar un pequeño feedback visual
-    console.log('Notificación agendada en 1 min para', name);
+    // 3) Pide al backend que programe la notificación 1 minuto después
+    await scheduleForProgram(id, name, 1);
+
+    console.log('✅ Push programmed for', name);
   };
 
   // Contenido del tooltip
