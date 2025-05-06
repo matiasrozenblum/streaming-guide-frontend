@@ -171,11 +171,18 @@ export const ProgramBlock: React.FC<Props> = ({
 
     // 2) Programar notificación de prueba a 1 minuto
     setTimeout(() => {
-      new Notification(name, {
-        body: `En 10 minutos comienza ${name}`,
-        icon: logo_url,
-        data: { programId: id },
-      });
+      console.log(
+        '🔥 timeout fired, permission is',
+        Notification.permission
+      );
+      try {
+        const notif = new Notification(name, {
+          body: `En 10 minutos comienza ${name}`,
+        });
+        console.log('✅ Notification created', notif);
+      } catch (err) {
+        console.error('❌ Error mostrando notificación', err);
+      }
     }, 60_000);
 
     // Puedes dar un pequeño feedback visual
