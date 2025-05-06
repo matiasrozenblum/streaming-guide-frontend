@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, Button, ClickAwayListener } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, Button, ClickAwayListener, IconButton } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
-import { OpenInNew } from '@mui/icons-material';
+import { OpenInNew, Notifications } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
@@ -154,6 +154,34 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  const handleBellClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    // 1) Pedir permiso si hace falta
+    if (Notification.permission === 'default') {
+      const permiso = await Notification.requestPermission();
+      if (permiso !== 'granted') {
+        console.warn('Usuario no concedió notificaciones');
+        return;
+      }
+    }
+    if (Notification.permission === 'denied') {
+      console.warn('Notificaciones bloqueadas');
+      return;
+    }
+
+    // 2) Programar notificación de prueba a 1 minuto
+    setTimeout(() => {
+      new Notification(name, {
+        body: `En 10 minutos comienza ${name}`,
+        icon: logo_url,
+        data: { programId: id },
+      });
+    }, 60_000);
+
+    // Puedes dar un pequeño feedback visual
+    console.log('Notificación agendada en 1 min para', name);
+  };
+
   // Contenido del tooltip
   const tooltipContent = (
     <Box
@@ -204,6 +232,13 @@ export const ProgramBlock: React.FC<Props> = ({
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
         </Button>
       )}
+      <IconButton
+        size="small"
+        aria-label="Notificarme"
+        onClick={handleBellClick}
+      >
+        <Notifications />
+      </IconButton>
     </Box>
   );
 
