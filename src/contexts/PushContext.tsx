@@ -29,38 +29,38 @@ interface PushContextValue {
   ) => Promise<void>;
 }
 
+// Contexto para Push API
 const PushContext = createContext<PushContextValue | undefined>(undefined);
 
 export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  // Llamamos al hook al tope del componente
   const deviceId = useDeviceId();
   const [vapidKey, setVapidKey] = useState<string | null>(null);
   const hasSubscribedRef = useRef(false);
 
   useEffect(() => {
-    // 1) Register service worker
+    // 1) Registro del Service Worker
     if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js').catch((err) => {
-        console.error('SW registration failed:', err);
-      });
+      navigator.serviceWorker
+        .register('/sw.js')
+        .catch((err) => console.error('SW registration failed:', err));
     }
-    // 2) Fetch VAPID public key from backend
+    // 2) Obtención de la clave VAPID desde el backend
     fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/vapidPublicKey`)
       .then((res) => res.json())
       .then(({ publicKey }) => setVapidKey(publicKey))
-      .catch((err) => {
-        console.error('Error fetching VAPID key:', err);
-      });
+      .catch((err) => console.error('Error fetching VAPID key:', err));
   }, []);
 
   const subscribeAndRegister = async (): Promise<PushSubscription | null> => {
+    // Aseguramos que tenemos clave y deviceId antes de suscribir
     if (!vapidKey) {
       console.warn('VAPID key not loaded yet');
       return null;
     }
     if (hasSubscribedRef.current) {
-      return null; // already subscribed this session
+      return null; // ya suscrito en esta sesión
     }
-
     if (!deviceId) {
       console.warn('deviceId not available yet');
       return null;
@@ -75,10 +75,7 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        deviceId,
-        subscription,
-      }),
+      body: JSON.stringify({ deviceId, subscription }),
     });
 
     hasSubscribedRef.current = true;
@@ -104,6 +101,10 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
+/**
+ * Hook para consumir funcionalidades de Push.
+ * Debe usarse dentro de <PushProvider>.
+ */
 export function usePush(): PushContextValue {
   const context = useContext(PushContext);
   if (!context) {
