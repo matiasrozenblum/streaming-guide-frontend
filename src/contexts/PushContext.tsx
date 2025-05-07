@@ -7,6 +7,7 @@ import React, {
   useContext,
   useState,
   useEffect,
+  useRef,
 } from 'react';
 import { urlBase64ToUint8Array } from '@/utils/push';
 import { useDeviceId } from '@/hooks/useDeviceId';
@@ -28,13 +29,12 @@ interface PushContextValue {
   ) => Promise<void>;
 }
 
-// Create context with undefined to enforce usage inside provider
 const PushContext = createContext<PushContextValue | undefined>(undefined);
 
 export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
+  const deviceId = useDeviceId();
   const [vapidKey, setVapidKey] = useState<string | null>(null);
-  const [deviceId, setDeviceId] = useState<string | null>(null);
-  const hasSubscribedRef = React.useRef(false);
+  const hasSubscribedRef = useRef(false);
 
   useEffect(() => {
     // 1) Register service worker
@@ -50,9 +50,6 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
       .catch((err) => {
         console.error('Error fetching VAPID key:', err);
       });
-
-    const deviceId = useDeviceId();
-    setDeviceId(deviceId);
   }, []);
 
   const subscribeAndRegister = async (): Promise<PushSubscription | null> => {
@@ -64,16 +61,16 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
       return null; // already subscribed this session
     }
 
+    if (!deviceId) {
+      console.warn('deviceId not available yet');
+      return null;
+    }
+
     const registration = await navigator.serviceWorker.ready;
     const subscription = await registration.pushManager.subscribe({
       userVisibleOnly: true,
       applicationServerKey: urlBase64ToUint8Array(vapidKey),
     });
-
-    const deviceId = localStorage.getItem('device_id');
-    if (!deviceId) {
-      console.warn('No device_id found in localStorage');
-    }
 
     await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
       method: 'POST',
@@ -107,10 +104,6 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
   );
 };
 
-/**
- * Hook to access push functionality.
- * Must be used within a PushProvider.
- */
 export function usePush(): PushContextValue {
   const context = useContext(PushContext);
   if (!context) {
