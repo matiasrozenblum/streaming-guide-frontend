@@ -13,11 +13,11 @@ export function useDeviceId() {
       localStorage.setItem('device_id', id);
 
       // opcional: registra el device en tu backend
-      fetch('/api/devices', {
+      /*fetch('/api/devices', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId: id }),
-      });
+      });*/
     }
     setDeviceId(id);
   }, []);
