@@ -9,6 +9,7 @@ import React, {
   useEffect,
 } from 'react';
 import { urlBase64ToUint8Array } from '@/utils/push';
+import { useDeviceId } from '@/hooks/useDeviceId';
 
 interface PushContextValue {
   /**
@@ -32,6 +33,7 @@ const PushContext = createContext<PushContextValue | undefined>(undefined);
 
 export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
   const [vapidKey, setVapidKey] = useState<string | null>(null);
+  const [deviceId, setDeviceId] = useState<string | null>(null);
   const hasSubscribedRef = React.useRef(false);
 
   useEffect(() => {
@@ -48,6 +50,9 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
       .catch((err) => {
         console.error('Error fetching VAPID key:', err);
       });
+
+    const deviceId = useDeviceId();
+    setDeviceId(deviceId);
   }, []);
 
   const subscribeAndRegister = async (): Promise<PushSubscription | null> => {
