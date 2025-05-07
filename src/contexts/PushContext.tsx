@@ -42,7 +42,7 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
       });
     }
     // 2) Fetch VAPID public key from backend
-    fetch('/push/vapidPublicKey')
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/vapidPublicKey`)
       .then((res) => res.json())
       .then(({ publicKey }) => setVapidKey(publicKey))
       .catch((err) => {
@@ -70,7 +70,7 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
       console.warn('No device_id found in localStorage');
     }
 
-    await fetch('/push/subscribe', {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -88,7 +88,7 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
     title: string,
     minutesBefore: number
   ): Promise<void> => {
-    await fetch('/push/schedule', {
+    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/schedule`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ programId, title, minutesBefore }),
