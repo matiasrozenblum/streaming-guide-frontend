@@ -5,7 +5,7 @@ export function usePreferences() {
   const deviceId = localStorage.getItem('device_id')!;
 
   useEffect(() => {
-    fetch('/preferences', {
+    fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferences`, {
       method: 'GET',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ deviceId }),
@@ -19,7 +19,7 @@ export function usePreferences() {
   const toggle = async (programId: string) => {
     if (prefs.has(programId)) {
       // desuscribir
-      await fetch(`/preferences/${programId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferences/${programId}`, {
         method: 'DELETE',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId }),
@@ -27,7 +27,7 @@ export function usePreferences() {
       setPrefs(s => { const t = new Set(s); t.delete(programId); return t; });
     } else {
       // suscribir
-      await fetch(`/preferences/${programId}`, {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferences/${programId}`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ deviceId }),
