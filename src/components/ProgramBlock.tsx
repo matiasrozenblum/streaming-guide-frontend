@@ -13,6 +13,7 @@ import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
 import { usePush } from '@/contexts/PushContext';
+import { usePreferences } from '@/hooks/usePreferences';
 
 
 dayjs.extend(customParseFormat);
@@ -59,7 +60,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, scheduleForProgram } = usePush();
-
+  const { prefs, toggle } = usePreferences();
+  const isOn = prefs.has(id);
+  
   // Detectar mobile
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -175,6 +178,8 @@ export const ProgramBlock: React.FC<Props> = ({
     // 3) Pide al backend que programe la notificación 1 minuto después
     await scheduleForProgram(id, name, 0);
 
+    await toggle(id);
+
     console.log('✅ Push programmed for', name);
   };
 
@@ -233,7 +238,7 @@ export const ProgramBlock: React.FC<Props> = ({
         aria-label="Notificarme"
         onClick={handleBellClick}
       >
-        <Notifications />
+        {isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
       </IconButton>
     </Box>
   );

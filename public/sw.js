@@ -1,5 +1,4 @@
 self.addEventListener('push', (event) => {
-    console.log('💥 SW push event:', event);
     event.waitUntil((async () => {
       let payload;
       try {
@@ -12,6 +11,8 @@ self.addEventListener('push', (event) => {
           options: { body: text },
         };
       }
+
+      payload.options.icon = 'img/logo.png';
   
       const { title, options } = payload;
       await self.registration.showNotification(title, options);
