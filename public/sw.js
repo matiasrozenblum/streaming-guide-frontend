@@ -1,4 +1,5 @@
 self.addEventListener('push', (event) => {
+    console.log('💥 SW push event:', event);
     event.waitUntil((async () => {
       let payload;
       try {

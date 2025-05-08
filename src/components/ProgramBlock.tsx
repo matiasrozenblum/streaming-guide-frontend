@@ -173,7 +173,7 @@ export const ProgramBlock: React.FC<Props> = ({
     await subscribeAndRegister();
 
     // 3) Pide al backend que programe la notificación 1 minuto después
-    await scheduleForProgram(id, name, 1);
+    await scheduleForProgram(id, name, 0);
 
     console.log('✅ Push programmed for', name);
   };
