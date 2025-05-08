@@ -53,32 +53,49 @@ export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
   }, []);
 
   const subscribeAndRegister = async (): Promise<PushSubscription | null> => {
-    // Aseguramos que tenemos clave y deviceId antes de suscribir
     if (!vapidKey) {
       console.warn('VAPID key not loaded yet');
       return null;
     }
     if (hasSubscribedRef.current) {
-      return null; // ya suscrito en esta sesión
+      return null; // ya suscrito
     }
-    if (!deviceId) {
-      console.warn('deviceId not available yet');
+  
+    // Leer directamente de localStorage
+    const storedDeviceId = localStorage.getItem('device_id');
+    if (!storedDeviceId) {
+      console.warn('device_id not found in localStorage');
       return null;
     }
-
+  
+    // 1) Asegurarnos de tener el SW listo
     const registration = await navigator.serviceWorker.ready;
-    const subscription = await registration.pushManager.subscribe({
-      userVisibleOnly: true,
-      applicationServerKey: urlBase64ToUint8Array(vapidKey),
-    });
-
-    await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId, subscription }),
-    });
-
+  
+    // 2) Mirar si ya hay una subscripción
+    let subscription = await registration.pushManager.getSubscription();
+    if (!subscription) {
+      // 3) Si no, crearla
+      subscription = await registration.pushManager.subscribe({
+        userVisibleOnly: true,
+        applicationServerKey: urlBase64ToUint8Array(vapidKey),
+      });
+    }
+  
+    // 4) Enviar la subscripción al backend
+    await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId: storedDeviceId,
+          subscription,
+        }),
+      }
+    );
+  
     hasSubscribedRef.current = true;
+    console.log('✅ Subscribed & sent to server:', subscription);
     return subscription;
   };
 
