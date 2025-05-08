@@ -5,16 +5,23 @@ export function usePreferences() {
   const deviceId = localStorage.getItem('device_id')!;
 
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_API_URL}/preferences`, {
-      method: 'GET',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ deviceId }),
-    })
-      .then(r => r.json())
+    if (!deviceId) return;
+
+    // 1) quitamos body y lo ponemos en la query
+    fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/preferences?deviceId=${deviceId}`
+    )
+      .then((r) => {
+        if (!r.ok) throw new Error(`Status ${r.status}`);
+        return r.json();
+      })
       .then((arr: { programId: string }[]) => {
-        setPrefs(new Set(arr.map(x => x.programId)));
+        setPrefs(new Set(arr.map((x) => x.programId)));
+      })
+      .catch((err) => {
+        console.error('Error cargando preferencias', err);
       });
-  }, []);
+  }, [deviceId]);
 
   const toggle = async (programId: string) => {
     if (prefs.has(programId)) {
