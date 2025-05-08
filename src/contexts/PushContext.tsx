@@ -10,7 +10,6 @@ import React, {
   useRef,
 } from 'react';
 import { urlBase64ToUint8Array } from '@/utils/push';
-import { useDeviceId } from '@/hooks/useDeviceId';
 
 interface PushContextValue {
   /**
@@ -34,7 +33,6 @@ const PushContext = createContext<PushContextValue | undefined>(undefined);
 
 export const PushProvider: FC<{ children: ReactNode }> = ({ children }) => {
   // Llamamos al hook al tope del componente
-  const deviceId = useDeviceId();
   const [vapidKey, setVapidKey] = useState<string | null>(null);
   const hasSubscribedRef = useRef(false);
 
