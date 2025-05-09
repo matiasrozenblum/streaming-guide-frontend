@@ -179,19 +179,22 @@ export const ProgramBlock: React.FC<Props> = ({
     }
 
     const willSubscribe = !isOn;
-    const deviceId = localStorage.getItem('device_id')!;
 
     if (willSubscribe) {
-      // 1) guardo preferencia
+      // 1) subscribe
+      await subscribeAndRegister();
+
+      // 2) guardo preferencia
+      const deviceId = localStorage.getItem('device_id')!;
       await api.post(`/preferences/${id}`, { deviceId });
       setIsOn(true);
 
-      // 2) subscribe + schedule
-      await subscribeAndRegister();
+      // 3) schedule
       await scheduleForProgram(id, name, 10);
       console.log(`✅ Notificación programada para ${name}`);
     } else {
       // desactivo
+      const deviceId = localStorage.getItem('device_id')!;
       await api.delete(`/preferences/${id}`, { data: { deviceId } });
       setIsOn(false);
       console.log(`🚫 Notificación desactivada para ${name}`);
