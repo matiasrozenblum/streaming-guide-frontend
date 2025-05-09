@@ -174,6 +174,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
+                subscribed: s.subscribed,
                 description: s.program.description || undefined,
                 panelists: s.program.panelists || undefined,
                 logo_url: s.program.logo_url || undefined,
