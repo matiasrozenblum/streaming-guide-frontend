@@ -266,7 +266,7 @@ export const ProgramBlock: React.FC<Props> = ({
           return;
         }
 
-        isMobile && setOpenTooltip(false)
+        if (isMobile) setOpenTooltip(false);
       }
     }>
       <Tooltip
