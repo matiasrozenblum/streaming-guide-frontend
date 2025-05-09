@@ -174,11 +174,11 @@ export default function HomeClient({
       setChannelsWithSchedules(weekData);
     })();
 
-    // 3) Polling diario
+    // 3) Polling semanal
     const id = setInterval(async () => {
-      const tData = await fetchSchedules(today);
+        const weekData = await fetchSchedules();
       const liveMap: LiveMap = {};
-      tData.forEach((ch) =>
+      weekData.forEach((ch) =>
         ch.schedules.forEach((sch) => {
           liveMap[sch.id.toString()] = {
             is_live: sch.program.is_live,
@@ -187,7 +187,7 @@ export default function HomeClient({
         })
       );
       setLiveStatuses(liveMap);
-      setChannelsWithSchedules(tData);
+      setChannelsWithSchedules(weekData);
     }, 60_000);
     return () => clearInterval(id);
   }, [mounted, today, setLiveStatuses]);
