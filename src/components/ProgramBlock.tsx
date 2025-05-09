@@ -13,7 +13,7 @@ import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
 import { usePush } from '@/contexts/PushContext';
-import { usePreferences } from '@/hooks/usePreferences';
+import { api } from '@/services/api';
 
 
 dayjs.extend(customParseFormat);
@@ -23,6 +23,7 @@ interface Props {
   name: string;
   start: string;
   end: string;
+  subscribed: boolean;
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
@@ -38,6 +39,7 @@ export const ProgramBlock: React.FC<Props> = ({
   name,
   start,
   end,
+  subscribed,
   description,
   panelists,
   logo_url,
@@ -60,8 +62,11 @@ export const ProgramBlock: React.FC<Props> = ({
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, scheduleForProgram } = usePush();
-  const { prefs, toggle } = usePreferences();
-  const isOn = prefs.has(id);
+  const [isOn, setIsOn] = useState(subscribed);
+  useEffect(() => {
+    setIsOn(subscribed);
+  }, [subscribed]);
+
 
   // Detectar mobile
   useEffect(() => {
@@ -161,34 +166,36 @@ export const ProgramBlock: React.FC<Props> = ({
   };
 
   const handleBellClick = async (e: React.MouseEvent) => {
-  e.stopPropagation();
+    e.stopPropagation();
+    // permisos
+    if (Notification.permission === 'default') {
+      const perm = await Notification.requestPermission();
+      if (perm !== 'granted') return;
+    }
+    if (Notification.permission === 'denied') {
+      console.warn('Notificaciones bloqueadas');
+      return;
+    }
 
-  // 1) Solicitar permiso si hace falta
-  if (Notification.permission === 'default') {
-    const permiso = await Notification.requestPermission();
-    if (permiso !== 'granted') return;
-  }
-  if (Notification.permission === 'denied') {
-    console.warn('Notificaciones bloqueadas');
-    return;
-  }
+    const willSubscribe = !isOn;
+    const deviceId = localStorage.getItem('device_id')!;
 
-  // 2) Determinar si estamos activando o desactivando
-  const willSubscribe = !isOn;
+    if (willSubscribe) {
+      // 1) guardo preferencia
+      await api.post(`/preferences/${id}`, { deviceId });
+      setIsOn(true);
 
-  // 3) Primero guardo/elimino la preferencia en el backend + UI
-  await toggle(id);
-
-  // 4) Si acabo de activar, me suscribo al Push Service y programo la notificación
-  if (willSubscribe) {
-    await subscribeAndRegister();
-    // aquí usá 10 minutos o 0 para testear
-    await scheduleForProgram(id, name, 10);
-    console.log(`✅ Notificación programada para ${name} en 10 min`);
-  } else {
-    console.log(`🚫 Notificación desactivada para ${name}`);
-  }
-};
+      // 2) subscribe + schedule
+      await subscribeAndRegister();
+      await scheduleForProgram(id, name, 10);
+      console.log(`✅ Notificación programada para ${name}`);
+    } else {
+      // desactivo
+      await api.delete(`/preferences/${id}`, { data: { deviceId } });
+      setIsOn(false);
+      console.log(`🚫 Notificación desactivada para ${name}`);
+    }
+  };
 
   // Contenido del tooltip
   const tooltipContent = (

@@ -3,6 +3,7 @@ export interface Schedule {
   day_of_week: string;
   start_time: string;
   end_time: string;
+  subscribed: boolean;
   program: {
     id: number;
     name: string;

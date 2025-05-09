@@ -7,7 +7,7 @@ export function usePreferences() {
   useEffect(() => {
     if (!deviceId) return;
 
-    // 1) quitamos body y lo ponemos en la query
+
     fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/preferences?deviceId=${deviceId}`
     )

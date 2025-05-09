@@ -46,6 +46,7 @@ function hasData(x: unknown): x is HasData {
 interface FetchParams {
   day?: string;
   live_status: boolean;
+  deviceId?: string;
 }
 type LiveMap = Record<
   string,
@@ -103,11 +104,13 @@ export default function HomeClient({
 
   const fetchSchedules = async (day?: string) => {
     console.time(day ? 'fetchToday' : 'fetchWeek');
+    const deviceId = localStorage.getItem('device_id');
     const token = AuthService.getCorrectToken(false);
     const params: FetchParams = {
       live_status: true,
     };
     if (day) params.day = day;
+    if (deviceId) params.deviceId = deviceId;
     const resp = await api.get<ChannelWithSchedules[]>(
       '/channels/with-schedules',
       {
