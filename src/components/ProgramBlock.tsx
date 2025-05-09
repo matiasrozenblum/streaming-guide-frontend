@@ -56,6 +56,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
+  const bellRef = useRef<HTMLButtonElement>(null);
 
   // Refs para controlar delay de apertura y cierre
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -251,6 +252,7 @@ export const ProgramBlock: React.FC<Props> = ({
         size="small"
         aria-label="Notificarme"
         onClick={handleBellClick}
+        ref={bellRef}
       >
         {isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
       </IconButton>
@@ -258,7 +260,15 @@ export const ProgramBlock: React.FC<Props> = ({
   );
 
   return (
-    <ClickAwayListener onClickAway={() => isMobile && setOpenTooltip(false)}>
+    <ClickAwayListener onClickAway={
+      (event) => {
+        if (bellRef.current?.contains(event.target as Node)) {
+          return;
+        }
+
+        isMobile && setOpenTooltip(false)
+      }
+    }>
       <Tooltip
         title={tooltipContent}
         arrow
