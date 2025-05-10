@@ -28,6 +28,11 @@ const HolidayDialog = dynamic(
 );
 const MotionBox = motion(Box);
 
+interface BeforeInstallPromptEvent extends Event {
+    prompt(): Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  }
+
 interface HomeClientProps {
   initialData:
     | ChannelWithSchedules[]
@@ -58,6 +63,7 @@ export default function HomeClient({
 }: HomeClientProps) {
   const startRef = useRef<number>(0);
   const [isPWA, setIsPWA] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
 
   // hydrate inicial desde SSR/ISR
   const initArray: ChannelWithSchedules[] = Array.isArray(
@@ -208,23 +214,25 @@ export default function HomeClient({
   }, [flattened]);
 
   useEffect(() => {
+    // capturar beforeinstallprompt
+    window.addEventListener('beforeinstallprompt', (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e as BeforeInstallPromptEvent);
+    });
+    // detectar standalone
+    const nav = window.navigator as Navigator & { standalone?: boolean };
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || nav.standalone === true;
+    setIsPWA(standalone);
+    if (standalone && 'Notification' in window) {
+      Notification.requestPermission().then(perm => console.log('Permiso Notif:', perm));
+    }
+  }, []);
+
+
+  useEffect(() => {
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
-    }
-
-    // ¿estamos en standalone?
-    // Definimos un tipo que extiende Navigator para incluir `standalone`
-    type NavigatorWithStandalone = Navigator & { standalone?: boolean };
-    const nav = window.navigator as NavigatorWithStandalone;
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-      || nav.standalone === true; // iOS Safari
-    setIsPWA(standalone);
-
-    // si es PWA, pedimos permiso de Notificaciones
-    if (standalone && 'Notification' in window) {
-      Notification.requestPermission().then(perm => {
-        console.log('Permiso Notificaciones:', perm);
-      });
     }
   }, []);
 
@@ -237,7 +245,7 @@ export default function HomeClient({
       : '/img/text-white.png';
 
     return (
-        <PushProvider enabled={isPWA}>
+        <PushProvider enabled={isPWA} installPrompt={deferredPrompt}>
             <LiveStatusProvider>
             {showHoliday && (
                 <HolidayDialog

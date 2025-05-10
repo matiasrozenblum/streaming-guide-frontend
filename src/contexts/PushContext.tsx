@@ -12,27 +12,27 @@ import React, {
 import { urlBase64ToUint8Array } from '@/utils/push';
 import { useDeviceId } from '@/hooks/useDeviceId';
 
-interface PushContextValue {
-  /**
-   * Subscribes the user to Push Service and registers the subscription with the backend.
-   * Only runs once per session.
-   */
-  subscribeAndRegister: () => Promise<PushSubscription | null>;
+interface BeforeInstallPromptEvent extends Event {
+    prompt(): Promise<void>;
+    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+  }
 
-  /**
-   * Requests the backend to schedule a push notification for a specific program.
-   */
-  scheduleForProgram: (
-    programId: string,
-    title: string,
-    minutesBefore: number
-  ) => Promise<void>;
+interface PushContextValue {
+    subscribeAndRegister: () => Promise<PushSubscription | null>;
+    scheduleForProgram: (programId: string, title: string, minutesBefore: number) => Promise<void>;
+    promptInstall: () => Promise<void>;
+}
+
+interface PushProviderProps {
+    children: ReactNode;
+    enabled?: boolean;
+    installPrompt: BeforeInstallPromptEvent | null;
 }
 
 // Contexto para Push API
 const PushContext = createContext<PushContextValue | undefined>(undefined);
 
-export const PushProvider: FC<{ children: ReactNode; enabled?: boolean }> = ({ children, enabled = false }) => {
+export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false, installPrompt = null }) => {
   const deviceId = useDeviceId();
   const [vapidKey, setVapidKey] = useState<string | null>(null);
   const hasSubscribedRef = useRef(false);
@@ -116,8 +116,22 @@ export const PushProvider: FC<{ children: ReactNode; enabled?: boolean }> = ({ c
     });
   };
 
+  const promptInstall = async () => {
+    if (installPrompt) {
+      installPrompt.prompt();
+      await installPrompt.userChoice;
+      return;
+    }
+    // fallback iOS
+    alert(
+      "Para recibir notificaciones en iOS debes agregar la app a tu pantalla de inicio:\n" +
+      "1. Abrir el menú de compartir\n" +
+      "2. Seleccionar 'Añadir a pantalla de inicio'"
+    );
+  };
+
   return (
-    <PushContext.Provider value={{ subscribeAndRegister, scheduleForProgram }}>
+    <PushContext.Provider value={{ subscribeAndRegister, scheduleForProgram, promptInstall }}>
       {children}
     </PushContext.Provider>
   );

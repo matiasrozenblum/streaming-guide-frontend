@@ -64,7 +64,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister } = usePush();
+  const { subscribeAndRegister, promptInstall } = usePush();
   const [isOn, setIsOn] = useState(subscribed);
   useEffect(() => {
     setIsOn(subscribed);
@@ -177,6 +177,12 @@ export const ProgramBlock: React.FC<Props> = ({
     }
     if (Notification.permission === 'denied') {
       console.warn('Notificaciones bloqueadas');
+      return;
+    }
+
+    // si Push deshabilitado (iOS web), ofrezco instalar
+    if (!subscribeAndRegister) {
+      await promptInstall();
       return;
     }
 
