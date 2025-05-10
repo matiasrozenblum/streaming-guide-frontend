@@ -196,8 +196,6 @@ export const ProgramBlock: React.FC<Props> = ({
       await api.post(`/preferences/${id}`, { deviceId });
       setIsOn(true);
 
-      // 3) schedule
-      await scheduleForProgram(id, name, 10);
       console.log(`✅ Notificación programada para ${name}`);
     } else {
       // desactivo
