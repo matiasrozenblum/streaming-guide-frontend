@@ -64,7 +64,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister, scheduleForProgram } = usePush();
+  const { subscribeAndRegister } = usePush();
   const [isOn, setIsOn] = useState(subscribed);
   useEffect(() => {
     setIsOn(subscribed);

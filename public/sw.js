@@ -1,3 +1,12 @@
+self.addEventListener('install', event => {
+    self.skipWaiting();         // activa el SW inmediatamente
+  });
+
+  self.addEventListener('activate', event => {
+    console.log('SW activado');
+    // opcional: limpiar caches antiguas
+  });
+
 self.addEventListener('push', (event) => {
     event.waitUntil((async () => {
       let payload;

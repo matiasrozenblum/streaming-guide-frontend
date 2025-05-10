@@ -57,6 +57,7 @@ export default function HomeClient({
   initialData,
 }: HomeClientProps) {
   const startRef = useRef<number>(0);
+  const [isPWA, setIsPWA] = useState(false);
 
   // hydrate inicial desde SSR/ISR
   const initArray: ChannelWithSchedules[] = Array.isArray(
@@ -210,6 +211,21 @@ export default function HomeClient({
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker.register('/sw.js');
     }
+
+    // ¿estamos en standalone?
+    // Definimos un tipo que extiende Navigator para incluir `standalone`
+    type NavigatorWithStandalone = Navigator & { standalone?: boolean };
+    const nav = window.navigator as NavigatorWithStandalone;
+    const standalone = window.matchMedia('(display-mode: standalone)').matches
+      || nav.standalone === true; // iOS Safari
+    setIsPWA(standalone);
+
+    // si es PWA, pedimos permiso de Notificaciones
+    if (standalone && 'Notification' in window) {
+      Notification.requestPermission().then(perm => {
+        console.log('Permiso Notificaciones:', perm);
+      });
+    }
   }, []);
 
   if (!mounted) return null;
@@ -221,7 +237,7 @@ export default function HomeClient({
       : '/img/text-white.png';
 
     return (
-        <PushProvider>
+        <PushProvider enabled={isPWA}>
             <LiveStatusProvider>
             {showHoliday && (
                 <HolidayDialog
