@@ -171,6 +171,7 @@ export function SchedulesTable() {
   const handleCloseProgramDialog = () => {
     setOpenProgramDialog(false);
     setSelectedProgram(null);
+    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', programId: '' });
     setShowAddScheduleForm(false);
   };
 
@@ -187,7 +188,6 @@ export function SchedulesTable() {
       const pid = parseInt(programFormData.programId, 10);
       setPrograms(programs.map(pr => pr.id === pid ? { ...pr, schedules: [...pr.schedules, created] } : pr));
       if (selectedProgram?.id === pid) setSelectedProgram(prev => prev ? { ...prev, schedules: [...prev.schedules, created] } : null);
-      setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', programId: '' });
       setShowAddScheduleForm(false);
       setSuccess('Nuevo horario agregado correctamente');
     } catch (err) {

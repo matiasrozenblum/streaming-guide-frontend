@@ -14,6 +14,7 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
 import { usePush } from '@/contexts/PushContext';
 import { api } from '@/services/api';
+import { useDeviceId } from '@/hooks/useDeviceId';
 
 
 dayjs.extend(customParseFormat);
@@ -48,6 +49,7 @@ export const ProgramBlock: React.FC<Props> = ({
   is_live,
   stream_url,
 }) => {
+  const deviceId = useDeviceId();
   const { liveStatus } = useLiveStatus();
   const dynamic = liveStatus[id] ?? { is_live, stream_url };
   const isLive = dynamic.is_live;
@@ -179,6 +181,11 @@ export const ProgramBlock: React.FC<Props> = ({
     }
 
     const willSubscribe = !isOn;
+
+    if (!deviceId) {
+      console.warn('⏳ esperando a que se genere device_id…');
+      return;
+    }
 
     if (willSubscribe) {
       // 1) subscribe
