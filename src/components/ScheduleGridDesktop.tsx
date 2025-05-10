@@ -211,7 +211,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.id.toString(),
+                id: s.program.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
