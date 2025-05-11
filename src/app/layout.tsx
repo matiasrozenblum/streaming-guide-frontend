@@ -3,7 +3,7 @@ import '@/styles/globals.css';
 import Script from 'next/script';
 import { GA_TRACKING_ID } from '@/lib/gtag';
 import { HotjarLoader } from '@/components/HotjarLoader';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '@/components/Footer';
 import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
@@ -20,6 +20,14 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({

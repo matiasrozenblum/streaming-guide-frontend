@@ -323,7 +323,7 @@ export default function HomeClient({
                   ? 'rgba(255,255,255,0.9)'
                   : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
-              overflow: 'hidden',
+              //overflow: 'hidden',
               backdropFilter: 'blur(8px)',
             }}
           >
