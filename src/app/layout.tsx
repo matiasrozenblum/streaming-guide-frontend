@@ -86,7 +86,7 @@ export default function RootLayout({
         <HotjarLoader />
         <CustomThemeProvider>
           <YouTubePlayerProvider>
-            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+            <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
               {children}
               <Footer />
             </div>

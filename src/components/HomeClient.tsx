@@ -221,7 +221,7 @@ export default function HomeClient({
 
       <Box
         sx={{
-          minHeight: '100vh',
+          minHeight: '100dvh',
           maxWidth: '100vw',
           background:
             mode === 'light'
