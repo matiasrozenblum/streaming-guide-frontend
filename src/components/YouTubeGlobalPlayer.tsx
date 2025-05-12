@@ -136,7 +136,7 @@ export const YouTubeGlobalPlayer = () => {
            top: 0,
            left: 0,
            width: '100vw',
-           height: '100vh',
+           height: '100dvh',
            backgroundColor: 'rgba(0, 0, 0, 0.2)',
            zIndex: 1999,
          }}

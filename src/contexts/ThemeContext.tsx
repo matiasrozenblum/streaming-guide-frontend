@@ -172,7 +172,7 @@ export const CustomThemeProvider = ({ children }: { children: React.ReactNode })
         display="flex" 
         justifyContent="center" 
         alignItems="center" 
-        minHeight="100vh"
+        minHeight="100dvh"
         sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#0f172a' }}
       >
         <CircularProgress />
