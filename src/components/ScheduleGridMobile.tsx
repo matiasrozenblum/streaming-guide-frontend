@@ -162,7 +162,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
-          <TimeHeader />
+          <TimeHeader isMobile={true} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {channels.map((channel, idx) => (
             <ScheduleRow

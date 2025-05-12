@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.2.4] - 2025-04-06
+
+### Changed
+- Made some visual adjustments, including replacing 100vh for 100dvh
+
 ## [0.2.3] - 2025-04-06
 
 ### Changed
