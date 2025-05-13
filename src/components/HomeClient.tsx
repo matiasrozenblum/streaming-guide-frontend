@@ -6,7 +6,9 @@ import React, {
   useMemo,
   useRef,
 } from 'react';
-import { Box, Container } from '@mui/material';
+import { Box, Container, IconButton } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import LoginModal from '@/components/LoginModal';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
@@ -74,6 +76,7 @@ export default function HomeClient({
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
+  const [loginOpen, setLoginOpen] = useState(false);
 
   const channels = useMemo(
     () =>
@@ -292,6 +295,10 @@ export default function HomeClient({
                   transform: 'translateY(-50%)',
                 }}
               >
+                <IconButton color="inherit" onClick={() => setLoginOpen(true)} sx={{ ml:1 }}>
+                    <PersonIcon /> Acceder
+                </IconButton>
+                <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
                 <ThemeToggle />
               </Box>
             </Box>
