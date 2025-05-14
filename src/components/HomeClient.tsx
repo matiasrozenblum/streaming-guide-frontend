@@ -8,7 +8,7 @@ import React, {
 } from 'react';
 import { Box, Container, IconButton } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import LoginModal from '@/components/LoginModal';
+import LoginModal from '@/components/auth/LoginModal';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';

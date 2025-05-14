@@ -11,8 +11,8 @@ export class AuthService {
   private static REG_TOKEN_KEY = 'registration_token';
   private static BACKOFFICE_TOKEN_KEY = 'backoffice_token';
 
-  static async login(password: string, isBackoffice: boolean = false) {
-    const response = await fetch(`/api/auth/login`, {
+  static async loginLegacy(password: string, isBackoffice: boolean = false) {
+    const response = await fetch(`/api/auth/login/legacy`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -119,5 +119,31 @@ export class AuthService {
     const cookies = document.cookie.split(';');
     const cookie = cookies.find(c => c.trim().startsWith(`${this.REG_TOKEN_KEY}=`));
     return cookie?.split('=')[1] || null;
+  }
+
+  static async checkUserExists(email: string) {
+    const resp = await fetch(`${process.env.NEXT_PUBLIC_BASE_PATH || ''}/api/users/email/${email}`);
+    if (!resp.ok) throw new Error('Error getting user by email');
+    return await resp.json();
+  }
+
+  static async login(email: string, password: string) {
+    const response = await fetch(`/api/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({ email, password }),
+    });
+
+    if (!response.ok) {
+      throw new Error('Invalid credentials');
+    }
+
+    const { access_token } = await response.json();
+    const tokenKey = this.PUBLIC_TOKEN_KEY;
+    
+    document.cookie = `${tokenKey}=${access_token}; path=/; SameSite=Strict`;
+    return access_token;
   }
 } 

@@ -24,7 +24,7 @@ export default function BackofficeLoginPage() {
 
     try {
       console.log('Attempting backoffice login');
-      await AuthService.login(password, true);
+      await AuthService.loginLegacy(password, true);
       console.log('Login successful, redirecting to backoffice');
       router.push('/backoffice');
     } catch (err) {
