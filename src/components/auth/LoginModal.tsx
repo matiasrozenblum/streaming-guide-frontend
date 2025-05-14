@@ -1,12 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import {
-    Box,
   Dialog,
   DialogTitle,
   DialogContent,
   LinearProgress,
   IconButton,
+  Box,
+  Stack,
+  useTheme,
 } from '@mui/material';
 import { X } from 'lucide-react';
 import StepIndicator from './StepIndicator';
@@ -25,6 +27,7 @@ interface LoginModalProps {
 type Step = 'email' | 'code' | 'profile' | 'password' | 'existing-user';
 
 export default function LoginModal({ open, onClose }: LoginModalProps) {
+  const theme = useTheme();
   const [step, setStep] = useState<Step>('email');
   const [email, setEmail] = useState<string>('');
   const [code, setCode] = useState<string>('');
@@ -36,7 +39,6 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
   const [isLoading, setIsLoading] = useState<boolean>(false);
   const [isUserExisting, setIsUserExisting] = useState<boolean>(false);
 
-  // Reset on close/open
   useEffect(() => {
     if (!open) {
       setStep('email');
@@ -52,11 +54,21 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
     }
   }, [open]);
 
-  // Determine progress %
   const getProgress = () => {
-    const newSteps = isUserExisting ? ['email', 'existing-user'] : ['email', 'code', 'profile', 'password'];
-    const idx = newSteps.indexOf(step);
-    return ((idx + 1) / newSteps.length) * 100;
+    const steps = isUserExisting
+      ? ['email', 'existing-user']
+      : ['email', 'code', 'profile', 'password'];
+    const idx = steps.indexOf(step);
+    return ((idx + 1) / steps.length) * 100;
+  };
+
+  // Title based on step
+  const titles: Record<Step, string> = {
+    email: 'Acceder / Registrarse',
+    'existing-user': 'Iniciar Sesión',
+    code: 'Verificar Correo',
+    profile: 'Completa tu Perfil',
+    password: 'Crea tu Contraseña',
   };
 
   return (
@@ -65,140 +77,150 @@ export default function LoginModal({ open, onClose }: LoginModalProps) {
       onClose={onClose}
       fullWidth
       maxWidth="xs"
-      scroll="paper"
-      PaperProps={{ sx: { overflow: 'visible' } }}
+      PaperProps={{
+        sx: {
+          borderRadius: 2,
+          backgroundColor: theme.palette.background.paper,
+          boxShadow: theme.shadows[24],
+        },
+      }}
     >
-      <DialogTitle sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-        {step === 'email' && 'Acceder / Registrarse'}
-        {step === 'code' && 'Verificar Correo'}
-        {step === 'profile' && 'Completa tu Perfil'}
-        {step === 'password' && 'Crea tu Contraseña'}
-        {step === 'existing-user' && 'Iniciar Sesión'}
+      <DialogTitle
+        sx={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          px: 3,
+          py: 2,
+        }}
+      >
+        <Box component="span" sx={{ typography: 'h6' }}>
+          {titles[step]}
+        </Box>
         <IconButton onClick={onClose} size="small">
           <X size={20} />
         </IconButton>
       </DialogTitle>
 
-      {/* Progress Bar */}
       <LinearProgress
         variant="determinate"
         value={getProgress()}
-        sx={{ height: 3 }}
+        sx={{ height: 4, backgroundColor: theme.palette.divider }}
       />
 
-      {/* Step Indicator */}
       <Box sx={{ px: 3, pt: 2 }}>
         <StepIndicator currentStep={step} isUserExisting={isUserExisting} />
       </Box>
 
-      {/* Content */}
-      <DialogContent dividers>
-        {step === 'email' && (
-          <EmailStep
-            email={email}
-            onSubmit={async (e) => {
-              setIsLoading(true);
-              setError('');
-              setEmail(e);
-              try {
-                const { exists } = await AuthService.checkUserExists(e);
-                setIsUserExisting(exists);
-                if (exists) setStep('existing-user');
-                else {
-                  await AuthService.sendCode(e);
-                  setStep('code');
+      <DialogContent sx={{ px: 3, py: 2 }}>
+        <Stack spacing={3}>
+          {step === 'email' && (
+            <EmailStep
+              email={email}
+              onSubmit={async (e) => {
+                setIsLoading(true);
+                setError('');
+                setEmail(e);
+                try {
+                  const { exists } = await AuthService.checkUserExists(e);
+                  setIsUserExisting(exists);
+                  if (exists) setStep('existing-user');
+                  else {
+                    await AuthService.sendCode(e);
+                    setStep('code');
+                  }
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Error');
                 }
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error');
-              }
-              setIsLoading(false);
-            }}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
+                setIsLoading(false);
+              }}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
 
-        {step === 'code' && (
-          <CodeStep
-            email={email}
-            code={code}
-            onSubmit={async (c) => {
-              setIsLoading(true);
-              setError('');
-              try {
-                const { isNew } = await AuthService.verifyCode(email, c);
-                if (isNew) setStep('profile');
-                else {
+          {step === 'existing-user' && (
+            <ExistingUserStep
+              email={email}
+              onSubmit={async (p) => {
+                setIsLoading(true);
+                setError('');
+                try {
+                  await AuthService.login(email, p);
                   onClose();
                   window.location.reload();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Error');
                 }
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error');
-              }
-              setIsLoading(false);
-            }}
-            onBack={() => setStep('email')}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
+                setIsLoading(false);
+              }}
+              onBack={() => setStep('email')}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
 
-        {step === 'profile' && (
-          <ProfileStep
-            firstName={firstName}
-            lastName={lastName}
-            onSubmit={(f, l) => {
-              setFirstName(f);
-              setLastName(l);
-              setStep('password');
-            }}
-            onBack={() => setStep('code')}
-            error={error}
-          />
-        )}
+          {step === 'code' && (
+            <CodeStep
+              email={email}
+              code={code}
+              onSubmit={async (c) => {
+                setIsLoading(true);
+                setError('');
+                try {
+                  const { isNew } = await AuthService.verifyCode(email, c);
+                  if (isNew) setStep('profile');
+                  else {
+                    onClose();
+                    window.location.reload();
+                  }
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Error');
+                }
+                setIsLoading(false);
+              }}
+              onBack={() => setStep('email')}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
 
-        {step === 'password' && (
-          <PasswordStep
-            password={password}
-            confirmPassword={confirmPassword}
-            onSubmit={async (p) => {
-              setIsLoading(true);
-              setError('');
-              try {
-                await AuthService.register({ firstName, lastName, password: p });
-                onClose();
-                window.location.reload();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error');
-              }
-              setIsLoading(false);
-            }}
-            onBack={() => setStep('profile')}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
+          {step === 'profile' && (
+            <ProfileStep
+              firstName={firstName}
+              lastName={lastName}
+              onSubmit={(f, l) => {
+                setFirstName(f);
+                setLastName(l);
+                setStep('password');
+              }}
+              onBack={() => setStep('code')}
+              error={error}
+            />
+          )}
 
-        {step === 'existing-user' && (
-          <ExistingUserStep
-            email={email}
-            onSubmit={async (p) => {
-              setIsLoading(true);
-              setError('');
-              try {
-                await AuthService.login(email, p);
-                onClose();
-                window.location.reload();
-              } catch (err) {
-                setError(err instanceof Error ? err.message : 'Error');
-              }
-              setIsLoading(false);
-            }}
-            onBack={() => setStep('email')}
-            isLoading={isLoading}
-            error={error}
-          />
-        )}
+          {step === 'password' && (
+            <PasswordStep
+              password={password}
+              confirmPassword={confirmPassword}
+              onSubmit={async (p) => {
+                setIsLoading(true);
+                setError('');
+                try {
+                  await AuthService.register({ firstName, lastName, password: p });
+                  onClose();
+                  window.location.reload();
+                } catch (err) {
+                  setError(err instanceof Error ? err.message : 'Error');
+                }
+                setIsLoading(false);
+              }}
+              onBack={() => setStep('profile')}
+              isLoading={isLoading}
+              error={error}
+            />
+          )}
+        </Stack>
       </DialogContent>
     </Dialog>
   );
