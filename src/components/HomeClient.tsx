@@ -59,6 +59,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
+  const isLoading = !mounted || flattened.length === 0;
+
   const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase();
 
   // Fetch schedules with token captured
@@ -77,7 +79,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => { setMounted(true); startRef.current = performance.now(); }, []);
 
   useEffect(() => {
-    if (!mounted || !isAuth) return;
+    if (!mounted) return;
 
     // Holiday check
     (async () => {
@@ -154,7 +156,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 {!isAuth ? (
                   <>
                     <IconButton color="inherit" onClick={() => setLoginOpen(true)} sx={{ ml:1 }}>
-                      <PersonIcon />
+                      <PersonIcon sx={{ color: 'text.secondary' }} /> Acceder
                     </IconButton>
                     <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
                   </>
@@ -169,7 +171,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         {/* GRID */}
         <Container maxWidth="xl" disableGutters sx={{ px:0, flex:1, display:'flex', flexDirection:'column' }}>
           <MotionBox initial={{ opacity:0 }} animate={{ opacity:1 }} transition={{ duration:0.5, delay:0.2 }} sx={{ flex:1, background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)', borderRadius:2, backdropFilter:'blur(8px)' }}>
-            {flattened.length === 0 ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
+            {isLoading ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
           </MotionBox>
         </Container>
       </Box>
