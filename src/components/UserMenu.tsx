@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { signOut, useSession } from 'next-auth/react';
 import {
   Button,
   Menu,
@@ -9,55 +10,28 @@ import {
   Avatar,
   Divider,
 } from '@mui/material';
-import { AuthService } from '@/services/auth';
-
-interface User {
-  id: number;
-  firstName: string;
-  lastName: string;
-  email: string;
-}
 
 export default function UserMenu() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
-  const [user, setUser] = useState<User | null>(null);
 
-  useEffect(() => {
-    async function loadProfile() {
-      try {
-        const token = AuthService.getCorrectToken();
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-          {
-            headers: {
-              Authorization: `Bearer ${token}`,
-            },
-          }
-        );
-        if (res.ok) {
-          setUser(await res.json());
-        }
-      } catch {
-        setUser(null);
-      }
-    }
-    if (AuthService.isAuthenticated()) {
-      loadProfile();
-    }
-  }, []);
+  // Solo mostramos si hay sesión autenticada
+  if (status !== 'authenticated' || !session?.user) {
+    return null;
+  }
 
-  const open = Boolean(anchorEl);
+  const user = session.user;
+  const firstName = user.name?.split(' ')[0] ?? 'Usuario';
+
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
   const handleClose = () => setAnchorEl(null);
 
-  const handleLogout = () => {
-    AuthService.logout();
+  const handleLogout = async () => {
+    await signOut({ redirect: false });
     router.refresh();
   };
-
-  if (!user) return null;
 
   return (
     <>
@@ -66,16 +40,16 @@ export default function UserMenu() {
         color="inherit"
         startIcon={
           <Avatar sx={{ width: 32, height: 32 }}>
-            {user.firstName.charAt(0)}
+            {firstName.charAt(0)}
           </Avatar>
         }
         sx={{ textTransform: 'none', ml: 1 }}
       >
-        Hola, {user.firstName}
+        Hola, {firstName}
       </Button>
       <Menu
         anchorEl={anchorEl}
-        open={open}
+        open={Boolean(anchorEl)}
         onClose={handleClose}
         PaperProps={{ sx: { mt: 1 } }}
       >
