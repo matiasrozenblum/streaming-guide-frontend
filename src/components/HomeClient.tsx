@@ -155,7 +155,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   <>
                     <IconButton color="inherit" onClick={() => setLoginOpen(true)} sx={{ ml:1 }}>
                       <PersonIcon sx={{ color: 'text.secondary' }} />
-                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>Acceder</Typography>
+                      <Typography variant="button" sx={{ color: 'text.secondary' }}>Acceder</Typography>
                     </IconButton>
                     <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
                   </>
