@@ -20,6 +20,10 @@ export async function GET(
       },
     });
 
+    if (response.status === 404) {
+      return NextResponse.json({ exists: false });
+    }
+
     if (!response.ok) {
       const errorData = await response.json().catch(() => null);
       console.error('Backend error response:', {
@@ -31,7 +35,7 @@ export async function GET(
     }
 
     const data = await response.json();
-    return NextResponse.json(data);
+    return NextResponse.json({ ...data, exists: true });
   } catch (error) {
     console.error('Error checking email:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
