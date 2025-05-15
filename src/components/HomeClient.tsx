@@ -131,8 +131,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [flattened]);
 
-  if (!mounted) return null;
-
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
 
