@@ -9,6 +9,7 @@ import React, {
 import { Box, Container, IconButton } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LoginModal from '@/components/auth/LoginModal';
+import UserMenu from '@/components/UserMenu';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
@@ -213,6 +214,8 @@ export default function HomeClient({
       ? '/img/text.png'
       : '/img/text-white.png';
 
+  const isAuth = AuthService.isAuthenticated();
+
   return (
     <LiveStatusProvider>
       {showHoliday && (
@@ -295,10 +298,23 @@ export default function HomeClient({
                   transform: 'translateY(-50%)',
                 }}
               >
-                <IconButton color="inherit" onClick={() => setLoginOpen(true)} sx={{ ml:1 }}>
-                    <PersonIcon /> Acceder
-                </IconButton>
-                <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+                { !isAuth ? (
+                  <>
+                    <IconButton
+                      color="inherit"
+                      onClick={() => setLoginOpen(true)}
+                      sx={{ ml: 1 }}
+                    >
+                      <PersonIcon /> Acceder
+                    </IconButton>
+                    <LoginModal
+                      open={loginOpen}
+                      onClose={() => setLoginOpen(false)}
+                    />
+                  </>
+                ) : (
+                  <UserMenu />
+                )}
                 <ThemeToggle />
               </Box>
             </Box>
