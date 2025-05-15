@@ -9,6 +9,7 @@ import Footer from '@/components/Footer';
 import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import { ClarityLoader } from '@/components/ClarityLoader'
+import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -84,15 +85,17 @@ export default function RootLayout({
         />
 
         <HotjarLoader />
-        <CustomThemeProvider>
-          <YouTubePlayerProvider>
-            <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+        <SessionProviderWrapper>
+          <CustomThemeProvider>
+            <YouTubePlayerProvider>
+              <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
               {children}
               <Footer />
             </div>
             <YouTubeGlobalPlayer />
-          </YouTubePlayerProvider>
-        </CustomThemeProvider>
+            </YouTubePlayerProvider>
+          </CustomThemeProvider>
+        </SessionProviderWrapper>
       </body>
     </html>
   );
