@@ -2,7 +2,7 @@
 
 import { useSession } from 'next-auth/react';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { Box, Container, IconButton } from '@mui/material';
+import { Box, Container, IconButton, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LoginModal from '@/components/auth/LoginModal';
 import UserMenu from '@/components/UserMenu';
@@ -154,7 +154,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                 {!isAuth ? (
                   <>
                     <IconButton color="inherit" onClick={() => setLoginOpen(true)} sx={{ ml:1 }}>
-                      <PersonIcon sx={{ color: 'text.secondary' }} /> Acceder
+                      <PersonIcon sx={{ color: 'text.secondary' }} />
+                      <Typography variant="caption" sx={{ color: 'text.secondary' }}>Acceder</Typography>
                     </IconButton>
                     <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
                   </>
