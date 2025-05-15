@@ -1,6 +1,7 @@
 export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
+import { cookies } from 'next/headers';
 import { ChannelWithSchedules } from '@/types/channel';
 import HomeClient from '@/components/HomeClient';
 
@@ -13,12 +14,23 @@ export default async function Page() {
 
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-  // Fetch inicial (ISR cada 60s), con fallback seguro en caso de fallo
+  // 1) Leemos la cookie public_token
+  const cookieStore = await cookies();
+  const token = cookieStore.get('public_token')?.value;
+
+  // 2) Preparamos headers, sólo si hay token
+  const headers: Record<string,string> = {};
+  if (token) headers.Authorization = `Bearer ${token}`;
+
+  // 3) Fetch inicial (ISR cada 60s), ahora con auth
   let initialData: ChannelWithSchedules[] = [];
   try {
     const res = await fetch(
       `${url}/channels/with-schedules?day=${today}`,
-      { next: { revalidate: 60 } }
+      {
+        next: { revalidate: 60 },
+        headers
+      }
     );
     if (res.ok) {
       initialData = await res.json();
