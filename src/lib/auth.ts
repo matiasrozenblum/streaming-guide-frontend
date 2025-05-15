@@ -24,7 +24,7 @@ export const authOptions: AuthOptions = {
           });
           if (!response.ok) return null;
           const data = await response.json();
-          return { id: '1', accessToken: data.access_token };
+          return { id: '0', accessToken: data.access_token };
         } catch (error) {
           console.error('Auth error:', error);
           return null;
