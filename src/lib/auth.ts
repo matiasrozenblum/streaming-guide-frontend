@@ -83,6 +83,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials) return null
+        const isBackoffice = credentials.isBackoffice === 'true'
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login/legacy`,
           {
@@ -90,7 +91,7 @@ export const authOptions: AuthOptions = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               password: credentials.password,
-              isBackoffice: credentials.isBackoffice,
+              isBackoffice: isBackoffice,
             }),
           }
         )
