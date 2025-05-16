@@ -13,11 +13,11 @@ import {
 
 export default function UserMenu() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
   // Solo mostramos si hay sesión autenticada
-  if (status !== 'authenticated' || !session?.user) {
+  if (!session?.user) {
     return null;
   }
 
