@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.0] - 2025-04-16
+
+### Added
+- Added user sign up and login
+
 ## [0.2.4] - 2025-04-06
 
 ### Changed
