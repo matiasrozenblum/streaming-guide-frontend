@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerToken } from '@/utils/auth-server';
 
 export async function GET(
   request: NextRequest,
