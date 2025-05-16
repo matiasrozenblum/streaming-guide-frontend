@@ -39,9 +39,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   // Timer for performance logging
   const startRef = useRef(performance.now());
 
-  const { data: session, status } = useSession()
-  const isAuth = status === 'authenticated' &&
-    (session.user.role === 'user' || session.user.role === 'admin')
+  const { data: session } = useSession()
+  const isAuth = session?.user.role === 'user' || session?.user.role === 'admin'
   const token = session?.accessToken || ''
 
   // Hydrate with initialData from SSR

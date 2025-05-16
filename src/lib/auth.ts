@@ -3,8 +3,10 @@ import { jwtDecode } from 'jwt-decode'
 import { AuthOptions } from 'next-auth'
 
 interface JWTUser {
-  id: string        // necesario para User.id
-  role: string      // 'user' | 'admin' | 'friends&family'
+  id: string
+  name: string
+  email: string
+  role: string
   accessToken: string
 }
 
@@ -19,7 +21,9 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials) return null
-        const res = await fetch(
+
+        // 1) Cabecera al endpoint de login
+        const loginRes = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
           {
             method: 'POST',
@@ -30,13 +34,37 @@ export const authOptions: AuthOptions = {
             }),
           }
         )
-        if (!res.ok) return null
-        const { access_token } = await res.json()
+        if (!loginRes.ok) return null
+        const { access_token } = await loginRes.json()
+
+        // 2) Decode para pillar el role/sub
         const payload = jwtDecode<{ sub: string; role: string }>(
           access_token
         )
+
+        // 3) Con el token, pedir perfil al backend
+        const profileRes = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
+          {
+            headers: {
+              'Content-Type': 'application/json',
+              Authorization: `Bearer ${access_token}`,
+            },
+          }
+        )
+        if (!profileRes.ok) return null
+        const profile = await profileRes.json() as {
+          id: number
+          firstName: string
+          lastName: string
+          email: string
+        }
+
+        // 4) Devuelves todo junto
         const user: JWTUser = {
-          id: payload.sub,
+          id: profile.id.toString(),
+          name: `${profile.firstName} ${profile.lastName}`,
+          email: profile.email,
           role: payload.role,
           accessToken: access_token,
         }
@@ -71,6 +99,8 @@ export const authOptions: AuthOptions = {
         )
         const user: JWTUser = {
           id: payload.sub,
+          name: '',
+          email: '',
           role: payload.role,
           accessToken: access_token,
         }

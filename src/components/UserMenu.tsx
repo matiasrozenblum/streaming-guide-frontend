@@ -9,6 +9,7 @@ import {
   MenuItem,
   Avatar,
   Divider,
+  Typography,
 } from '@mui/material';
 
 export default function UserMenu() {
@@ -20,6 +21,9 @@ export default function UserMenu() {
   if (!session?.user) {
     return null;
   }
+
+  console.log(session);
+  console.log(session.user);
 
   const user = session.user;
   const firstName = user.name?.split(' ')[0] ?? 'Usuario';
@@ -45,7 +49,12 @@ export default function UserMenu() {
         }
         sx={{ textTransform: 'none', ml: 1 }}
       >
-        Hola, {firstName}
+        <Typography
+            variant="button"
+            sx={{ color: 'text.secondary', ml: 0.5 }}
+        >
+          Hola, {firstName}
+        </Typography>
       </Button>
       <Menu
         anchorEl={anchorEl}
