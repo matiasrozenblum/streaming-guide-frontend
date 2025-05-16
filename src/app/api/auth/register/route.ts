@@ -1,3 +1,4 @@
+import { signIn } from 'next-auth/react';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
@@ -17,12 +18,6 @@ export async function POST(request: NextRequest) {
   }
   // payload: { access_token }
   const response = NextResponse.json(payload);
-  response.cookies.set({
-    name: 'public_token',
-    value: payload.access_token,
-    path: '/',
-    sameSite: 'strict',
-  });
   // clear registration_token
   response.cookies.delete({ name: 'registration_token', path: '/' });
   return response;
