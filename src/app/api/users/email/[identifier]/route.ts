@@ -6,19 +6,9 @@ export async function GET(
   { params }: { params: Promise<{ identifier: string }> }
 ) {
   try {
-    const token = await getServerToken(true);
-    
-    if (!token) {
-      console.error('No authentication token found');
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
 
     const { identifier } = await params;
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${identifier}`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${identifier}`);
 
     if (response.status === 404) {
       return NextResponse.json({ exists: false });
