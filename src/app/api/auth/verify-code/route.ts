@@ -1,4 +1,3 @@
-import { signIn } from 'next-auth/react';
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 

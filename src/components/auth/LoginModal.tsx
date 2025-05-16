@@ -13,6 +13,11 @@ import ProfileStep from './steps/ProfileStep';
 import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 
+// Helper para extraer mensaje de Error
+function getErrorMessage(err: unknown): string {
+  return err instanceof Error ? err.message : String(err);
+}
+
 type StepKey = 'email' | 'code' | 'profile' | 'password' | 'existing-user';
 
 const ALL_STEPS: Record<'new'|'existing', StepKey[]> = {
@@ -115,8 +120,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 } else {
                   throw new Error('Error inesperado');
                 }
-              } catch (err: any) {
-                setError(err.message || 'Error desconocido');
+              } catch (err: unknown) {
+                setError(getErrorMessage(err));
               }
               setIsLoading(false);
             }}
@@ -167,7 +172,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   setRegistrationToken(body.registration_token);
                   setStep('profile');
                 } else {
-                  // existing user auto-login
                   const nxt = await signIn('credentials', {
                     redirect: false,
                     accessToken: body.access_token,
@@ -176,8 +180,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     onClose(); window.location.reload();
                   }
                 }
-              } catch (err: any) {
-                setError(err.message || 'Error desconocido');
+              } catch (err: unknown) {
+                setError(getErrorMessage(err));
               }
               setIsLoading(false);
             }}
@@ -220,8 +224,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
                 onClose(); window.location.reload();
-              } catch (err: any) {
-                setError(err.message || 'Error desconocido');
+              } catch (err: unknown) {
+                setError(getErrorMessage(err));
               }
               setIsLoading(false);
             }}
