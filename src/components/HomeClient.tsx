@@ -1,12 +1,12 @@
 'use client';
 
-import { useSession } from 'next-auth/react'
+import { useSession } from 'next-auth/react';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Container,
   IconButton,
-  Typography
+  Typography,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import { motion } from 'framer-motion';
@@ -36,12 +36,10 @@ const hasData = (x: unknown): x is HasData =>
 type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-  // Timer for performance logging
   const startRef = useRef(performance.now());
 
   const { data: session } = useSession()
   const isAuth = session?.user.role === 'user' || session?.user.role === 'admin'
-  const token = session?.accessToken || ''
 
   // Hydrate with initialData from SSR
   const initArray: ChannelWithSchedules[] =
@@ -70,20 +68,15 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     [channelsWithSchedules]
   );
 
-  // Grid shows skeleton only if truly empty
   const showSkeleton = flattened.length === 0;
 
-  // One effect: holiday, weekly load, polling
   useEffect(() => {
     let isMounted = true;
 
     // Holiday check
     (async () => {
       try {
-        const { data } = await api.get<{ holiday: boolean }>(
-          '/holiday',
-          { headers: { Authorization: `Bearer ${token}` } }
-        );
+        const { data } = await api.get<{ holiday: boolean }>('/holiday');
         if (isMounted && data.holiday) setShowHoliday(true);
       } catch {
         // ignore
@@ -93,26 +86,26 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     // Load week schedules
     const loadWeek = async () => {
       try {
-        console.log('HomeClient.tsx token', token);
-        const resp = await api.get<ChannelWithSchedules[]>(
-          '/channels/with-schedules',
-          { params: { live_status: true }, headers: { Authorization: `Bearer ${token}` } }
-        );
+        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+          params: { live_status: true },
+        });
         if (!isMounted) return;
+
         const weekData = resp.data;
         const liveMap: LiveMap = {};
         weekData.forEach(ch =>
           ch.schedules.forEach(sch => {
             liveMap[sch.id.toString()] = {
               is_live: sch.program.is_live,
-              stream_url: sch.program.stream_url
+              stream_url: sch.program.stream_url,
             };
           })
         );
+
         setLiveStatuses(liveMap);
         setChannelsWithSchedules(weekData);
       } catch {
-        // ignore errors on load
+        // ignore
       }
     };
 
@@ -123,9 +116,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [token, setLiveStatuses]);
+  }, [setLiveStatuses]);
 
-  // Performance log once data arrives
   useEffect(() => {
     if (flattened.length > 0) {
       console.log(
@@ -134,7 +126,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [flattened]);
 
-  // Assets
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
 
@@ -152,10 +143,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           py: { xs: 1, sm: 2 },
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
         }}
       >
-        {/* HEADER */}
         <Container maxWidth="xl" disableGutters sx={{ px: 0, mb: { xs: 1, sm: 2 } }}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
@@ -178,15 +168,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
                 backdropFilter: 'blur(8px)',
                 px: { xs: 1, sm: 2 },
-                position: 'relative'
+                position: 'relative',
               }}
             >
-              <Box
-                component="img"
-                src={logo}
-                alt="Logo"
-                sx={{ height: '11vh', width: 'auto' }}
-              />
+              <Box component="img" src={logo} alt="Logo" sx={{ height: '11vh', width: 'auto' }} />
               <Box
                 component="img"
                 src={text}
@@ -200,7 +185,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                   right: 8,
                   transform: 'translateY(-50%)',
                   display: 'flex',
-                  alignItems: 'center'
+                  alignItems: 'center',
                 }}
               >
                 {!isAuth ? (
@@ -211,17 +196,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                       sx={{ ml: 1 }}
                     >
                       <PersonIcon sx={{ color: 'text.secondary' }} />
-                      <Typography
-                        variant="button"
-                        sx={{ color: 'text.secondary', ml: 0.5 }}
-                      >
+                      <Typography variant="button" sx={{ color: 'text.secondary', ml: 0.5 }}>
                         Acceder
                       </Typography>
                     </IconButton>
-                    <LoginModal
-                      open={loginOpen}
-                      onClose={() => setLoginOpen(false)}
-                    />
+                    <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
                   </>
                 ) : (
                   <UserMenu />
@@ -232,29 +211,19 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </MotionBox>
         </Container>
 
-        {/* GRID */}
-        <Container
-          maxWidth="xl"
-          disableGutters
-          sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}
-        >
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <MotionBox
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
               flex: 1,
-              background:
-                mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
+              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
               borderRadius: 2,
-              backdropFilter: 'blur(8px)'
+              backdropFilter: 'blur(8px)',
             }}
           >
-            {showSkeleton ? (
-              <SkeletonScheduleGrid rowCount={10} />
-            ) : (
-              <ScheduleGrid channels={channels} schedules={flattened} />
-            )}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
           </MotionBox>
         </Container>
       </Box>

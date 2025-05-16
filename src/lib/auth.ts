@@ -10,49 +10,49 @@ interface JWTUser {
   accessToken: string
 }
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL as string
+
 export const authOptions: AuthOptions = {
   providers: [
-    // — Usuario real (email/password) —
+    // — Usuario real (email/password) o registro (accessToken directo) —
     CredentialsProvider({
       id: 'credentials',
       name: 'Usuario',
       credentials: {
         email: { label: 'Email', type: 'text' },
         password: { label: 'Contraseña', type: 'password' },
+        accessToken: { label: 'Token', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials) return null
 
-        // 1) Cabecera al endpoint de login
-        const loginRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
-          {
+        let access_token: string
+
+        // Si viene de registro o verificación, usamos el token ya obtenido
+        if (credentials.accessToken) {
+          access_token = credentials.accessToken
+        } else {
+          // Login clásico con email + password
+          const res = await fetch(`${API_URL}/auth/login`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
               email: credentials.email,
               password: credentials.password,
             }),
-          }
-        )
-        if (!loginRes.ok) return null
-        const { access_token } = await loginRes.json()
+          })
+          if (!res.ok) return null
+          const body = await res.json()
+          access_token = body.access_token
+        }
 
-        // 2) Decode para pillar el role/sub
-        const payload = jwtDecode<{ sub: string; role: string }>(
-          access_token
-        )
+        // Decodificar para extraer sub (id) y role
+        const payload = jwtDecode<{ sub: string; role: string }>(access_token)
 
-        // 3) Con el token, pedir perfil al backend
-        const profileRes = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/users/me`,
-          {
-            headers: {
-              'Content-Type': 'application/json',
-              Authorization: `Bearer ${access_token}`,
-            },
-          }
-        )
+        // Obtener perfil del usuario
+        const profileRes = await fetch(`${API_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${access_token}` },
+        })
         if (!profileRes.ok) return null
         const profile = await profileRes.json() as {
           id: number
@@ -61,50 +61,41 @@ export const authOptions: AuthOptions = {
           email: string
         }
 
-        // 4) Devuelves todo junto
-        const user: JWTUser = {
-          id: profile.id.toString(),
-          name: `${profile.firstName} ${profile.lastName}`,
-          email: profile.email,
-          role: payload.role,
+        return {
+          id:          profile.id.toString(),
+          name:        `${profile.firstName} ${profile.lastName}`,
+          email:       profile.email,
+          role:        payload.role,
           accessToken: access_token,
-        }
-        return user
+        } as JWTUser
       },
     }),
 
     // — Legacy Friends&Family —
     CredentialsProvider({
-      id: 'legacy',               // asegúrate de ponerle un id único
+      id: 'legacy',
       name: 'Legacy',
       credentials: {
-        password:    { label: 'Password', type: 'password' },
-        isBackoffice:{ label: 'Backoffice', type: 'text' } // OJO: siempre “text”
+        password:     { label: 'Password', type: 'password' },
+        isBackoffice: { label: 'Backoffice', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials) return null
-
-        // convertimos "true"/"false" a boolean
         const isBackoffice = credentials.isBackoffice === 'true'
 
-        const res = await fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/auth/login/legacy`,
-          {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              password:     credentials.password,
-              isBackoffice,
-            }),
-          }
-        )
-        console.log('auth.ts res', res);
+        const res = await fetch(`${API_URL}/auth/login/legacy`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            password: credentials.password,
+            isBackoffice,
+          }),
+        })
         if (!res.ok) return null
-
         const { access_token } = await res.json()
-        console.log('auth.ts access_token', access_token);
         const payload = jwtDecode<{ sub: string; role: string }>(access_token)
 
+        // Legacy no trae perfil, sólo guardamos role
         return {
           id:          payload.sub,
           name:        '',
@@ -118,7 +109,6 @@ export const authOptions: AuthOptions = {
 
   callbacks: {
     async jwt({ token, user }) {
-      // En el token guardamos nuestro accessToken y role
       if (user) {
         token.accessToken = (user as JWTUser).accessToken
         token.role        = (user as JWTUser).role
@@ -126,15 +116,15 @@ export const authOptions: AuthOptions = {
       return token
     },
     async session({ session, token }) {
-      // Exponemos accessToken y role en session.user
       session.accessToken = token.accessToken as string
       session.user.id     = token.sub as string
       session.user.role   = token.role as string
+      session.user.name   = session.user.name || ''
       return session
     },
   },
 
   pages: {
-    signIn: '/login', // o la ruta que uses para tu UI de login
+    signIn: '/login',
   },
 }
