@@ -1,7 +1,7 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
+import { jwtDecode } from 'jwt-decode';
 import { Box, Container, IconButton, Typography } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import LoginModal from '@/components/auth/LoginModal';
@@ -15,6 +15,7 @@ import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext'
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
+import { AuthService } from '@/services/auth';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -31,9 +32,17 @@ type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(0);
-  const { data: session, status } = useSession();
-  const isAuth = status === 'authenticated';
-  const token = isAuth ? (session?.accessToken as string) : '';
+  const token = AuthService.getCorrectToken(false) || '';
+  let isAuth = false;
+  if (token) {
+    try {
+      const payload = jwtDecode<{ role: string }>(token);
+      // legacy Friends&Family firma con role: 'friends&family'
+      isAuth = payload.role === 'user' || payload.role === 'admin';
+    } catch {
+      isAuth = false;
+    }
+  }
 
   // SSR data hydration
   const initArray: ChannelWithSchedules[] = Array.isArray(initialData)
@@ -123,7 +132,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }, 60000);
 
     return () => clearInterval(id);
-  }, [mounted, isAuth, token, today, setLiveStatuses]);
+  }, [mounted, token, today, setLiveStatuses]);
 
   useEffect(() => {
     if (flattened.length) {
