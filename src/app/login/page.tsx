@@ -15,7 +15,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await signIn('credentials', { redirect: false, password, isBackoffice: false });
+      await signIn('legacy', { redirect: false, password, isBackoffice: false });
       router.push('/');
     } catch {
       setError('Contraseña incorrecta');

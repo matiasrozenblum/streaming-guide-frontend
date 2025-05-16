@@ -14,6 +14,7 @@ export const authOptions: AuthOptions = {
   providers: [
     // — Usuario real (email/password) —
     CredentialsProvider({
+      id: 'credentials',
       name: 'Usuario',
       credentials: {
         email: { label: 'Email', type: 'text' },
@@ -74,6 +75,7 @@ export const authOptions: AuthOptions = {
 
     // — Legacy Friends&Family —
     CredentialsProvider({
+      id: 'legacy',
       name: 'Legacy',
       credentials: {
         password: { label: 'Password', type: 'password' },
