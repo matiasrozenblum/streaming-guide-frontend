@@ -93,6 +93,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     // Load week schedules
     const loadWeek = async () => {
       try {
+        console.log('HomeClient.tsx token', token);
         const resp = await api.get<ChannelWithSchedules[]>(
           '/channels/with-schedules',
           { params: { live_status: true }, headers: { Authorization: `Bearer ${token}` } }
