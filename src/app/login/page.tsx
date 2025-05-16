@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
-import { AuthService } from '@/services/auth';
+import { signIn } from 'next-auth/react'
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
@@ -15,7 +15,7 @@ export default function LoginPage() {
     setError('');
 
     try {
-      await AuthService.loginLegacy(password, false);
+      await signIn('credentials', { redirect: false, password, isBackoffice: false });
       router.push('/');
     } catch {
       setError('Contraseña incorrecta');

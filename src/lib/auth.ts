@@ -1,50 +1,103 @@
-import CredentialsProvider from 'next-auth/providers/credentials';
-import { AuthOptions } from 'next-auth';
+import CredentialsProvider from 'next-auth/providers/credentials'
+import { jwtDecode } from 'jwt-decode'
+import { AuthOptions } from 'next-auth'
 
-interface UserWithToken {
-  id: string;
-  accessToken: string;
+interface JWTUser {
+  id: string        // necesario para User.id
+  role: string      // 'user' | 'admin' | 'friends&family'
+  accessToken: string
 }
 
 export const authOptions: AuthOptions = {
   providers: [
+    // — Usuario real (email/password) —
     CredentialsProvider({
-      name: 'Credentials',
+      name: 'Usuario',
       credentials: {
-        password: { label: 'Password', type: 'password' },
-        isBackoffice: { label: 'Is Backoffice', type: 'boolean' }
+        email: { label: 'Email', type: 'text' },
+        password: { label: 'Contraseña', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.password) return null;
-        try {
-          const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/${credentials.isBackoffice ? 'backoffice' : 'public'}/login`, {
+        if (!credentials) return null
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login`,
+          {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ password: credentials.password }),
-          });
-          if (!response.ok) return null;
-          const data = await response.json();
-          return { id: '0', accessToken: data.access_token };
-        } catch (error) {
-          console.error('Auth error:', error);
-          return null;
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          }
+        )
+        if (!res.ok) return null
+        const { access_token } = await res.json()
+        const payload = jwtDecode<{ sub: string; role: string }>(
+          access_token
+        )
+        const user: JWTUser = {
+          id: payload.sub,
+          role: payload.role,
+          accessToken: access_token,
         }
+        return user
+      },
+    }),
+
+    // — Legacy Friends&Family —
+    CredentialsProvider({
+      name: 'Legacy',
+      credentials: {
+        password: { label: 'Password', type: 'password' },
+        isBackoffice: { label: 'Backoffice', type: 'boolean' },
+      },
+      async authorize(credentials) {
+        if (!credentials) return null
+        const res = await fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/auth/login/legacy`,
+          {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              password: credentials.password,
+              isBackoffice: credentials.isBackoffice,
+            }),
+          }
+        )
+        if (!res.ok) return null
+        const { access_token } = await res.json()
+        const payload = jwtDecode<{ sub: string; role: string }>(
+          access_token
+        )
+        const user: JWTUser = {
+          id: payload.sub,
+          role: payload.role,
+          accessToken: access_token,
+        }
+        return user
       },
     }),
   ],
+
   callbacks: {
     async jwt({ token, user }) {
+      // En el token guardamos nuestro accessToken y role
       if (user) {
-        token.accessToken = (user as UserWithToken).accessToken;
+        token.accessToken = (user as JWTUser).accessToken
+        token.role        = (user as JWTUser).role
       }
-      return token;
+      return token
     },
     async session({ session, token }) {
-      session.accessToken = token.accessToken;
-      return session;
+      // Exponemos accessToken y role en session.user
+      session.accessToken = token.accessToken as string
+      session.user.id     = token.sub as string
+      session.user.role   = token.role as string
+      return session
     },
   },
+
   pages: {
-    signIn: '/login',
+    signIn: '/login', // o la ruta que uses para tu UI de login
   },
-}; 
+}

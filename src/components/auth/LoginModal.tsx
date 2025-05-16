@@ -11,6 +11,7 @@ import ProfileStep from './steps/ProfileStep';
 import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 import { AuthService } from '@/services/auth';
+import { signIn } from 'next-auth/react'
 
 type StepKey = 'email' | 'code' | 'profile' | 'password' | 'existing-user';
 
@@ -133,7 +134,10 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             onSubmit={async p => {
               setIsLoading(true); setError('');
               try {
-                await AuthService.login(email, p);
+                await signIn('credentials', {
+                  email,
+                  password: p,
+                });
                 onClose(); window.location.reload();
               } catch (err:unknown) {
                 const message = err instanceof Error ? err.message : String(err);

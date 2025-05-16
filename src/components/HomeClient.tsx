@@ -1,7 +1,7 @@
 'use client';
 
+import { useSession } from 'next-auth/react'
 import React, { useState, useEffect, useMemo, useRef } from 'react';
-import { jwtDecode } from 'jwt-decode';
 import {
   Box,
   Container,
@@ -13,7 +13,6 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
-import { AuthService } from '@/services/auth';
 import { ThemeToggle } from '@/components/ThemeToggle';
 import LoginModal from '@/components/auth/LoginModal';
 import UserMenu from '@/components/UserMenu';
@@ -40,17 +39,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   // Timer for performance logging
   const startRef = useRef(performance.now());
 
-  // Extract token and determine if a real user is logged in
-  const token = AuthService.getCorrectToken(false) || '';
-  let isAuth = false;
-  if (token) {
-    try {
-      const { role } = jwtDecode<{ role: string }>(token);
-      isAuth = role === 'user' || role === 'admin';
-    } catch {
-      isAuth = false;
-    }
-  }
+  const { data: session, status } = useSession()
+  const isAuth = status === 'authenticated' &&
+    (session.user.role === 'user' || session.user.role === 'admin')
+  const token = session?.accessToken || ''
 
   // Hydrate with initialData from SSR
   const initArray: ChannelWithSchedules[] =
