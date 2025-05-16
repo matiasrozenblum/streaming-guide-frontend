@@ -11,16 +11,24 @@ export default function LoginPage() {
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError('');
+    e.preventDefault()
+    setError('')
 
-    try {
-      await signIn('legacy', { redirect: false, password, isBackoffice: false });
-      router.push('/');
-    } catch {
-      setError('Contraseña incorrecta');
+    // le pasamos callbackUrl explícito para que NextAuth sepa dónde volver
+    const res = await signIn('legacy', {
+      redirect:     false,
+      password,
+      isBackoffice: 'false',     // ojo: debe ser string
+      callbackUrl:  '/'
+    })
+
+    if (res?.error) {
+      setError('Contraseña incorrecta')
+    } else {
+      // si no hay error, redirigimos manualmente al /
+      router.push(res?.url || '/')
     }
-  };
+  }
 
   return (
     <Box

@@ -75,39 +75,41 @@ export const authOptions: AuthOptions = {
 
     // — Legacy Friends&Family —
     CredentialsProvider({
-      id: 'legacy',
+      id: 'legacy',               // asegúrate de ponerle un id único
       name: 'Legacy',
       credentials: {
-        password: { label: 'Password', type: 'password' },
-        isBackoffice: { label: 'Backoffice', type: 'boolean' },
+        password:    { label: 'Password', type: 'password' },
+        isBackoffice:{ label: 'Backoffice', type: 'text' } // OJO: siempre “text”
       },
       async authorize(credentials) {
         if (!credentials) return null
+
+        // convertimos "true"/"false" a boolean
         const isBackoffice = credentials.isBackoffice === 'true'
+
         const res = await fetch(
           `${process.env.NEXT_PUBLIC_API_URL}/auth/login/legacy`,
           {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
-              password: credentials.password,
-              isBackoffice: isBackoffice,
+              password:     credentials.password,
+              isBackoffice,
             }),
           }
         )
         if (!res.ok) return null
+
         const { access_token } = await res.json()
-        const payload = jwtDecode<{ sub: string; role: string }>(
-          access_token
-        )
-        const user: JWTUser = {
-          id: payload.sub,
-          name: '',
-          email: '',
-          role: payload.role,
+        const payload = jwtDecode<{ sub: string; role: string }>(access_token)
+
+        return {
+          id:          payload.sub,
+          name:        '',
+          email:       '',
+          role:        payload.role,
           accessToken: access_token,
-        }
-        return user
+        } as JWTUser
       },
     }),
   ],
