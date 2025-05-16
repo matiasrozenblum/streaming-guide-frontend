@@ -1,81 +1,58 @@
 'use client';
-
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Box, Button, TextField, Typography, Paper } from '@mui/material';
-import { signIn } from 'next-auth/react'
+import { signIn } from 'next-auth/react';
+import {
+  Box, Paper, Typography,
+  TextField, Button
+} from '@mui/material';
 
 export default function LoginPage() {
   const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
+  const [error,    setError]    = useState('');
   const router = useRouter();
 
   const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setError('')
+    e.preventDefault();
+    setError('');
 
-    // le pasamos callbackUrl explícito para que NextAuth sepa dónde volver
+    // llamamos al provider "legacy"
     const res = await signIn('legacy', {
       redirect:     false,
       password,
-      isBackoffice: 'false',     // ojo: debe ser string
-      callbackUrl:  '/'
-    })
+      isBackoffice: 'false',  // tiene que ser string
+      callbackUrl:  '/',      // dónde redirigir tras OK
+    });
 
     if (res?.error) {
-      setError('Contraseña incorrecta')
+      setError('Credenciales inválidas');
     } else {
-      // si no hay error, redirigimos manualmente al /
-      router.push(res?.url || '/')
+      router.push(res?.url || '/');
     }
-  }
+  };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100dvh',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          width: '100%',
-          maxWidth: 400,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4" component="h1" align="center" gutterBottom>
-          Acceso Público
-        </Typography>
+    <Box sx={{
+      minHeight:'100dvh',
+      display:'flex', alignItems:'center', justifyContent:'center',
+      bgcolor:'background.default'
+    }}>
+      <Paper elevation={3} sx={{
+        p:4, width:'100%', maxWidth:400,
+        display:'flex', flexDirection:'column', gap:2
+      }}>
+        <Typography variant="h4" align="center">Acceso Público</Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            fullWidth
-            label="Contraseña"
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            error={!!error}
-            helperText={error}
-            margin="normal"
+            fullWidth label="Contraseña" type="password"
+            value={password} onChange={e => setPassword(e.target.value)}
+            error={!!error} helperText={error}
           />
-          <Button
-            fullWidth
-            variant="contained"
-            type="submit"
-            size="large"
-            sx={{ mt: 2 }}
-          >
+          <Button fullWidth variant="contained" type="submit" sx={{mt:2}}>
             Ingresar
           </Button>
         </form>
       </Paper>
     </Box>
   );
-} 
+}

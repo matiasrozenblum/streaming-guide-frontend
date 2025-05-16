@@ -98,9 +98,11 @@ export const authOptions: AuthOptions = {
             }),
           }
         )
+        console.log('auth.ts res', res);
         if (!res.ok) return null
 
         const { access_token } = await res.json()
+        console.log('auth.ts access_token', access_token);
         const payload = jwtDecode<{ sub: string; role: string }>(access_token)
 
         return {
