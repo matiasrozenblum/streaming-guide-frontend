@@ -23,6 +23,32 @@ export const YouTubeGlobalPlayer = () => {
 
   const buttonBgColor = theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5';
 
+  const moveTo = useCallback((clientX: number, clientY: number) => {
+    if (!dragging) return;
+    
+    const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
+    const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
+    
+    setPosition({ x: clampedX, y: clampedY });
+  }, [dragging, minimizedWidth, minimizedHeight]);
+  
+  const handleMouseUp = useCallback(() => {
+    if (dragging) {
+      setDragging(false);
+    }
+  }, [dragging]);
+  
+  const handleMouseMove = useCallback((e: MouseEvent) => {
+    moveTo(e.clientX, e.clientY);
+  }, [moveTo]);
+  
+  const handleTouchMove = useCallback((e: TouchEvent) => {
+    if (!dragging) return;
+    e.preventDefault();
+    const touch = e.touches[0];
+    moveTo(touch.clientX, touch.clientY);
+  }, [dragging, moveTo]);
+
   useEffect(() => {
     if (minimized) {
       if (isMobile) {
@@ -58,32 +84,6 @@ export const YouTubeGlobalPlayer = () => {
     };
   };
 
-  const moveTo = useCallback((clientX: number, clientY: number) => {
-    if (!dragging) return;
-    
-    const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
-    const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
-    
-    setPosition({ x: clampedX, y: clampedY });
-  }, [dragging, minimizedWidth, minimizedHeight]);
-
-  const handleMouseMove = (e: MouseEvent) => {
-    moveTo(e.clientX, e.clientY);
-  };
-
-  const handleTouchMove = (e: TouchEvent) => {
-    if (!dragging) return;
-    e.preventDefault(); // 🚀 Clave para que no haga pull-to-refresh
-    const touch = e.touches[0];
-    moveTo(touch.clientX, touch.clientY);
-  };
-
-  const handleMouseUp = () => {
-    if (dragging) {
-      setDragging(false);
-    }
-  };
-
   useEffect(() => {
     if (!open) return;
 
@@ -100,7 +100,7 @@ export const YouTubeGlobalPlayer = () => {
       window.removeEventListener('touchmove', handleTouchMove);
       window.removeEventListener('touchend', handleMouseUp);
     };
-  }, [dragging, open]);
+  }, [dragging, open, handleMouseMove, handleMouseUp, handleTouchMove]);
 
   useEffect(() => {
     const handleTouchMove = (e: TouchEvent) => {

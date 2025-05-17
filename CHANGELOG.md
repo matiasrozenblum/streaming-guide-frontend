@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.2] - 2025-04-17
+
+### Removed
+- Removed backoffice login, now using user role
+
 ## [0.3.1] - 2025-04-16
 
 ### Fixed

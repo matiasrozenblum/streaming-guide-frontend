@@ -23,11 +23,11 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   // 1) Next-Auth: obligamos a tener sesión
-  const { status } = useSession({
+  const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      // redirige al login legacy/backoffice
-      signIn('backoffice_login', { callbackUrl: '/backoffice' });
+      // NextAuth redirige al /login
+      signIn(undefined, { callbackUrl: '/backoffice' });
     },
   });
 
@@ -43,7 +43,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // 2) Esperamos hasta que Next-Auth confirme que estamos "authenticated"
-    if (status !== 'authenticated') return;
+    if (status !== 'authenticated' || session?.user.role !== 'admin') return;
 
     (async () => {
       try {
@@ -67,7 +67,7 @@ export default function DashboardPage() {
         setError('No se pudieron cargar las estadísticas');
       }
     })();
-  }, [status]);
+  }, [status, session?.user.role]);
 
   if (status === 'loading') {
     return (
