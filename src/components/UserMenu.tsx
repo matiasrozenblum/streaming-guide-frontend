@@ -79,7 +79,18 @@ export default function UserMenu() {
           Suscripciones
         </MenuItem>
         <Divider />
-        <MenuItem onClick={handleLogout}>Salir</MenuItem>
+        <MenuItem
+          onClick={() => {
+            handleClose();
+            router.push('/backoffice');
+          }}
+        >
+          Backoffice
+        </MenuItem>
+
+        <MenuItem onClick={handleLogout}>
+          Salir
+        </MenuItem>
       </Menu>
     </>
   );

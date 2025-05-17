@@ -54,10 +54,11 @@ interface ProgramWithSchedules extends Program {
 
 export function SchedulesTable() {
   // Forzar sesión y redirigir si no autenticado
-  const { status } = useSession({
+  const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      signIn('backoffice_login', { callbackUrl: '/backoffice/schedules' });
+      // NextAuth redirige al /login
+      signIn(undefined, { callbackUrl: '/backoffice/schedules' });
     },
   });
 
@@ -74,10 +75,10 @@ export function SchedulesTable() {
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && session.user.role === 'admin') {
       fetchSchedules();
     }
-  }, [status]);
+  }, [status, session?.user.role]);
 
   const fetchSchedules = async () => {
     setLoading(true);

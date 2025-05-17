@@ -53,10 +53,11 @@ const FIELD_LABELS: Record<string, string> = {
 
 export default function ProposedChangesTable() {
   // Forzar sesión y redirigir si no autenticado
-  const { status } = useSession({
+  const { data: session, status } = useSession({
     required: true,
     onUnauthenticated() {
-      signIn('legacy', { callbackUrl: '/backoffice/changes' });
+      // NextAuth redirige al /login
+      signIn(undefined, { callbackUrl: '/backoffice/changes' });
     },
   });
 
@@ -66,10 +67,10 @@ export default function ProposedChangesTable() {
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    if (status === 'authenticated') {
+    if (status === 'authenticated' && session?.user.role === 'admin') {
       fetchChanges();
     }
-  }, [status]);
+  }, [status, session?.user.role]);
 
   const fetchChanges = async () => {
     try {
