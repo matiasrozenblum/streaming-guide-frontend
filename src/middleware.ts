@@ -1,40 +1,29 @@
-import { NextResponse } from 'next/server';
-import type { NextRequest } from 'next/server';
+import { NextResponse } from 'next/server'
+import type { NextRequest } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export function middleware(request: NextRequest) {
-  console.log('Middleware running for path:', request.nextUrl.pathname);
-  console.log('All cookies:', request.cookies.getAll());
-  
-  const backofficeToken = request.cookies.get('backoffice_token');
-  const publicToken = request.cookies.get('public_token');
+export async function middleware(req: NextRequest) {
+  // extrae el JWT de next-auth
+  const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
+  const { pathname } = req.nextUrl
 
-  console.log('Auth check:', {
-    path: request.nextUrl.pathname,
-    hasBackofficeToken: !!backofficeToken,
-    hasPublicToken: !!publicToken,
-    backofficeToken: backofficeToken?.value?.substring(0, 10) + '...',
-    publicToken: publicToken?.value?.substring(0, 10) + '...'
-  });
-
-  // Handle root path authentication
-  if (request.nextUrl.pathname === '/') {
-    if (!publicToken) {
-      console.log('Redirecting to login');
-      return NextResponse.redirect(new URL('/login', request.url));
+  // Raíz pública (“/”): requiere al menos sesión legacy o user
+  if (pathname === '/') {
+    if (!token) {
+      return NextResponse.redirect(new URL('/login', req.url))
     }
   }
 
-  // Handle backoffice authentication
-  if (request.nextUrl.pathname.startsWith('/backoffice')) {
-    if (!backofficeToken) {
-      console.log('Redirecting to backoffice login');
-      return NextResponse.redirect(new URL('/backoffice_login', request.url));
+  // Backoffice: sólo role=admin (o como lo definas tú)
+  if (pathname.startsWith('/backoffice')) {
+    if (!token || token.role !== 'admin') {
+      return NextResponse.redirect(new URL('/backoffice_login', req.url))
     }
   }
 
-  return NextResponse.next();
+  return NextResponse.next()
 }
 
 export const config = {
   matcher: ['/', '/backoffice/:path*'],
-}; 
+}

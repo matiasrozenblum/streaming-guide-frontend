@@ -1,16 +1,17 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { 
-  Box, 
-  Button, 
-  Paper, 
-  Table, 
-  TableBody, 
-  TableCell, 
-  TableContainer, 
-  TableHead, 
-  TableRow, 
+import { useSession, signIn } from 'next-auth/react';
+import {
+  Box,
+  Button,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
   Typography,
   IconButton,
   Dialog,
@@ -20,55 +21,49 @@ import {
   TextField,
   CircularProgress,
   Alert,
-  Snackbar
+  Snackbar,
 } from '@mui/material';
-import { Add as AddIcon, Edit as EditIcon, Delete as DeleteIcon, ArrowUpward, ArrowDownward } from '@mui/icons-material';
+import {
+  Add as AddIcon,
+  Edit as EditIcon,
+  Delete as DeleteIcon,
+  ArrowUpward,
+  ArrowDownward,
+} from '@mui/icons-material';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
 
 export default function ChannelsPage() {
+  // Require session; redirect on unauth
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn('legacy', { callbackUrl: '/backoffice/channels' });
+    },
+  });
+
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    logo_url: '',
-    handle: '',
-  });
+  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '' });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
 
   useEffect(() => {
-    fetchChannels();
-  }, []);
+    if (status === 'authenticated') fetchChannels();
+  }, [status]);
 
   const fetchChannels = async () => {
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-      console.log('Token:', token);
-      
-      if (!token) {
-        throw new Error('No authentication token found');
-      }
-
-      const response = await fetch('/api/channels', {
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-      
-      if (!response.ok) {
-        throw new Error('Failed to fetch channels');
-      }
+      const response = await fetch('/api/channels');
+      if (!response.ok) throw new Error('Failed to fetch channels');
       const data = await response.json();
       setChannels(data);
-    } catch (error) {
-      console.error('Error fetching channels:', error);
-      setError('Error al cargar los canales');
+    } catch (err: unknown) {
+      console.error('Error fetching channels:', err);
+      setError(err instanceof Error ? err.message : 'Error al cargar los canales');
     } finally {
       setLoading(false);
     }
@@ -76,34 +71,32 @@ export default function ChannelsPage() {
 
   const handleMoveUp = (index: number) => {
     if (index === 0) return;
-    const newChannels = [...channels];
-    [newChannels[index - 1], newChannels[index]] = [newChannels[index], newChannels[index - 1]];
-    setChannels(newChannels);
+    const arr = [...channels];
+    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+    setChannels(arr);
   };
 
   const handleMoveDown = (index: number) => {
     if (index === channels.length - 1) return;
-    const newChannels = [...channels];
-    [newChannels[index], newChannels[index + 1]] = [newChannels[index + 1], newChannels[index]];
-    setChannels(newChannels);
+    const arr = [...channels];
+    [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+    setChannels(arr);
   };
 
   const handleSaveOrder = async () => {
     try {
       setSavingOrder(true);
-      const ids = channels.map(channel => channel.id);
-      const response = await fetch('/api/channels/reorder', {
+      const ids = channels.map(c => c.id);
+      const res = await fetch('/api/channels/reorder', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ ids }),
       });
-      if (!response.ok) {
-        throw new Error('Error al guardar el orden');
-      }
+      if (!res.ok) throw new Error('Error al guardar el orden');
       setSuccess('Orden guardado correctamente');
-    } catch (error) {
-      console.error('Error saving order:', error);
-      setError(error instanceof Error ? error.message : 'Error al guardar el orden');
+    } catch (err: unknown) {
+      console.error('Error saving order:', err);
+      setError(err instanceof Error ? err.message : 'Error al guardar el orden');
     } finally {
       setSavingOrder(false);
     }
@@ -112,18 +105,10 @@ export default function ChannelsPage() {
   const handleOpenDialog = (channel?: Channel) => {
     if (channel) {
       setEditingChannel(channel);
-      setFormData({
-        name: channel.name,
-        logo_url: channel.logo_url || '',
-        handle: channel.handle || '',
-      });
+      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '' });
     } else {
       setEditingChannel(null);
-      setFormData({
-        name: '',
-        logo_url: '',
-        handle: '',
-      });
+      setFormData({ name: '', logo_url: '', handle: '' });
     }
     setOpenDialog(true);
   };
@@ -131,77 +116,42 @@ export default function ChannelsPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingChannel(null);
-    setFormData({
-      name: '',
-      logo_url: '',
-      handle: '',
-    });
+    setFormData({ name: '', logo_url: '', handle: '' });
   };
 
   const handleSubmit = async () => {
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-      console.log('Token:', token);
-
-      const url = editingChannel 
-        ? `/api/channels/${editingChannel.id}`
-        : '/api/channels';
-      
+      const url = editingChannel ? `/api/channels/${editingChannel.id}` : '/api/channels';
       const method = editingChannel ? 'PATCH' : 'POST';
-      
-      const response = await fetch(url, {
+      const res = await fetch(url, {
         method,
-        headers: {
-          'Content-Type': 'application/json',
-          'Authorization': `Bearer ${token}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(formData),
       });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || errorData.error || 'Error al guardar el canal');
-      }
-
+      const body = await res.json();
+      if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el canal');
       await fetchChannels();
       handleCloseDialog();
       setSuccess(editingChannel ? 'Canal actualizado correctamente' : 'Canal creado correctamente');
-    } catch (error) {
-      console.error('Error saving channel:', error);
-      setError(error instanceof Error ? error.message : 'Error al guardar el canal');
+    } catch (err: unknown) {
+      console.error('Error saving channel:', err);
+      setError(err instanceof Error ? err.message : 'Error al guardar el canal');
     }
   };
 
   const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro que deseas eliminar este canal?')) {
-      return;
-    }
-
+    if (!confirm('¿Estás seguro que deseas eliminar este canal?')) return;
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-      console.log('Token:', token);
-      
-      const response = await fetch(`/api/channels/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Authorization': `Bearer ${token}`,
-        },
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.details || 'Error al eliminar el canal');
+      const res = await fetch(`/api/channels/${id}`, { method: 'DELETE' });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || 'Error al eliminar el canal');
       }
-
       await fetchChannels();
       setSuccess('Canal eliminado correctamente');
-    } catch (error) {
-      console.error('Error deleting channel:', error);
-      setError(error instanceof Error ? error.message : 'Error al eliminar el canal');
+    } catch (err: unknown) {
+      console.error('Error deleting channel:', err);
+      setError(err instanceof Error ? err.message : 'Error al eliminar el canal');
     }
   };
 
@@ -222,19 +172,14 @@ export default function ChannelsPage() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4">Canales</Typography>
-        <Button
-          variant="contained"
-          startIcon={<AddIcon />}
-          onClick={() => handleOpenDialog()}
-        >
+        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
           Nuevo Canal
         </Button>
       </Box>
 
-      <Button 
-        variant="contained" 
-        color="primary" 
-        onClick={handleSaveOrder} 
+      <Button
+        variant="contained"
+        onClick={handleSaveOrder}
         disabled={savingOrder}
         sx={{ mb: 2 }}
       >
@@ -253,63 +198,35 @@ export default function ChannelsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {channels.map((channel, index) => (
+            {channels.map((channel, idx) => (
               <TableRow key={channel.id}>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
-                    #{index + 1}
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleMoveUp(index)} 
-                      disabled={index === 0}
-                    >
+                    #{idx + 1}
+                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
                       <ArrowUpward fontSize="small" />
                     </IconButton>
-                    <IconButton 
-                      size="small" 
-                      onClick={() => handleMoveDown(index)} 
-                      disabled={index === channels.length - 1}
-                    >
+                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === channels.length - 1}>
                       <ArrowDownward fontSize="small" />
                     </IconButton>
                   </Box>
                 </TableCell>
                 <TableCell>
-                {channel.logo_url ? (
-                  <Image 
-                    src={channel.logo_url} 
-                    alt={channel.name}
-                    width={50}
-                    height={50}
-                    style={{ objectFit: 'contain' }}
-                  />
-                ) : (
-                  <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
-                    <Typography variant="caption" color="textSecondary">
-                      Sin logo
-                    </Typography>
-                  </Box>
-                )}
+                  {channel.logo_url ? (
+                    <Image src={channel.logo_url} alt={channel.name} width={50} height={50} style={{ objectFit: 'contain' }} />
+                  ) : (
+                    <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
+                      <Typography variant="caption" color="textSecondary">Sin logo</Typography>
+                    </Box>
+                  )}
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
-                  {channel.handle && (
-                    <a 
-                      href={`https://www.youtube.com/${channel.handle}`} 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                    >
-                      Ver canal
-                    </a>
-                  )}
+                  {channel.handle && <a href={`https://www.youtube.com/${channel.handle}`} target="_blank" rel="noopener noreferrer">Ver canal</a>}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(channel)}>
-                    <EditIcon />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(channel.id)}>
-                    <DeleteIcon />
-                  </IconButton>
+                  <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                  <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -318,7 +235,7 @@ export default function ChannelsPage() {
       </TableContainer>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
+        <DialogTitle sx={{ fontWeight:'bold', fontSize:'1.5rem' }}>
           {editingChannel ? 'Editar Canal' : 'Nuevo Canal'}
         </DialogTitle>
         <DialogContent>
@@ -326,45 +243,33 @@ export default function ChannelsPage() {
             <TextField
               label="Nombre"
               value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              fullWidth
-              required
-              variant="outlined"
+              onChange={e => setFormData({ ...formData, name: e.target.value })}
+              fullWidth required
             />
             <TextField
               label="URL del Logo"
               value={formData.logo_url}
-              onChange={(e) => setFormData({ ...formData, logo_url: e.target.value })}
+              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
               fullWidth
-              variant="outlined"
             />
             <TextField
-              label="Handle de YouTube (@VorterixOficial sin arroba)"
+              label="Handle de YouTube"
               value={formData.handle}
-              onChange={(e) => setFormData({ ...formData, handle: e.target.value })}
+              onChange={e => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
-              variant="outlined"
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
+        <DialogActions sx={{ p:2 }}>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained" color="primary">
+          <Button onClick={handleSubmit} variant="contained">
             {editingChannel ? 'Guardar' : 'Crear'}
           </Button>
         </DialogActions>
       </Dialog>
 
-      <Snackbar
-        open={!!error || !!success}
-        autoHideDuration={6000}
-        onClose={handleCloseSnackbar}
-      >
-        <Alert
-          onClose={handleCloseSnackbar}
-          severity={error ? 'error' : 'success'}
-          sx={{ width: '100%' }}
-        >
+      <Snackbar open={!!error || !!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
+        <Alert onClose={handleCloseSnackbar} severity={error ? 'error' : 'success'} sx={{ width:'100%' }}>
           {error || success}
         </Alert>
       </Snackbar>

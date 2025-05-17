@@ -1,14 +1,16 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 import {
+  Box,
+  Paper,
   Table,
   TableBody,
   TableCell,
   TableContainer,
   TableHead,
   TableRow,
-  Paper,
   IconButton,
   Button,
   Dialog,
@@ -17,7 +19,6 @@ import {
   DialogActions,
   TextField,
   MenuItem,
-  Box,
   Typography,
   Chip,
   Snackbar,
@@ -52,6 +53,14 @@ interface ProgramWithSchedules extends Program {
 }
 
 export function SchedulesTable() {
+  // Forzar sesión y redirigir si no autenticado
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn('backoffice_login', { callbackUrl: '/backoffice/schedules' });
+    },
+  });
+
   const [programs, setPrograms] = useState<ProgramWithSchedules[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -62,32 +71,28 @@ export function SchedulesTable() {
   const [success, setSuccess] = useState<string | null>(null);
   const [openProgramDialog, setOpenProgramDialog] = useState(false);
   const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
-  const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '', programId: '' });
+  const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
 
   useEffect(() => {
-    fetchSchedules();
-  }, []);
+    if (status === 'authenticated') {
+      fetchSchedules();
+    }
+  }, [status]);
 
   const fetchSchedules = async () => {
+    setLoading(true);
     try {
-      setLoading(true);
-      const token = document.cookie.split(';').find(c => c.trim().startsWith('backoffice_token='))?.split('=')[1];
-      if (!token) throw new Error('No authentication token found');
-
       const [schedulesRes, programsRes] = await Promise.all([
-        api.get('/schedules', { headers: { Authorization: `Bearer ${token}` } }),
-        api.get('/programs?include=channel', { headers: { Authorization: `Bearer ${token}` } }),
+        api.get<ScheduleType[]>('/schedules'),
+        api.get<Program[]>('/programs?include=channel'),
       ]);
-
-      const schedules: ScheduleType[] = schedulesRes.data || [];
-      const programsList: Program[] = programsRes.data || [];
-
-      setPrograms(
-        programsList.map(program => ({
-          ...program,
-          schedules: schedules.filter(s => s.program?.id === program.id),
-        }))
-      );
+      const schedules = schedulesRes.data || [];
+      const programsList = programsRes.data || [];
+      const merged = programsList.map(program => ({
+        ...program,
+        schedules: schedules.filter(s => s.program.id === program.id),
+      }));
+      setPrograms(merged);
     } catch (err) {
       console.error('Error fetching data:', err);
       setError('Error al cargar los datos');
@@ -118,42 +123,54 @@ export function SchedulesTable() {
   };
 
   const handleSubmit = async () => {
+    if (!editingSchedule) return;
     try {
-      const token = document.cookie.split(';').find(c => c.trim().startsWith('backoffice_token='))?.split('=')[1];
-      if (!token) throw new Error('No authentication token found');
-
-      if (editingSchedule) {
-        const scheduleData = {
-          programId: editingSchedule.program.id.toString(),
-          channelId: editingSchedule.program.id.toString(),
-          dayOfWeek: formData.dayOfWeek,
-          startTime: formData.startTime,
-          endTime: formData.endTime,
-        };
-        const response = await api.put(`/schedules/${editingSchedule.id}`, scheduleData, { headers: { Authorization: `Bearer ${token}` } });
-        const updated = response.data;
-        const pid = editingSchedule.program.id;
-        setPrograms(programs.map(pr => pr.id === pid ? { ...pr, schedules: pr.schedules.map(s => s.id === updated.id ? updated : s) } : pr));
-        if (selectedProgram?.id === pid) setSelectedProgram(prev => prev ? { ...prev, schedules: prev.schedules.map(s => s.id === updated.id ? updated : s) } : null);
-        setSuccess('Horario actualizado correctamente');
-        handleCloseEditDialog();
+      const updateData = {
+        day_of_week: formData.dayOfWeek,
+        start_time: formData.startTime,
+        end_time: formData.endTime,
+      };
+      const response = await api.put<ScheduleType>(
+        `/schedules/${editingSchedule.id}`,
+        updateData
+      );
+      const updated = response.data;
+      setPrograms(programs.map(pr =>
+        pr.id === editingSchedule.program.id
+          ? { ...pr, schedules: pr.schedules.map(s => s.id === updated.id ? updated : s) }
+          : pr
+      ));
+      if (selectedProgram?.id === editingSchedule.program.id) {
+        setSelectedProgram(prev => prev ? {
+          ...prev,
+          schedules: prev.schedules.map(s => s.id === updated.id ? updated : s)
+        } : null);
       }
+      setSuccess('Horario actualizado correctamente');
+      handleCloseEditDialog();
     } catch (err) {
       console.error('Error saving schedule:', err);
-      setError((err as Error)?.message || 'Error al guardar el horario');
+      setError((err as Error).message || 'Error al guardar el horario');
     }
   };
 
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de que deseas eliminar este horario?')) return;
     try {
-      const token = document.cookie.split(';').find(c => c.trim().startsWith('backoffice_token='))?.split('=')[1];
-      if (!token) throw new Error('No authentication token found');
-      const scheduleRes = await api.get(`/schedules/${id}`, { headers: { Authorization: `Bearer ${token}` } });
+      const scheduleRes = await api.get<ScheduleType>(`/schedules/${id}`);
       const pid = scheduleRes.data.program.id;
-      await api.delete(`/schedules/${id}`, { headers: { Authorization: `Bearer ${token}` } });
-      setPrograms(programs.map(pr => pr.id === pid ? { ...pr, schedules: pr.schedules.filter(s => s.id !== id) } : pr));
-      if (selectedProgram?.id === pid) setSelectedProgram(prev => prev ? { ...prev, schedules: prev.schedules.filter(s => s.id !== id) } : null);
+      await api.delete(`/schedules/${id}`);
+      setPrograms(programs.map(pr =>
+        pr.id === pid
+          ? { ...pr, schedules: pr.schedules.filter(s => s.id !== id) }
+          : pr
+      ));
+      if (selectedProgram?.id === pid) {
+        setSelectedProgram(prev => prev ? {
+          ...prev,
+          schedules: prev.schedules.filter(s => s.id !== id)
+        } : null);
+      }
       setSuccess('Horario eliminado correctamente');
     } catch (err) {
       console.error('Error deleting schedule:', err);
@@ -163,7 +180,7 @@ export function SchedulesTable() {
 
   const handleOpenProgramDialog = (program: ProgramWithSchedules) => {
     setSelectedProgram(program);
-    setProgramFormData(prev => ({ ...prev, programId: program.id.toString() }));
+    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
     setOpenProgramDialog(true);
     setShowAddScheduleForm(false);
   };
@@ -177,21 +194,29 @@ export function SchedulesTable() {
   const handleShowAddScheduleForm = () => setShowAddScheduleForm(true);
 
   const handleAddProgramSchedule = async () => {
+    if (!selectedProgram) return;
     try {
-      const token = document.cookie.split(';').find(c => c.trim().startsWith('backoffice_token='))?.split('=')[1];
-      if (!token) throw new Error('No authentication token found');
-      if (!programFormData.dayOfWeek || !programFormData.startTime || !programFormData.endTime) throw new Error('Todos los campos son requeridos');
-      const newData = { programId: programFormData.programId, channelId: programFormData.programId, dayOfWeek: programFormData.dayOfWeek, startTime: programFormData.startTime, endTime: programFormData.endTime };
-      const resp = await api.post('/schedules', newData, { headers: { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } });
+      if (!programFormData.dayOfWeek || !programFormData.startTime || !programFormData.endTime) {
+        throw new Error('Todos los campos son requeridos');
+      }
+      const newData = {
+        program_id: selectedProgram.id,
+        day_of_week: programFormData.dayOfWeek,
+        start_time: programFormData.startTime,
+        end_time: programFormData.endTime,
+      };
+      const resp = await api.post<ScheduleType>('/schedules', newData);
       const created = resp.data;
-      const pid = parseInt(programFormData.programId, 10);
-      setPrograms(programs.map(pr => pr.id === pid ? { ...pr, schedules: [...pr.schedules, created] } : pr));
-      if (selectedProgram?.id === pid) setSelectedProgram(prev => prev ? { ...prev, schedules: [...prev.schedules, created] } : null);
-      setShowAddScheduleForm(false);
+      setPrograms(programs.map(pr =>
+        pr.id === selectedProgram.id
+          ? { ...pr, schedules: [...pr.schedules, created] }
+          : pr
+      ));
       setSuccess('Nuevo horario agregado correctamente');
+      setShowAddScheduleForm(false);
     } catch (err) {
       console.error('Error adding schedule:', err);
-      setError((err as Error)?.message || 'Error al agregar el horario');
+      setError((err as Error).message || 'Error al agregar el horario');
     }
   };
 
@@ -219,13 +244,6 @@ export function SchedulesTable() {
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Escribe para filtrar en vivo"
-          inputProps={{ style: { color: 'black' } }}
-          InputLabelProps={{ style: { color: 'black' } }}
-          sx={{
-            '& .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-            '&:hover .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': { borderColor: 'black' },
-          }}
         />
       </Box>
 
@@ -267,7 +285,7 @@ export function SchedulesTable() {
         </Table>
       </TableContainer>
 
-      {/* Dialog de gestión de horarios */}
+      {/* Diálogo de gestión de horarios */}
       <Dialog open={openProgramDialog} onClose={handleCloseProgramDialog} maxWidth="md" fullWidth>
         <DialogTitle>
           {selectedProgram ? `Horarios de ${selectedProgram.name}` : 'Horarios'}

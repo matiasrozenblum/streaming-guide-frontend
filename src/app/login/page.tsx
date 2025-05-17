@@ -1,7 +1,7 @@
 'use client';
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { getSession, signIn } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import {
   Box, Paper, Typography,
   TextField, Button
@@ -20,8 +20,8 @@ export default function LoginPage() {
     const res = await signIn('legacy', {
       redirect:     false,
       password,
-      isBackoffice: 'false',  // tiene que ser string
-      callbackUrl:  '/',      // dónde redirigir tras OK
+      isBackoffice: 'false',
+      callbackUrl:  '/',
     });
 
     if (res?.error) {
@@ -29,16 +29,6 @@ export default function LoginPage() {
       return;
     }
 
-    // 1) Esperamos a que NextAuth escriba su propia cookie de sesión
-    // 2) Le pedimos la sesión para extraer el JWT que NextAuth guardó en ella
-    const session = await getSession();
-    const token   = session?.accessToken;
-    if (token) {
-      // 3) Seteamos justo aquí la cookie legacy que tu código antiguo consume
-      document.cookie = `public_token=${token}; path=/; SameSite=Strict`;
-    }
-
-    // 4) Ahora sí redirigimos al /
     router.push(res?.url || '/');
   };
 

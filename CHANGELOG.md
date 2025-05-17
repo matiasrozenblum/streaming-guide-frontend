@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.1] - 2025-04-16
+
+### Fixed
+- Migrated all sessions related logic to next-auth
+
 ## [0.3.0] - 2025-04-16
 
 ### Added

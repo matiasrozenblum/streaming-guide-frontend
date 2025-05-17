@@ -1,9 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerToken } from '@/utils/auth-server';
+import { requireAccessToken } from '@/utils/auth-server';
 
 export async function POST(req: NextRequest) {
   try {
-    const token = await getServerToken(true);
+    const token = await requireAccessToken(req);
 
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

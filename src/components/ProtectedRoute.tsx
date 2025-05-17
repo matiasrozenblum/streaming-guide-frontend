@@ -2,24 +2,25 @@
 
 import { useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { AuthService } from '@/services/auth';
+import { useSession } from 'next-auth/react';
 
 interface ProtectedRouteProps {
   children: React.ReactNode;
 }
 
 export default function ProtectedRoute({ children }: ProtectedRouteProps) {
+  const { status } = useSession();
   const router = useRouter();
 
   useEffect(() => {
-    if (!AuthService.isAuthenticated()) {
-      router.push('/login');
+    if (status === 'unauthenticated') {
+      router.push('/backoffice_login');
     }
-  }, [router]);
+  }, [status, router]);
 
-  if (!AuthService.isAuthenticated()) {
+  if (status !== 'authenticated') {
     return null;
   }
 
   return <>{children}</>;
-} 
+}

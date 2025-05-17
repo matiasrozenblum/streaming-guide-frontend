@@ -1,6 +1,7 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useSession, signIn } from 'next-auth/react';
 import {
   Box,
   Paper,
@@ -37,44 +38,45 @@ interface ProposedChange {
   channelName: string;
   programName: string;
   action: 'create' | 'update' | 'delete';
-  entityType: 'program' | 'schedule'; // 🔥 Para saber qué tipo de cambio es
+  entityType: 'program' | 'schedule';
   before?: ChangeData;
   after: ChangeData;
 }
 
 const FIELD_LABELS: Record<string, string> = {
-    day_of_week: 'Día',
-    start_time: 'Inicio',
-    end_time: 'Fin',
-    name: 'Nombre',
-    logo_url: 'Logo',
-  };
+  day_of_week: 'Día',
+  start_time: 'Inicio',
+  end_time: 'Fin',
+  name: 'Nombre',
+  logo_url: 'Logo',
+};
 
 export default function ProposedChangesTable() {
+  // Forzar sesión y redirigir si no autenticado
+  const { status } = useSession({
+    required: true,
+    onUnauthenticated() {
+      signIn('legacy', { callbackUrl: '/backoffice/changes' });
+    },
+  });
+
   const [changes, setChanges] = useState<ProposedChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    fetchChanges();
-  }, []);
+    if (status === 'authenticated') {
+      fetchChanges();
+    }
+  }, [status]);
 
   const fetchChanges = async () => {
     try {
       setLoading(true);
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-
-      const response = await api.get('/proposed-changes', {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      const response = await api.get<ProposedChange[]>('/proposed-changes');
       setChanges(response.data);
-    } catch (err) {
+    } catch (err: unknown) {
       console.error('Error fetching proposed changes:', err);
       setError('Error al cargar cambios propuestos');
     } finally {
@@ -84,19 +86,10 @@ export default function ProposedChangesTable() {
 
   const handleAction = async (id: number, action: 'approve' | 'reject') => {
     try {
-      const cookies = document.cookie.split(';');
-      const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-      const token = tokenCookie?.split('=')[1];
-
-      await api.post(`/proposed-changes/${id}/${action}`, {}, {
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
-      });
-
+      await api.post(`/proposed-changes/${id}/${action}`);
       setSuccess(`Cambio ${action === 'approve' ? 'aprobado' : 'rechazado'} correctamente`);
       fetchChanges();
-    } catch (err) {
+    } catch (err: unknown) {
       console.error(`Error trying to ${action} change:`, err);
       setError(`Error al ${action === 'approve' ? 'aprobar' : 'rechazar'} el cambio`);
     }
@@ -111,7 +104,7 @@ export default function ProposedChangesTable() {
       </Typography>
     );
   };
-  
+
   const renderAfterField = (field: string, beforeValue?: string, afterValue?: string) => {
     const isDifferent = beforeValue !== afterValue;
     const label = FIELD_LABELS[field] || field;
@@ -161,16 +154,36 @@ export default function ProposedChangesTable() {
                     {change.before ? (
                       <Box sx={{ whiteSpace: 'pre-line' }}>
                         {change.entityType === 'schedule' ? (
-                        <>
-                            {renderBeforeField('day_of_week', (change.before as ScheduleChangeData)?.day_of_week, (change.after as ScheduleChangeData)?.day_of_week)}
-                            {renderBeforeField('start_time', (change.before as ScheduleChangeData)?.start_time, (change.after as ScheduleChangeData)?.start_time)}
-                            {renderBeforeField('end_time', (change.before as ScheduleChangeData)?.end_time, (change.after as ScheduleChangeData)?.end_time)}
-                        </>
+                          <>
+                            {renderBeforeField(
+                              'day_of_week',
+                              (change.before as ScheduleChangeData)?.day_of_week,
+                              (change.after as ScheduleChangeData)?.day_of_week
+                            )}
+                            {renderBeforeField(
+                              'start_time',
+                              (change.before as ScheduleChangeData)?.start_time,
+                              (change.after as ScheduleChangeData)?.start_time
+                            )}
+                            {renderBeforeField(
+                              'end_time',
+                              (change.before as ScheduleChangeData)?.end_time,
+                              (change.after as ScheduleChangeData)?.end_time
+                            )}
+                          </>
                         ) : (
-                        <>
-                            {renderBeforeField('name', (change.before as ProgramChangeData)?.name, (change.after as ProgramChangeData)?.name)}
-                            {renderBeforeField('logo_url', (change.before as ProgramChangeData)?.logo_url, (change.after as ProgramChangeData)?.logo_url)}
-                        </>
+                          <>
+                            {renderBeforeField(
+                              'name',
+                              (change.before as ProgramChangeData)?.name,
+                              (change.after as ProgramChangeData)?.name
+                            )}
+                            {renderBeforeField(
+                              'logo_url',
+                              (change.before as ProgramChangeData)?.logo_url,
+                              (change.after as ProgramChangeData)?.logo_url
+                            )}
+                          </>
                         )}
                       </Box>
                     ) : (
@@ -181,16 +194,36 @@ export default function ProposedChangesTable() {
                     {change.after ? (
                       <Box sx={{ whiteSpace: 'pre-line' }}>
                         {change.entityType === 'schedule' ? (
-                        <>
-                            {renderAfterField('day_of_week', (change.before as ScheduleChangeData)?.day_of_week, (change.after as ScheduleChangeData)?.day_of_week)}
-                            {renderAfterField('start_time', (change.before as ScheduleChangeData)?.start_time, (change.after as ScheduleChangeData)?.start_time)}
-                            {renderAfterField('end_time', (change.before as ScheduleChangeData)?.end_time, (change.after as ScheduleChangeData)?.end_time)}
-                        </>
+                          <>
+                            {renderAfterField(
+                              'day_of_week',
+                              (change.before as ScheduleChangeData)?.day_of_week,
+                              (change.after as ScheduleChangeData)?.day_of_week
+                            )}
+                            {renderAfterField(
+                              'start_time',
+                              (change.before as ScheduleChangeData)?.start_time,
+                              (change.after as ScheduleChangeData)?.start_time
+                            )}
+                            {renderAfterField(
+                              'end_time',
+                              (change.before as ScheduleChangeData)?.end_time,
+                              (change.after as ScheduleChangeData)?.end_time
+                            )}
+                          </>
                         ) : (
-                        <>
-                            {renderAfterField('name', (change.before as ProgramChangeData)?.name, (change.after as ProgramChangeData)?.name)}
-                            {renderAfterField('logo_url', (change.before as ProgramChangeData)?.logo_url, (change.after as ProgramChangeData)?.logo_url)}
-                        </>
+                          <>
+                            {renderAfterField(
+                              'name',
+                              (change.before as ProgramChangeData)?.name,
+                              (change.after as ProgramChangeData)?.name
+                            )}
+                            {renderAfterField(
+                              'logo_url',
+                              (change.before as ProgramChangeData)?.logo_url,
+                              (change.after as ProgramChangeData)?.logo_url
+                            )}
+                          </>
                         )}
                       </Box>
                     ) : (
@@ -198,10 +231,16 @@ export default function ProposedChangesTable() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleAction(change.id, 'approve')} color="success">
+                    <IconButton
+                      onClick={() => handleAction(change.id, 'approve')}
+                      color="success"
+                    >
                       <Check />
                     </IconButton>
-                    <IconButton onClick={() => handleAction(change.id, 'reject')} color="error">
+                    <IconButton
+                      onClick={() => handleAction(change.id, 'reject')}
+                      color="error"
+                    >
                       <Close />
                     </IconButton>
                   </TableCell>
