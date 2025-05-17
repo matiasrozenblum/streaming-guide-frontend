@@ -30,7 +30,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
   }, [status, session, router, pathname]);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: '/backoffice_login' });
+    signOut({ callbackUrl: '/login' });
   };
 
   const drawerWidth = 240;
