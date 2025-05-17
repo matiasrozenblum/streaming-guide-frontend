@@ -27,6 +27,7 @@ export default function UserMenu() {
 
   const user = session.user;
   const firstName = user.name?.split(' ')[0] ?? 'Usuario';
+  const isAdmin = session.user.role === 'admin';
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
@@ -79,14 +80,16 @@ export default function UserMenu() {
           Suscripciones
         </MenuItem>
         <Divider />
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            router.push('/backoffice');
-          }}
-        >
-          Backoffice
-        </MenuItem>
+        {isAdmin && (
+          <MenuItem
+            onClick={() => {
+              handleClose();
+              router.push('/backoffice');
+            }}
+          >
+            Backoffice
+          </MenuItem>
+        )}
 
         <MenuItem onClick={handleLogout}>
           Salir
