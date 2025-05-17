@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from 'next/server';
-
+import { requireAccessToken } from '@/utils/auth-server';
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -9,10 +9,7 @@ export async function PATCH(
     const { id } = await params;
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/channels/${id}`;
 
-    const cookieHeader = request.headers.get('cookie');
-    const cookies = cookieHeader ? cookieHeader.split(';') : [];
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
+    const token = await requireAccessToken(request);
 
     const response = await fetch(apiUrl, {
       method: 'PATCH',
@@ -50,10 +47,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const cookieHeader = request.headers.get('cookie');
-    const cookies = cookieHeader ? cookieHeader.split(';') : [];
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
+    const token = await requireAccessToken(request);
 
     const { id } = await params;
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/channels/${id}`;

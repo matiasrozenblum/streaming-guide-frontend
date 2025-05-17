@@ -1,9 +1,9 @@
-import { NextResponse } from 'next/server';
-import { getServerToken } from '@/utils/auth-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAccessToken } from '@/utils/auth-server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
   try {
-    const token = await getServerToken(true);
+    const token = await requireAccessToken(request);
     
     if (!token) {
       console.error('No authentication token found');
@@ -54,9 +54,9 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
-    const token = await getServerToken(true);
+    const token = await requireAccessToken(request);
     
     if (!token) {
       console.error('No authentication token found');
