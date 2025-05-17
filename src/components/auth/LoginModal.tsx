@@ -105,7 +105,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             onSubmit={async (e) => {
               setIsLoading(true); setError(''); setEmail(e);
               try {
-                const res = await fetch(`/users/email/${e}`);
+                const res = await fetch(`/api/users/email/${e}`);
                 if (res.ok) {
                   setIsUserExisting(true);
                   setStep('existing-user');
