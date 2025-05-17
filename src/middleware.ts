@@ -17,7 +17,7 @@ export async function middleware(req: NextRequest) {
   // Backoffice: sólo role=admin (o como lo definas tú)
   if (pathname.startsWith('/backoffice')) {
     if (!token || token.role !== 'admin') {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return NextResponse.redirect(new URL('/backoffice_login', req.url))
     }
   }
 

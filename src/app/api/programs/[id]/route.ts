@@ -1,12 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getServerToken } from '@/utils/auth-server';
+import { requireAccessToken } from '@/utils/auth-server';
 
 export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = await getServerToken(true);
+    const token = await requireAccessToken(request);
     
     if (!token) {
       console.error('No authentication token found');
@@ -60,7 +60,7 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const token = await getServerToken(true);
+    const token = await requireAccessToken(request);
     
     if (!token) {
       console.error('No authentication token found');

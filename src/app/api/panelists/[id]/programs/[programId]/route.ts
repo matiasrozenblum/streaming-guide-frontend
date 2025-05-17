@@ -1,11 +1,11 @@
-import { getServerToken } from '@/utils/auth-server';
-import { NextResponse } from 'next/server';
+import { requireAccessToken } from '@/utils/auth-server';
+import { NextRequest, NextResponse } from 'next/server';
 
 export async function POST(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
-  const token = await getServerToken(true);
+  const token = await requireAccessToken(request);
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
@@ -38,10 +38,10 @@ export async function POST(
 }
 
 export async function DELETE(
-  request: Request,
+  request: NextRequest,
   { params }: { params: Promise<{ id: string; programId: string }> }
 ) {
-  const token = await getServerToken(true);
+  const token = await requireAccessToken(request);
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
