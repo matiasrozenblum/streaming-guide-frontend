@@ -10,20 +10,21 @@ import {
   Avatar,
   Divider,
   Typography,
+  useTheme,
+  useMediaQuery,
 } from '@mui/material';
 
 export default function UserMenu() {
   const router = useRouter();
   const { data: session } = useSession();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Solo mostramos si hay sesión autenticada
   if (!session?.user) {
     return null;
   }
-
-  console.log(session);
-  console.log(session.user);
 
   const user = session.user;
   const firstName = user.name?.split(' ')[0] ?? 'Usuario';
@@ -34,7 +35,7 @@ export default function UserMenu() {
   const handleClose = () => setAnchorEl(null);
 
   const handleLogout = async () => {
-    await signOut({ redirect: false });
+    await signOut({ callbackUrl: '/login' });
     router.refresh();
   };
 
@@ -44,18 +45,32 @@ export default function UserMenu() {
         onClick={handleOpen}
         color="inherit"
         startIcon={
-          <Avatar sx={{ width: 32, height: 32 }}>
-            {firstName.charAt(0)}
+          <Avatar 
+            sx={{ 
+              width: 32, 
+              height: 32,
+              bgcolor: theme.palette.primary.main,
+              color: theme.palette.primary.contrastText
+            }}
+          >
+            {firstName.charAt(0).toUpperCase()}
           </Avatar>
         }
-        sx={{ textTransform: 'none', ml: 1 }}
+        sx={{ 
+          textTransform: 'none', 
+          ml: 1,
+          minWidth: isMobile ? 'auto' : undefined,
+          px: isMobile ? 1 : 2
+        }}
       >
-        <Typography
+        {!isMobile && (
+          <Typography
             variant="button"
             sx={{ color: 'text.secondary', ml: 0.5 }}
-        >
-          Hola, {firstName}
-        </Typography>
+          >
+            Hola, {firstName}
+          </Typography>
+        )}
       </Button>
       <Menu
         anchorEl={anchorEl}
