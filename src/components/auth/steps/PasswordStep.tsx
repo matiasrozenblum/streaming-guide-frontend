@@ -17,13 +17,15 @@ interface PasswordStepProps {
   onBack: () => void;
   isLoading: boolean;
   error?: string;
+  submitLabel?: string;
 }
 
 export default function PasswordStep({
   onSubmit,
   onBack,
   isLoading,
-  error
+  error,
+  submitLabel = 'Registrarme'
 }: PasswordStepProps) {
   const [pass, setPass] = useState('');
   const [show, setShow] = useState(false);
@@ -128,7 +130,7 @@ export default function PasswordStep({
           fullWidth
           disabled={isLoading}
         >
-          Registrarme
+          {submitLabel}
         </Button>
         <Button
           variant="outlined"

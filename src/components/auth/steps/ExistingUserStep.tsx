@@ -17,6 +17,7 @@ interface ExistingUserStepProps {
   onBack: () => void;
   isLoading: boolean;
   error?: string;
+  onForgotPassword: () => void;
 }
 
 export default function ExistingUserStep({
@@ -24,7 +25,8 @@ export default function ExistingUserStep({
   onSubmit,
   onBack,
   isLoading,
-  error
+  error,
+  onForgotPassword
 }: ExistingUserStepProps) {
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
@@ -91,6 +93,15 @@ export default function ExistingUserStep({
           onClick={onBack}
         >
           Volver
+        </Button>
+        <Button
+          variant="text"
+          color="primary"
+          fullWidth
+          disabled={isLoading}
+          onClick={onForgotPassword}
+        >
+          ¿Olvidaste tu contraseña?
         </Button>
       </Box>
     </Box>
