@@ -1,26 +1,20 @@
 'use client';
 
-import { useSession } from 'next-auth/react';
 import React, { useState, useEffect, useMemo, useRef } from 'react';
 import {
   Box,
   Container,
-  IconButton,
-  Typography,
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import LoginModal from '@/components/auth/LoginModal';
-import UserMenu from '@/components/UserMenu';
 import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
+import Header from './Header';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -38,9 +32,6 @@ type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
 
-  const { data: session } = useSession()
-  const isAuth = session?.user.role === 'user' || session?.user.role === 'admin'
-
   // Hydrate with initialData from SSR
   const initArray: ChannelWithSchedules[] =
     Array.isArray(initialData)
@@ -51,7 +42,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(initArray);
   const [showHoliday, setShowHoliday] = useState(false);
-  const [loginOpen, setLoginOpen] = useState(false);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -126,9 +116,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [flattened]);
 
-  const logo = '/img/logo.png';
-  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
-
   return (
     <LiveStatusProvider>
       {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
@@ -146,70 +133,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           flexDirection: 'column'
         }}
       >
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, mb: { xs: 1, sm: 2 } }}>
-          <MotionBox
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.5 }}
-          >
-            <Box
-              sx={{
-                height: '13vh',
-                display: 'flex',
-                alignItems: 'center',
-                background:
-                  mode === 'light'
-                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                borderRadius: 2,
-                boxShadow:
-                  mode === 'light'
-                    ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                    : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
-                backdropFilter: 'blur(8px)',
-                px: { xs: 1, sm: 2 },
-                position: 'relative',
-              }}
-            >
-              <Box component="img" src={logo} alt="Logo" sx={{ height: '11vh', width: 'auto' }} />
-              <Box
-                component="img"
-                src={text}
-                alt="Texto"
-                sx={{ pl: { xs: 1, sm: 2 }, height: '11vh', width: 'auto' }}
-              />
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: '50%',
-                  right: 8,
-                  transform: 'translateY(-50%)',
-                  display: 'flex',
-                  alignItems: 'center',
-                }}
-              >
-                {!isAuth ? (
-                  <>
-                    <IconButton
-                      color="inherit"
-                      onClick={() => setLoginOpen(true)}
-                      sx={{ ml: 1 }}
-                    >
-                      <PersonIcon sx={{ color: 'text.secondary' }} />
-                      <Typography variant="button" sx={{ color: 'text.secondary', ml: 0.5 }}>
-                        Acceder
-                      </Typography>
-                    </IconButton>
-                    <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-                  </>
-                ) : (
-                  <UserMenu />
-                )}
-                <ThemeToggle />
-              </Box>
-            </Box>
-          </MotionBox>
-        </Container>
+        <Header />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <MotionBox
