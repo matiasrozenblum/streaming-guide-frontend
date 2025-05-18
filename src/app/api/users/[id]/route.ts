@@ -121,4 +121,53 @@ export async function DELETE(
     console.error('Error deleting user:', error);
     return NextResponse.json({ error: 'Failed to delete user' }, { status: 500 });
   }
+}
+
+export async function POST(
+  request: NextRequest,
+  { params }: { params: Promise<{ id: string }> }
+) {
+  try {
+    const token = await requireAccessToken(request);
+    
+    if (!token) {
+      console.error('No authentication token found');
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const body = await request.json();
+    const { currentPassword, newPassword } = body;
+
+    if (!currentPassword || !newPassword) {
+      return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
+    }
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/change-password`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${token}`,
+      },
+      body: JSON.stringify({ currentPassword, newPassword }),
+    });
+
+    if (!response.ok) {
+      const errorData = await response.json().catch(() => null);
+      console.error('Backend error response:', {
+        status: response.status,
+        statusText: response.statusText,
+        errorData
+      });
+      throw new Error(`Failed to change password: ${response.status} ${response.statusText}`);
+    }
+
+    const data = await response.json();
+    return NextResponse.json(data);
+  } catch (error) {
+    console.error('Error changing password:', error);
+    return NextResponse.json({ 
+      error: 'Failed to change password',
+      details: error instanceof Error ? error.message : 'Unknown error'
+    }, { status: 500 });
+  }
 } 
