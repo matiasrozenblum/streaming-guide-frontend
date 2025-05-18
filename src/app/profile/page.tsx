@@ -22,14 +22,11 @@ import {
   InputAdornment,
   LinearProgress,
 } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-import { ThemeToggle } from '@/components/ThemeToggle';
-import LoginModal from '@/components/auth/LoginModal';
-import UserMenu from '@/components/UserMenu';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { KeyRound, LockKeyhole, Eye, EyeOff } from 'lucide-react';
+import Header from '@/components/Header';
 
 const MotionBox = motion(Box);
 
@@ -90,12 +87,6 @@ export default function ProfilePage() {
   const { data: session, status } = useSession();
   const router = useRouter();
   const { mode } = useThemeContext();
-
-  // Header state
-  const [loginOpen, setLoginOpen] = useState(false);
-  const isAuth = session?.user.role === 'user' || session?.user.role === 'admin';
-  const logo = '/img/logo.png';
-  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
 
   // sección en edición
   const [editSection, setEditSection] =
@@ -288,8 +279,7 @@ export default function ProfilePage() {
       credentials: 'include',
     });
     if (res.ok) {
-      await signOut({ redirect: false });
-      router.push('/');
+      await signOut({ callbackUrl: '/login' });
     } else {
       alert('Error al cancelar la cuenta');
     }
@@ -304,68 +294,10 @@ export default function ProfilePage() {
         background: mode === 'light'
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          py: { xs: 1, sm: 2 },
       }}
     >
-      {/* HEADER */}
-      <Container maxWidth="xl" sx={{ py: { xs: 2, sm: 3 } }}>
-        <MotionBox
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Box
-            sx={{
-              height: '13vh',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              background: mode === 'light'
-                ? 'rgba(255,255,255,0.9)'
-                : 'rgba(30,41,59,0.9)',
-              borderRadius: 2,
-              boxShadow: mode === 'light'
-                ? '0 4px 6px rgba(0,0,0,0.1)'
-                : '0 4px 6px rgba(0,0,0,0.3)',
-              backdropFilter: 'blur(8px)',
-              px: { xs: 2, sm: 4 },
-            }}
-          >
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-              <Box component="img" src={logo} alt="Logo" sx={{ height: '11vh' }} />
-              <Box component="img" src={text} alt="Texto" sx={{ height: '11vh' }} />
-            </Box>
-            
-            <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-              {!isAuth ? (
-                <>
-                  <Button
-                    startIcon={<PersonIcon />}
-                    onClick={() => setLoginOpen(true)}
-                    variant="outlined"
-                    sx={{ 
-                      borderColor: 'text.secondary',
-                      color: 'text.secondary',
-                      '&:hover': {
-                        borderColor: 'text.primary',
-                        color: 'text.primary',
-                      }
-                    }}
-                  >
-                    Acceder
-                  </Button>
-                  <LoginModal
-                    open={loginOpen}
-                    onClose={() => setLoginOpen(false)}
-                  />
-                </>
-              ) : (
-                <UserMenu />
-              )}
-              <ThemeToggle />
-            </Box>
-          </Box>
-        </MotionBox>
-      </Container>
+      <Header />
 
       {/* Content section with updated width */}
       <Container 
