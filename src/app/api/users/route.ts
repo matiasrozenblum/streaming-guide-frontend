@@ -90,4 +90,4 @@ export async function POST(request: NextRequest) {
     console.error('Error creating user:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
-} 
+}

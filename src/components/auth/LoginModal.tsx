@@ -50,12 +50,14 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [firstName, setFirstName] = useState('');
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
+  const [forgotPassword, setForgotPassword] = useState(false);
 
   useEffect(() => {
     if (!open) {
       setStep('email'); setIsUserExisting(false);
       setEmail(''); setCode(''); setRegistrationToken('');
       setFirstName(''); setLastName(''); setError(''); setIsLoading(false);
+      setForgotPassword(false);
     }
   }, [open]);
 
@@ -72,11 +74,11 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             : !isUserExisting && step==='email'
             ? 'Acceder / Registrarse'
             : step==='code'
-            ? 'Verificar Correo'
+            ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar Correo')
             : step==='profile'
             ? 'Completa tu Perfil'
             : step==='password'
-            ? 'Crea tu Contraseña'
+            ? (forgotPassword ? 'Nueva contraseña' : 'Crea tu Contraseña')
             : '' }
         <IconButton onClick={onClose}><X/></IconButton>
       </DialogTitle>
@@ -148,10 +150,41 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               }
               setIsLoading(false);
             }}
+            onForgotPassword={() => {
+              setForgotPassword(true);
+              setIsLoading(true);
+              fetch('/api/auth/send-code', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ identifier: email }),
+              })
+                .then(() => {
+                  setStep('code');
+                  setError('');
+                })
+                .catch((err) => {
+                  setError(getErrorMessage(err));
+                })
+                .finally(() => setIsLoading(false));
+            }}
           />
         )}
 
-        {step === 'code' && (
+        {step === 'code' && forgotPassword && (
+          <CodeStep
+            email={email}
+            initialCode={code}
+            isLoading={isLoading}
+            error={error}
+            onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
+            onSubmit={async (c) => {
+              setCode(c);
+              setStep('password');
+            }}
+          />
+        )}
+
+        {step === 'code' && !forgotPassword && (
           <CodeStep
             email={email}
             initialCode={code}
@@ -198,11 +231,45 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
           />
         )}
 
-        {step === 'password' && (
+        {step === 'password' && forgotPassword && (
+          <PasswordStep
+            isLoading={isLoading}
+            error={error}
+            onBack={() => setStep('code')}
+            submitLabel="Cambiar contraseña"
+            onSubmit={async (pw) => {
+              setIsLoading(true); setError('');
+              try {
+                // POST to reset-password endpoint with email, password, and code
+                const resetRes = await fetch('/api/users/reset-password', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email, password: pw, code }),
+                });
+                const resetBody = await resetRes.json();
+                if (!resetRes.ok) throw new Error(resetBody.message || 'Error al cambiar la contraseña');
+                // Now try to login
+                const nxt = await signIn('credentials', {
+                  redirect: false,
+                  email,
+                  password: pw,
+                });
+                if (nxt?.error) throw new Error('No se pudo iniciar sesión');
+                onClose(); window.location.reload();
+              } catch (err: unknown) {
+                setError(getErrorMessage(err));
+              }
+              setIsLoading(false);
+            }}
+          />
+        )}
+
+        {step === 'password' && !forgotPassword && (
           <PasswordStep
             isLoading={isLoading}
             error={error}
             onBack={() => setStep('profile')}
+            submitLabel="Registrarme"
             onSubmit={async (pw) => {
               setIsLoading(true); setError('');
               try {
