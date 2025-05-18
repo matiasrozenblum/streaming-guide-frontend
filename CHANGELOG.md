@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.5] - 2025-04-18
+
+### Changed
+- Moved header into new component
+- Now in mobile only showing user icon
+- Resized header, made it smaller in mobile
+
 ## [0.3.4] - 2025-04-18
 
 ### Added
