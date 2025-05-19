@@ -10,7 +10,7 @@ export async function GET(
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${identifier}`);
 
     if (response.status === 404) {
-      return NextResponse.json({ exists: false });
+      return NextResponse.json({ exists: false }, { status: 404 });
     }
 
     if (!response.ok) {
