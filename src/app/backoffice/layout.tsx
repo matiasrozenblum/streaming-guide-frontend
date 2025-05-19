@@ -10,8 +10,11 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon, Dashboard, LiveTv,
-  People, Schedule, ScheduleTwoTone
+  People, Schedule, ScheduleTwoTone,
+  TrackChanges,
+  ToggleOn
 } from '@mui/icons-material';
+import { MicIcon } from 'lucide-react';
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -38,10 +41,11 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     { text: 'Dashboard', icon: <Dashboard />, path: '/backoffice' },
     { text: 'Canales',   icon: <LiveTv />,     path: '/backoffice/channels' },
     { text: 'Programas',  icon: <Schedule />,   path: '/backoffice/programs' },
-    { text: 'Panelistas', icon: <People />,     path: '/backoffice/panelists' },
+    { text: 'Panelistas', icon: <MicIcon />,     path: '/backoffice/panelists' },
     { text: 'Horarios',   icon: <Schedule />,   path: '/backoffice/schedules' },
-    { text: 'Configs',    icon: <ScheduleTwoTone />, path: '/backoffice/configs' },
-    { text: 'Cambios',    icon: <ScheduleTwoTone />, path: '/backoffice/changes' },
+    { text: 'Configs',    icon: <ToggleOn />, path: '/backoffice/configs' },
+    { text: 'Cambios',    icon: <TrackChanges />, path: '/backoffice/changes' },
+    { text: 'Usuarios',   icon: <People />,     path: '/backoffice/users' },
   ];
 
   const drawer = (

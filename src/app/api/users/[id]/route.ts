@@ -70,18 +70,15 @@ export async function PATCH(
       body: JSON.stringify(body),
     });
 
+    const data = await response.json().catch(() => ({}));
+
     if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('Backend error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        errorData,
-        url: apiUrl
-      });
-      throw new Error(`Failed to update user: ${response.status} ${response.statusText}`);
+      return NextResponse.json(
+        data,
+        { status: response.status }
+      );
     }
 
-    const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating user:', error);
