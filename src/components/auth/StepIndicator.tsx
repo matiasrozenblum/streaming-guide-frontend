@@ -1,5 +1,9 @@
 import React from 'react';
-import { Check, Mail, KeyRound, User, LockKeyhole } from 'lucide-react';
+import CheckCircleIcon from '@mui/icons-material/CheckCircle';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 
 interface StepIndicatorProps {
   currentStep: string;
@@ -9,14 +13,14 @@ interface StepIndicatorProps {
 export default function StepIndicator({ currentStep, isUserExisting }: StepIndicatorProps) {
   const steps = isUserExisting 
     ? [
-        { id: 'email', icon: Mail, label: 'Correo' },
-        { id: 'existing-user', icon: KeyRound, label: 'Acceso' }
+        { id: 'email', icon: MailOutlineIcon, label: 'Correo' },
+        { id: 'existing-user', icon: VpnKeyIcon, label: 'Acceso' }
       ]
     : [
-        { id: 'email', icon: Mail, label: 'Correo' },
-        { id: 'code', icon: KeyRound, label: 'Verificar' },
-        { id: 'profile', icon: User, label: 'Perfil' },
-        { id: 'password', icon: LockKeyhole, label: 'Contraseña' }
+        { id: 'email', icon: MailOutlineIcon, label: 'Correo' },
+        { id: 'code', icon: VpnKeyIcon, label: 'Verificar' },
+        { id: 'profile', icon: PersonOutlineIcon, label: 'Perfil' },
+        { id: 'password', icon: LockOutlinedIcon, label: 'Contraseña' }
       ];
 
   return (
@@ -44,9 +48,9 @@ export default function StepIndicator({ currentStep, isUserExisting }: StepIndic
               ${isUpcoming ? 'border-gray-300 dark:border-slate-600 text-gray-400 dark:text-slate-500' : ''}
             `}>
               {isCompleted ? (
-                <Check size={20} className="text-green-500" />
+                <CheckCircleIcon fontSize="small" className="text-green-500" />
               ) : (
-                <IconComponent size={20} />
+                <IconComponent fontSize="small" />
               )}
             </div>
             
