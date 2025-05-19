@@ -10,7 +10,10 @@ import {
   LinearProgress,
   Typography
 } from '@mui/material';
-import { LockKeyhole, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface PasswordStepProps {
   onSubmit: (password: string) => void;
@@ -77,13 +80,13 @@ export default function PasswordStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <LockKeyhole size={20} />
+              <LockOutlinedIcon fontSize="small" />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton size="small" onClick={() => setShow(s => !s)}>
-                {show ? <EyeOff size={18}/> : <Eye size={18}/>}
+                {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>
           )
@@ -105,13 +108,13 @@ export default function PasswordStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <LockKeyhole size={20} />
+              <LockOutlinedIcon fontSize="small" />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton size="small" onClick={() => setShow2(s => !s)}>
-                {show2 ? <EyeOff size={18}/> : <Eye size={18}/>}
+                {show2 ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>
           )
@@ -134,7 +137,7 @@ export default function PasswordStep({
         </Button>
         <Button
           variant="outlined"
-          startIcon={<ArrowLeft size={16} />}
+          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
           disabled={isLoading}
           onClick={onBack}

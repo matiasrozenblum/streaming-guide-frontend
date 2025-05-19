@@ -7,7 +7,8 @@ import {
   AlertTitle,
   InputAdornment
 } from '@mui/material';
-import { User, ArrowLeft } from 'lucide-react';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface ProfileStepProps {
   initialFirst?: string;
@@ -53,7 +54,7 @@ export default function ProfileStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <User size={20} />
+              <PersonOutlineIcon fontSize="small" />
             </InputAdornment>
           )
         }}
@@ -66,7 +67,7 @@ export default function ProfileStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <User size={20} />
+              <PersonOutlineIcon fontSize="small" />
             </InputAdornment>
           )
         }}
@@ -87,7 +88,7 @@ export default function ProfileStep({
         </Button>
         <Button
           variant="outlined"
-          startIcon={<ArrowLeft size={16} />}
+          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
           onClick={onBack}
         >

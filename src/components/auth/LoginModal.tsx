@@ -5,7 +5,11 @@ import {
   Dialog, DialogTitle, DialogContent, LinearProgress,
   IconButton, Box, Stepper, Step, StepLabel, useTheme
 } from '@mui/material';
-import { X, Mail, KeyRound, User, LockKeyhole } from 'lucide-react';
+import CloseIcon from '@mui/icons-material/Close';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import { signIn } from 'next-auth/react';
 import EmailStep from './steps/EmailStep';
 import CodeStep from './steps/CodeStep';
@@ -32,11 +36,11 @@ const STEP_LABELS: Record<StepKey,string> = {
   'existing-user': 'Acceso'
 };
 const STEP_ICONS: Record<StepKey, React.ReactNode> = {
-  email: <Mail size={20} />,
-  code: <KeyRound size={20} />,
-  profile: <User size={20} />,
-  password: <LockKeyhole size={20} />,
-  'existing-user': <KeyRound size={20} />
+  email: <MailOutlineIcon fontSize="small" />,
+  code: <VpnKeyIcon fontSize="small" />,
+  profile: <PersonOutlineIcon fontSize="small" />,
+  password: <LockOutlinedIcon fontSize="small" />,
+  'existing-user': <VpnKeyIcon fontSize="small" />
 };
 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
@@ -80,7 +84,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             : step==='password'
             ? (forgotPassword ? 'Nueva contraseña' : 'Crea tu Contraseña')
             : '' }
-        <IconButton onClick={onClose}><X/></IconButton>
+        <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
       <LinearProgress variant="determinate" value={((activeStep+1)/steps.length)*100}
