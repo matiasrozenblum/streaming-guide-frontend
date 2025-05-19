@@ -68,6 +68,7 @@ export const ScheduleRow = ({
           src={channelLogo} 
           alt={channelName}
           variant="rounded"
+          draggable={false}
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,

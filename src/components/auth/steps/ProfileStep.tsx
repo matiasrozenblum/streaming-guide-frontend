@@ -80,19 +80,19 @@ export default function ProfileStep({
       )}
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-        >
-          Continuar
-        </Button>
-        <Button
           variant="outlined"
           startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
           onClick={onBack}
         >
           Volver
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+        >
+          Continuar
         </Button>
       </Box>
     </Box>
