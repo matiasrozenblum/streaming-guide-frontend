@@ -22,10 +22,13 @@ import {
   InputAdornment,
   LinearProgress,
 } from '@mui/material';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { KeyRound, LockKeyhole, Eye, EyeOff } from 'lucide-react';
 import Header from '@/components/Header';
 
 const MotionBox = motion(Box);
@@ -656,7 +659,7 @@ export default function ProfilePage() {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <KeyRound size={20} />
+                        <VpnKeyIcon fontSize="small" />
                       </InputAdornment>
                     )
                   }}
@@ -675,13 +678,13 @@ export default function ProfilePage() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockKeyhole size={20} />
+                      <LockOutlinedIcon fontSize="small" />
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => setShowPassword(s => !s)}>
-                        {showPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   )
@@ -711,13 +714,13 @@ export default function ProfilePage() {
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
-                      <LockKeyhole size={20} />
+                      <LockOutlinedIcon fontSize="small" />
                     </InputAdornment>
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton size="small" onClick={() => setShowConfirmPassword(s => !s)}>
-                        {showConfirmPassword ? <EyeOff size={18}/> : <Eye size={18}/>}
+                        {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
                   )

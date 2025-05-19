@@ -8,7 +8,8 @@ import {
   InputAdornment,
   Typography
 } from '@mui/material';
-import { KeyRound, ArrowLeft } from 'lucide-react';
+import VpnKeyIcon from '@mui/icons-material/VpnKey';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface CodeStepProps {
   email: string;
@@ -77,7 +78,7 @@ export default function CodeStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <KeyRound size={20} />
+              <VpnKeyIcon fontSize="small" />
             </InputAdornment>
           )
         }}
@@ -111,7 +112,7 @@ export default function CodeStep({
         </Button>
         <Button
           variant="outlined"
-          startIcon={<ArrowLeft size={16} />}
+          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
           disabled={isLoading}
           onClick={onBack}
