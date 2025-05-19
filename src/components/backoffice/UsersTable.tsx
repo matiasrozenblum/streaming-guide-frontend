@@ -19,7 +19,6 @@ import {
   TextField,
   Box,
   Typography,
-  Chip,
   Alert,
   Snackbar,
   CircularProgress,
@@ -28,15 +27,21 @@ import { Edit, Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
 
 // Helper to extract error messages
-function getErrorMessage(err: any): string {
+function getErrorMessage(err: unknown): string {
   if (!err) return 'Error desconocido';
   if (typeof err === 'string') return err;
   if (err instanceof Error) return err.message;
-  if (err.message) {
-    if (Array.isArray(err.message)) return err.message.join(' | ');
-    return err.message;
+  if (typeof err === 'object' && err !== null) {
+    const obj = err as Record<string, unknown>;
+    if ('message' in obj) {
+      const msg = obj.message;
+      if (Array.isArray(msg)) return msg.join(' | ');
+      if (typeof msg === 'string') return msg;
+    }
+    if ('details' in obj && typeof obj.details === 'string') {
+      return obj.details;
+    }
   }
-  if (err.details) return err.details;
   return JSON.stringify(err);
 }
 
@@ -56,9 +61,6 @@ export function UsersTable() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [emailAnchor, setEmailAnchor] = useState<HTMLElement | null>(null);
-  const [showEmailTooltip, setShowEmailTooltip] = useState(false);
-  const [emailTooltipMsg, setEmailTooltipMsg] = useState('');
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
 
   const fetchUsers = useCallback(async () => {
@@ -120,19 +122,6 @@ export function UsersTable() {
     });
   };
 
-  const handleEmailBlur = (e: React.FocusEvent<HTMLInputElement>) => {
-    const value = e.target.value;
-    setEmailAnchor(e.target);
-    const emailRegex = /^[^@\s]+@[^@\s]+\.[^@\s]+$/;
-    if (value && !emailRegex.test(value)) {
-      setEmailTooltipMsg("Por favor incluí un '@' en el correo electrónico. Ejemplo: usuario@ejemplo.com");
-      setShowEmailTooltip(true);
-    } else {
-      setShowEmailTooltip(false);
-      setEmailTooltipMsg('');
-    }
-  };
-
   const validateFields = () => {
     const errors: { [key: string]: string } = {};
     if (!formData.firstName.trim()) {
@@ -176,7 +165,7 @@ export function UsersTable() {
   
       // Remove empty string fields
       const filteredFormData = Object.fromEntries(
-        Object.entries(formData).filter(([_, v]) => v !== '')
+        Object.entries(formData).filter(([, v]) => v !== '')
       );
   
       const response = await fetch(url, {

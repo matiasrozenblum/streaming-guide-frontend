@@ -10,7 +10,7 @@ import {
 } from '@mui/material';
 import {
   Menu as MenuIcon, Dashboard, LiveTv,
-  People, Schedule, ScheduleTwoTone,
+  People, Schedule,
   TrackChanges,
   ToggleOn
 } from '@mui/icons-material';
