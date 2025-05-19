@@ -103,6 +103,14 @@ export default function CodeStep({
       </Box>
       <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
         <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={isLoading}
+        >
+          Verificar
+        </Button>
+        <Button
           variant="outlined"
           startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
@@ -110,14 +118,6 @@ export default function CodeStep({
           onClick={onBack}
         >
           Volver
-        </Button>
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={isLoading}
-        >
-          Verificar
         </Button>
       </Box>
     </Box>
