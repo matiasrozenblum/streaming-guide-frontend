@@ -128,14 +128,6 @@ export default function PasswordStep({
       )}
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={isLoading}
-        >
-          {submitLabel}
-        </Button>
-        <Button
           variant="outlined"
           startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
@@ -143,6 +135,14 @@ export default function PasswordStep({
           onClick={onBack}
         >
           Volver
+        </Button>
+        <Button
+          type="submit"
+          variant="contained"
+          fullWidth
+          disabled={isLoading}
+        >
+          {submitLabel}
         </Button>
       </Box>
     </Box>

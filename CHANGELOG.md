@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.7] - 2025-04-19
+
+### Changed
+- Made channel logos not draggable
+- Reordered sign up buttons
+
 ## [0.3.6] - 2025-04-19
 
 ### Added
