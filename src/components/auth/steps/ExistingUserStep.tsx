@@ -9,7 +9,10 @@ import {
   IconButton,
   Typography
 } from '@mui/material';
-import { LockKeyhole, Eye, EyeOff, ArrowLeft } from 'lucide-react';
+import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
+import VisibilityIcon from '@mui/icons-material/Visibility';
+import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
+import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface ExistingUserStepProps {
   email: string;
@@ -58,13 +61,13 @@ export default function ExistingUserStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <LockKeyhole size={20} />
+              <LockOutlinedIcon fontSize="small" />
             </InputAdornment>
           ),
           endAdornment: (
             <InputAdornment position="end">
               <IconButton onClick={() => setShow(s => !s)} edge="end" size="small">
-                {show ? <EyeOff size={18}/> : <Eye size={18}/>}
+                {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>
           )
@@ -87,7 +90,7 @@ export default function ExistingUserStep({
         </Button>
         <Button
           variant="outlined"
-          startIcon={<ArrowLeft size={16} />}
+          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
           fullWidth
           disabled={isLoading}
           onClick={onBack}

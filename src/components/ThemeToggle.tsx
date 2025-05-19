@@ -1,5 +1,5 @@
 import { IconButton, Tooltip } from '@mui/material';
-import { Moon, Sun } from 'lucide-react';
+import { DarkModeOutlined, LightModeOutlined } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 
 export const ThemeToggle = () => {
@@ -23,9 +23,9 @@ export const ThemeToggle = () => {
         }}
       >
         {mode === 'light' ? (
-          <Moon size={22} style={{ color: '#1e293b' }} />
+          <DarkModeOutlined style={{ color: '#1e293b' }} />
         ) : (
-          <Sun size={22} style={{ color: '#f1f5f9' }} />
+          <LightModeOutlined style={{ color: '#f1f5f9' }} />
         )}
       </IconButton>
     </Tooltip>

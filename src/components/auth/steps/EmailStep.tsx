@@ -7,7 +7,7 @@ import {
   AlertTitle,
   InputAdornment
 } from '@mui/material';
-import { Mail } from 'lucide-react';
+import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
 interface EmailStepProps {
   initialEmail?: string;
@@ -53,7 +53,7 @@ export default function EmailStep({
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
-              <Mail size={20} />
+              <MailOutlineIcon fontSize="small" />
             </InputAdornment>
           )
         }}
