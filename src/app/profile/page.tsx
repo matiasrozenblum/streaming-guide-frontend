@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -30,6 +30,8 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 const MotionBox = motion(Box);
 
@@ -87,7 +89,8 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
 );
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
 
@@ -121,7 +124,7 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (status !== 'authenticated') return;
-    const id = session!.user.id;
+    const id = typedSession!.user.id;
     fetch(`/api/users/${id}`, { credentials: 'include' })
       .then(r => r.json())
       .then(data => {
@@ -131,11 +134,11 @@ export default function ProfilePage() {
         setPhone(data.phone ?? '');
       })
       .catch(console.error);
-  }, [session, status]);
+  }, [status, typedSession]);
 
   const saveNames = async () => {
-    if (!session) return;
-    const id = session.user.id;
+    if (!typedSession) return;
+    const id = typedSession.user.id;
     const res = await fetch(`/api/users/${id}`, {
       method: 'PATCH',
       credentials: 'include',
@@ -196,7 +199,7 @@ export default function ProfilePage() {
 
         try {
           // Update the password using PATCH /api/users/:id
-          const updateRes = await fetch(`/api/users/${session?.user.id}`, {
+          const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ password: newPassword }),
@@ -233,7 +236,7 @@ export default function ProfilePage() {
         }
 
         // Then update the email using the users endpoint
-        const updateRes = await fetch(`/api/users/${session?.user.id}`, {
+        const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ email: newEmail }),
@@ -275,8 +278,8 @@ export default function ProfilePage() {
   };
 
   const cancelAccount = async () => {
-    if (!session) return;
-    const id = session.user.id;
+    if (!typedSession) return;
+    const id = typedSession.user.id;
     const res = await fetch(`/api/users/${id}`, {
       method: 'DELETE',
       credentials: 'include',

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useSessionContext } from '@/contexts/SessionContext';
 import {
   Box,
   Button,
@@ -35,12 +35,7 @@ import Image from 'next/image';
 
 export default function ChannelsPage() {
   // Require session; redirect on unauth
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      signIn('legacy', { callbackUrl: '/backoffice/channels' });
-    },
-  });
+  const { status } = useSessionContext();
 
   const [channels, setChannels] = useState<Channel[]>([]);
   const [loading, setLoading] = useState(true);

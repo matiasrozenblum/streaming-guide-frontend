@@ -20,11 +20,15 @@ import {
   Typography,
   Chip,
   Autocomplete,
+  useTheme,
 } from '@mui/material';
 import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
 import Image from 'next/image';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { api } from '@/services/api';
+import type { SessionWithToken } from '@/types/session';
 
 interface PanelistsTableProps {
   onError: (message: string) => void;
@@ -40,32 +44,33 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const [editingPanelist, setEditingPanelist] = useState<Panelist | null>(null);
   const [formData, setFormData] = useState({ name: '', avatar_url: '' });
   const [selectedPrograms, setSelectedPrograms] = useState<Program[]>([]);
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
+  const theme = useTheme();
 
   const fetchPanelists = useCallback(async () => {
     try {
-      const response = await fetch('/api/panelists');
-      if (!response.ok) throw new Error('Failed to fetch panelists');
-      const data = await response.json();
-      setPanelists(data);
+      const response = await api.get<Panelist[]>('/panelists', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to fetch panelists');
+      setPanelists(response.data);
     } catch (error) {
       onError('Error loading panelists');
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [onError, typedSession]);
 
   const fetchPrograms = useCallback(async () => {
     try {
-      const response = await fetch('/api/programs');
-      if (!response.ok) throw new Error('Failed to fetch programs');
-      const data = await response.json();
-      setPrograms(data);
+      const response = await api.get<Program[]>('/programs', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to fetch programs');
+      setPrograms(response.data);
     } catch (error) {
       onError('Error loading programs');
       console.error('Error:', error);
     }
-  }, [onError]);
+  }, [onError, typedSession]);
 
   useEffect(() => {
     fetchPanelists();
@@ -113,17 +118,13 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       const url = editingPanelist
         ? `/api/panelists/${editingPanelist.id}`
         : `/api/panelists`;
-      const method = editingPanelist ? 'PATCH' : 'POST';
-
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
-
-      if (!response.ok) throw new Error('Failed to save panelist');
+      let response;
+      if (editingPanelist) {
+        response = await api.patch(url, formData, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      } else {
+        response = await api.post(url, formData, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      }
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to save panelist');
       handleCloseDialog();
       fetchPanelists();
     } catch (error) {
@@ -135,13 +136,8 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this panelist?')) return;
     try {
-      const response = await fetch(`/api/panelists/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to delete panelist');
+      const response = await api.delete(`/panelists/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to delete panelist');
       fetchPanelists();
     } catch (error) {
       onError('Error deleting panelist');
@@ -152,13 +148,8 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleAddToProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to add panelist to program');
+      const response = await api.post(`/panelists/${editingPanelist.id}/programs/${programId}`, null, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to add panelist to program');
       fetchPanelists();
     } catch (error) {
       onError('Error adding panelist to program');
@@ -169,13 +160,8 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleRemoveFromProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
-      if (!response.ok) throw new Error('Failed to remove panelist from program');
+      const response = await api.delete(`/panelists/${editingPanelist.id}/programs/${programId}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to remove panelist from program');
       fetchPanelists();
     } catch (error) {
       onError('Error removing panelist from program');
@@ -209,17 +195,21 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Escribe para filtrar en vivo"
-          inputProps={{ style: { color: 'black' } }}
-          InputLabelProps={{ style: { color: 'black' } }}
+          InputProps={{
+            style: { color: theme.palette.text.primary },
+          }}
+          InputLabelProps={{
+            style: { color: theme.palette.text.secondary },
+          }}
           sx={{
             '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
+              borderColor: theme.palette.divider,
             },
             '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
+              borderColor: theme.palette.text.primary,
             },
             '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
+              borderColor: theme.palette.primary.main,
             },
           }}
         />

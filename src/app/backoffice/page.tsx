@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession, getSession, signIn } from 'next-auth/react';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { getSession } from 'next-auth/react';
 import {
   Box,
   Typography,
@@ -13,6 +14,7 @@ import {
 } from '@mui/material';
 import ProtectedRoute from '@/components/ProtectedRoute';
 import PanelistsTable from '@/components/backoffice/PanelistsTable';
+import type { SessionWithToken } from '@/types/session';
 
 interface DashboardStats {
   channels: number;
@@ -23,13 +25,8 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   // 1) Next-Auth: obligamos a tener sesión
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // NextAuth redirige al /login
-      signIn(undefined, { callbackUrl: '/backoffice' });
-    },
-  });
+  const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';
@@ -43,7 +40,7 @@ export default function DashboardPage() {
 
   useEffect(() => {
     // 2) Esperamos hasta que Next-Auth confirme que estamos "authenticated"
-    if (status !== 'authenticated' || session?.user.role !== 'admin') return;
+    if (status !== 'authenticated' || typedSession?.user.role !== 'admin') return;
 
     (async () => {
       try {
@@ -67,7 +64,7 @@ export default function DashboardPage() {
         setError('No se pudieron cargar las estadísticas');
       }
     })();
-  }, [status, session?.user.role]);
+  }, [status, typedSession]);
 
   if (status === 'loading') {
     return (

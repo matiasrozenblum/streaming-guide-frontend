@@ -1,7 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -29,6 +28,8 @@ import { Edit, Delete, Add, Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 const formatTime = (time: string) => {
   if (!time) return '';
@@ -53,14 +54,8 @@ interface ProgramWithSchedules extends Program {
 }
 
 export function SchedulesTable() {
-  // Forzar sesión y redirigir si no autenticado
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // NextAuth redirige al /login
-      signIn(undefined, { callbackUrl: '/backoffice/schedules' });
-    },
-  });
+  const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   const [programs, setPrograms] = useState<ProgramWithSchedules[]>([]);
   const [loading, setLoading] = useState(true);
@@ -74,18 +69,12 @@ export function SchedulesTable() {
   const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
 
-  useEffect(() => {
-    if (status === 'authenticated' && session.user.role === 'admin') {
-      fetchSchedules();
-    }
-  }, [status, session?.user.role]);
-
-  const fetchSchedules = async () => {
+  const fetchSchedules = useCallback(async () => {
     setLoading(true);
     try {
       const [schedulesRes, programsRes] = await Promise.all([
-        api.get<ScheduleType[]>('/schedules'),
-        api.get<Program[]>('/programs?include=channel'),
+        api.get<ScheduleType[]>('/schedules', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }),
+        api.get<Program[]>('/programs?include=channel', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }),
       ]);
       const schedules = schedulesRes.data || [];
       const programsList = programsRes.data || [];
@@ -100,7 +89,13 @@ export function SchedulesTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [typedSession]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && typedSession?.user.role === 'admin') {
+      fetchSchedules();
+    }
+  }, [status, typedSession, fetchSchedules]);
 
   // Filtrado en vivo
   const filteredPrograms = programs.filter(p =>
@@ -133,7 +128,8 @@ export function SchedulesTable() {
       };
       const response = await api.put<ScheduleType>(
         `/schedules/${editingSchedule.id}`,
-        updateData
+        updateData,
+        { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }
       );
       const updated = response.data;
       setPrograms(programs.map(pr =>
@@ -158,9 +154,9 @@ export function SchedulesTable() {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de que deseas eliminar este horario?')) return;
     try {
-      const scheduleRes = await api.get<ScheduleType>(`/schedules/${id}`);
+      const scheduleRes = await api.get<ScheduleType>(`/schedules/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       const pid = scheduleRes.data.program.id;
-      await api.delete(`/schedules/${id}`);
+      await api.delete(`/schedules/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       setPrograms(programs.map(pr =>
         pr.id === pid
           ? { ...pr, schedules: pr.schedules.filter(s => s.id !== id) }
@@ -206,7 +202,7 @@ export function SchedulesTable() {
         start_time: programFormData.startTime,
         end_time: programFormData.endTime,
       };
-      const resp = await api.post<ScheduleType>('/schedules', newData);
+      const resp = await api.post<ScheduleType>('/schedules', newData, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       const created = resp.data;
       setPrograms(programs.map(pr =>
         pr.id === selectedProgram.id

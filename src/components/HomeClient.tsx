@@ -15,6 +15,9 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { useRouter } from 'next/navigation';
+import type { SessionWithToken } from '@/types/session';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -31,6 +34,16 @@ type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
+  const router = useRouter();
+  const { status, session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
+  useEffect(() => {
+    console.log('status', status);
+    // si no hay sesión, redirige
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
   // Hydrate with initialData from SSR
   const initArray: ChannelWithSchedules[] =
@@ -63,21 +76,29 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     let isMounted = true;
 
-    // Holiday check
-    (async () => {
+    const fetchHolidayInfo = async () => {
+      if (!typedSession?.accessToken) {
+        console.warn('Attempted to fetch holiday info without an access token.');
+        return;
+      }
       try {
-        const { data } = await api.get<{ holiday: boolean }>('/holiday');
+        const { data } = await api.get<{ holiday: boolean }>('/holiday', { headers: { Authorization: `Bearer ${typedSession.accessToken}` } });
         if (isMounted && data.holiday) setShowHoliday(true);
       } catch {
         // ignore
       }
-    })();
+    };
 
     // Load week schedules
     const loadWeek = async () => {
+      if (!typedSession?.accessToken) {
+        console.warn('Attempted to load week schedules without an access token.');
+        return;
+      }
       try {
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
           params: { live_status: true },
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
         if (!isMounted) return;
 
@@ -99,6 +120,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
+    fetchHolidayInfo();
     loadWeek();
     const intervalId = setInterval(loadWeek, 60_000);
 
@@ -106,7 +128,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [setLiveStatuses]);
+  }, [setLiveStatuses, typedSession?.accessToken]);
 
   useEffect(() => {
     if (flattened.length > 0) {

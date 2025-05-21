@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, Button, ClickAwayListener } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -12,6 +12,8 @@ import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
+import { tokens } from '@/design-system/tokens';
+import { Text, BaseButton } from '@/design-system/components';
 
 dayjs.extend(customParseFormat);
 
@@ -157,33 +159,33 @@ export const ProgramBlock: React.FC<Props> = ({
   // Contenido del tooltip
   const tooltipContent = (
     <Box
-      sx={{ p: 1 }}
+      sx={{ p: tokens.spacing.sm }}
       onMouseEnter={handleTooltipOpen}
       onMouseLeave={handleTooltipClose}
     >
-      <Typography variant="subtitle1" fontWeight="bold" color="white">
+      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} color="white">
         {name}
-      </Typography>
-      <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+      </Text>
+      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.9)' }}>
         {start} - {end}
-      </Typography>
+      </Text>
       {description && (
-        <Typography variant="body2" sx={{ mt: 1, color: 'rgba(255,255,255,0.9)' }}>
+        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.9)' }}>
           {description}
-        </Typography>
+        </Text>
       )}
       {panelists?.length ? (
-        <Box sx={{ mt: 1 }}>
-          <Typography variant="body2" fontWeight="bold" color="white">
+        <Box sx={{ mt: tokens.spacing.sm }}>
+          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} color="white">
             Panelistas:
-          </Typography>
-          <Typography variant="body2" color="rgba(255,255,255,0.9)">
+          </Text>
+          <Text variant="body2" color="rgba(255,255,255,0.9)">
             {panelists.map(p => p.name).join(', ')}
-          </Typography>
+          </Text>
         </Box>
       ) : null}
       {streamUrl && (
-        <Button
+        <BaseButton
           onClick={handleClick}
           onTouchStart={handleClick}
           variant="contained"
@@ -191,18 +193,18 @@ export const ProgramBlock: React.FC<Props> = ({
           startIcon={<OpenInNew />}
           className="youtube-button"
           sx={{
-            mt: 2,
+            mt: tokens.spacing.md,
             backgroundColor: '#FF0000',
             '&:hover': { backgroundColor: '#cc0000' },
-            fontWeight: 'bold',
+            fontWeight: tokens.typography.fontWeight.bold,
             textTransform: 'none',
-            fontSize: '0.8rem',
+            fontSize: tokens.typography.fontSize.sm,
             boxShadow: 'none',
             touchAction: 'manipulation',
           }}
         >
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-        </Button>
+        </BaseButton>
       )}
     </Box>
   );
@@ -232,10 +234,11 @@ export const ProgramBlock: React.FC<Props> = ({
           sx={{
             backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
             border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
-            borderRadius: 1,
-            transition: 'all 0.2s ease-in-out',
+            borderRadius: tokens.borderRadius.sm,
+            transition: `all ${tokens.transition.normal} ${tokens.transition.timing}`,
             cursor: 'pointer',
             overflow: 'hidden',
+            boxShadow: tokens.boxShadow.sm,
             '&:hover': {
               backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
               transform: 'scale(1.01)',
@@ -244,11 +247,12 @@ export const ProgramBlock: React.FC<Props> = ({
         >
           <Box
             sx={{
-              p: 1,
+              p: tokens.spacing.sm,
               height: '100%',
               display: 'flex',
               flexDirection: 'column',
-              justifyContent: 'center',
+              justifyContent: 'flex-start',
+              alignItems: 'flex-start',
               position: 'relative',
             }}
           >
@@ -256,8 +260,8 @@ export const ProgramBlock: React.FC<Props> = ({
               <Box
                 sx={{
                   position: 'absolute',
-                  top: 4,
-                  right: 4,
+                  top: tokens.spacing.xs,
+                  right: tokens.spacing.xs,
                   backgroundColor: '#f44336',
                   color: 'white',
                   fontSize: '0.65rem',
@@ -297,7 +301,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: logo_url ? 'flex-start' : 'center',
+                  alignItems: 'center',
                   gap: 0.5,
                 }}
               >
@@ -306,7 +310,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   sx={{
                     fontWeight: 'bold',
                     fontSize: '0.75rem',
-                    textAlign: logo_url ? 'left' : 'center',
+                    textAlign: 'center',
                     color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
                   }}
                 >
@@ -317,7 +321,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     variant="caption"
                     sx={{
                       fontSize: '0.65rem',
-                      textAlign: logo_url ? 'left' : 'center',
+                      textAlign: 'center',
                       color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
                       lineHeight: 1.2,
                       maxWidth: '100%',
