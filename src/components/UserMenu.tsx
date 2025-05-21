@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import {
   Button,
   Menu,
@@ -12,23 +12,28 @@ import {
   Typography,
   useTheme,
   useMediaQuery,
+  ListItemIcon,
 } from '@mui/material';
+import PersonIcon from '@mui/icons-material/Person';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 export default function UserMenu() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   // Solo mostramos si hay sesión autenticada
-  if (!session?.user) {
+  if (!typedSession?.user) {
     return null;
   }
 
-  const user = session.user;
+  const user = typedSession.user;
   const firstName = user.name?.split(' ')[0] ?? 'Usuario';
-  const isAdmin = session.user.role === 'admin';
+  const isAdmin = user.role === 'admin';
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
     setAnchorEl(e.currentTarget);
@@ -53,7 +58,7 @@ export default function UserMenu() {
               color: theme.palette.primary.contrastText
             }}
           >
-            {firstName.charAt(0).toUpperCase()}
+            {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
           </Avatar>
         }
         sx={{ 
@@ -84,7 +89,10 @@ export default function UserMenu() {
             router.push('/profile');
           }}
         >
-          Mi cuenta
+          <ListItemIcon>
+            <PersonIcon fontSize="small" />
+          </ListItemIcon>
+          Mi Perfil ({user.name || user.email})
         </MenuItem>
         <MenuItem
           onClick={() => {

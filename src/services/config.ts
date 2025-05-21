@@ -4,11 +4,11 @@ import { api } from '@/services/api';
  * Obtiene el valor de configuración para una clave dada.
  * Retorna null si no existe o falla la petición.
  */
-export const fetchConfig = async (key: string): Promise<string | null> => {
+export const fetchConfig = async (key: string, token?: string): Promise<string | null> => {
   try {
     const res = await api.get<{ value: string }>(`/config/${key}`, {
       // Evita cache de Next.js
-      headers: { 'Cache-Control': 'no-store' },
+      headers: { 'Cache-Control': 'no-store', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     });
     return res.data.value ?? null;
   } catch (err) {
@@ -25,10 +25,10 @@ export const ConfigService = {
   /**
    * Recupera todas las configuraciones disponibles.
    */
-  findAll: async (): Promise<{ key: string; value: string; type: string }[]> => {
+  findAll: async (token?: string): Promise<{ key: string; value: string; type: string }[]> => {
     try {
       const res = await api.get<{ key: string; value: string }[]>('/config', {
-        headers: { 'Cache-Control': 'no-store' },
+        headers: { 'Cache-Control': 'no-store', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
       });
       return res.data.map((cfg) => ({
         ...cfg,
@@ -43,9 +43,9 @@ export const ConfigService = {
   /**
    * Crea o actualiza una configuración.
    */
-  set: async (key: string, value: string): Promise<void> => {
+  set: async (key: string, value: string, token?: string): Promise<void> => {
     try {
-      await api.post('/config', { key, value });
+      await api.post('/config', { key, value }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     } catch (err) {
       console.warn(`Error setting configuration for key: ${key}`, err);
     }
@@ -54,9 +54,9 @@ export const ConfigService = {
   /**
    * Elimina una configuración por clave.
    */
-  delete: async (key: string): Promise<void> => {
+  delete: async (key: string, token?: string): Promise<void> => {
     try {
-      await api.delete(`/config/${key}`);
+      await api.delete(`/config/${key}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     } catch (err) {
       console.warn(`Error deleting configuration for key: ${key}`, err);
     }
@@ -65,9 +65,9 @@ export const ConfigService = {
   /**
    * Actualiza el valor de una configuración existente.
    */
-  update: async (key: string, value: string): Promise<void> => {
+  update: async (key: string, value: string, token?: string): Promise<void> => {
     try {
-      await api.patch(`/config/${key}`, { value });
+      await api.patch(`/config/${key}`, { value }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
     } catch (err) {
       console.warn(`Error updating configuration for key: ${key}`, err);
     }

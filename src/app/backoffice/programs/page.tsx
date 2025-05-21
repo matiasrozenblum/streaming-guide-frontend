@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
 import {
   Box,
   Button,
@@ -37,15 +36,11 @@ import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
 import ProgramPanelistsDialog from '@/components/backoffice/ProgramPanelistsDialog';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 export default function ProgramsPage() {
   // Forzar sesión y redirigir si no está autenticado
-  const { status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      signIn('legacy', { callbackUrl: '/backoffice/programs' });
-    },
-  });
+  const { status } = useSessionContext();
 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
