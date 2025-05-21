@@ -5,20 +5,22 @@ import { useRouter } from 'next/navigation';
 import { signIn } from 'next-auth/react';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
 import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 export default function BackofficeLoginPage() {
   const router = useRouter();
   const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   // Si ya estamos autenticados como backoffice, redirigimos
   useEffect(() => {
     if (
       status === 'authenticated' &&
-      session?.user.id === 'backoffice'
+      typedSession?.user.id === 'backoffice'
     ) {
       router.push('/backoffice');
     }
-  }, [session, status, router]);
+  }, [status, typedSession?.user.id, router]);
 
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');

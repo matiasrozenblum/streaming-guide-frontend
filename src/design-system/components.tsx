@@ -1,4 +1,3 @@
-import React from 'react';
 import { Box, Button, Typography, styled } from '@mui/material';
 import { tokens } from './tokens';
 
@@ -35,7 +34,7 @@ export const Text = styled(Typography)(({ theme }) => ({
 }));
 
 // Componente base para botones
-export const BaseButton = styled(Button)(({ theme }) => ({
+export const BaseButton = styled(Button)(() => ({
   fontFamily: tokens.typography.fontFamily.primary,
   fontWeight: tokens.typography.fontWeight.medium,
   padding: `${tokens.spacing.sm} ${tokens.spacing.lg}`,
