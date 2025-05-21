@@ -25,6 +25,7 @@ import {
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
 import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
@@ -47,6 +48,7 @@ function getErrorMessage(err: unknown): string {
 
 export function UsersTable() {
   const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
@@ -67,7 +69,7 @@ export function UsersTable() {
     try {
       const response = await fetch('/api/users', {
         headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
+          Authorization: `Bearer ${typedSession?.accessToken}`,
         },
       });
       if (!response.ok) throw new Error('Failed to fetch users');
@@ -79,13 +81,13 @@ export function UsersTable() {
     } finally {
       setLoading(false);
     }
-  }, [session?.accessToken]);
+  }, [typedSession?.accessToken]);
 
   useEffect(() => {
-    if (session?.accessToken) {
+    if (typedSession?.accessToken) {
       fetchUsers();
     }
-  }, [fetchUsers, session?.accessToken]);
+  }, [fetchUsers, typedSession?.accessToken]);
 
   const handleOpenDialog = (user?: User) => {
     if (user) {
@@ -172,7 +174,7 @@ export function UsersTable() {
         method,
         headers: {
           'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.accessToken}`,
+          Authorization: `Bearer ${typedSession?.accessToken}`,
         },
         body: JSON.stringify(filteredFormData),
       });
@@ -202,7 +204,7 @@ export function UsersTable() {
       const response = await fetch(`/api/users/${id}`, {
         method: 'DELETE',
         headers: {
-          Authorization: `Bearer ${session?.accessToken}`,
+          Authorization: `Bearer ${typedSession?.accessToken}`,
         },
       });
       if (!response.ok) {

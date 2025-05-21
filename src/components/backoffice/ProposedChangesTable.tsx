@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import {
   Box,
   Paper,
@@ -19,6 +19,7 @@ import {
 import { Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 interface ProgramChangeData {
   name?: string;
@@ -52,24 +53,18 @@ const FIELD_LABELS: Record<string, string> = {
 };
 
 export default function ProposedChangesTable() {
-  // Forzar sesión y redirigir si no autenticado
   const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   const [changes, setChanges] = useState<ProposedChange[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user.role === 'admin') {
-      fetchChanges();
-    }
-  }, [status, session?.user.role]);
-
-  const fetchChanges = async () => {
+  const fetchChanges = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await api.get<ProposedChange[]>('/proposed-changes', { headers: { Authorization: `Bearer ${session?.accessToken}` } });
+      const response = await api.get<ProposedChange[]>('/proposed-changes', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       setChanges(response.data);
     } catch (err: unknown) {
       console.error('Error fetching proposed changes:', err);
@@ -77,11 +72,17 @@ export default function ProposedChangesTable() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [typedSession]);
+
+  useEffect(() => {
+    if (status === 'authenticated' && typedSession?.user.role === 'admin') {
+      fetchChanges();
+    }
+  }, [status, typedSession, fetchChanges]);
 
   const handleAction = async (id: number, action: 'approve' | 'reject') => {
     try {
-      await api.post(`/proposed-changes/${id}/${action}`, null, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
+      await api.post(`/proposed-changes/${id}/${action}`, null, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       setSuccess(`Cambio ${action === 'approve' ? 'aprobado' : 'rechazado'} correctamente`);
       fetchChanges();
     } catch (err: unknown) {

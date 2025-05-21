@@ -17,22 +17,24 @@ import {
   Movie,
   Mic
 } from '@mui/icons-material';
+import type { SessionWithToken } from '@/types/session';
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const router   = useRouter();
   const pathname = usePathname();
 
   useEffect(() => {
     // si no hay sesión o el role no es admin, redirige
-    if (status === 'authenticated' && session?.user.role !== 'admin') {
+    if (status === 'authenticated' && typedSession?.user.role !== 'admin') {
       router.push('/login');
     }
     if (status === 'unauthenticated') {
       router.push('/login');
     }
-  }, [status, session, router, pathname]);
+  }, [status, typedSession, router, pathname]);
 
   const handleLogout = () => {
     signOut({ callbackUrl: '/login' });

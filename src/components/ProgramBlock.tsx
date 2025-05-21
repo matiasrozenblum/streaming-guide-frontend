@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, Button, ClickAwayListener } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -13,7 +13,7 @@ import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
 import { tokens } from '@/design-system/tokens';
-import { Text, BaseButton, Card } from '@/design-system/components';
+import { Text, BaseButton } from '@/design-system/components';
 
 dayjs.extend(customParseFormat);
 
@@ -301,7 +301,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 sx={{
                   display: 'flex',
                   flexDirection: 'column',
-                  alignItems: logo_url ? 'flex-start' : 'center',
+                  alignItems: 'center',
                   gap: 0.5,
                 }}
               >
@@ -310,7 +310,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   sx={{
                     fontWeight: 'bold',
                     fontSize: '0.75rem',
-                    textAlign: logo_url ? 'left' : 'center',
+                    textAlign: 'center',
                     color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
                   }}
                 >
@@ -321,7 +321,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     variant="caption"
                     sx={{
                       fontSize: '0.65rem',
-                      textAlign: logo_url ? 'left' : 'center',
+                      textAlign: 'center',
                       color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
                       lineHeight: 1.2,
                       maxWidth: '100%',

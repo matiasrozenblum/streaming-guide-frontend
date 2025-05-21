@@ -21,6 +21,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 - Added session context to avoid duplicate requests and redirect to login when invalid session
+- Multiple UX tweaks
 
 ## [0.3.7] - 2025-04-19
 

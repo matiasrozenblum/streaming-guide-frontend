@@ -8,12 +8,14 @@ import LoginModal from './auth/LoginModal';
 import { tokens } from '@/design-system/tokens';
 import { Text } from '@/design-system/components';
 import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 export default function Header() {
   const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
   const [loginOpen, setLoginOpen] = useState(false);
-  const isAuth = session?.user.role === 'user' || session?.user.role === 'admin';
+  const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
