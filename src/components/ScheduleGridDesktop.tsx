@@ -59,36 +59,50 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
     const container = scrollRef.current;
     if (!container) return;
     let isDown = false;
-    let startX = 0;
-    let scrollLeft = 0;
+    let startX = 0;       // Stores initial e.clientX on mousedown
+    let scrollLeft = 0;   // Stores initial container.scrollLeft on mousedown
 
     const onMouseDown = (e: MouseEvent) => {
       isDown = true;
       container.classList.add('dragging');
-      startX = e.pageX - container.offsetLeft;
+      startX = e.clientX; // Use clientX
       scrollLeft = container.scrollLeft;
+      e.preventDefault(); // Also good to prevent default on mousedown for dragging
     };
+
     const onMouseUp = () => {
+      if (!isDown) return; // Ensure this only runs if dragging was active
       isDown = false;
       container.classList.remove('dragging');
     };
-    const onMouseLeave = onMouseUp;
+
+    // const onMouseLeave = () => { // Similar to onMouseUp - removed as window listeners are better
+    //   if (!isDown) return;
+    //   isDown = false;
+    //   container.classList.remove('dragging');
+    // };
+
     const onMouseMove = (e: MouseEvent) => {
       if (!isDown) return;
-      e.preventDefault();
-      const x = e.pageX - container.offsetLeft;
-      container.scrollLeft = scrollLeft - (x - startX) * 1.2;
+      e.preventDefault(); // Important to prevent text selection etc.
+      const currentX = e.clientX;
+      const deltaX = currentX - startX;
+      container.scrollLeft = scrollLeft - deltaX; // No multiplier
     };
 
+    // Add mousedown event listener
     container.addEventListener('mousedown', onMouseDown);
-    container.addEventListener('mouseup', onMouseUp);
-    container.addEventListener('mouseleave', onMouseLeave);
-    container.addEventListener('mousemove', onMouseMove);
+
+    // Add mousemove and mouseup listeners to the window
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+    // container.addEventListener('mouseleave', onMouseLeave); // Removed
+
     return () => {
       container.removeEventListener('mousedown', onMouseDown);
-      container.removeEventListener('mouseup', onMouseUp);
-      container.removeEventListener('mouseleave', onMouseLeave);
-      container.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      // container.removeEventListener('mouseleave', onMouseLeave); // Removed
     };
   }, []);
 
@@ -107,14 +121,9 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        height: '100%',
       }}
     >
       {/* Day selector & Live button */}
@@ -129,6 +138,9 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
           borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
         }}
       >
         {[
