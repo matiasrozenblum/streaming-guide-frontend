@@ -16,7 +16,6 @@ import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { useRouter } from 'next/navigation';
 import type { SessionWithToken } from '@/types/session';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
@@ -34,16 +33,8 @@ type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
-  const router = useRouter();
-  const { status, session } = useSessionContext();
+  const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  useEffect(() => {
-    console.log('status', status);
-    // si no hay sesión, redirige
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
 
   // Hydrate with initialData from SSR
   const initArray: ChannelWithSchedules[] =
@@ -72,6 +63,22 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   );
 
   const showSkeleton = flattened.length === 0;
+
+  // Effect to process initialData for live statuses
+  useEffect(() => {
+    if (initArray.length > 0) {
+      const liveMap: LiveMap = {};
+      initArray.forEach(ch =>
+        ch.schedules.forEach(sch => {
+          liveMap[sch.id.toString()] = {
+            is_live: sch.program.is_live,
+            stream_url: sch.program.stream_url,
+          };
+        })
+      );
+      setLiveStatuses(liveMap);
+    }
+  }, [initArray, setLiveStatuses]);
 
   useEffect(() => {
     let isMounted = true;
@@ -121,14 +128,17 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     };
 
     fetchHolidayInfo();
-    loadWeek();
+    // Only call loadWeek if initArray is empty (SSR failed)
+    if (initArray.length === 0) {
+      loadWeek();
+    }
     const intervalId = setInterval(loadWeek, 60_000);
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [setLiveStatuses, typedSession?.accessToken]);
+  }, [setLiveStatuses, typedSession?.accessToken, initArray.length]);
 
   useEffect(() => {
     if (flattened.length > 0) {

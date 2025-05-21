@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -51,6 +51,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const streamUrl = dynamic.stream_url;
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const theme = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
 
@@ -122,6 +123,8 @@ export const ProgramBlock: React.FC<Props> = ({
   const currentDate = now.format('YYYY-MM-DD');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
   const isPast = isToday && now.isAfter(parsedEndWithDate);
+
+  const programNameTextColor = theme.palette.text.primary;
 
   // Manejo de click en YouTube
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -224,9 +227,18 @@ export const ProgramBlock: React.FC<Props> = ({
       >
         <Box
           className="program-block"
+          tabIndex={0}
+          role="button"
+          aria-label={`Program: ${name}, from ${start} to ${end}. ${dynamic.is_live ? 'Currently Live.' : ''} Activate for details.`}
           onMouseEnter={handleTooltipOpen}
           onMouseLeave={handleTooltipClose}
-          onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+          onClick={() => setOpenTooltip(!openTooltip)} // Unified click for mobile and desktop
+          onKeyDown={(e: React.KeyboardEvent) => {
+            if (e.key === 'Enter' || e.key === ' ') {
+              e.preventDefault(); // Prevent space from scrolling page
+              setOpenTooltip(!openTooltip);
+            }
+          }}
           position="absolute"
           left={`${offsetPx}px`}
           width={`${widthPx}px`}
@@ -311,7 +323,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     fontWeight: 'bold',
                     fontSize: '0.75rem',
                     textAlign: 'center',
-                    color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                    color: isPast ? alpha(programNameTextColor, 0.6) : programNameTextColor,
                   }}
                 >
                   {name.toUpperCase()}
@@ -322,7 +334,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     sx={{
                       fontSize: '0.65rem',
                       textAlign: 'center',
-                      color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
+                      color: isPast ? alpha(programNameTextColor, 0.5) : alpha(programNameTextColor, 0.85),
                       lineHeight: 1.2,
                       maxWidth: '100%',
                       overflow: 'hidden',

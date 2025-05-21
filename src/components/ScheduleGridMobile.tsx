@@ -97,14 +97,9 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        height: '100%',
       }}
     >
       {/* Día Selector */}
@@ -121,6 +116,9 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
+          position: 'sticky',
+          top: 0,
+          zIndex: 1,
         }}
       >
         {daysOfWeek.map(day => (

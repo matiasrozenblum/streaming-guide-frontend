@@ -7,20 +7,21 @@ export async function middleware(req: NextRequest) {
   const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET })
   const { pathname } = req.nextUrl
 
-  // Raíz pública (“/”): requiere al menos sesión legacy o user
-  if (pathname === '/') {
+  // Protected routes that require any authenticated user
+  if (pathname === '/' || pathname.startsWith('/profile')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return NextResponse.redirect(new URL('/login', req.url));
     }
   }
 
-  // Backoffice: sólo role=admin (o como lo definas tú)
+  // Backoffice: only role=admin
   if (pathname.startsWith('/backoffice')) {
     if (!token) {
-      return NextResponse.redirect(new URL('/login', req.url))
+      return NextResponse.redirect(new URL('/login', req.url));
     }
     if (token.role !== 'admin') {
-      return NextResponse.redirect(new URL('/', req.url))
+      // Redirect non-admins trying to access backoffice to the home page
+      return NextResponse.redirect(new URL('/', req.url));
     }
   }
 
@@ -28,5 +29,5 @@ export async function middleware(req: NextRequest) {
 }
 
 export const config = {
-  matcher: ['/', '/backoffice/:path*'],
+  matcher: ['/', '/profile/:path*', '/backoffice/:path*'],
 }
