@@ -1,7 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useSession, getSession, signIn } from 'next-auth/react';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { getSession, signIn } from 'next-auth/react';
 import {
   Box,
   Typography,
@@ -23,13 +24,7 @@ interface DashboardStats {
 
 export default function DashboardPage() {
   // 1) Next-Auth: obligamos a tener sesión
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // NextAuth redirige al /login
-      signIn(undefined, { callbackUrl: '/backoffice' });
-    },
-  });
+  const { session, status } = useSessionContext();
 
   const theme = useTheme();
   const isDark = theme.palette.mode === 'dark';

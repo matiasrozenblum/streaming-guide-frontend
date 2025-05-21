@@ -25,6 +25,8 @@ import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
 import Image from 'next/image';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { api } from '@/services/api';
 
 interface PanelistsTableProps {
   onError: (message: string) => void;
@@ -40,10 +42,11 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const [editingPanelist, setEditingPanelist] = useState<Panelist | null>(null);
   const [formData, setFormData] = useState({ name: '', avatar_url: '' });
   const [selectedPrograms, setSelectedPrograms] = useState<Program[]>([]);
+  const { session } = useSessionContext();
 
   const fetchPanelists = useCallback(async () => {
     try {
-      const response = await fetch('/api/panelists');
+      const response = await api.get<Panelist[]>('/panelists', { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       if (!response.ok) throw new Error('Failed to fetch panelists');
       const data = await response.json();
       setPanelists(data);
@@ -53,11 +56,11 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     } finally {
       setLoading(false);
     }
-  }, [onError]);
+  }, [onError, session]);
 
   const fetchPrograms = useCallback(async () => {
     try {
-      const response = await fetch('/api/programs');
+      const response = await api.get<Program[]>('/programs', { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       if (!response.ok) throw new Error('Failed to fetch programs');
       const data = await response.json();
       setPrograms(data);
@@ -65,7 +68,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
       onError('Error loading programs');
       console.error('Error:', error);
     }
-  }, [onError]);
+  }, [onError, session]);
 
   useEffect(() => {
     fetchPanelists();
@@ -115,13 +118,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         : `/api/panelists`;
       const method = editingPanelist ? 'PATCH' : 'POST';
 
-      const response = await fetch(url, {
-        method,
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(formData),
-      });
+      const response = await api.post(url, formData, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
 
       if (!response.ok) throw new Error('Failed to save panelist');
       handleCloseDialog();
@@ -135,12 +132,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this panelist?')) return;
     try {
-      const response = await fetch(`/api/panelists/${id}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.delete(`/panelists/${id}`, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       if (!response.ok) throw new Error('Failed to delete panelist');
       fetchPanelists();
     } catch (error) {
@@ -152,12 +144,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleAddToProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.post(`/panelists/${editingPanelist.id}/programs/${programId}`, null, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       if (!response.ok) throw new Error('Failed to add panelist to program');
       fetchPanelists();
     } catch (error) {
@@ -169,12 +156,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleRemoveFromProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await fetch(`/api/panelists/${editingPanelist.id}/programs/${programId}`, {
-        method: 'DELETE',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      });
+      const response = await api.delete(`/panelists/${editingPanelist.id}/programs/${programId}`, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       if (!response.ok) throw new Error('Failed to remove panelist from program');
       fetchPanelists();
     } catch (error) {

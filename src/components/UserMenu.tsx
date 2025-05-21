@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut, useSession } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import {
   Button,
   Menu,
@@ -13,10 +13,10 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-
+import { useSessionContext } from '@/contexts/SessionContext';
 export default function UserMenu() {
   const router = useRouter();
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));

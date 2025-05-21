@@ -2,12 +2,13 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn } from 'next-auth/react';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 export default function BackofficeLoginPage() {
   const router = useRouter();
-  const { data: session, status } = useSession();
+  const { session, status } = useSessionContext();
 
   // Si ya estamos autenticados como backoffice, redirigimos
   useEffect(() => {

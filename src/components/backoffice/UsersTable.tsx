@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import { useSession } from 'next-auth/react';
 import {
   Table,
   TableBody,
@@ -25,6 +24,7 @@ import {
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
@@ -46,7 +46,7 @@ function getErrorMessage(err: unknown): string {
 }
 
 export function UsersTable() {
-  const { data: session } = useSession();
+  const { session } = useSessionContext();
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');

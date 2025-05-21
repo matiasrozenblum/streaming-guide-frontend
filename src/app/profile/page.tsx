@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect } from 'react';
-import { useSession, signOut } from 'next-auth/react';
+import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
 import {
@@ -30,6 +30,7 @@ import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 const MotionBox = motion(Box);
 
@@ -87,7 +88,7 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
 );
 
 export default function ProfilePage() {
-  const { data: session, status } = useSession();
+  const { session, status } = useSessionContext();
   const router = useRouter();
   const { mode } = useThemeContext();
 

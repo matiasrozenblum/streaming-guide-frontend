@@ -2,7 +2,8 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
-import { useSession, signOut } from 'next-auth/react';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { signOut } from 'next-auth/react';
 import {
   Box, Drawer, AppBar, Toolbar, Typography,
   List, ListItem, ListItemIcon, ListItemText,
@@ -19,7 +20,7 @@ import {
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
-  const { data: session, status } = useSession();
+  const { session, status } = useSessionContext();
   const router   = useRouter();
   const pathname = usePathname();
 

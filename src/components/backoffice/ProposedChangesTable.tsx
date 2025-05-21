@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useSession, signIn } from 'next-auth/react';
 import {
   Box,
   Paper,
@@ -19,6 +18,7 @@ import {
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
+import { useSessionContext } from '@/contexts/SessionContext';
 
 interface ProgramChangeData {
   name?: string;
@@ -53,13 +53,7 @@ const FIELD_LABELS: Record<string, string> = {
 
 export default function ProposedChangesTable() {
   // Forzar sesión y redirigir si no autenticado
-  const { data: session, status } = useSession({
-    required: true,
-    onUnauthenticated() {
-      // NextAuth redirige al /login
-      signIn(undefined, { callbackUrl: '/backoffice/changes' });
-    },
-  });
+  const { session, status } = useSessionContext();
 
   const [changes, setChanges] = useState<ProposedChange[]>([]);
   const [loading, setLoading] = useState(true);
@@ -75,7 +69,7 @@ export default function ProposedChangesTable() {
   const fetchChanges = async () => {
     try {
       setLoading(true);
-      const response = await api.get<ProposedChange[]>('/proposed-changes');
+      const response = await api.get<ProposedChange[]>('/proposed-changes', { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       setChanges(response.data);
     } catch (err: unknown) {
       console.error('Error fetching proposed changes:', err);
@@ -87,7 +81,7 @@ export default function ProposedChangesTable() {
 
   const handleAction = async (id: number, action: 'approve' | 'reject') => {
     try {
-      await api.post(`/proposed-changes/${id}/${action}`);
+      await api.post(`/proposed-changes/${id}/${action}`, null, { headers: { Authorization: `Bearer ${session?.accessToken}` } });
       setSuccess(`Cambio ${action === 'approve' ? 'aprobado' : 'rechazado'} correctamente`);
       fetchChanges();
     } catch (err: unknown) {
