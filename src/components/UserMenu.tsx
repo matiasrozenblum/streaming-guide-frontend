@@ -92,7 +92,7 @@ export default function UserMenu() {
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          Mi Perfil ({user.name || user.email})
+          Mi Perfil
         </MenuItem>
         <MenuItem
           onClick={() => {
