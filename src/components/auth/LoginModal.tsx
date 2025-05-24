@@ -78,11 +78,11 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             : !isUserExisting && step==='email'
             ? 'Acceder / Registrarse'
             : step==='code'
-            ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar Correo')
+            ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar correo')
             : step==='profile'
-            ? 'Completa tu Perfil'
+            ? 'Completa tu perfil'
             : step==='password'
-            ? (forgotPassword ? 'Nueva contraseña' : 'Crea tu Contraseña')
+            ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
             : '' }
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
