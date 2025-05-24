@@ -73,7 +73,7 @@ export default function UserMenu() {
             variant="button"
             sx={{ color: 'text.secondary', ml: 0.5 }}
           >
-            Hola, {firstName}
+            ¡Hola, {firstName}!
           </Typography>
         )}
       </Button>

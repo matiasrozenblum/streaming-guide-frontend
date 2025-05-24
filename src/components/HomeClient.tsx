@@ -164,8 +164,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
               flex: 1,
-              background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
-              borderRadius: 2,
+              //background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
+              //borderRadius: 2,
               backdropFilter: 'blur(8px)',
             }}
           >
