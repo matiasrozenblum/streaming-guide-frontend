@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Box, Container, IconButton, useTheme, useMediaQuery } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import UserMenu from './UserMenu';
 import { ThemeToggle } from './ThemeToggle';
-import LoginModal from './auth/LoginModal';
 import { tokens } from '@/design-system/tokens';
-import { Text } from '@/design-system/components';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { UserButton } from './UserButton';
 
 export default function Header() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
-  const [loginOpen, setLoginOpen] = useState(false);
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
@@ -66,26 +63,7 @@ export default function Header() {
         >
           {!isAuth ? (
             <>
-              <IconButton
-                color="inherit"
-                onClick={() => setLoginOpen(true)}
-                sx={{ ml: tokens.spacing.sm }}
-              >
-                <PersonIcon sx={{ color: 'text.secondary' }} />
-                {!isMobile && (
-                  <Text 
-                    variant="body2" 
-                    sx={{ 
-                      color: 'text.secondary', 
-                      ml: tokens.spacing.xs,
-                      fontWeight: tokens.typography.fontWeight.medium
-                    }}
-                  >
-                    ACCEDER
-                  </Text>
-                )}
-              </IconButton>
-              <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+            <UserButton />
             </>
           ) : (
             <UserMenu />
