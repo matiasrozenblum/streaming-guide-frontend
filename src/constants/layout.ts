@@ -9,7 +9,7 @@ export const ROW_HEIGHT = {
 
 export const CHANNEL_LABEL_WIDTH = {
   mobile: 122,
-  desktop: 160,
+  desktop: 150,
 };
 
 // Custom hook to get layout values based on screen size

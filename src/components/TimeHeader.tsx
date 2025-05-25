@@ -5,6 +5,7 @@ import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
+import { tokens } from '@/design-system/tokens';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
@@ -86,8 +87,7 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
           sx={{
             color: mode === 'light' ? '#64748b' : '#94a3b8',
             fontWeight: 500,
-            fontSize: '0.75rem',
-            mr: '22px',
+            fontSize: tokens.typography.fontSize.sm,
           }}
         >
           Canal
