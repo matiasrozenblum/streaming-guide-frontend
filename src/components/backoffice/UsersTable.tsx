@@ -21,6 +21,10 @@ import {
   Alert,
   Snackbar,
   CircularProgress,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from '@mui/material';
 import { Edit, Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
@@ -60,6 +64,7 @@ export function UsersTable() {
     email: '',
     phone: '',
     password: '',
+    role: 'user' as 'admin' | 'user',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -98,6 +103,7 @@ export function UsersTable() {
         email: user.email || '',
         phone: user.phone || '',
         password: '', // Don't show current password
+        role: user.role === 'admin' ? 'admin' : 'user',
       });
     } else {
       setEditingUser(null);
@@ -107,6 +113,7 @@ export function UsersTable() {
         email: '',
         phone: '',
         password: '',
+        role: 'user',
       });
     }
     setOpenDialog(true);
@@ -121,6 +128,7 @@ export function UsersTable() {
       email: '',
       phone: '',
       password: '',
+      role: 'user',
     });
   };
 
@@ -289,6 +297,7 @@ export function UsersTable() {
               <TableCell>Apellido</TableCell>
               <TableCell>Email</TableCell>
               <TableCell>Teléfono</TableCell>
+              <TableCell>Rol</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -299,6 +308,9 @@ export function UsersTable() {
                 <TableCell>{user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>{user.phone}</TableCell>
+                <TableCell>
+                  {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(user)}>
                     <Edit />
@@ -381,6 +393,22 @@ export function UsersTable() {
                 error={!!fieldErrors.password}
                 helperText={fieldErrors.password || (editingUser ? 'Dejar en blanco para mantener la contraseña actual' : '')}
               />
+              <FormControl fullWidth>
+                <InputLabel id="role-label">Rol</InputLabel>
+                <Select
+                  labelId="role-label"
+                  id="role"
+                  value={formData.role}
+                  label="Rol"
+                  onChange={(e) => {
+                    setFormData({ ...formData, role: e.target.value as 'admin' | 'user' });
+                    setFieldErrors(prev => ({ ...prev, role: '' }));
+                  }}
+                >
+                  <MenuItem value="user">Usuario</MenuItem>
+                  <MenuItem value="admin">Administrador</MenuItem>
+                </Select>
+              </FormControl>
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 2, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
