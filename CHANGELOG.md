@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.9] - 2025-04-25
+
+### Changed
+- Several ux tweaks and improvements, including removing backgrounds, aligning buttons and improving user menu and button
+
 ## [0.3.8] - 2025-04-21
 
 ### Changed
