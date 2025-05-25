@@ -2,41 +2,54 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import { signIn } from 'next-auth/react';
 import { Box, Button, TextField, Typography, Paper } from '@mui/material';
-import { AuthService } from '@/services/auth';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 export default function BackofficeLoginPage() {
-  const [password, setPassword] = useState('');
-  const [error, setError] = useState('');
   const router = useRouter();
+  const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
+  // Si ya estamos autenticados como backoffice, redirigimos
   useEffect(() => {
-    // Check if already authenticated
-    if (AuthService.isAuthenticated(true)) {
-      console.log('Already authenticated, redirecting to backoffice');
+    if (
+      status === 'authenticated' &&
+      typedSession?.user.id === 'backoffice'
+    ) {
       router.push('/backoffice');
     }
-  }, [router]);
+  }, [status, typedSession?.user.id, router]);
+
+  const [password, setPassword] = useState('');
+  const [error, setError] = useState('');
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setError('');
 
-    try {
-      console.log('Attempting backoffice login');
-      await AuthService.login(password, true);
-      console.log('Login successful, redirecting to backoffice');
-      router.push('/backoffice');
-    } catch (err) {
-      console.error('Login error:', err);
+    // 1) Invocamos el provider "legacy"
+    const res = await signIn('legacy', {
+      redirect: false,
+      password,
+      isBackoffice: 'true',
+      callbackUrl: '/backoffice',
+    });
+
+    if (res?.error) {
       setError('Contraseña incorrecta');
+      return;
     }
+
+    // 4) Redirigimos al panel de backoffice
+    router.push(res?.url || '/backoffice');
   };
 
   return (
     <Box
       sx={{
-        minHeight: '100vh',
+        minHeight: '100dvh',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -54,24 +67,24 @@ export default function BackofficeLoginPage() {
           gap: 2,
         }}
       >
-        <Typography variant="h4" component="h1" align="center" gutterBottom>
+        <Typography variant="h4" align="center" gutterBottom>
           Acceso Backoffice
         </Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            fullWidth
             label="Contraseña"
             type="password"
+            fullWidth
+            margin="normal"
             value={password}
-            onChange={(e) => setPassword(e.target.value)}
+            onChange={e => setPassword(e.target.value)}
             error={!!error}
             helperText={error}
-            margin="normal"
           />
           <Button
-            fullWidth
-            variant="contained"
             type="submit"
+            variant="contained"
+            fullWidth
             size="large"
             sx={{ mt: 2 }}
           >
@@ -81,4 +94,4 @@ export default function BackofficeLoginPage() {
       </Paper>
     </Box>
   );
-} 
+}

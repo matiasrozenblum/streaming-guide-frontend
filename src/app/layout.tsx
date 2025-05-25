@@ -3,12 +3,13 @@ import '@/styles/globals.css';
 import Script from 'next/script';
 import { GA_TRACKING_ID } from '@/lib/gtag';
 import { HotjarLoader } from '@/components/HotjarLoader';
-import type { Metadata } from 'next';
+import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import Footer from '@/components/Footer';
 import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import { ClarityLoader } from '@/components/ClarityLoader'
+import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import Head from 'next/head';
 
 const inter = Inter({ subsets: ['latin'] });
@@ -20,6 +21,14 @@ export const metadata: Metadata = {
   icons: {
     icon: '/favicon.png',
   },
+};
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: 'cover',
 };
 
 export default function RootLayout({
@@ -77,15 +86,17 @@ export default function RootLayout({
         />
 
         <HotjarLoader />
-        <CustomThemeProvider>
-          <YouTubePlayerProvider>
-            <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+        <SessionProviderWrapper>
+          <CustomThemeProvider>
+            <YouTubePlayerProvider>
+              <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
               {children}
               <Footer />
             </div>
             <YouTubeGlobalPlayer />
-          </YouTubePlayerProvider>
-        </CustomThemeProvider>
+            </YouTubePlayerProvider>
+          </CustomThemeProvider>
+        </SessionProviderWrapper>
       </body>
     </html>
   );

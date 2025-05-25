@@ -1,379 +1,177 @@
 'use client';
 
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-} from 'react';
-import { Box, Container } from '@mui/material';
+import React, { useState, useEffect, useMemo, useRef } from 'react';
+import {
+  Box,
+  Container,
+} from '@mui/material';
 import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
+
 import { api } from '@/services/api';
-import { ThemeToggle } from '@/components/ThemeToggle';
+import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import {
-  LiveStatusProvider,
-  useLiveStatus,
-} from '@/contexts/LiveStatusContext';
-import { AuthService } from '@/services/auth';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
-import { PushProvider } from '@/contexts/PushContext';
+import Header from './Header';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { useRouter } from 'next/navigation';
+import type { SessionWithToken } from '@/types/session';
 
-const HolidayDialog = dynamic(
-  () => import('@/components/HolidayDialog'),
-  { ssr: false }
-);
+const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
 
-interface BeforeInstallPromptEvent extends Event {
-    prompt(): Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-  }
-
 interface HomeClientProps {
-  initialData:
-    | ChannelWithSchedules[]
-    | { data: ChannelWithSchedules[] };
+  initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
 }
-interface HasData {
-  data: ChannelWithSchedules[];
-}
-function hasData(x: unknown): x is HasData {
-  return (
-    typeof x === 'object' &&
-    x !== null &&
-    Array.isArray((x as HasData).data)
-  );
-}
-interface FetchParams {
-  day?: string;
-  live_status: boolean;
-  deviceId?: string;
-}
-type LiveMap = Record<
-  string,
-  { is_live: boolean; stream_url: string | null }
->;
 
-export default function HomeClient({
-  initialData,
-}: HomeClientProps) {
-  const startRef = useRef<number>(0);
-  const [isPWA, setIsPWA] = useState(false);
-  const [deferredPrompt, setDeferredPrompt] = useState<BeforeInstallPromptEvent | null>(null);
+interface HasData { data: ChannelWithSchedules[]; }
+const hasData = (x: unknown): x is HasData =>
+  typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
 
-  // hydrate inicial desde SSR/ISR
-  const initArray: ChannelWithSchedules[] = Array.isArray(
-    initialData
-  )
-    ? initialData
-    : hasData(initialData)
-    ? initialData.data
-    : [];
+type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
-  const [
-    channelsWithSchedules,
-    setChannelsWithSchedules,
-  ] = useState<ChannelWithSchedules[]>(initArray);
+export default function HomeClient({ initialData }: HomeClientProps) {
+  const startRef = useRef(performance.now());
+  const router = useRouter();
+  const { status, session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
+  
+  useEffect(() => {
+    console.log('status', status);
+    // si no hay sesión, redirige
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
+
+  // Hydrate with initialData from SSR
+  const initArray: ChannelWithSchedules[] =
+    Array.isArray(initialData)
+      ? initialData
+      : hasData(initialData)
+      ? initialData.data
+      : [];
+
+  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initArray);
   const [showHoliday, setShowHoliday] = useState(false);
-  const [mounted, setMounted] = useState(false);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
 
+  // Derive flat lists for grid
   const channels = useMemo(
-    () =>
-      channelsWithSchedules.map((c) => c.channel),
+    () => channelsWithSchedules.map(c => c.channel),
     [channelsWithSchedules]
   );
   const flattened = useMemo(
-    () =>
-      channelsWithSchedules.flatMap((c) =>
-        c.schedules.map((s) => ({
-          ...s,
-          program: {
-            ...s.program,
-            channel: c.channel,
-          },
-        }))
-      ),
+    () => channelsWithSchedules.flatMap(c =>
+      c.schedules.map(s => ({ ...s, program: { ...s.program, channel: c.channel } }))
+    ),
     [channelsWithSchedules]
   );
 
-  const today = new Date()
-    .toLocaleString('en-US', {
-      weekday: 'long',
-    })
-    .toLowerCase();
+  const showSkeleton = flattened.length === 0;
 
-  const fetchSchedules = async (day?: string) => {
-    console.time(day ? 'fetchToday' : 'fetchWeek');
-    const deviceId = localStorage.getItem('device_id');
-    const token = AuthService.getCorrectToken(false);
-    const params: FetchParams = {
-      live_status: true,
-    };
-    if (day) params.day = day;
-    if (deviceId) params.deviceId = deviceId;
-    const resp = await api.get<ChannelWithSchedules[]>(
-      '/channels/with-schedules',
-      {
-        params,
-        headers: {
-          Authorization: `Bearer ${token}`,
-        },
+  useEffect(() => {
+    let isMounted = true;
+
+    const fetchHolidayInfo = async () => {
+      if (!typedSession?.accessToken) {
+        console.warn('Attempted to fetch holiday info without an access token.');
+        return;
       }
-    );
-    console.timeEnd(day ? 'fetchToday' : 'fetchWeek');
-    return resp.data;
-  };
+      try {
+        const { data } = await api.get<{ holiday: boolean }>('/holiday', { headers: { Authorization: `Bearer ${typedSession.accessToken}` } });
+        if (isMounted && data.holiday) setShowHoliday(true);
+      } catch {
+        // ignore
+      }
+    };
 
-  useEffect(() => {
-    startRef.current = performance.now();
-    setMounted(true);
-  }, []);
+    // Load week schedules
+    const loadWeek = async () => {
+      if (!typedSession?.accessToken) {
+        console.warn('Attempted to load week schedules without an access token.');
+        return;
+      }
+      try {
+        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+          params: { live_status: true },
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+        });
+        if (!isMounted) return;
 
-  useEffect(() => {
-    if (!mounted) return;
+        const weekData = resp.data;
+        const liveMap: LiveMap = {};
+        weekData.forEach(ch =>
+          ch.schedules.forEach(sch => {
+            liveMap[sch.id.toString()] = {
+              is_live: sch.program.is_live,
+              stream_url: sch.program.stream_url,
+            };
+          })
+        );
 
-    // Holiday (no bloquea grilla)
-    (async () => {
-      const token = AuthService.getCorrectToken(false);
-      const { data } = await api.get<{ holiday: boolean }>(
-        '/holiday',
-        {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        }
-      );
-      if (data.holiday) setShowHoliday(true);
-    })();
+        setLiveStatuses(liveMap);
+        setChannelsWithSchedules(weekData);
+      } catch {
+        // ignore
+      }
+    };
 
-    // 1) Carga rápida HOY
-    (async () => {
-      const todayData = await fetchSchedules(today);
-      const liveMap: LiveMap = {};
-      todayData.forEach((ch) =>
-        ch.schedules.forEach((sch) => {
-          liveMap[sch.id.toString()] = {
-            is_live: sch.program.is_live,
-            stream_url: sch.program.stream_url,
-          };
-        })
-      );
-      setLiveStatuses(liveMap);
-      setChannelsWithSchedules(todayData);
-    })();
+    fetchHolidayInfo();
+    loadWeek();
+    const intervalId = setInterval(loadWeek, 60_000);
 
-    // 2) Precarga SEMANA (background)
-    (async () => {
-      const weekData = await fetchSchedules();
-      const liveMap: LiveMap = {};
-      weekData.forEach((ch) =>
-        ch.schedules.forEach((sch) => {
-          liveMap[sch.id.toString()] = {
-            is_live: sch.program.is_live,
-            stream_url: sch.program.stream_url,
-          };
-        })
-      );
-      setLiveStatuses(liveMap);
-      setChannelsWithSchedules(weekData);
-    })();
-
-    // 3) Polling diario
-    const id = setInterval(async () => {
-        const weekData = await fetchSchedules();
-      const liveMap: LiveMap = {};
-      weekData.forEach((ch) =>
-        ch.schedules.forEach((sch) => {
-          liveMap[sch.id.toString()] = {
-            is_live: sch.program.is_live,
-            stream_url: sch.program.stream_url,
-          };
-        })
-      );
-      setLiveStatuses(liveMap);
-      setChannelsWithSchedules(weekData);
-    }, 60_000);
-    return () => clearInterval(id);
-  }, [mounted, today, setLiveStatuses]);
+    return () => {
+      isMounted = false;
+      clearInterval(intervalId);
+    };
+  }, [setLiveStatuses, typedSession?.accessToken]);
 
   useEffect(() => {
     if (flattened.length > 0) {
-      const total =
-        performance.now() - startRef.current;
       console.log(
-        `🏁 Grid rendered in ${total.toFixed(2)} ms`
+        `🏁 Grid rendered in ${(performance.now() - startRef.current).toFixed(2)} ms`
       );
     }
   }, [flattened]);
 
-  useEffect(() => {
-    // capturar beforeinstallprompt
-    window.addEventListener('beforeinstallprompt', (e) => {
-      e.preventDefault();
-      setDeferredPrompt(e as BeforeInstallPromptEvent);
-    });
-    // detectar standalone
-    const nav = window.navigator as Navigator & { standalone?: boolean };
-    const standalone = window.matchMedia('(display-mode: standalone)').matches
-      || nav.standalone === true;
-    setIsPWA(standalone);
-    if (standalone && 'Notification' in window) {
-      Notification.requestPermission().then(perm => console.log('Permiso Notif:', perm));
-    }
-  }, []);
+  return (
+    <LiveStatusProvider>
+      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
+      <Box
+        sx={{
+          minHeight: '100dvh',
+          maxWidth: '100vw',
+          background:
+            mode === 'light'
+              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          py: { xs: 1, sm: 2 },
+          display: 'flex',
+          flexDirection: 'column'
+        }}
+      >
+        <Header />
 
-  useEffect(() => {
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/sw.js');
-    }
-  }, []);
-
-  if (!mounted) return null;
-
-  const logo = '/img/logo.png';
-  const text =
-    mode === 'light'
-      ? '/img/text.png'
-      : '/img/text-white.png';
-
-    return (
-        <PushProvider enabled={isPWA} installPrompt={deferredPrompt}>
-            <LiveStatusProvider>
-            {showHoliday && (
-                <HolidayDialog
-                    open
-                    onClose={() => setShowHoliday(false)}
-                />
-            )}
-
-                <Box
-                    sx={{
-                    minHeight: '100vh',
-                    maxWidth: '100vw',
-                    background:
-                        mode === 'light'
-                        ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-                        : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-                    py: { xs: 1, sm: 2 },
-                    display: 'flex',
-                    flexDirection: 'column',
-                    }}
-                >
-                    {/* HEADER */}
-                    <Container
-                        maxWidth="xl"
-                        disableGutters
-                        sx={{ px: 0, mb: { xs: 1, sm: 2 } }}
-                    >
-                        <MotionBox
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5 }}
-                        >
-                            <Box
-                                sx={{
-                                    height: '13vh',
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'left',
-                                    background:
-                                    mode === 'light'
-                                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                                    borderRadius: 2,
-                                    boxShadow:
-                                    mode === 'light'
-                                        ? '0 4px 6px -1px rgb(0 0 0 / 0.1),0 2px 4px -2px rgb(0 0 0 / 0.1)'
-                                        : '0 4px 6px -1px rgb(0 0 0 / 0.3),0 2px 4px -2px rgb(0 0 0 / 0.3)',
-                                    backdropFilter: 'blur(8px)',
-                                    paddingLeft: { xs: 1, sm: 2 },
-                                    position: 'relative',
-                                }}
-                            >
-                                <Box
-                                    component="img"
-                                    src={logo}
-                                    alt="Logo"
-                                    sx={{
-                                    height: '11vh',
-                                    width: 'auto',
-                                    objectFit: 'contain',
-                                    }}
-                                />
-                                <Box
-                                    component="img"
-                                    src={text}
-                                    alt="Texto"
-                                    sx={{
-                                    paddingLeft: { xs: 1, sm: 2 },
-                                    height: '11vh',
-                                    width: 'auto',
-                                    objectFit: 'contain',
-                                    }}
-                                />
-                                <Box
-                                    sx={{
-                                    position: 'absolute',
-                                    top: '50%',
-                                    right: 8,
-                                    transform: 'translateY(-50%)',
-                                    }}
-                                >
-                                    <ThemeToggle />
-                                </Box>
-                            </Box>
-                        </MotionBox>
-                    </Container>
-
-                    {/* GRID / SKELETON */}
-                    <Container
-                        maxWidth="xl"
-                        disableGutters
-                        sx={{
-                            px: 0,
-                            flex: 1,
-                            display: 'flex',
-                            flexDirection: 'column',
-                        }}
-                    >
-                        <MotionBox
-                            initial={{ opacity: 0 }}
-                            animate={{ opacity: 1 }}
-                            transition={{
-                            duration: 0.5,
-                            delay: 0.2,
-                            }}
-                            sx={{
-                                flex: 1,
-                                background:
-                                    mode === 'light'
-                                    ? 'rgba(255,255,255,0.9)'
-                                    : 'rgba(30,41,59,0.9)',
-                                borderRadius: 2,
-                                overflow: 'hidden',
-                                backdropFilter: 'blur(8px)',
-                            }}
-                        >
-                            {flattened.length === 0 ? (
-                            <SkeletonScheduleGrid rowCount={10} />
-                            ) : (
-                            <ScheduleGrid
-                                channels={channels}
-                                schedules={flattened}
-                            />
-                            )}
-                        </MotionBox>
-                    </Container>
-                </Box>
-            </LiveStatusProvider>
-        </PushProvider>
-    );
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <MotionBox
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
+            sx={{
+              flex: 1,
+              backdropFilter: 'blur(8px)',
+            }}
+          >
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
+          </MotionBox>
+        </Container>
+      </Box>
+    </LiveStatusProvider>
+  );
 }

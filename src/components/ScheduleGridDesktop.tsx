@@ -121,14 +121,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       <Box
         display="flex"
         gap={1}
-        p={2}
+        py={2}
         alignItems="center"
         sx={{
-          background: mode === 'light'
+          /*background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
             : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
           borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          backdropFilter: 'blur(8px)',
+          backdropFilter: 'blur(8px)',*/
         }}
       >
         {[
@@ -150,14 +150,19 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 Clarity.event('day_change');
                 gaEvent(
                   'day_change',
-                  { 
+                  {
                     day: day.value,
                     client: 'desktop',
                    }
                 );
               }
             }
-            sx={{ minWidth: '80px', height: '40px' }}
+            sx={{
+              minWidth: '80px',
+              height: '40px',
+              transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+              transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
+            }}
           >
             {day.label}
           </Button>
@@ -188,6 +193,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       <Box
         ref={scrollRef}
         sx={{
+          background: mode === 'light'
+            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
+            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
+          border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
@@ -203,7 +212,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
-          <TimeHeader />
+          <TimeHeader isMobile={false} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {channels.map((channel, idx) => (
             <ScheduleRow

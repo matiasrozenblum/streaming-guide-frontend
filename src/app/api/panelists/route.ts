@@ -1,8 +1,8 @@
-import { NextResponse } from 'next/server';
-import { getServerToken } from '@/utils/auth-server';
+import { NextRequest, NextResponse } from 'next/server';
+import { requireAccessToken } from '@/utils/auth-server';
 
-export async function GET() {
-  const token = await getServerToken(true);
+export async function GET(request: NextRequest) {
+  const token = await requireAccessToken(request);
 
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
@@ -27,8 +27,8 @@ export async function GET() {
   }
 }
 
-export async function POST(request: Request) {
-  const token = await getServerToken(true);
+export async function POST(request: NextRequest) {
+  const token = await requireAccessToken(request);
 
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });

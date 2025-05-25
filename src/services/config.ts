@@ -1,106 +1,75 @@
-export const fetchConfig = async (key: string): Promise<string | null> => {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
+import { api } from '@/services/api';
 
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/${key}`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      cache: 'no-store',
+/**
+ * Obtiene el valor de configuración para una clave dada.
+ * Retorna null si no existe o falla la petición.
+ */
+export const fetchConfig = async (key: string, token?: string): Promise<string | null> => {
+  try {
+    const res = await api.get<{ value: string }>(`/config/${key}`, {
+      // Evita cache de Next.js
+      headers: { 'Cache-Control': 'no-store', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
     });
-  
-    if (!res.ok) {
-      console.warn(`Config key "${key}" not found or error occurred.`);
-      return null;
-    }
-  
-    const data = await res.json();
-    return data?.value ?? null;
-  };
-  
+    return res.data.value ?? null;
+  } catch (err) {
+    console.warn(`Config key "${key}" not found or error occurred.`, err);
+    return null;
+  }
+};
+
+/**
+ * Servicio de configuración general usando la instancia axios `api`,
+ * que ya inyecta automáticamente el token de sesión.
+ */
 export const ConfigService = {
-  findAll: async (): Promise<{ key: string; value: string; type: string }[]> => {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-      method: 'GET',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      cache: 'no-store',
-    });
-
-    if (!res.ok) {
-      console.warn('Error fetching configurations.');
+  /**
+   * Recupera todas las configuraciones disponibles.
+   */
+  findAll: async (token?: string): Promise<{ key: string; value: string; type: string }[]> => {
+    try {
+      const res = await api.get<{ key: string; value: string }[]>('/config', {
+        headers: { 'Cache-Control': 'no-store', ...(token ? { Authorization: `Bearer ${token}` } : {}) },
+      });
+      return res.data.map((cfg) => ({
+        ...cfg,
+        type: typeof cfg.value,
+      }));
+    } catch (err) {
+      console.warn('Error fetching configurations.', err);
       return [];
     }
-
-    const data = await res.json();
-    return data.map((config: { key: string; value: string }) => ({
-      ...config,
-      type: typeof config.value,
-    }));
   },
 
-  set: async (key: string, value: string): Promise<void> => {
-    const cookies = document.cookie.split(';');
-    const tokenCookie = cookies.find(cookie => cookie.trim().startsWith('backoffice_token='));
-    const token = tokenCookie?.split('=')[1];
-
-    if (!token) {
-      throw new Error('No authentication token found');
-    }
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
-      },
-      body: JSON.stringify({ key, value }),
-    });
-
-    if (!res.ok) {
-      console.warn(`Error setting configuration for key: ${key}`);
+  /**
+   * Crea o actualiza una configuración.
+   */
+  set: async (key: string, value: string, token?: string): Promise<void> => {
+    try {
+      await api.post('/config', { key, value }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    } catch (err) {
+      console.warn(`Error setting configuration for key: ${key}`, err);
     }
   },
 
-  delete: async (key: string): Promise<void> => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/${key}`, {
-      method: 'DELETE',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-    });
-
-    if (!res.ok) {
-      console.warn(`Error deleting configuration for key: ${key}`);
+  /**
+   * Elimina una configuración por clave.
+   */
+  delete: async (key: string, token?: string): Promise<void> => {
+    try {
+      await api.delete(`/config/${key}`, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    } catch (err) {
+      console.warn(`Error deleting configuration for key: ${key}`, err);
     }
   },
 
-  update: async (key: string, value: string): Promise<void> => {
-    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/config/${key}`, {
-      method: 'PATCH',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({ value }),
-    });
-
-    if (!res.ok) {
-      console.warn(`Error updating configuration for key: ${key}`);
+  /**
+   * Actualiza el valor de una configuración existente.
+   */
+  update: async (key: string, value: string, token?: string): Promise<void> => {
+    try {
+      await api.patch(`/config/${key}`, { value }, { headers: token ? { Authorization: `Bearer ${token}` } : {} });
+    } catch (err) {
+      console.warn(`Error updating configuration for key: ${key}`, err);
     }
   },
 };
-  

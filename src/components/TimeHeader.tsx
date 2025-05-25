@@ -5,14 +5,16 @@ import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
+import { tokens } from '@/design-system/tokens';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
 
 interface Props {
   isModalOpen?: boolean;
+  isMobile?: boolean;
 }
 
-export const TimeHeader = ({ isModalOpen }: Props) => {
+export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
   const [currentHour, setCurrentHour] = useState(dayjs().hour());
@@ -44,14 +46,13 @@ export const TimeHeader = ({ isModalOpen }: Props) => {
       height={`${timeHeaderHeight}px`}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       position="sticky"
-      top={0}
       zIndex={1000}
       sx={{ 
         boxShadow: mode === 'light'
           ? '0 1px 2px rgba(0,0,0,0.05)'
           : '0 1px 2px rgba(0,0,0,0.2)',
         position: 'sticky',
-        top: 0,
+        top: isMobile ? -1 : 0,
         zIndex: 1000,
       }}
     >
@@ -86,8 +87,7 @@ export const TimeHeader = ({ isModalOpen }: Props) => {
           sx={{
             color: mode === 'light' ? '#64748b' : '#94a3b8',
             fontWeight: 500,
-            fontSize: '0.75rem',
-            mr: '22px',
+            fontSize: tokens.typography.fontSize.sm,
           }}
         >
           Canal

@@ -1,20 +1,16 @@
-import { cookies } from 'next/headers';
+import { NextRequest, NextResponse } from 'next/server'
+import { getToken } from 'next-auth/jwt'
 
-export const BACKOFFICE_TOKEN_KEY = 'backoffice_token';
-export const PUBLIC_TOKEN_KEY = 'public_token';
+const SECRET = process.env.NEXTAUTH_SECRET!
 
-export async function getServerToken(isBackoffice: boolean = false): Promise<string | null> {
-  const tokenKey = isBackoffice ? BACKOFFICE_TOKEN_KEY : PUBLIC_TOKEN_KEY;
-  const cookieStore = await cookies();
-  const token = cookieStore.get(tokenKey);
-  
-  console.log('Server token check:', {
-    tokenKey,
-    hasToken: !!token,
-    tokenValue: token?.value,
-    tokenLength: token?.value?.length,
-    tokenParts: token?.value?.split('.')
-  });
-  
-  return token?.value || null;
-} 
+/**
+ * Extrae el accessToken que guardaste en el callback de Session.
+ * Si no existe, arroja un NextResponse con 401.
+ */
+export async function requireAccessToken(req: NextRequest): Promise<string> {
+  const nextAuthToken = await getToken({ req, secret: SECRET })
+  if (!nextAuthToken?.accessToken) {
+    throw NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+  return nextAuthToken.accessToken as string
+}

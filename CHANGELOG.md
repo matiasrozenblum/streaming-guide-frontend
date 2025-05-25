@@ -17,6 +17,70 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.10] - 2025-04-25
+
+### Added
+- Added user role to user backoffice
+
+## [0.3.9] - 2025-04-25
+
+### Changed
+- Several ux tweaks and improvements, including removing backgrounds, aligning buttons and improving user menu and button
+
+## [0.3.8] - 2025-04-21
+
+### Changed
+- Added session context to avoid duplicate requests and redirect to login when invalid session
+- Multiple UX tweaks
+
+## [0.3.7] - 2025-04-19
+
+### Changed
+- Made channel logos not draggable
+- Reordered sign up buttons
+
+## [0.3.6] - 2025-04-19
+
+### Added
+- Added users backoffice
+
+## [0.3.5] - 2025-04-18
+
+### Changed
+- Moved header into new component
+- Now in mobile only showing user icon
+- Resized header, made it smaller in mobile
+
+## [0.3.4] - 2025-04-18
+
+### Added
+- Added reset password to login flow
+
+## [0.3.3] - 2025-04-18
+
+### Added
+- Added profile page
+
+## [0.3.2] - 2025-04-17
+
+### Removed
+- Removed backoffice login, now using user role
+
+## [0.3.1] - 2025-04-16
+
+### Fixed
+- Migrated all sessions related logic to next-auth
+
+## [0.3.0] - 2025-04-16
+
+### Added
+- Added user sign up and login
+
+## [0.2.4] - 2025-04-06
+
+### Changed
+- Made some visual adjustments, including replacing 100vh for 100dvh
+
 ## [0.2.3] - 2025-04-06
 
 ### Changed

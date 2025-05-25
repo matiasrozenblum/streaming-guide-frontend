@@ -2,13 +2,13 @@ import { NextResponse } from 'next/server';
 
 export async function POST(request: Request) {
   try {
-    const { password, isBackoffice } = await request.json();
+    const { email, password } = await request.json();
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify({ password, isBackoffice }),
+      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
