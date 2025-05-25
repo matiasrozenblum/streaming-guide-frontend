@@ -42,6 +42,7 @@ export default function RootLayout({
       <Head>
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
+        <link rel="manifest" href="/manifest.json" />
       </Head> 
       {/* Google Tag Manager */}
       <Script

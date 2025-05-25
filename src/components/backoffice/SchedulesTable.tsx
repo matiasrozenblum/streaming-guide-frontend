@@ -185,6 +185,7 @@ export function SchedulesTable() {
   const handleCloseProgramDialog = () => {
     setOpenProgramDialog(false);
     setSelectedProgram(null);
+    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
     setShowAddScheduleForm(false);
   };
 
