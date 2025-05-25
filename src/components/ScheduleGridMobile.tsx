@@ -113,10 +113,6 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         gap={1}
         p={2}
         sx={{
-          /*background:
-            mode === 'light'
-              ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-              : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',*/
           borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
@@ -154,6 +150,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       <Box
         ref={scrollRef}
         sx={{
+          borderRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowX: 'auto',
@@ -177,10 +174,11 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.id.toString(),
+                id: s.program.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
+                subscribed: s.subscribed,
                 description: s.program.description || undefined,
                 panelists: s.program.panelists || undefined,
                 logo_url: s.program.logo_url || undefined,

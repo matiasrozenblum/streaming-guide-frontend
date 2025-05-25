@@ -1,11 +1,11 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
-import { OpenInNew } from '@mui/icons-material';
+import { OpenInNew, Notifications } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
@@ -14,6 +14,9 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import Clarity from '@microsoft/clarity';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
+import { api } from '@/services/api';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
 
 dayjs.extend(customParseFormat);
 
@@ -22,6 +25,7 @@ interface Props {
   name: string;
   start: string;
   end: string;
+  subscribed: boolean;
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
@@ -37,6 +41,7 @@ export const ProgramBlock: React.FC<Props> = ({
   name,
   start,
   end,
+  subscribed,
   description,
   panelists,
   logo_url,
@@ -45,6 +50,8 @@ export const ProgramBlock: React.FC<Props> = ({
   is_live,
   stream_url,
 }) => {
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   const { liveStatus } = useLiveStatus();
   const dynamic = liveStatus[id] ?? { is_live, stream_url };
   const isLive = dynamic.is_live;
@@ -53,11 +60,17 @@ export const ProgramBlock: React.FC<Props> = ({
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
   const [openTooltip, setOpenTooltip] = useState(false);
+  const bellRef = useRef<HTMLButtonElement>(null);
+  const [isOn, setIsOn] = useState(subscribed);
 
   // Refs para controlar delay de apertura y cierre
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
+
+  useEffect(() => {
+    setIsOn(subscribed);
+  }, [subscribed]);
 
   // Detectar mobile
   useEffect(() => {
@@ -156,6 +169,41 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  const handleBellClick = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    
+    if (!typedSession?.accessToken) {
+      console.warn('No access token available');
+      return;
+    }
+
+    try {
+      const willSubscribe = !isOn;
+
+      if (willSubscribe) {
+        // Subscribe to program
+        await api.post(
+          `/programs/${id}/subscribe`,
+          { notificationMethod: 'both' },
+          {
+            headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+          }
+        );
+        setIsOn(true);
+        console.log(`✅ Subscribed to ${name}`);
+      } else {
+        // Unsubscribe from program
+        await api.delete(`/programs/${id}/subscribe`, {
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+        });
+        setIsOn(false);
+        console.log(`🚫 Unsubscribed from ${name}`);
+      }
+    } catch (error) {
+      console.error('Error updating subscription:', error);
+    }
+  };
+
   // Contenido del tooltip
   const tooltipContent = (
     <Box
@@ -206,11 +254,27 @@ export const ProgramBlock: React.FC<Props> = ({
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
         </BaseButton>
       )}
+      <IconButton
+        size="small"
+        aria-label="Notificarme"
+        onClick={handleBellClick}
+        ref={bellRef}
+      >
+        {isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
+      </IconButton>
     </Box>
   );
 
   return (
-    <ClickAwayListener onClickAway={() => isMobile && setOpenTooltip(false)}>
+    <ClickAwayListener onClickAway={
+      (event) => {
+        if (bellRef.current?.contains(event.target as Node)) {
+          return;
+        }
+
+        if (isMobile) setOpenTooltip(false);
+      }
+    }>
       <Tooltip
         title={tooltipContent}
         arrow

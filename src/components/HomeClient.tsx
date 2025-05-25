@@ -18,6 +18,7 @@ import Header from './Header';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { useRouter } from 'next/navigation';
 import type { SessionWithToken } from '@/types/session';
+import { useDeviceId } from '@/hooks/useDeviceId';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -37,6 +38,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const router = useRouter();
   const { status, session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const deviceId = useDeviceId();
+  
   useEffect(() => {
     console.log('status', status);
     // si no hay sesión, redirige
@@ -96,8 +99,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         return;
       }
       try {
+        const params: { live_status: boolean; deviceId?: string } = { live_status: true };
+        if (deviceId) {
+          params.deviceId = deviceId;
+        }
+
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
-          params: { live_status: true },
+          params,
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
         if (!isMounted) return;
@@ -128,7 +136,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [setLiveStatuses, typedSession?.accessToken]);
+  }, [setLiveStatuses, typedSession?.accessToken, deviceId]);
 
   useEffect(() => {
     if (flattened.length > 0) {
@@ -164,8 +172,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
               flex: 1,
-              //background: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
-              //borderRadius: 2,
               backdropFilter: 'blur(8px)',
             }}
           >

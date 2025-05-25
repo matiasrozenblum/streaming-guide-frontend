@@ -19,6 +19,7 @@ interface Program {
   logo_url?: string;
   stream_url?: string;
   is_live?: boolean;
+  subscribed?: boolean;
 }
 
 interface Props {
@@ -214,6 +215,7 @@ export const ScheduleRow = ({
                 isToday={isToday}
                 stream_url={currentStreamUrl}
                 is_live={isLive}
+                subscribed={p.subscribed ?? false}
               />
             );
           })}

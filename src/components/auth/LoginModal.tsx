@@ -16,6 +16,7 @@ import CodeStep from './steps/CodeStep';
 import ProfileStep from './steps/ProfileStep';
 import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
+import { useDeviceId } from '@/hooks/useDeviceId';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -45,6 +46,7 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
+  const deviceId = useDeviceId();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -201,7 +203,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const res = await fetch('/api/auth/verify-code', {
                   method:'POST',
                   headers:{'Content-Type':'application/json'},
-                  body: JSON.stringify({ identifier: email, code: c }),
+                  body: JSON.stringify({ identifier: email, code: c, deviceId }),
                 });
                 const body = await res.json();
                 if (!res.ok) throw new Error(body.message || 'Error');
@@ -285,6 +287,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     firstName,
                     lastName,
                     password: pw,
+                    deviceId,
                   }),
                 });
                 const body = await res.json();
