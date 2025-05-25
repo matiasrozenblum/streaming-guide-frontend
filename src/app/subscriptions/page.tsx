@@ -144,32 +144,6 @@ export default function SubscriptionsPage() {
     }
   };
 
-  const getNotificationIcon = (method: NotificationMethod) => {
-    switch (method) {
-      case NotificationMethod.PUSH:
-        return <Notifications fontSize="small" />;
-      case NotificationMethod.EMAIL:
-        return <Email fontSize="small" />;
-      case NotificationMethod.BOTH:
-        return <NotificationsActive fontSize="small" />;
-      default:
-        return <NotificationsOff fontSize="small" />;
-    }
-  };
-
-  const getNotificationLabel = (method: NotificationMethod) => {
-    switch (method) {
-      case NotificationMethod.PUSH:
-        return 'Solo Push';
-      case NotificationMethod.EMAIL:
-        return 'Solo Email';
-      case NotificationMethod.BOTH:
-        return 'Push y Email';
-      default:
-        return 'Sin notificaciones';
-    }
-  };
-
   if (loading) {
     return (
       <Box

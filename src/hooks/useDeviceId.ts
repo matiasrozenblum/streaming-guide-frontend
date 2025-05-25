@@ -52,7 +52,7 @@ export function useDeviceId() {
     } catch (error) {
       console.error('❌ [useDeviceId] Failed to register device:', error);
     }
-  }, [typedSession?.accessToken, typedSession?.user.id]);
+  }, [typedSession?.accessToken, typedSession?.user?.id, typedSession?.user?.role]);
 
   useEffect(() => {
     console.log('🔄 [useDeviceId] useEffect triggered, session state:', {
@@ -77,7 +77,7 @@ export function useDeviceId() {
       console.log('🚀 [useDeviceId] User authenticated, registering device with correct user-agent');
       registerDevice(id);
     }
-  }, [typedSession?.accessToken, registerDevice]);
+  }, [typedSession?.accessToken, typedSession?.user?.id, typedSession?.user?.role, registerDevice]);
 
   return deviceId;
 }
