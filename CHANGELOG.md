@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.3.10] - 2025-04-25
+
+### Added
+- Added user role to user backoffice
+
 ## [0.3.9] - 2025-04-25
 
 ### Changed
