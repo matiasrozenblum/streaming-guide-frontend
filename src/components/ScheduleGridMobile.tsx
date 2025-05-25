@@ -113,10 +113,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         gap={1}
         p={2}
         sx={{
-          background:
+          /*background:
             mode === 'light'
               ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-              : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
+              : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',*/
           borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
@@ -136,7 +136,14 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 { day: day.value, client: 'mobile' }
               );
             }}
-            sx={{ minWidth: '40px', height: '40px', padding: 0, borderRadius: '8px' }}
+            sx={{
+              minWidth: '40px',
+              height: '40px',
+              padding: 0,
+              borderRadius: '8px',
+              transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+              transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
+            }}
           >
             {day.label}
           </Button>

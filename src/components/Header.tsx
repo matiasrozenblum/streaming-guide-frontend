@@ -1,20 +1,17 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Box, Container, IconButton, useTheme, useMediaQuery } from '@mui/material';
-import PersonIcon from '@mui/icons-material/Person';
+import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
 import UserMenu from './UserMenu';
 import { ThemeToggle } from './ThemeToggle';
-import LoginModal from './auth/LoginModal';
 import { tokens } from '@/design-system/tokens';
-import { Text } from '@/design-system/components';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { UserButton } from './UserButton';
 
 export default function Header() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
-  const [loginOpen, setLoginOpen] = useState(false);
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
@@ -32,13 +29,13 @@ export default function Header() {
           height: headerHeight,
           display: 'flex',
           alignItems: 'center',
-          background:
+          /*background:
             mode === 'light'
               ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-              : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+              : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',*/
           borderRadius: tokens.borderRadius.lg,
-          boxShadow: mode === 'light' ? tokens.boxShadow.md : tokens.boxShadow.lg,
-          backdropFilter: 'blur(8px)',
+          //boxShadow: mode === 'light' ? tokens.boxShadow.md : tokens.boxShadow.lg,
+          //backdropFilter: 'blur(8px)',
           px: { xs: tokens.spacing.sm, sm: tokens.spacing.md },
           position: 'relative',
         }}
@@ -58,7 +55,7 @@ export default function Header() {
           sx={{
             position: 'absolute',
             top: '50%',
-            right: tokens.spacing.md,
+            right: 0,
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
@@ -66,26 +63,7 @@ export default function Header() {
         >
           {!isAuth ? (
             <>
-              <IconButton
-                color="inherit"
-                onClick={() => setLoginOpen(true)}
-                sx={{ ml: tokens.spacing.sm }}
-              >
-                <PersonIcon sx={{ color: 'text.secondary' }} />
-                {!isMobile && (
-                  <Text 
-                    variant="body2" 
-                    sx={{ 
-                      color: 'text.secondary', 
-                      ml: tokens.spacing.xs,
-                      fontWeight: tokens.typography.fontWeight.medium
-                    }}
-                  >
-                    ACCEDER
-                  </Text>
-                )}
-              </IconButton>
-              <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+            <UserButton />
             </>
           ) : (
             <UserMenu />
