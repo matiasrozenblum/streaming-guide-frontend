@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { signOut } from 'next-auth/react';
 import {
@@ -15,8 +15,13 @@ import {
   ListItemIcon,
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
+import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
+import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import LogoutIcon from '@mui/icons-material/Logout';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+
+const MIN_WIDTH = 155; // Minimum width based on natural "¡Hola, Matias!" size
 
 export default function UserMenu() {
   const router = useRouter();
@@ -26,7 +31,19 @@ export default function UserMenu() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  // Solo mostramos si hay sesión autenticada
+  const buttonRef = useRef<HTMLButtonElement>(null);
+  const [menuWidth, setMenuWidth] = useState<string | number>(MIN_WIDTH);
+  const menuOpen = Boolean(anchorEl);
+
+  useEffect(() => {
+    if (buttonRef.current && menuOpen) {
+      // Use the larger of minimum width or actual button width
+      const actualWidth = buttonRef.current.offsetWidth;
+      setMenuWidth(Math.max(MIN_WIDTH, actualWidth));
+    }
+  }, [menuOpen]);
+
+  // Only mostramos si hay sesión autenticada
   if (!typedSession?.user) {
     return null;
   }
@@ -40,6 +57,7 @@ export default function UserMenu() {
   const handleClose = () => setAnchorEl(null);
 
   const handleLogout = async () => {
+    handleClose(); // Close menu first
     await signOut({ callbackUrl: '/login' });
     router.refresh();
   };
@@ -47,41 +65,90 @@ export default function UserMenu() {
   return (
     <>
       <Button
+        ref={buttonRef}
         onClick={handleOpen}
+        aria-controls={menuOpen ? 'user-menu-popover' : undefined}
+        aria-haspopup="true"
+        aria-expanded={menuOpen ? 'true' : undefined}
         color="inherit"
         startIcon={
-          <Avatar 
-            sx={{ 
-              width: 32, 
-              height: 32,
-              bgcolor: theme.palette.primary.main,
-              color: theme.palette.primary.contrastText
+          <Avatar
+            sx={{
+              width: 30, // Adjusted to match image's proportion
+              height: 30, // Adjusted to match image's proportion
+              bgcolor: '#007bff', // Blue color from image
+              color: 'white',
+              fontSize: '0.9rem', // Adjusted for avatar size
             }}
           >
             {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
           </Avatar>
         }
-        sx={{ 
-          textTransform: 'none', 
+        sx={{
+          textTransform: 'none',
           ml: 1,
-          minWidth: isMobile ? 'auto' : undefined,
-          px: isMobile ? 1 : 2
+          display: 'flex',
+          alignItems: 'center',
+          padding: '6px 12px',
+          borderRadius: '24px', // Pill shape
+          backdropFilter: 'blur(8px)',
+          color: 'text.primary',
+          '&:hover': {
+            backgroundColor: theme.palette.mode === 'light' ? 'rgba(255,255,255,0.95)' : 'rgba(50,61,79,0.95)',
+          },
+          transition: 'background-color 0.3s ease, border 0.3s ease',
+          // Set minimum width but allow expansion for longer names
+          minWidth: isMobile ? 'auto' : `${MIN_WIDTH}px`,
         }}
       >
         {!isMobile && (
           <Typography
-            variant="button"
-            sx={{ color: 'text.secondary', ml: 0.5 }}
+            variant="subtitle2" // More appropriate variant for the style
+            sx={{
+              color: 'text.primary', // Match button text color for consistency
+              ml: 0.75, // Fine-tune spacing
+              fontWeight: 500, // Match image weight
+              whiteSpace: 'nowrap', // Prevent text wrapping
+            }}
           >
             ¡Hola, {firstName}!
           </Typography>
         )}
       </Button>
       <Menu
+        id="user-menu-popover"
         anchorEl={anchorEl}
-        open={Boolean(anchorEl)}
+        open={menuOpen}
         onClose={handleClose}
-        PaperProps={{ sx: { mt: 1 } }}
+        MenuListProps={{
+          'aria-labelledby': 'user-button-loggedIn', // More descriptive
+        }}
+        PaperProps={{
+          elevation: 0,
+          sx: {
+            width: menuWidth, // Apply the dynamically calculated width
+            overflow: 'visible',
+            mt: 1,
+            borderRadius: '8px',
+            border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)'}`,
+            backgroundColor: theme.palette.mode === 'light' ? 'rgba(248,249,250,0.9)' : 'rgba(30,41,59,0.95)', // Adjusted for distinct menu appearance
+            backdropFilter: 'blur(8px)',
+            '& .MuiMenuItem-root': {
+              fontSize: '1rem',
+              padding: '10px 16px',
+              '&:hover': {
+                backgroundColor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+              },
+            },
+            '& .MuiListItemIcon-root': { // Style for icons in menu items
+              minWidth: 'auto', // Allow icon to size naturally
+              marginRight: theme.spacing(1), // Reduced spacing from 1.5 to 1
+              color: 'text.secondary',
+            },
+          },
+        }}
+        transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+        anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
       >
         <MenuItem
           onClick={() => {
@@ -92,7 +159,7 @@ export default function UserMenu() {
           <ListItemIcon>
             <PersonIcon fontSize="small" />
           </ListItemIcon>
-          Mi Perfil
+          Mi perfil
         </MenuItem>
         <MenuItem
           onClick={() => {
@@ -100,9 +167,12 @@ export default function UserMenu() {
             router.push('/subscriptions');
           }}
         >
-          Suscripciones
+          <ListItemIcon>
+            <SubscriptionsIcon fontSize="small" />
+          </ListItemIcon>
+          Favoritos
         </MenuItem>
-        <Divider />
+        <Divider sx={{ my: 0.5, borderColor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
         {isAdmin && (
           <MenuItem
             onClick={() => {
@@ -110,11 +180,16 @@ export default function UserMenu() {
               router.push('/backoffice');
             }}
           >
+            <ListItemIcon>
+              <AdminPanelSettingsIcon fontSize="small" />
+            </ListItemIcon>
             Backoffice
           </MenuItem>
         )}
-
-        <MenuItem onClick={handleLogout}>
+        <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
+          <ListItemIcon>
+            <LogoutIcon fontSize="small" sx={{ color: 'error.main' }} />
+          </ListItemIcon>
           Salir
         </MenuItem>
       </Menu>
