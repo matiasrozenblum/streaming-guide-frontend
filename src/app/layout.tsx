@@ -11,6 +11,7 @@ import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import { ClarityLoader } from '@/components/ClarityLoader'
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import Head from 'next/head';
+import { PushProvider } from '@/contexts/PushContext';
 
 const inter = Inter({ subsets: ['latin'] });
 const GTM_ID = 'GTM-TCGNQB97';
@@ -87,15 +88,17 @@ export default function RootLayout({
 
         <HotjarLoader />
         <SessionProviderWrapper>
-          <CustomThemeProvider>
-            <YouTubePlayerProvider>
-              <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-              {children}
-              <Footer />
-            </div>
-            <YouTubeGlobalPlayer />
-            </YouTubePlayerProvider>
-          </CustomThemeProvider>
+          <PushProvider enabled={true} installPrompt={null}>
+            <CustomThemeProvider>
+              <YouTubePlayerProvider>
+                <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+                {children}
+                <Footer />
+              </div>
+              <YouTubeGlobalPlayer />
+              </YouTubePlayerProvider>
+            </CustomThemeProvider>
+          </PushProvider>
         </SessionProviderWrapper>
       </body>
     </html>
