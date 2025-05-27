@@ -74,10 +74,6 @@ export const ProgramBlock: React.FC<Props> = ({
     setIsOn(subscribed);
   }, [subscribed]);
 
-  useEffect(() => {
-    setIsOn(subscribed);
-  }, [subscribed]);
-
   // Detectar mobile
   useEffect(() => {
     if (typeof window !== 'undefined') {

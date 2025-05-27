@@ -17,6 +17,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.2] - 2025-04-27
+
+### Changed
+- Made some minor visual adjustments
+
+## [0.4.1] - 2025-04-26
+
+### Fixed
+- Fixed push subscriptions generation
+
 ## [0.4.0] - 2025-04-25
 
 ### Added

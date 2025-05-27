@@ -111,9 +111,9 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       <Box
         display="flex"
         gap={1}
-        p={2}
+        pl={1}
+        pb={2}
         sx={{
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
           WebkitOverflowScrolling: 'touch',
@@ -210,7 +210,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           }}
           sx={{
             position: 'fixed',
-            bottom: '20vh',
+            bottom: '5vh',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: mode === 'light' ? '#2563eb' : '#3b82f6',
