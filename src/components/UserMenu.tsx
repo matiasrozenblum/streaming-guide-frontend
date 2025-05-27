@@ -71,44 +71,45 @@ export default function UserMenu() {
         aria-haspopup="true"
         aria-expanded={menuOpen ? 'true' : undefined}
         color="inherit"
-        startIcon={
-          <Avatar
-            sx={{
-              width: 30, // Adjusted to match image's proportion
-              height: 30, // Adjusted to match image's proportion
-              bgcolor: '#007bff', // Blue color from image
-              color: 'white',
-              fontSize: '0.9rem', // Adjusted for avatar size
-            }}
-          >
-            {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
-          </Avatar>
-        }
         sx={{
           textTransform: 'none',
-          ml: 1,
           display: 'flex',
           alignItems: 'center',
-          padding: '6px 12px',
-          borderRadius: '24px', // Pill shape
+          padding: 0, // No internal padding
+          borderRadius: isMobile ? '50%' : '24px', // Circle on mobile, pill on desktop
+          minWidth: isMobile ? 0 : `${MIN_WIDTH}px`,
+          width: isMobile ? 40 : 'auto', // Fixed width on mobile for circle
+          height: 40, // Fixed height for both
+          marginRight: 1.5, // 12px spacing to the right
           backdropFilter: 'blur(8px)',
           color: 'text.primary',
           '&:hover': {
-            backgroundColor: theme.palette.mode === 'light' ? 'rgba(255,255,255,0.95)' : 'rgba(50,61,79,0.95)',
+            backgroundColor: theme.palette.mode === 'light'
+              ? 'rgba(255,255,255,0.95)'
+              : 'rgba(50,61,79,0.95)',
           },
           transition: 'background-color 0.3s ease, border 0.3s ease',
-          // Set minimum width but allow expansion for longer names
-          minWidth: isMobile ? 'auto' : `${MIN_WIDTH}px`,
         }}
       >
+        <Avatar
+          sx={{
+            width: 40,
+            height: 40,
+            bgcolor: '#007bff',
+            color: 'white',
+            fontSize: '0.9rem',
+          }}
+        >
+          {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+        </Avatar>
         {!isMobile && (
           <Typography
-            variant="subtitle2" // More appropriate variant for the style
+            variant="subtitle2"
             sx={{
-              color: 'text.primary', // Match button text color for consistency
-              ml: 0.75, // Fine-tune spacing
-              fontWeight: 500, // Match image weight
-              whiteSpace: 'nowrap', // Prevent text wrapping
+              color: 'text.primary',
+              ml: 0.75,
+              fontWeight: 500,
+              whiteSpace: 'nowrap',
             }}
           >
             ¡Hola, {firstName}!

@@ -29,13 +29,7 @@ export default function Header() {
           height: headerHeight,
           display: 'flex',
           alignItems: 'center',
-          /*background:
-            mode === 'light'
-              ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-              : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',*/
           borderRadius: tokens.borderRadius.lg,
-          //boxShadow: mode === 'light' ? tokens.boxShadow.md : tokens.boxShadow.lg,
-          //backdropFilter: 'blur(8px)',
           px: { xs: tokens.spacing.sm, sm: tokens.spacing.md },
           position: 'relative',
         }}
@@ -56,6 +50,7 @@ export default function Header() {
             position: 'absolute',
             top: '50%',
             right: 0,
+            pr: { xs: tokens.spacing.sm, sm: tokens.spacing.md }, 
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
