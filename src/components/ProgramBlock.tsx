@@ -198,12 +198,8 @@ export const ProgramBlock: React.FC<Props> = ({
             notificationMethod: 'both',
             ...(pushSubscription && {
               endpoint: pushSubscription.endpoint,
-              p256dh: btoa(String.fromCharCode.apply(null, 
-                Array.from(new Uint8Array(pushSubscription.getKey('p256dh') || new ArrayBuffer(0)))
-              )),
-              auth: btoa(String.fromCharCode.apply(null, 
-                Array.from(new Uint8Array(pushSubscription.getKey('auth') || new ArrayBuffer(0)))
-              ))
+              p256dh: pushSubscription.getKey('p256dh'),
+              auth: pushSubscription.getKey('auth')
             })
           },
           {
