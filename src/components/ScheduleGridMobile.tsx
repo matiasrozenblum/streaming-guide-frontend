@@ -111,7 +111,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       <Box
         display="flex"
         gap={1}
-        p={2}
+        pl={1}
+        pb={2}
         sx={{
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
