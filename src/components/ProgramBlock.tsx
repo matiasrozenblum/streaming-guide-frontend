@@ -17,6 +17,7 @@ import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { usePush } from '@/contexts/PushContext';
 
 dayjs.extend(customParseFormat);
 
@@ -67,6 +68,11 @@ export const ProgramBlock: React.FC<Props> = ({
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
+  const { subscribeAndRegister } = usePush();
+
+  useEffect(() => {
+    setIsOn(subscribed);
+  }, [subscribed]);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -181,10 +187,29 @@ export const ProgramBlock: React.FC<Props> = ({
       const willSubscribe = !isOn;
 
       if (willSubscribe) {
+        // Get push subscription details if needed
+        let pushSubscription = null;
+        try {
+          pushSubscription = await subscribeAndRegister();
+        } catch (error) {
+          console.warn('Failed to get push subscription:', error);
+        }
+
         // Subscribe to program
         await api.post(
           `/programs/${id}/subscribe`,
-          { notificationMethod: 'both' },
+          { 
+            notificationMethod: 'both',
+            ...(pushSubscription && {
+              endpoint: pushSubscription.endpoint,
+              p256dh: btoa(String.fromCharCode.apply(null, 
+                Array.from(new Uint8Array(pushSubscription.getKey('p256dh') || new ArrayBuffer(0)))
+              )),
+              auth: btoa(String.fromCharCode.apply(null, 
+                Array.from(new Uint8Array(pushSubscription.getKey('auth') || new ArrayBuffer(0)))
+              ))
+            })
+          },
           {
             headers: { Authorization: `Bearer ${typedSession.accessToken}` },
           }
