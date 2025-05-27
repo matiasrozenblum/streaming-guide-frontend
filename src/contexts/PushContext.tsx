@@ -85,18 +85,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       });
     }
 
-    // 4) Enviar la subscripción al backend
-    await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ deviceId, subscription }),
-      }
-    );
-
     hasSubscribedRef.current = true;
-    console.log('✅ Subscribed & sent to server:', subscription);
     return subscription;
   };
 
