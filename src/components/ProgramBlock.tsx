@@ -37,6 +37,12 @@ interface Props {
   stream_url?: string | null;
 }
 
+// Helper to encode ArrayBuffer to base64
+function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
+  if (!buffer) return '';
+  return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer))));
+}
+
 export const ProgramBlock: React.FC<Props> = ({
   id,
   name,
@@ -185,26 +191,28 @@ export const ProgramBlock: React.FC<Props> = ({
       if (willSubscribe) {
         // Get push subscription details if needed
         let pushSubscription = null;
+        let endpoint = '';
+        let p256dh = '';
+        let auth = '';
         try {
           pushSubscription = await subscribeAndRegister();
+          if (pushSubscription) {
+            endpoint = pushSubscription.endpoint;
+            p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
+            auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
+          }
         } catch (error) {
           console.warn('Failed to get push subscription:', error);
         }
 
-        // Subscribe to program
+        // Subscribe to program (only one request)
         await api.post(
           `/programs/${id}/subscribe`,
           { 
             notificationMethod: 'both',
-            ...(pushSubscription && {
-              endpoint: pushSubscription.endpoint,
-              p256dh: btoa(String.fromCharCode.apply(null, 
-                Array.from(new Uint8Array(pushSubscription.getKey('p256dh') || new ArrayBuffer(0)))
-              )),
-              auth: btoa(String.fromCharCode.apply(null, 
-                Array.from(new Uint8Array(pushSubscription.getKey('auth') || new ArrayBuffer(0)))
-              ))
-            })
+            endpoint,
+            p256dh,
+            auth
           },
           {
             headers: { Authorization: `Bearer ${typedSession.accessToken}` },
