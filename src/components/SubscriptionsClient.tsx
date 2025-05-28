@@ -175,9 +175,25 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
               mb: 4,
             }}
           >
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
-              Mis suscripciones
-            </Typography>
+            <Box>
+              <Typography 
+                variant="h4" 
+                sx={{ 
+                  fontWeight: 700,
+                  background: mode === 'light'
+                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
+                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  mb: 1,
+                }}
+              >
+                Mis Favoritos
+              </Typography>
+              <Typography variant="body1" color="text.secondary">
+                Gestiona tus suscripciones a programas y preferencias de notificación
+              </Typography>
+            </Box>
             <Button
               startIcon={<ArrowBack />}
               onClick={() => router.push('/')}
