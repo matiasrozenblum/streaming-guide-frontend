@@ -18,11 +18,15 @@ import {
   FormControl,
   Select,
   MenuItem,
-  Stack,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   Delete,
   NotificationsActive,
+  Notifications,
+  Email,
+  NotificationsOff,
   ArrowBack,
 } from '@mui/icons-material';
 import { useSessionContext } from '@/contexts/SessionContext';
@@ -187,79 +191,197 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
           {subscriptions.length === 0 ? (
-            <Typography variant="h6" align="center" color="text.secondary" sx={{ mt: 8 }}>
-              No tienes suscripciones activas.
-            </Typography>
+            <MotionCard
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              sx={{ 
+                textAlign: 'center', 
+                py: 8,
+                background: mode === 'light'
+                  ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
+                  : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                backdropFilter: 'blur(8px)',
+                borderRadius: 3,
+                border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+              }}
+            >
+              <CardContent>
+                <NotificationsOff sx={{ fontSize: 80, color: 'text.secondary', mb: 3 }} />
+                <Typography variant="h5" gutterBottom fontWeight={600}>
+                  No tienes suscripciones activas
+                </Typography>
+                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
+                  Suscríbete a tus programas favoritos haciendo clic en el ícono de campanita en la grilla de programación
+                </Typography>
+                <Button 
+                  variant="contained" 
+                  onClick={() => router.push('/')} 
+                  size="large"
+                  sx={{ 
+                    borderRadius: 2,
+                    px: 4,
+                    py: 1.5,
+                    textTransform: 'none',
+                    fontSize: '1.1rem',
+                  }}
+                >
+                  Ir a la programación
+                </Button>
+              </CardContent>
+            </MotionCard>
           ) : (
             <Grid container spacing={3}>
-              {subscriptions.map(sub => (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={sub.id}>
+              {subscriptions.map((subscription, index) => (
+                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={subscription.id}>
                   <MotionCard
-                    whileHover={{ scale: 1.03 }}
-                    sx={{
-                      borderRadius: 3,
-                      boxShadow: 3,
-                      background: mode === 'light'
-                        ? 'linear-gradient(135deg,#fff 0%,#f3f6fa 100%)'
-                        : 'linear-gradient(135deg,#1e293b 0%,#334155 100%)',
-                      minHeight: 220,
-                      display: 'flex',
+                    initial={{ opacity: 0, y: 20 }}
+                    animate={{ opacity: 1, y: 0 }}
+                    transition={{ duration: 0.5, delay: index * 0.1 }}
+                    sx={{ 
+                      height: '100%', 
+                      display: 'flex', 
                       flexDirection: 'column',
+                      background: mode === 'light'
+                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
+                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                      backdropFilter: 'blur(8px)',
+                      borderRadius: 3,
+                      border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                      transition: 'all 0.3s ease-in-out',
+                      '&:hover': {
+                        transform: 'translateY(-4px)',
+                        boxShadow: mode === 'light'
+                          ? '0 12px 24px rgba(0,0,0,0.15)'
+                          : '0 12px 24px rgba(0,0,0,0.4)',
+                      }
                     }}
                   >
-                    <CardContent sx={{ flex: 1 }}>
-                      <Box display="flex" alignItems="center" gap={2} mb={2}>
-                        <Avatar
-                          src={sub.program.logoUrl || ''}
-                          alt={sub.program.name}
-                          sx={{ width: 48, height: 48, bgcolor: getColorForChannel(sub.program.channel.id - 1) }}
-                        >
-                          {sub.program.name?.[0] || '?'}
-                        </Avatar>
-                        <Box>
-                          <Typography variant="h6" fontWeight={600}>{sub.program.name}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {sub.program.channel.name}
+                    <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                      <Box display="flex" alignItems="center" mb={2}>
+                        {subscription.program.logoUrl ? (
+                          <Avatar
+                            src={subscription.program.logoUrl}
+                            alt={subscription.program.name}
+                            sx={{ width: 56, height: 56, mr: 2 }}
+                          />
+                        ) : (
+                          <Avatar 
+                            sx={{ 
+                              width: 56, 
+                              height: 56, 
+                              mr: 2,
+                              backgroundColor: getColorForChannel(subscription.program.channel.id - 1),
+                              fontSize: '1.5rem',
+                              fontWeight: 600,
+                              color: 'white',
+                            }}
+                          >
+                            {subscription.program.name.charAt(0)}
+                          </Avatar>
+                        )}
+                        <Box flexGrow={1}>
+                          <Typography variant="h6" component="h3" fontWeight={600} sx={{ mb: 0.5 }}>
+                            {subscription.program.name}
                           </Typography>
+                          <Chip
+                            label={subscription.program.channel.name}
+                            size="small"
+                            variant="outlined"
+                            sx={{ 
+                              borderRadius: 1.5,
+                              fontWeight: 500,
+                              borderColor: getColorForChannel(subscription.program.channel.id - 1),
+                              color: getColorForChannel(subscription.program.channel.id - 1),
+                            }}
+                          />
                         </Box>
                       </Box>
-                      <Typography variant="body2" color="text.secondary" mb={2}>
-                        {sub.program.description || 'Sin descripción'}
-                      </Typography>
-                      <Stack direction="row" spacing={1} alignItems="center">
-                        <Chip
-                          icon={<NotificationsActive fontSize="small" />}
-                          label={
-                            sub.notificationMethod === NotificationMethod.BOTH
-                              ? 'Push + Email'
-                              : sub.notificationMethod === NotificationMethod.PUSH
-                                ? 'Push'
-                                : 'Email'
-                          }
-                          color="primary"
-                          variant="outlined"
-                        />
-                        <FormControl size="small">
+
+                      {subscription.program.description && (
+                        <Typography 
+                          variant="body2" 
+                          color="text.secondary" 
+                          sx={{ 
+                            mb: 3,
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                            display: '-webkit-box',
+                            WebkitLineClamp: 2,
+                            WebkitBoxOrient: 'vertical',
+                            lineHeight: 1.5,
+                          }}
+                        >
+                          {subscription.program.description}
+                        </Typography>
+                      )}
+
+                      <Box>
+                        <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mb: 1.5 }}>
+                          Notificaciones:
+                        </Typography>
+                        <FormControl size="small" fullWidth>
                           <Select
-                            value={sub.notificationMethod}
-                            onChange={e => updateNotificationMethod(sub.id, e.target.value as NotificationMethod)}
+                            value={subscription.notificationMethod}
+                            onChange={(e) => updateNotificationMethod(
+                              subscription.id, 
+                              e.target.value as NotificationMethod
+                            )}
+                            sx={{ 
+                              borderRadius: 2,
+                              '& .MuiSelect-select': {
+                                display: 'flex',
+                                alignItems: 'center',
+                                gap: 1,
+                              }
+                            }}
                           >
-                            <MenuItem value={NotificationMethod.BOTH}>Push + Email</MenuItem>
-                            <MenuItem value={NotificationMethod.PUSH}>Push</MenuItem>
-                            <MenuItem value={NotificationMethod.EMAIL}>Email</MenuItem>
+                            <MenuItem value={NotificationMethod.BOTH}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <NotificationsActive fontSize="small" />
+                                Push y Email
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value={NotificationMethod.PUSH}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Notifications fontSize="small" />
+                                Solo Push
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value={NotificationMethod.EMAIL}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Email fontSize="small" />
+                                Solo Email
+                              </Box>
+                            </MenuItem>
                           </Select>
                         </FormControl>
-                      </Stack>
+                      </Box>
                     </CardContent>
-                    <CardActions>
-                      <Button
-                        startIcon={<Delete />}
-                        color="error"
-                        onClick={() => removeSubscription(sub.id)}
-                        sx={{ borderRadius: 2 }}
-                      >
-                        Cancelar
-                      </Button>
+
+                    <CardActions sx={{ justifyContent: 'space-between', px: 3, pb: 3 }}>
+                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
+                        Desde {new Date(subscription.createdAt).toLocaleDateString('es-ES', {
+                          day: 'numeric',
+                          month: 'short',
+                          year: 'numeric'
+                        })}
+                      </Typography>
+                      <Tooltip title="Cancelar suscripción">
+                        <IconButton
+                          size="small"
+                          color="error"
+                          onClick={() => removeSubscription(subscription.id)}
+                          sx={{
+                            '&:hover': {
+                              backgroundColor: 'error.main',
+                              color: 'error.contrastText',
+                            }
+                          }}
+                        >
+                          <Delete fontSize="small" />
+                        </IconButton>
+                      </Tooltip>
                     </CardActions>
                   </MotionCard>
                 </Grid>
