@@ -24,14 +24,11 @@ const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr:
 const MotionBox = motion(Box);
 
 interface HomeClientProps {
-  initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
+  initialData: {
+    holiday: boolean;
+    schedules: ChannelWithSchedules[];
+  };
 }
-
-interface HasData { data: ChannelWithSchedules[]; }
-const hasData = (x: unknown): x is HasData =>
-  typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
-
-type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
@@ -48,16 +45,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [status, router]);
 
-  // Hydrate with initialData from SSR
-  const initArray: ChannelWithSchedules[] =
-    Array.isArray(initialData)
-      ? initialData
-      : hasData(initialData)
-      ? initialData.data
-      : [];
-
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initArray);
-  const [showHoliday, setShowHoliday] = useState(false);
+  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initialData.schedules);
+  const [showHoliday, setShowHoliday] = useState(initialData.holiday);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -79,19 +68,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchHolidayInfo = async () => {
-      if (!typedSession?.accessToken) {
-        console.warn('Attempted to fetch holiday info without an access token.');
-        return;
-      }
-      try {
-        const { data } = await api.get<{ holiday: boolean }>('/holiday', { headers: { Authorization: `Bearer ${typedSession.accessToken}` } });
-        if (isMounted && data.holiday) setShowHoliday(true);
-      } catch {
-        // ignore
-      }
-    };
-
     // Load week schedules
     const loadWeek = async () => {
       if (!typedSession?.accessToken) {
@@ -104,6 +80,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           params.deviceId = deviceId;
         }
 
+        // Fetch all schedules without the day parameter to get the full week
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
           params,
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
@@ -111,7 +88,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         if (!isMounted) return;
 
         const weekData = resp.data;
-        const liveMap: LiveMap = {};
+        const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
         weekData.forEach(ch =>
           ch.schedules.forEach(sch => {
             liveMap[sch.id.toString()] = {
@@ -128,12 +105,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
-    fetchHolidayInfo();
-    loadWeek();
+    // Load full week data after initial render
+    const timeoutId = setTimeout(loadWeek, 1000);
     const intervalId = setInterval(loadWeek, 60_000);
 
     return () => {
       isMounted = false;
+      clearTimeout(timeoutId);
       clearInterval(intervalId);
     };
   }, [setLiveStatuses, typedSession?.accessToken, deviceId]);
@@ -147,7 +125,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   }, [flattened]);
 
   return (
-    <LiveStatusProvider>
+    <>
       {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
       <Box
@@ -179,6 +157,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </MotionBox>
         </Container>
       </Box>
-    </LiveStatusProvider>
+    </>
   );
 }
