@@ -23,7 +23,7 @@ async function getInitialData(token: string): Promise<InitialData> {
 
     // Fetch only today's schedules
     const schedulesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=tuesday&live_status=true`,
       {
         headers: { Authorization: `Bearer ${token}` },
         next: { revalidate: 60 } // Cache for 1 minute
