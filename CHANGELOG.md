@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.3] - 2025-04-28
+
+### Changed
+- Optimized home client, profile and subscription pages.
+
 ## [0.4.2] - 2025-04-27
 
 ### Changed
