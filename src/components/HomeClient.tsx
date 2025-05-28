@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
-import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';

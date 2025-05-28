@@ -4,6 +4,10 @@ export const dynamic = 'force-dynamic';
 import { ChannelWithSchedules } from '@/types/channel';
 import HomeClient from '@/components/HomeClient';
 
+interface InitialData {
+  holiday: boolean;
+  schedules: ChannelWithSchedules[];
+}
 
 export default async function Page() {
   // Calcula el día de la semana en inglés en minúsculas
@@ -14,20 +18,26 @@ export default async function Page() {
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
   // Fetch inicial (ISR cada 60s), con fallback seguro en caso de fallo
-  let initialData: ChannelWithSchedules[] = [];
+  let schedules: ChannelWithSchedules[] = [];
   try {
     const res = await fetch(
       `${url}/channels/with-schedules?day=${today}`,
       { next: { revalidate: 60 } }
     );
     if (res.ok) {
-      initialData = await res.json();
+      schedules = await res.json();
     } else {
       console.warn('Fetch failed with status', res.status);
     }
   } catch (err) {
     console.warn('Fetch error during build/runtime:', err);
   }
+
+  // Prepare the initial data with the correct structure
+  const initialData: InitialData = {
+    holiday: false, // Legal page doesn't need holiday info
+    schedules
+  };
 
   // Renderiza componente cliente con datos pre-cargados
   return <HomeClient initialData={initialData} />;
