@@ -22,6 +22,9 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Changed
 - Made some minor visual adjustments
 
+### Fixed
+- Fixed pushs again
+
 ## [0.4.1] - 2025-04-26
 
 ### Fixed

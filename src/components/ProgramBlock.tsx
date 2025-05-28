@@ -69,6 +69,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [openTooltip, setOpenTooltip] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState(subscribed);
+  const [isLoading, setIsLoading] = useState(false);
 
   // Refs para controlar delay de apertura y cierre
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -185,9 +186,14 @@ export const ProgramBlock: React.FC<Props> = ({
       return;
     }
 
-    try {
-      const willSubscribe = !isOn;
+    const prevIsOn = isOn;
+    const willSubscribe = !isOn;
 
+    // Optimistically update UI
+    setIsOn(willSubscribe);
+    setIsLoading(true);
+
+    try {
       if (willSubscribe) {
         // Get push subscription details if needed
         let pushSubscription = null;
@@ -218,18 +224,22 @@ export const ProgramBlock: React.FC<Props> = ({
             headers: { Authorization: `Bearer ${typedSession.accessToken}` },
           }
         );
-        setIsOn(true);
         console.log(`✅ Subscribed to ${name}`);
       } else {
         // Unsubscribe from program
         await api.delete(`/programs/${id}/subscribe`, {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
-        setIsOn(false);
         console.log(`🚫 Unsubscribed from ${name}`);
       }
+      // Success: do nothing, UI already updated
     } catch (error) {
+      // Revert UI on error
+      setIsOn(prevIsOn);
+      alert('Error updating subscription. Please try again.');
       console.error('Error updating subscription:', error);
+    } finally {
+      setIsLoading(false);
     }
   };
 
@@ -288,8 +298,20 @@ export const ProgramBlock: React.FC<Props> = ({
         aria-label="Notificarme"
         onClick={handleBellClick}
         ref={bellRef}
+        sx={{
+          mt: tokens.spacing.md
+        }}
+        disabled={isLoading}
       >
-        {isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
+        {isLoading ? (
+          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
+            <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
+              <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
+                <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
+              </circle>
+            </svg>
+          </Box>
+        ) : isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
       </IconButton>
     </Box>
   );
