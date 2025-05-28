@@ -3,6 +3,7 @@ import { authOptions } from '@/lib/auth';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules } from '@/types/channel';
+import dayjs from 'dayjs';
 
 interface InitialData {
   holiday: boolean;
@@ -19,11 +20,11 @@ async function getInitialData(token: string): Promise<InitialData> {
     const holidayData = await holidayResponse.json();
 
     // Get today's day of week in lowercase
-    const today = new Date().toLocaleDateString('en-US', { weekday: 'long' }).toLowerCase();
+    const today = dayjs().format('dddd').toLowerCase();
 
     // Fetch only today's schedules
     const schedulesResponse = await fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=tuesday&live_status=true`,
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
       {
         headers: { Authorization: `Bearer ${token}` },
         next: { revalidate: 60 } // Cache for 1 minute
