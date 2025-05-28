@@ -31,6 +31,7 @@ async function getInitialData(token: string): Promise<InitialData> {
     );
     const schedulesData = await schedulesResponse.json();
 
+    // Ensure we return the correct data structure
     return {
       holiday: holidayData.holiday,
       schedules: schedulesData
