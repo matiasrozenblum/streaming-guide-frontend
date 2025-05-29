@@ -4,6 +4,7 @@ export const dynamic = 'force-dynamic';
 import { ChannelWithSchedules } from '@/types/channel';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
+import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
 interface InitialData {
   holiday: boolean;
@@ -12,10 +13,8 @@ interface InitialData {
 }
 
 export default async function Page() {
-  // Calcula el día de la semana en inglés en minúsculas
-  const today = new Date()
-    .toLocaleString('en-US', { weekday: 'long' })
-    .toLowerCase();
+  // Get today's day of week using Buenos Aires time
+  const today = getBuenosAiresDayOfWeek();
 
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 

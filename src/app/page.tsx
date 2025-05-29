@@ -3,7 +3,7 @@ import { authOptions } from '@/lib/auth';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules } from '@/types/channel';
-import dayjs from 'dayjs';
+import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
 interface InitialData {
   holiday: boolean;
@@ -19,8 +19,8 @@ async function getInitialData(token: string): Promise<InitialData> {
       next: { revalidate: 3600 } // Cache for 1 hour
     }).then(res => res.json());
 
-    // Get today's day of week in lowercase
-    const today = dayjs().format('dddd').toLowerCase();
+    // Get today's day of week in lowercase using Buenos Aires time
+    const today = getBuenosAiresDayOfWeek();
 
     // Fetch both today's and full week's schedules in parallel
     const todayPromise = fetch(
