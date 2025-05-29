@@ -97,6 +97,20 @@ export const ProgramBlock: React.FC<Props> = ({
     };
   }, []);
 
+  // Cálculo de posición y tamaño
+  const [startHours, startMinutes] = start.split(':').map(Number);
+  const [endHours, endMinutes] = end.split(':').map(Number);
+  const minutesFromMidnightStart = startHours * 60 + startMinutes;
+  const minutesFromMidnightEnd = endHours * 60 + endMinutes;
+  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
+  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  const widthPx = duration * pixelsPerMinute - 1;
+
+  const now = dayjs();
+  const currentDate = now.format('YYYY-MM-DD');
+  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  const isPast = isToday && now.isAfter(parsedEndWithDate);
+
   // Apertura retardada 5s
   const handleTooltipOpen = () => {
     if (closeTimeoutRef.current) {
@@ -131,20 +145,6 @@ export const ProgramBlock: React.FC<Props> = ({
       }, 100);
     }
   };
-
-  // Cálculo de posición y tamaño
-  const [startHours, startMinutes] = start.split(':').map(Number);
-  const [endHours, endMinutes] = end.split(':').map(Number);
-  const minutesFromMidnightStart = startHours * 60 + startMinutes;
-  const minutesFromMidnightEnd = endHours * 60 + endMinutes;
-  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
-  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * pixelsPerMinute - 1;
-
-  const now = dayjs();
-  const currentDate = now.format('YYYY-MM-DD');
-  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
-  const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   // Manejo de click en YouTube
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -344,7 +344,7 @@ export const ProgramBlock: React.FC<Props> = ({
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
             exit={{ opacity: 0 }}
-            transition={{ duration: 0.2 }}
+            transition={{ duration: 0.2, ease: 'easeInOut' }}
             style={{
               position: 'absolute',
               left: `${offsetPx}px`,
