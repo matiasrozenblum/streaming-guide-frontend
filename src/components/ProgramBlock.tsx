@@ -443,7 +443,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     >
                       {name.toUpperCase()}
                     </Typography>
-                    {panelists && panelists.length > 0 && (
+                    {panelists && panelists.length > 0 && widthPx > 120 && (
                       <Typography
                         variant="caption"
                         sx={{
