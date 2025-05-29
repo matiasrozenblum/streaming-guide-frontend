@@ -18,6 +18,7 @@ import { api } from '@/services/api';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
+import { motion, AnimatePresence } from 'framer-motion';
 
 dayjs.extend(customParseFormat);
 
@@ -337,123 +338,136 @@ export const ProgramBlock: React.FC<Props> = ({
         disableFocusListener={isMobile}
         PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
       >
-        <Box
-          className="program-block"
-          onMouseEnter={handleTooltipOpen}
-          onMouseLeave={handleTooltipClose}
-          onClick={() => isMobile && setOpenTooltip(!openTooltip)}
-          position="absolute"
-          left={`${offsetPx}px`}
-          width={`${widthPx}px`}
-          height="100%"
-          sx={{
-            backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
-            border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
-            borderRadius: tokens.borderRadius.sm,
-            transition: `all ${tokens.transition.normal} ${tokens.transition.timing}`,
-            cursor: 'pointer',
-            overflow: 'hidden',
-            boxShadow: tokens.boxShadow.sm,
-            '&:hover': {
-              backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
-              transform: 'scale(1.01)',
-            },
-          }}
-        >
-          <Box
-            sx={{
-              p: tokens.spacing.sm,
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={`${id}-${start}-${end}`}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.2 }}
+            style={{
+              position: 'absolute',
+              left: `${offsetPx}px`,
+              width: `${widthPx}px`,
               height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              position: 'relative',
             }}
           >
-            {isLive && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: tokens.spacing.xs,
-                  right: tokens.spacing.xs,
-                  backgroundColor: '#f44336',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontWeight: 'bold',
-                  zIndex: 5,
-                }}
-              >
-                LIVE
-              </Box>
-            )}
             <Box
+              className="program-block"
+              onMouseEnter={handleTooltipOpen}
+              onMouseLeave={handleTooltipClose}
+              onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+              height="100%"
               sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
-                height: '100%',
-                gap: 1,
+                backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
+                border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
+                borderRadius: tokens.borderRadius.sm,
+                transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
+                cursor: 'pointer',
+                overflow: 'hidden',
+                boxShadow: tokens.boxShadow.sm,
+                '&:hover': {
+                  backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
+                  transform: 'scale(1.01)',
+                },
               }}
             >
-              {logo_url && (
-                <Box
-                  component="img"
-                  src={logo_url}
-                  alt={name}
-                  sx={{
-                    width: '40px',
-                    height: '40px',
-                    objectFit: 'contain',
-                    opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
-                  }}
-                />
-              )}
               <Box
                 sx={{
+                  p: tokens.spacing.sm,
+                  height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
+                  justifyContent: 'flex-start',
                   alignItems: 'center',
-                  gap: 0.5,
+                  position: 'relative',
                 }}
               >
-                <Typography
-                  variant="caption"
-                  sx={{
-                    fontWeight: 'bold',
-                    fontSize: '0.75rem',
-                    textAlign: 'center',
-                    color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
-                  }}
-                >
-                  {name.toUpperCase()}
-                </Typography>
-                {panelists && panelists.length > 0 && (
-                  <Typography
-                    variant="caption"
+                {isLive && (
+                  <Box
                     sx={{
+                      position: 'absolute',
+                      top: tokens.spacing.xs,
+                      right: tokens.spacing.xs,
+                      backgroundColor: '#f44336',
+                      color: 'white',
                       fontSize: '0.65rem',
-                      textAlign: 'center',
-                      color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
-                      lineHeight: 1.2,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      zIndex: 5,
                     }}
                   >
-                    {panelists.map(p => p.name).join(', ')}
-                  </Typography>
+                    LIVE
+                  </Box>
                 )}
+                <Box
+                  sx={{
+                    display: 'flex',
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    height: '100%',
+                    gap: 1,
+                  }}
+                >
+                  {logo_url && (
+                    <Box
+                      component="img"
+                      src={logo_url}
+                      alt={name}
+                      sx={{
+                        width: '40px',
+                        height: '40px',
+                        objectFit: 'contain',
+                        opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                      }}
+                    />
+                  )}
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
+                    }}
+                  >
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontWeight: 'bold',
+                        fontSize: '0.75rem',
+                        textAlign: 'center',
+                        color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                      }}
+                    >
+                      {name.toUpperCase()}
+                    </Typography>
+                    {panelists && panelists.length > 0 && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontSize: '0.65rem',
+                          textAlign: 'center',
+                          color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
+                          lineHeight: 1.2,
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {panelists.map(p => p.name).join(', ')}
+                      </Typography>
+                    )}
+                  </Box>
+                </Box>
               </Box>
             </Box>
-          </Box>
-        </Box>
+          </motion.div>
+        </AnimatePresence>
       </Tooltip>
     </ClickAwayListener>
   );
