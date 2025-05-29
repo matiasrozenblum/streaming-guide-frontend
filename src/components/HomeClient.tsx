@@ -26,7 +26,8 @@ const MotionBox = motion(Box);
 interface HomeClientProps {
   initialData: {
     holiday: boolean;
-    schedules: ChannelWithSchedules[];
+    todaySchedules: ChannelWithSchedules[];
+    weekSchedules: ChannelWithSchedules[];
   };
 }
 
@@ -45,7 +46,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [status, router]);
 
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initialData.schedules);
+  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initialData.weekSchedules);
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
 
   const { mode } = useThemeContext();
@@ -68,10 +69,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     let isMounted = true;
 
-    // Load week schedules
-    const loadWeek = async () => {
+    // Update live statuses periodically
+    const updateLiveStatuses = async () => {
       if (!typedSession?.accessToken) {
-        console.warn('Attempted to load week schedules without an access token.');
+        console.warn('Attempted to update live statuses without an access token.');
         return;
       }
       try {
@@ -80,7 +81,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           params.deviceId = deviceId;
         }
 
-        // Fetch all schedules without the day parameter to get the full week
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
           params,
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
@@ -105,13 +105,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
-    // Load full week data after initial render
-    const timeoutId = setTimeout(loadWeek, 1000);
-    const intervalId = setInterval(loadWeek, 60_000);
+    // Update live statuses every minute
+    const intervalId = setInterval(updateLiveStatuses, 60_000);
 
     return () => {
       isMounted = false;
-      clearTimeout(timeoutId);
       clearInterval(intervalId);
     };
   }, [setLiveStatuses, typedSession?.accessToken, deviceId]);

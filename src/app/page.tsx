@@ -7,41 +7,55 @@ import dayjs from 'dayjs';
 
 interface InitialData {
   holiday: boolean;
-  schedules: ChannelWithSchedules[];
+  todaySchedules: ChannelWithSchedules[];
+  weekSchedules: ChannelWithSchedules[];
 }
 
 async function getInitialData(token: string): Promise<InitialData> {
   try {
     // Fetch holiday info
-    const holidayResponse = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/holiday`, {
+    const holidayPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/holiday`, {
       headers: { Authorization: `Bearer ${token}` },
       next: { revalidate: 3600 } // Cache for 1 hour
-    });
-    const holidayData = await holidayResponse.json();
+    }).then(res => res.json());
 
     // Get today's day of week in lowercase
     const today = dayjs().format('dddd').toLowerCase();
 
-    // Fetch only today's schedules
-    const schedulesResponse = await fetch(
+    // Fetch both today's and full week's schedules in parallel
+    const todayPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
       {
         headers: { Authorization: `Bearer ${token}` },
         next: { revalidate: 60 } // Cache for 1 minute
       }
-    );
-    const schedulesData = await schedulesResponse.json();
+    ).then(res => res.json());
 
-    // Ensure we return the correct data structure
+    const weekPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 60 } // Cache for 1 minute
+      }
+    ).then(res => res.json());
+
+    const [holidayData, todaySchedules, weekSchedules] = await Promise.all([
+      holidayPromise,
+      todayPromise,
+      weekPromise,
+    ]);
+
     return {
       holiday: holidayData.holiday,
-      schedules: schedulesData
+      todaySchedules,
+      weekSchedules,
     };
   } catch (error) {
     console.error('Error fetching initial data:', error);
     return {
       holiday: false,
-      schedules: []
+      todaySchedules: [],
+      weekSchedules: [],
     };
   }
 }
