@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -74,6 +74,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [openTooltip, setOpenTooltip] = useState(false);
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const theme = useTheme();
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -238,23 +239,23 @@ export const ProgramBlock: React.FC<Props> = ({
     <Box
       sx={{ p: tokens.spacing.sm }}
     >
-      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} color="white">
+      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} color={theme.palette.text.primary}>
         {name}
       </Text>
-      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.9)' }}>
+      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: theme.palette.text.secondary }}>
         {start} - {end}
       </Text>
       {description && (
-        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.9)' }}>
+        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: theme.palette.text.secondary }}>
           {description}
         </Text>
       )}
       {panelists?.length ? (
         <Box sx={{ mt: tokens.spacing.sm }}>
-          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} color="white">
+          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} color={theme.palette.text.primary}>
             Panelistas:
           </Text>
-          <Text variant="body2" color="rgba(255,255,255,0.9)">
+          <Text variant="body2" color={theme.palette.text.secondary}>
             {panelists.map(p => p.name).join(', ')}
           </Text>
         </Box>
