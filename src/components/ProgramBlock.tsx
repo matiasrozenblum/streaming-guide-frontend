@@ -67,14 +67,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const [isMobile, setIsMobile] = useState(false);
-  const [openTooltip, setOpenTooltip] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
-
-  // Refs para controlar delay de apertura y cierre
-  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister } = usePush();
 
@@ -87,14 +82,6 @@ export const ProgramBlock: React.FC<Props> = ({
     if (typeof window !== 'undefined') {
       setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
     }
-  }, []);
-
-  // Limpieza de timeouts al desmontar
-  useEffect(() => {
-    return () => {
-      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
-      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
-    };
   }, []);
 
   // Cálculo de posición y tamaño
@@ -110,41 +97,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const currentDate = now.format('YYYY-MM-DD');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
   const isPast = isToday && now.isAfter(parsedEndWithDate);
-
-  // Apertura retardada 5s
-  const handleTooltipOpen = () => {
-    if (closeTimeoutRef.current) {
-      clearTimeout(closeTimeoutRef.current);
-      closeTimeoutRef.current = null;
-    }
-    if (!isMobile) {
-      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
-      openTimeoutRef.current = setTimeout(() => {
-        Clarity.setTag('program_name', name);
-        Clarity.event(isLive ? 'open_tooltip_live' : 'open_tooltip_deferred');
-        gaEvent(
-          isLive ? 'open_tooltip_live' : 'open_tooltip_deferred',
-          {
-          category: 'tooltip',
-          program_name: name,
-        });
-        setOpenTooltip(true);
-      }, 500);
-    }
-  };
-
-  // Cierre rápido
-  const handleTooltipClose = () => {
-    if (openTimeoutRef.current) {
-      clearTimeout(openTimeoutRef.current);
-      openTimeoutRef.current = null;
-    }
-    if (!isMobile) {
-      closeTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(false);
-      }, 100);
-    }
-  };
 
   // Manejo de click en YouTube
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -248,8 +200,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const tooltipContent = (
     <Box
       sx={{ p: tokens.spacing.sm }}
-      onMouseEnter={handleTooltipOpen}
-      onMouseLeave={handleTooltipClose}
     >
       <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} color="white">
         {name}
@@ -323,20 +273,17 @@ export const ProgramBlock: React.FC<Props> = ({
         if (bellRef.current?.contains(event.target as Node)) {
           return;
         }
-
-        if (isMobile) setOpenTooltip(false);
+        if (isMobile) {
+          // If you want to close something else on mobile, handle here
+        }
       }
     }>
       <Tooltip
         title={tooltipContent}
         arrow
         placement="top"
-        open={openTooltip}
-        onOpen={handleTooltipOpen}
-        onClose={handleTooltipClose}
         disableTouchListener={isMobile}
         disableFocusListener={isMobile}
-        PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
       >
         <AnimatePresence mode="wait">
           <motion.div
@@ -354,9 +301,7 @@ export const ProgramBlock: React.FC<Props> = ({
           >
             <Box
               className="program-block"
-              onMouseEnter={handleTooltipOpen}
-              onMouseLeave={handleTooltipClose}
-              onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+              onClick={() => isMobile && setIsMobile(!isMobile)}
               height="100%"
               sx={{
                 backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),

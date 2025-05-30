@@ -39,7 +39,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const deviceId = useDeviceId();
   
   useEffect(() => {
-    console.log('status', status);
     // si no hay sesión, redirige
     if (status === 'unauthenticated') {
       router.push('/login');

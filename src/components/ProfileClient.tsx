@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { signOut } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import { motion } from 'framer-motion';
@@ -102,6 +102,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
+
+  useEffect(() => {
+    // si no hay sesión, redirige
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
   // sección en edición
   const [editSection, setEditSection] =

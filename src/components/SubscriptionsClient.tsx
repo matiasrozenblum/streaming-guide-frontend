@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 import { motion } from 'framer-motion';
 import {
   Box,
@@ -68,7 +68,7 @@ interface SubscriptionsClientProps {
 }
 
 export default function SubscriptionsClient({ initialSubscriptions }: SubscriptionsClientProps) {
-  const { session } = useSessionContext();
+  const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
@@ -76,6 +76,13 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+
+  useEffect(() => {
+    // si no hay sesión, redirige
+    if (status === 'unauthenticated') {
+      router.push('/login');
+    }
+  }, [status, router]);
 
   const updateNotificationMethod = async (subscriptionId: string, notificationMethod: NotificationMethod) => {
     if (!typedSession?.accessToken) return;
