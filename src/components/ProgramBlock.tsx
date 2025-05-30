@@ -18,7 +18,6 @@ import { api } from '@/services/api';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
-import { motion, AnimatePresence } from 'framer-motion';
 
 dayjs.extend(customParseFormat);
 
