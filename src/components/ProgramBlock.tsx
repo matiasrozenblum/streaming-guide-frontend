@@ -239,23 +239,23 @@ export const ProgramBlock: React.FC<Props> = ({
     <Box
       sx={{ p: tokens.spacing.sm }}
     >
-      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} color={theme.palette.text.primary}>
+      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
         {name}
       </Text>
-      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: theme.palette.text.secondary }}>
+      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
         {start} - {end}
       </Text>
       {description && (
-        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: theme.palette.text.secondary }}>
+        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
           {description}
         </Text>
       )}
       {panelists?.length ? (
         <Box sx={{ mt: tokens.spacing.sm }}>
-          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} color={theme.palette.text.primary}>
+          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
             Panelistas:
           </Text>
-          <Text variant="body2" color={theme.palette.text.secondary}>
+          <Text variant="body2" sx={{ color: 'rgba(255,255,255,0.8) !important' }}>
             {panelists.map(p => p.name).join(', ')}
           </Text>
         </Box>
@@ -288,7 +288,8 @@ export const ProgramBlock: React.FC<Props> = ({
         onClick={handleBellClick}
         ref={bellRef}
         sx={{
-          mt: tokens.spacing.md
+          mt: tokens.spacing.md,
+          color: isLoading ? undefined : (isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important'),
         }}
         disabled={isLoading}
       >
@@ -300,7 +301,9 @@ export const ProgramBlock: React.FC<Props> = ({
               </circle>
             </svg>
           </Box>
-        ) : isOn ? <Notifications color="primary" /> : <Notifications color="disabled" />}
+        ) : (
+          <Notifications sx={{ color: isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important' }} />
+        )}
       </IconButton>
     </Box>
   );
