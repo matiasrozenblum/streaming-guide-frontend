@@ -1,12 +1,12 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import SubscriptionsClient, { UserSubscription } from '@/components/SubscriptionsClient';
 
 export default async function SubscriptionsPage() {
   const session = await getServerSession(authOptions);
-  if (!session?.accessToken) {
-    // Not authenticated, let the client handle redirect
-    return null;
+  if (!session?.user || !session.user.id) {
+    redirect('/');
   }
 
   let initialSubscriptions: UserSubscription[] = [];

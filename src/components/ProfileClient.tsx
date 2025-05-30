@@ -104,11 +104,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { mode } = useThemeContext();
 
   useEffect(() => {
-    // si no hay sesión, redirige
-    if (status === 'unauthenticated') {
-      router.push('/login');
+    // If there is no real user, redirect to home
+    if (!typedSession?.user || !typedSession.user.id) {
+      router.push('/');
     }
-  }, [status, router]);
+  }, [typedSession, router]);
 
   // sección en edición
   const [editSection, setEditSection] =

@@ -68,7 +68,7 @@ interface SubscriptionsClientProps {
 }
 
 export default function SubscriptionsClient({ initialSubscriptions }: SubscriptionsClientProps) {
-  const { session, status } = useSessionContext();
+  const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
@@ -78,11 +78,11 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // si no hay sesión, redirige
-    if (status === 'unauthenticated') {
-      router.push('/login');
+    // If there is no real user, redirect to home
+    if (!typedSession?.user || !typedSession.user.id) {
+      router.push('/');
     }
-  }, [status, router]);
+  }, [typedSession, router]);
 
   const updateNotificationMethod = async (subscriptionId: string, notificationMethod: NotificationMethod) => {
     if (!typedSession?.accessToken) return;

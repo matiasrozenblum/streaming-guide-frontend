@@ -72,6 +72,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister } = usePush();
+  const [openTooltip, setOpenTooltip] = useState(false);
+  const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -196,6 +199,41 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  // Limpieza de timeouts al desmontar
+  useEffect(() => {
+    return () => {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      if (closeTimeoutRef.current) clearTimeout(closeTimeoutRef.current);
+    };
+  }, []);
+
+  // Apertura retardada 500ms
+  const handleTooltipOpen = () => {
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    if (!isMobile) {
+      if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = setTimeout(() => {
+        setOpenTooltip(true);
+      }, 500);
+    }
+  };
+
+  // Cierre rápido
+  const handleTooltipClose = () => {
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    if (!isMobile) {
+      closeTimeoutRef.current = setTimeout(() => {
+        setOpenTooltip(false);
+      }, 100);
+    }
+  };
+
   // Contenido del tooltip
   const tooltipContent = (
     <Box
@@ -273,146 +311,140 @@ export const ProgramBlock: React.FC<Props> = ({
         if (bellRef.current?.contains(event.target as Node)) {
           return;
         }
-        if (isMobile) {
-          // If you want to close something else on mobile, handle here
-        }
+        if (isMobile) setOpenTooltip(false);
       }
     }>
       <Tooltip
         title={tooltipContent}
         arrow
         placement="top"
+        open={openTooltip}
+        onOpen={handleTooltipOpen}
+        onClose={handleTooltipClose}
         disableTouchListener={isMobile}
         disableFocusListener={isMobile}
+        PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
       >
-        <AnimatePresence mode="wait">
-          <motion.div
-            key={`${id}-${start}-${end}`}
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            exit={{ opacity: 0 }}
-            transition={{ duration: 0.2, ease: 'easeInOut' }}
-            style={{
-              position: 'absolute',
-              left: `${offsetPx}px`,
-              width: `${widthPx}px`,
+        <Box
+          className="program-block"
+          onMouseEnter={handleTooltipOpen}
+          onMouseLeave={handleTooltipClose}
+          onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+          style={{
+            position: 'absolute',
+            left: `${offsetPx}px`,
+            width: `${widthPx}px`,
+            height: '100%',
+          }}
+          height="100%"
+          sx={{
+            backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
+            border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
+            borderRadius: tokens.borderRadius.sm,
+            transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
+            cursor: 'pointer',
+            overflow: 'hidden',
+            boxShadow: tokens.boxShadow.sm,
+            '&:hover': {
+              backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
+              transform: 'scale(1.01)',
+            },
+          }}
+        >
+          <Box
+            sx={{
+              p: tokens.spacing.sm,
               height: '100%',
+              display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'flex-start',
+              alignItems: 'center',
+              position: 'relative',
             }}
           >
-            <Box
-              className="program-block"
-              onClick={() => isMobile && setIsMobile(!isMobile)}
-              height="100%"
-              sx={{
-                backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
-                border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
-                borderRadius: tokens.borderRadius.sm,
-                transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
-                cursor: 'pointer',
-                overflow: 'hidden',
-                boxShadow: tokens.boxShadow.sm,
-                '&:hover': {
-                  backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
-                  transform: 'scale(1.01)',
-                },
-              }}
-            >
+            {isLive && (
               <Box
                 sx={{
-                  p: tokens.spacing.sm,
-                  height: '100%',
-                  display: 'flex',
-                  flexDirection: 'column',
-                  justifyContent: 'flex-start',
-                  alignItems: 'center',
-                  position: 'relative',
+                  position: 'absolute',
+                  top: tokens.spacing.xs,
+                  right: tokens.spacing.xs,
+                  backgroundColor: '#f44336',
+                  color: 'white',
+                  fontSize: '0.65rem',
+                  padding: '2px 6px',
+                  borderRadius: '4px',
+                  fontWeight: 'bold',
+                  zIndex: 5,
                 }}
               >
-                {isLive && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: tokens.spacing.xs,
-                      right: tokens.spacing.xs,
-                      backgroundColor: '#f44336',
-                      color: 'white',
-                      fontSize: '0.65rem',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: 'bold',
-                      zIndex: 5,
-                    }}
-                  >
-                    LIVE
-                  </Box>
-                )}
+                LIVE
+              </Box>
+            )}
+            <Box
+              sx={{
+                display: 'flex',
+                flexDirection: 'row',
+                alignItems: 'center',
+                justifyContent: 'center',
+                height: '100%',
+                gap: 1,
+              }}
+            >
+              {logo_url && (
                 <Box
+                  component="img"
+                  src={logo_url}
+                  alt={name}
                   sx={{
-                    display: 'flex',
-                    flexDirection: 'row',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    height: '100%',
-                    gap: 1,
+                    width: '40px',
+                    height: '40px',
+                    objectFit: 'contain',
+                    opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                  }}
+                />
+              )}
+              <Box
+                sx={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  gap: 0.5,
+                }}
+              >
+                <Typography
+                  variant="caption"
+                  sx={{
+                    fontWeight: 'bold',
+                    fontSize: '0.75rem',
+                    textAlign: 'center',
+                    color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
                   }}
                 >
-                  {logo_url && (
-                    <Box
-                      component="img"
-                      src={logo_url}
-                      alt={name}
-                      sx={{
-                        width: '40px',
-                        height: '40px',
-                        objectFit: 'contain',
-                        opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
-                      }}
-                    />
-                  )}
-                  <Box
+                  {name.toUpperCase()}
+                </Typography>
+                {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
+                  <Typography
+                    variant="caption"
                     sx={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      gap: 0.5,
+                      fontSize: '0.65rem',
+                      textAlign: 'center',
+                      color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
+                      lineHeight: 1.2,
+                      maxWidth: '100%',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 2,
+                      WebkitBoxOrient: 'vertical',
                     }}
                   >
-                    <Typography
-                      variant="caption"
-                      sx={{
-                        fontWeight: 'bold',
-                        fontSize: '0.75rem',
-                        textAlign: 'center',
-                        color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
-                      }}
-                    >
-                      {name.toUpperCase()}
-                    </Typography>
-                    {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
-                      <Typography
-                        variant="caption"
-                        sx={{
-                          fontSize: '0.65rem',
-                          textAlign: 'center',
-                          color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
-                          lineHeight: 1.2,
-                          maxWidth: '100%',
-                          overflow: 'hidden',
-                          textOverflow: 'ellipsis',
-                          display: '-webkit-box',
-                          WebkitLineClamp: 2,
-                          WebkitBoxOrient: 'vertical',
-                        }}
-                      >
-                        {panelists.map(p => p.name).join(', ')}
-                      </Typography>
-                    )}
-                  </Box>
-                </Box>
+                    {panelists.map(p => p.name).join(', ')}
+                  </Typography>
+                )}
               </Box>
             </Box>
-          </motion.div>
-        </AnimatePresence>
+          </Box>
+        </Box>
       </Tooltip>
     </ClickAwayListener>
   );

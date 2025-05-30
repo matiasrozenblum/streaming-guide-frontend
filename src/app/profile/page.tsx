@@ -1,12 +1,12 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
+import { redirect } from 'next/navigation';
 import ProfileClient from '@/components/ProfileClient';
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
-  if (!session?.accessToken || !session.user?.id) {
-    // Not authenticated, let the client handle redirect
-    return null;
+  if (!session?.user || !session.user.id) {
+    redirect('/');
   }
 
   // Fetch user data from the backend API
