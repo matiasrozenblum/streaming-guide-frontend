@@ -107,7 +107,7 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          backgroundColor: mode === 'light' ? '#1e293b' : '#0f172a',
+          backgroundColor: mode === 'light' ? '#fff' : '#0f172a',
           padding: '12px 16px',
           maxWidth: 320,
           fontSize: '0.875rem',
@@ -115,7 +115,7 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
           borderRadius: 8,
         },
         arrow: {
-          color: mode === 'light' ? '#1e293b' : '#0f172a',
+          color: mode === 'light' ? '#fff' : '#0f172a',
         },
       },
     },
