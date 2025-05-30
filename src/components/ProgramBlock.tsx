@@ -74,7 +74,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const [openTooltip, setOpenTooltip] = useState(false);
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  const theme = useTheme();
 
   useEffect(() => {
     setIsOn(subscribed);
