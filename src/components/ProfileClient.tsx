@@ -21,6 +21,7 @@ import {
   Stack,
   InputAdornment,
   LinearProgress,
+  MenuItem,
 } from '@mui/material';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -94,8 +95,17 @@ interface ProfileClientProps {
     lastName: string;
     email: string;
     phone: string;
+    gender: string;
+    birthDate: string;
   };
 }
+
+const genderTranslations: Record<string, string> = {
+  male: 'Masculino',
+  female: 'Femenino',
+  non_binary: 'No binario',
+  rather_not_say: 'Prefiero no decir'
+};
 
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { session, status } = useSessionContext();
@@ -119,6 +129,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [email, setEmail] = useState(initialUser.email);
   const [phone, setPhone] = useState(initialUser.phone);
+  const [gender, setGender] = useState(initialUser.gender || '');
+  const [birthDate, setBirthDate] = useState(initialUser.birthDate || '');
+  const [personalError, setPersonalError] = useState('');
 
   // códigos de verificación
   const [codeSent, setCodeSent] = useState({ email: false, phone: false, password: false });
@@ -141,13 +154,31 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   // --- All handlers from original ProfilePage ---
   const saveNames = async () => {
     if (!typedSession) return;
+    setPersonalError('');
+    // Validate birthDate (must be 18+)
+    if (!birthDate) {
+      setPersonalError('La fecha de nacimiento es obligatoria');
+      return;
+    }
+    const birth = new Date(birthDate);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      setPersonalError('Debes ser mayor de 18 años para registrarte');
+      return;
+    }
     const id = typedSession.user.id;
-    const res = await fetch(`/api/users/${id}`, {
-      method: 'PATCH',
-      credentials: 'include',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ firstName, lastName }),
-    });
+    const res = await fetch(`/api/users/${id}`,
+      {
+        method: 'PATCH',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ firstName, lastName, gender, birthDate }),
+      });
     alert(res.ok ? 'Datos actualizados' : 'Error al actualizar');
     if (res.ok) setEditSection('none');
   };
@@ -382,6 +413,22 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           {lastName || '—'}
                         </Typography>
                       </Grid>
+                      <Grid component="div" size={6}>
+                        <Typography color="text.secondary" gutterBottom>
+                          Fecha de nacimiento
+                        </Typography>
+                        <Typography variant="body1">
+                          {birthDate ? new Date(birthDate).toLocaleDateString() : '—'}
+                        </Typography>
+                      </Grid>
+                      <Grid component="div" size={6}>
+                        <Typography color="text.secondary" gutterBottom>
+                          Género
+                        </Typography>
+                        <Typography variant="body1">
+                          {gender ? genderTranslations[gender] || gender : '—'}
+                        </Typography>
+                      </Grid>
                     </Grid>
                   ) : (
                     <Box
@@ -412,6 +459,39 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             size="small"
                           />
                         </Grid>
+                        <Grid component="div" size={6}>
+                          <TextField
+                            label="Fecha de nacimiento"
+                            type="date"
+                            fullWidth
+                            value={birthDate}
+                            onChange={e => setBirthDate(e.target.value)}
+                            variant="outlined"
+                            size="small"
+                            InputLabelProps={{ shrink: true }}
+                          />
+                        </Grid>
+                        <Grid component="div" size={6}>
+                          <TextField
+                            label="Género"
+                            select
+                            fullWidth
+                            value={gender}
+                            onChange={e => setGender(e.target.value)}
+                            variant="outlined"
+                            size="small"
+                          >
+                            <MenuItem value="male">Masculino</MenuItem>
+                            <MenuItem value="female">Femenino</MenuItem>
+                            <MenuItem value="non_binary">No binario</MenuItem>
+                            <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
+                          </TextField>
+                        </Grid>
+                        {personalError && (
+                          <Grid component="div" size={12}>
+                            <Typography color="error" variant="body2" sx={{ mt: 1 }}>{personalError}</Typography>
+                          </Grid>
+                        )}
                         <Grid component="div" size={12}>
                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
                             <Button 

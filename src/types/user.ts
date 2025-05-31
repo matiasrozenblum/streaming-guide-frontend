@@ -7,4 +7,6 @@ export interface User {
   role: 'admin' | 'user';
   createdAt: string;
   updatedAt: string;
+  gender?: 'male' | 'female' | 'non_binary' | 'rather_not_say';
+  birthDate?: string;
 } 
