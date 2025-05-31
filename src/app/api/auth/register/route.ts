@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
-  const { registration_token, firstName, lastName, password, deviceId } = await request.json();
+  const { registration_token, firstName, lastName, password, deviceId, gender, birthDate } = await request.json();
   
   // Forward the user-agent header from the original request
   const userAgent = request.headers.get('user-agent') || 'Unknown';
@@ -12,6 +12,8 @@ export async function POST(request: NextRequest) {
     firstName,
     lastName,
     deviceId,
+    gender,
+    birthDate,
     userAgent,
     timestamp: new Date().toISOString()
   });
@@ -24,7 +26,7 @@ export async function POST(request: NextRequest) {
         'Content-Type': 'application/json',
         'User-Agent': userAgent,
       },
-      body: JSON.stringify({ registration_token, firstName, lastName, password, deviceId }),
+      body: JSON.stringify({ registration_token, firstName, lastName, password, deviceId, gender, birthDate }),
     }
   );
   const payload = await res.json();
