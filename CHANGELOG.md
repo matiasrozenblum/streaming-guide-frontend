@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.3] - 2025-04-31
+
+### Changed
+- Optimized home client, profile and subscription pages.
+
+### Fixed
+- Fixed backoffice schedules reloading every time and not deleting schedules
+
 ## [0.4.2] - 2025-04-27
 
 ### Changed

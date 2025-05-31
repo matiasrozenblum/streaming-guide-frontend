@@ -1,23 +1,74 @@
-export const revalidate = 60
-export const dynamic = 'force-dynamic'
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+import HomeClient from '@/components/HomeClient';
+import { ClientWrapper } from '@/components/ClientWrapper';
+import type { ChannelWithSchedules } from '@/types/channel';
+import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
-import HomeClient from '@/components/HomeClient'
-import type { ChannelWithSchedules } from '@/types/channel'
+interface InitialData {
+  holiday: boolean;
+  todaySchedules: ChannelWithSchedules[];
+  weekSchedules: ChannelWithSchedules[];
+}
 
-export default async function Page() {
-  // fetch SIN autenticación (para datos públicos)
-  const today = new Date().toLocaleString('en-US', { weekday: 'long' }).toLowerCase()
-  const url   = process.env.NEXT_PUBLIC_API_URL
-
-  let initialData: ChannelWithSchedules[] = []
+async function getInitialData(token: string): Promise<InitialData> {
   try {
-    const res = await fetch(`${url}/channels/with-schedules?day=${today}`, {
-      next: { revalidate: 60 }
-    })
-    if (res.ok) initialData = await res.json()
+    // Fetch holiday info
+    const holidayPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/holiday`, {
+      headers: { Authorization: `Bearer ${token}` },
+      next: { revalidate: 3600 }
+    }).then(res => res.json());
+
+    const today = getBuenosAiresDayOfWeek();
+
+    const todayPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 60 }
+      }
+    ).then(res => res.json());
+
+    const weekPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
+      {
+        headers: { Authorization: `Bearer ${token}` },
+        next: { revalidate: 60 }
+      }
+    ).then(res => res.json());
+
+    const [holidayData, todaySchedules, weekSchedules] = await Promise.all([
+      holidayPromise,
+      todayPromise,
+      weekPromise,
+    ]);
+
+    return {
+      holiday: !!holidayData.holiday,
+      todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
+      weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
+    };
   } catch {
-    /* ignore */
+    return {
+      holiday: false,
+      todaySchedules: [],
+      weekSchedules: [],
+    };
+  }
+}
+
+export default async function HomePage() {
+  const session = await getServerSession(authOptions);
+  
+  if (!session?.accessToken) {
+    return null; // This will trigger the client-side redirect in HomeClient
   }
 
-  return <HomeClient initialData={initialData} />
+  const initialData = await getInitialData(session.accessToken);
+
+  return (
+    <ClientWrapper>
+      <HomeClient initialData={initialData} />
+    </ClientWrapper>
+  );
 }

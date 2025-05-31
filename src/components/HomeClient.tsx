@@ -9,7 +9,7 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
-import { LiveStatusProvider, useLiveStatus } from '@/contexts/LiveStatusContext';
+import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
@@ -24,14 +24,12 @@ const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr:
 const MotionBox = motion(Box);
 
 interface HomeClientProps {
-  initialData: ChannelWithSchedules[] | { data: ChannelWithSchedules[] };
+  initialData: {
+    holiday: boolean;
+    todaySchedules: ChannelWithSchedules[];
+    weekSchedules: ChannelWithSchedules[];
+  };
 }
-
-interface HasData { data: ChannelWithSchedules[]; }
-const hasData = (x: unknown): x is HasData =>
-  typeof x === 'object' && x !== null && Array.isArray((x as HasData).data);
-
-type LiveMap = Record<string, { is_live: boolean; stream_url: string | null }>;
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
@@ -41,23 +39,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const deviceId = useDeviceId();
   
   useEffect(() => {
-    console.log('status', status);
     // si no hay sesión, redirige
     if (status === 'unauthenticated') {
       router.push('/login');
     }
   }, [status, router]);
 
-  // Hydrate with initialData from SSR
-  const initArray: ChannelWithSchedules[] =
-    Array.isArray(initialData)
-      ? initialData
-      : hasData(initialData)
-      ? initialData.data
-      : [];
-
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initArray);
-  const [showHoliday, setShowHoliday] = useState(false);
+  const [channelsWithSchedules, setChannelsWithSchedules] = useState(
+    Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
+  );
+  const [showHoliday, setShowHoliday] = useState(initialData.holiday);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -79,23 +70,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     let isMounted = true;
 
-    const fetchHolidayInfo = async () => {
+    // Update live statuses periodically
+    const updateLiveStatuses = async () => {
       if (!typedSession?.accessToken) {
-        console.warn('Attempted to fetch holiday info without an access token.');
-        return;
-      }
-      try {
-        const { data } = await api.get<{ holiday: boolean }>('/holiday', { headers: { Authorization: `Bearer ${typedSession.accessToken}` } });
-        if (isMounted && data.holiday) setShowHoliday(true);
-      } catch {
-        // ignore
-      }
-    };
-
-    // Load week schedules
-    const loadWeek = async () => {
-      if (!typedSession?.accessToken) {
-        console.warn('Attempted to load week schedules without an access token.');
+        console.warn('Attempted to update live statuses without an access token.');
         return;
       }
       try {
@@ -111,7 +89,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         if (!isMounted) return;
 
         const weekData = resp.data;
-        const liveMap: LiveMap = {};
+        const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
         weekData.forEach(ch =>
           ch.schedules.forEach(sch => {
             liveMap[sch.id.toString()] = {
@@ -122,15 +100,17 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         );
 
         setLiveStatuses(liveMap);
-        setChannelsWithSchedules(weekData);
+        setChannelsWithSchedules(Array.isArray(weekData) ? weekData : []);
       } catch {
         // ignore
       }
     };
 
-    fetchHolidayInfo();
-    loadWeek();
-    const intervalId = setInterval(loadWeek, 60_000);
+    // Fire immediately on mount
+    updateLiveStatuses();
+
+    // Update live statuses every minute
+    const intervalId = setInterval(updateLiveStatuses, 60_000);
 
     return () => {
       isMounted = false;
@@ -147,7 +127,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   }, [flattened]);
 
   return (
-    <LiveStatusProvider>
+    <>
       {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
       <Box
@@ -179,6 +159,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           </MotionBox>
         </Container>
       </Box>
-    </LiveStatusProvider>
+    </>
   );
 }
