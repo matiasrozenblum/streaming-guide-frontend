@@ -13,22 +13,19 @@ interface InitialData {
 
 async function getInitialData(token: string): Promise<InitialData> {
   try {
-    console.log('SSR: Fetching initial data...');
     // Fetch holiday info
     const holidayPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/holiday`, {
       headers: { Authorization: `Bearer ${token}` },
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 3600 }
     }).then(res => res.json());
 
-    // Get today's day of week in lowercase using Buenos Aires time
     const today = getBuenosAiresDayOfWeek();
 
-    // Fetch both today's and full week's schedules in parallel
     const todayPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
       {
         headers: { Authorization: `Bearer ${token}` },
-        next: { revalidate: 60 } // Cache for 1 minute
+        next: { revalidate: 60 }
       }
     ).then(res => res.json());
 
@@ -36,7 +33,7 @@ async function getInitialData(token: string): Promise<InitialData> {
       `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
       {
         headers: { Authorization: `Bearer ${token}` },
-        next: { revalidate: 60 } // Cache for 1 minute
+        next: { revalidate: 60 }
       }
     ).then(res => res.json());
 
@@ -46,17 +43,12 @@ async function getInitialData(token: string): Promise<InitialData> {
       weekPromise,
     ]);
 
-    console.log('SSR: holidayData', holidayData);
-    console.log('SSR: todaySchedules', todaySchedules);
-    console.log('SSR: weekSchedules', weekSchedules);
-
     return {
       holiday: !!holidayData.holiday,
       todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
     };
   } catch (error) {
-    console.error('SSR: Error fetching initial data:', error);
     return {
       holiday: false,
       todaySchedules: [],
