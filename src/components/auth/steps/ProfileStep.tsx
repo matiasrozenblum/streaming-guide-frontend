@@ -35,6 +35,7 @@ export default function ProfileStep({
   const [birthDate, setBirthDate] = useState(initialBirthDate);
   const [gender, setGender] = useState(initialGender);
   const [localErr, setLocalErr] = useState('');
+  const [birthDateError, setBirthDateError] = useState('');
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -52,6 +53,27 @@ export default function ProfileStep({
     }
     setLocalErr('');
     onSubmit(first.trim(), last.trim(), birthDate, gender);
+  };
+
+  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const value = e.target.value;
+    setBirthDate(value);
+    if (!value) {
+      setBirthDateError('La fecha de nacimiento es obligatoria');
+      return;
+    }
+    const birth = new Date(value);
+    const now = new Date();
+    let age = now.getFullYear() - birth.getFullYear();
+    const m = now.getMonth() - birth.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+      age--;
+    }
+    if (age < 18) {
+      setBirthDateError('Debés ser mayor de 18 años para registrarte');
+    } else {
+      setBirthDateError('');
+    }
   };
 
   return (
@@ -90,7 +112,9 @@ export default function ProfileStep({
           fullWidth
           InputLabelProps={{ shrink: true }}
           value={birthDate}
-          onChange={e => setBirthDate(e.target.value)}
+          onChange={handleBirthDateChange}
+          error={!!birthDateError}
+          helperText={birthDateError}
         />
         <TextField
           label="Género"
@@ -124,6 +148,7 @@ export default function ProfileStep({
           type="submit"
           variant="contained"
           fullWidth
+          disabled={!first || !last || !birthDate || !gender || !!birthDateError}
         >
           Continuar
         </Button>
