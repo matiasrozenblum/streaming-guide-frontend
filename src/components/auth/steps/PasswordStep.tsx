@@ -14,6 +14,7 @@ import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import Link from 'next/link';
 
 interface PasswordStepProps {
   onSubmit: (password: string) => void;
@@ -126,6 +127,12 @@ export default function PasswordStep({
           {localErr || error}
         </Alert>
       )}
+      <Typography variant="caption" sx={{ mt: 1, mb: -1, textAlign: 'center' }}>
+        Al acceder y utilizar este sitio web, aceptás los{' '}
+        <Link href="/terminos-y-condiciones" target="_blank" style={{ color: 'inherit', textDecoration: 'underline' }}>
+          términos y condiciones
+        </Link>.
+      </Typography>
       <Box sx={{ display: 'flex', gap: 1 }}>
         <Button
           variant="outlined"
