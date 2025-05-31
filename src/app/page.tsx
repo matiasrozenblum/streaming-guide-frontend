@@ -13,6 +13,7 @@ interface InitialData {
 
 async function getInitialData(token: string): Promise<InitialData> {
   try {
+    console.log('SSR: Fetching initial data...');
     // Fetch holiday info
     const holidayPromise = fetch(`${process.env.NEXT_PUBLIC_API_URL}/holiday`, {
       headers: { Authorization: `Bearer ${token}` },
@@ -45,13 +46,17 @@ async function getInitialData(token: string): Promise<InitialData> {
       weekPromise,
     ]);
 
+    console.log('SSR: holidayData', holidayData);
+    console.log('SSR: todaySchedules', todaySchedules);
+    console.log('SSR: weekSchedules', weekSchedules);
+
     return {
       holiday: !!holidayData.holiday,
       todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
     };
   } catch (error) {
-    console.error('Error fetching initial data:', error);
+    console.error('SSR: Error fetching initial data:', error);
     return {
       holiday: false,
       todaySchedules: [],

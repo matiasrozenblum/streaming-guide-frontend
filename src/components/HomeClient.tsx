@@ -106,6 +106,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
+    // Fire immediately on mount
+    updateLiveStatuses();
+
     // Update live statuses every minute
     const intervalId = setInterval(updateLiveStatuses, 60_000);
 
