@@ -95,7 +95,7 @@ export function SchedulesTable() {
     if (status === 'authenticated' && typedSession?.user.role === 'admin') {
       fetchSchedules();
     }
-  }, [status, typedSession, fetchSchedules]);
+  }, [status, typedSession?.accessToken]);
 
   // Filtrado en vivo
   const filteredPrograms = programs.filter(p =>
@@ -154,8 +154,11 @@ export function SchedulesTable() {
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro de que deseas eliminar este horario?')) return;
     try {
-      const scheduleRes = await api.get<ScheduleType>(`/schedules/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
-      const pid = scheduleRes.data.program.id;
+      // Find the program id from local state
+      const program = programs.find(pr => pr.schedules.some(s => s.id === id));
+      const pid = program?.id;
+      if (!pid) throw new Error('No se encontró el programa para este horario');
+
       await api.delete(`/schedules/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       setPrograms(programs.map(pr =>
         pr.id === pid
