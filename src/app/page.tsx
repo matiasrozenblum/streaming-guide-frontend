@@ -46,9 +46,9 @@ async function getInitialData(token: string): Promise<InitialData> {
     ]);
 
     return {
-      holiday: holidayData.holiday,
-      todaySchedules,
-      weekSchedules,
+      holiday: !!holidayData.holiday,
+      todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
+      weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
     };
   } catch (error) {
     console.error('Error fetching initial data:', error);

@@ -45,7 +45,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [status, router]);
 
-  const [channelsWithSchedules, setChannelsWithSchedules] = useState(initialData.weekSchedules);
+  const [channelsWithSchedules, setChannelsWithSchedules] = useState(
+    Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
+  );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
 
   const { mode } = useThemeContext();
@@ -98,7 +100,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         );
 
         setLiveStatuses(liveMap);
-        setChannelsWithSchedules(weekData);
+        setChannelsWithSchedules(Array.isArray(weekData) ? weekData : []);
       } catch {
         // ignore
       }
