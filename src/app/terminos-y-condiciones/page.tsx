@@ -1,10 +1,20 @@
 "use client";
 import Header from '@/components/Header';
 import { Box, Container, Typography } from '@mui/material';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 export default function TerminosYCondiciones() {
+  const { mode } = useThemeContext();
   return (
-    <>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        background: mode === 'light'
+          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        py: { xs: 1, sm: 2 },
+      }}
+    >
       <Header />
       <Container maxWidth="sm" sx={{ mt: 4, mb: 8 }}>
         <Typography variant="h4" gutterBottom>
@@ -39,6 +49,6 @@ export default function TerminosYCondiciones() {
           </Typography>
         </Box>
       </Container>
-    </>
+    </Box>
   );
 } 
