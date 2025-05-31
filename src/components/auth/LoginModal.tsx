@@ -44,6 +44,16 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
   'existing-user': <VpnKeyIcon fontSize="small" />
 };
 
+const mapGenderToBackend = (g: string) => {
+  switch (g) {
+    case 'masculino': return 'male';
+    case 'femenino': return 'female';
+    case 'no_binario': return 'non_binary';
+    case 'prefiero_no_decir': return 'rather_not_say';
+    default: return 'rather_not_say';
+  }
+};
+
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
   const deviceId = useDeviceId();
@@ -280,7 +290,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     password: pw,
                     deviceId,
                     birthDate: birthDate || undefined,
-                    gender
+                    gender: mapGenderToBackend(gender)
                   }),
                 });
                 const body = await res.json();

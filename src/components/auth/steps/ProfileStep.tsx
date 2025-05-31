@@ -9,6 +9,7 @@ import {
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+import MenuItem from '@mui/material/MenuItem';
 
 interface ProfileStepProps {
   initialFirst?: string;
@@ -98,10 +99,10 @@ export default function ProfileStep({
           value={gender}
           onChange={e => setGender(e.target.value)}
         >
-          <option value="masculino">Masculino</option>
-          <option value="femenino">Femenino</option>
-          <option value="no_binario">No binario</option>
-          <option value="prefiero_no_decir">Prefiero no decir</option>
+          <MenuItem value="masculino">Masculino</MenuItem>
+          <MenuItem value="femenino">Femenino</MenuItem>
+          <MenuItem value="no_binario">No binario</MenuItem>
+          <MenuItem value="prefiero_no_decir">Prefiero no decir</MenuItem>
         </TextField>
       </Box>
       {(localErr || error) && (
