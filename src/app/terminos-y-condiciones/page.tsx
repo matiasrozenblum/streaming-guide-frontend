@@ -2,9 +2,11 @@
 import Header from '@/components/Header';
 import { Box, Container, Typography } from '@mui/material';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useTheme } from '@mui/material';
 
 export default function TerminosYCondiciones() {
   const { mode } = useThemeContext();
+  const theme = useTheme();
   return (
     <Box
       sx={{
@@ -13,6 +15,7 @@ export default function TerminosYCondiciones() {
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
+        color: theme.palette.text.primary,
       }}
     >
       <Header />
