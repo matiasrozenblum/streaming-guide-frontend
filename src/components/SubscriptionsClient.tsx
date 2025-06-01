@@ -108,7 +108,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           subscription_id: subscriptionId,
           new_method: notificationMethod,
           program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
-        }
+        },
+        userData: typedSession?.user
       });
     } catch {
       setError('Error al actualizar las preferencias');
@@ -121,7 +122,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           subscription_id: subscriptionId,
           attempted_method: notificationMethod,
           program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
-        }
+        },
+        userData: typedSession?.user
       });
     } finally {
       setLoading(false);
@@ -151,7 +153,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           program_name: subscription?.program.name,
           location: 'subscriptions_page',
           notification_method: subscription?.notificationMethod,
-        }
+        },
+        userData: typedSession?.user
       });
     } catch {
       setError('Error al cancelar la suscripción');
@@ -164,7 +167,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           action: 'unsubscribe',
           location: 'subscriptions_page',
           error_message: 'Error al cancelar la suscripción',
-        }
+        },
+        userData: typedSession?.user
       });
     } finally {
       setLoading(false);
@@ -178,9 +182,10 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
       params: {
         subscription_count: subscriptions.length,
         has_active_subscriptions: subscriptions.some(s => s.notificationMethod),
-      }
+      },
+      userData: typedSession?.user
     });
-  }, [subscriptions]);
+  }, [subscriptions, typedSession]);
 
   if (loading) {
     return (

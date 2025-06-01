@@ -27,12 +27,14 @@ export default function Header() {
   const handleLogout = async () => {
     gaEvent({
       action: 'logout_attempt',
-      params: {}
+      params: {},
+      userData: typedSession?.user
     });
     await signOut({ redirect: false });
     gaEvent({
       action: 'logout_success',
-      params: {}
+      params: {},
+      userData: typedSession?.user
     });
     window.location.href = '/';
   };

@@ -3,6 +3,8 @@ export interface SessionUser {
   role: string;
   name?: string;
   email?: string;
+  gender?: string;      // Added for analytics
+  birthDate?: string;   // Added for analytics
   // Agregá aquí otras propiedades relevantes del usuario si las hay
 }
 

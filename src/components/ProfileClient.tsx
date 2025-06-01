@@ -120,9 +120,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       action: 'profile_page_visit',
       params: {
         has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
-      }
+      },
+      userData: typedSession?.user
     });
-  }, [initialUser.firstName, initialUser.lastName]);
+  }, [initialUser.firstName, initialUser.lastName, typedSession?.user]);
 
   useEffect(() => {
     // If there is no real user, redirect to home
@@ -202,7 +203,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           .filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields])
           .join(','),
         has_password_change: false,
-      }
+      },
+      userData: typedSession?.user
     });
   };
 
