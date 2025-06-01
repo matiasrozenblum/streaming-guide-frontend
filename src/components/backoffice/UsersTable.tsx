@@ -50,6 +50,26 @@ function getErrorMessage(err: unknown): string {
   return JSON.stringify(err);
 }
 
+const genderTranslations: Record<string, string> = {
+  male: 'Masculino',
+  female: 'Femenino',
+  non_binary: 'No binario',
+  rather_not_say: 'Prefiero no decir'
+};
+
+type Gender = 'male' | 'female' | 'non_binary' | 'rather_not_say';
+
+interface FormData {
+  firstName: string;
+  lastName: string;
+  email: string;
+  phone: string;
+  password: string;
+  role: 'admin' | 'user';
+  gender: Gender | '';
+  birthDate: string;
+}
+
 export function UsersTable() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -58,13 +78,15 @@ export function UsersTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
-  const [formData, setFormData] = useState({
+  const [formData, setFormData] = useState<FormData>({
     firstName: '',
     lastName: '',
     email: '',
     phone: '',
     password: '',
-    role: 'user' as 'admin' | 'user',
+    role: 'user',
+    gender: '',
+    birthDate: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -104,6 +126,8 @@ export function UsersTable() {
         phone: user.phone || '',
         password: '', // Don't show current password
         role: user.role === 'admin' ? 'admin' : 'user',
+        gender: user.gender || '',
+        birthDate: user.birthDate ? user.birthDate.slice(0, 10) : '',
       });
     } else {
       setEditingUser(null);
@@ -114,6 +138,8 @@ export function UsersTable() {
         phone: '',
         password: '',
         role: 'user',
+        gender: '',
+        birthDate: '',
       });
     }
     setOpenDialog(true);
@@ -129,6 +155,8 @@ export function UsersTable() {
       phone: '',
       password: '',
       role: 'user',
+      gender: '',
+      birthDate: '',
     });
   };
 
@@ -156,6 +184,24 @@ export function UsersTable() {
       errors.password = 'La contraseña es obligatoria para nuevos usuarios.';
     } else if (formData.password && formData.password.length < 6) {
       errors.password = 'La contraseña debe tener al menos 6 caracteres.';
+    }
+    if (!formData.gender) {
+      errors.gender = 'El género es obligatorio.';
+    }
+    if (!formData.birthDate) {
+      errors.birthDate = 'La fecha de nacimiento es obligatoria.';
+    } else {
+      // Validate 18+
+      const birth = new Date(formData.birthDate);
+      const now = new Date();
+      let age = now.getFullYear() - birth.getFullYear();
+      const m = now.getMonth() - birth.getMonth();
+      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
+        age--;
+      }
+      if (age < 18) {
+        errors.birthDate = 'El usuario debe ser mayor de 18 años.';
+      }
     }
     return errors;
   };
@@ -298,6 +344,8 @@ export function UsersTable() {
               <TableCell>Email</TableCell>
               <TableCell>Teléfono</TableCell>
               <TableCell>Rol</TableCell>
+              <TableCell>Género</TableCell>
+              <TableCell>Fecha de nacimiento</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -310,6 +358,12 @@ export function UsersTable() {
                 <TableCell>{user.phone}</TableCell>
                 <TableCell>
                   {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                </TableCell>
+                <TableCell>
+                  {user.gender ? genderTranslations[user.gender] : '—'}
+                </TableCell>
+                <TableCell>
+                  {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(user)}>
@@ -380,19 +434,6 @@ export function UsersTable() {
                 error={!!fieldErrors.phone}
                 helperText={fieldErrors.phone || ''}
               />
-              <TextField
-                label="Contraseña"
-                type="password"
-                value={formData.password}
-                onChange={e => {
-                  setFormData({ ...formData, password: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, password: '' }));
-                }}
-                fullWidth
-                required={!editingUser}
-                error={!!fieldErrors.password}
-                helperText={fieldErrors.password || (editingUser ? 'Dejar en blanco para mantener la contraseña actual' : '')}
-              />
               <FormControl fullWidth>
                 <InputLabel id="role-label">Rol</InputLabel>
                 <Select
@@ -409,6 +450,51 @@ export function UsersTable() {
                   <MenuItem value="admin">Administrador</MenuItem>
                 </Select>
               </FormControl>
+              <FormControl fullWidth>
+                <InputLabel id="gender-label">Género</InputLabel>
+                <Select
+                  labelId="gender-label"
+                  value={formData.gender}
+                  label="Género"
+                  onChange={(e) => {
+                    setFormData({ ...formData, gender: e.target.value as Gender });
+                    setFieldErrors(prev => ({ ...prev, gender: '' }));
+                  }}
+                  error={!!fieldErrors.gender}
+                >
+                  <MenuItem value="male">Masculino</MenuItem>
+                  <MenuItem value="female">Femenino</MenuItem>
+                  <MenuItem value="non_binary">No binario</MenuItem>
+                  <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
+                </Select>
+                {fieldErrors.gender && <Typography color="error" variant="caption">{fieldErrors.gender}</Typography>}
+              </FormControl>
+              <TextField
+                label="Fecha de nacimiento"
+                type="date"
+                value={formData.birthDate}
+                onChange={e => {
+                  setFormData({ ...formData, birthDate: e.target.value });
+                  setFieldErrors(prev => ({ ...prev, birthDate: '' }));
+                }}
+                fullWidth
+                InputLabelProps={{ shrink: true }}
+                error={!!fieldErrors.birthDate}
+                helperText={fieldErrors.birthDate || ''}
+              />
+              <TextField
+                label="Contraseña"
+                type="password"
+                value={formData.password}
+                onChange={e => {
+                  setFormData({ ...formData, password: e.target.value });
+                  setFieldErrors(prev => ({ ...prev, password: '' }));
+                }}
+                fullWidth
+                required={!editingUser}
+                error={!!fieldErrors.password}
+                helperText={fieldErrors.password || (editingUser ? 'Dejar en blanco para mantener la contraseña actual' : '')}
+              />
             </Box>
           </DialogContent>
           <DialogActions sx={{ p: 2, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
