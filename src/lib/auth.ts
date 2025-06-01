@@ -8,6 +8,8 @@ interface JWTUser {
   email: string
   role: string
   accessToken: string
+  gender?: string
+  birthDate?: string
 }
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL as string
@@ -46,8 +48,8 @@ export const authOptions: AuthOptions = {
           access_token = body.access_token
         }
 
-        // Decodificar para extraer sub (id) y role
-        const payload = jwtDecode<{ sub: string; role: string }>(access_token)
+        // Decodificar para extraer sub (id), role, gender, birthDate
+        const payload = jwtDecode<{ sub: string; role: string; gender?: string; birthDate?: string }>(access_token)
 
         // Obtener perfil del usuario
         const profileRes = await fetch(`${API_URL}/users/me`, {
@@ -59,6 +61,8 @@ export const authOptions: AuthOptions = {
           firstName: string
           lastName: string
           email: string
+          gender?: string
+          birthDate?: string
         }
 
         return {
@@ -67,6 +71,8 @@ export const authOptions: AuthOptions = {
           email:       profile.email,
           role:        payload.role,
           accessToken: access_token,
+          gender:      payload.gender || profile.gender,
+          birthDate:   payload.birthDate || profile.birthDate,
         } as JWTUser
       },
     }),
@@ -113,6 +119,8 @@ export const authOptions: AuthOptions = {
       if (user) {
         token.accessToken = (user as JWTUser).accessToken
         token.role        = (user as JWTUser).role
+        token.gender      = (user as JWTUser).gender
+        token.birthDate   = (user as JWTUser).birthDate
       }
       return token
     },
@@ -121,6 +129,8 @@ export const authOptions: AuthOptions = {
       session.user.id     = token.sub as string
       session.user.role   = token.role as string
       session.user.name   = session.user.name || ''
+      session.user.gender    = token.gender as string
+      session.user.birthDate = token.birthDate as string
       return session
     },
   },

@@ -35,7 +35,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
   const router = useRouter();
   const { status, session } = useSessionContext();
-  const typedSession = session as SessionWithToken | null;
   const deviceId = useDeviceId();
   
   useEffect(() => {
@@ -68,23 +67,28 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const showSkeleton = flattened.length === 0;
 
   useEffect(() => {
-    let isMounted = true;
+    if (!session || !deviceId) return; // Wait until both are available
 
-    // Update live statuses periodically
+    let isMounted = true;
+    console.log('Polling effect ran');
+
     const updateLiveStatuses = async () => {
-      if (!typedSession?.accessToken) {
+      const currentSession = session as SessionWithToken | null;
+      const accessToken = currentSession?.accessToken;
+      const currentDeviceId = deviceId;
+      if (!accessToken) {
         console.warn('Attempted to update live statuses without an access token.');
         return;
       }
       try {
         const params: { live_status: boolean; deviceId?: string } = { live_status: true };
-        if (deviceId) {
-          params.deviceId = deviceId;
+        if (currentDeviceId) {
+          params.deviceId = currentDeviceId;
         }
 
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
           params,
-          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!isMounted) return;
 
@@ -106,17 +110,20 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
-    // Fire immediately on mount
     updateLiveStatuses();
 
-    // Update live statuses every minute
-    const intervalId = setInterval(updateLiveStatuses, 60_000);
+    const intervalId = setInterval(() => {
+      console.log('Polling interval fired');
+      updateLiveStatuses();
+    }, 60_000);
+    console.log('Polling interval set');
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      console.log('Polling interval cleared');
     };
-  }, [setLiveStatuses, typedSession?.accessToken, deviceId]);
+  }, [session, deviceId]); // Depend on both
 
   useEffect(() => {
     if (flattened.length > 0) {

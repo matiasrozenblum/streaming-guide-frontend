@@ -33,6 +33,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { event as gaEvent } from '@/lib/gtag';
 
 const MotionBox = motion(Box);
 
@@ -113,6 +114,17 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const router = useRouter();
   const { mode } = useThemeContext();
 
+  // Track profile page visit
+  useEffect(() => {
+    gaEvent({
+      action: 'profile_page_visit',
+      params: {
+        has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
+      },
+      userData: typedSession?.user
+    });
+  }, [initialUser.firstName, initialUser.lastName, typedSession?.user]);
+
   useEffect(() => {
     // If there is no real user, redirect to home
     if (!typedSession?.user || !typedSession.user.id) {
@@ -181,6 +193,19 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       });
     alert(res.ok ? 'Datos actualizados' : 'Error al actualizar');
     if (res.ok) setEditSection('none');
+
+    // Track successful profile update
+    type ProfileFields = { firstName: string; lastName: string; gender: string; birthDate: string };
+    gaEvent({
+      action: 'profile_update',
+      params: {
+        fields_updated: ['firstName', 'lastName', 'gender', 'birthDate']
+          .filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields])
+          .join(','),
+        has_password_change: false,
+      },
+      userData: typedSession?.user
+    });
   };
 
   const sendCode = async (field: 'email' | 'phone' | 'password') => {
