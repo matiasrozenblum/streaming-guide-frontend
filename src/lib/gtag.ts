@@ -1,3 +1,5 @@
+import posthog from 'posthog-js';
+
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
 declare global {
@@ -71,6 +73,15 @@ export const event = ({ action, params }: { action: string; params?: GtagEventPa
       // event_category: params.category,
       // event_label: params.label,
       // value: params.value,
+    });
+
+    // Also send to PostHog
+    posthog.capture(action, {
+      ...params,
+      user_id: userData.id,
+      user_gender: userData.gender,
+      user_age: age,
+      user_role: userData.role,
     });
   }
 };
