@@ -45,23 +45,23 @@ type NextData = {
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
 export const event = ({ action, params }: { action: string; params?: GtagEventParams }) => {
-  if (typeof window.gtag === 'function') {
-    // Get user data from session if available
-    const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
-    const userData = nextData?.props?.pageProps?.session?.user || {};
-    
-    // Calculate age if birthDate is available
-    let age: number | undefined;
-    if (userData.birthDate) {
-      const birthDate = new Date(userData.birthDate);
-      const today = new Date();
-      age = today.getFullYear() - birthDate.getFullYear();
-      const monthDiff = today.getMonth() - birthDate.getMonth();
-      if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
-        age--;
-      }
+  // Get user data from session if available
+  const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
+  const userData = nextData?.props?.pageProps?.session?.user || {};
+  
+  // Calculate age if birthDate is available
+  let age: number | undefined;
+  if (userData.birthDate) {
+    const birthDate = new Date(userData.birthDate);
+    const today = new Date();
+    age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
     }
+  }
 
+  if (typeof window.gtag === 'function') {
     window.gtag('event', action, {
       ...params,
       // Add user data if available
@@ -69,19 +69,15 @@ export const event = ({ action, params }: { action: string; params?: GtagEventPa
       user_gender: userData.gender,
       user_age: age,
       user_role: userData.role,
-      // si aún quieres mantener compatibilidad con UA:
-      // event_category: params.category,
-      // event_label: params.label,
-      // value: params.value,
-    });
-
-    // Also send to PostHog
-    posthog.capture(action, {
-      ...params,
-      user_id: userData.id,
-      user_gender: userData.gender,
-      user_age: age,
-      user_role: userData.role,
     });
   }
+
+  // Always send to PostHog
+  posthog.capture(action, {
+    ...params,
+    user_id: userData.id,
+    user_gender: userData.gender,
+    user_age: age,
+    user_role: userData.role,
+  });
 };
