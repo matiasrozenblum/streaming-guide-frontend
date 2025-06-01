@@ -17,12 +17,28 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.4.4] - 2025-04-31
+## [0.4.6] - 2025-06-01
+
+### Added
+- Added integration to Posthog for metrics tracking
+
+### Fixed
+- Fixed schedules backoffice
+
+## [0.4.5] - 2025-05-31
+
+### Added
+- Added several new GA4 events with demographics
+
+### Changed
+- Added demographics to preexisting events
+
+## [0.4.4] - 2025-05-31
 
 ### Added
 - Added gender and birth date fields to user signup, profile and backoffice
 
-## [0.4.3] - 2025-04-31
+## [0.4.3] - 2025-05-31
 
 ### Changed
 - Optimized home client, profile and subscription pages.
@@ -30,7 +46,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 - Fixed backoffice schedules reloading every time and not deleting schedules
 
-## [0.4.2] - 2025-04-27
+## [0.4.2] - 2025-05-27
 
 ### Changed
 - Made some minor visual adjustments
@@ -38,98 +54,98 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 - Fixed pushs again
 
-## [0.4.1] - 2025-04-26
+## [0.4.1] - 2025-05-26
 
 ### Fixed
 - Fixed push subscriptions generation
 
-## [0.4.0] - 2025-04-25
+## [0.4.0] - 2025-05-25
 
 ### Added
 - Added program subscriptions for users with favorites section and email & push notifications
 
-## [0.3.10] - 2025-04-25
+## [0.3.10] - 2025-05-25
 
 ### Added
 - Added user role to user backoffice
 
-## [0.3.9] - 2025-04-25
+## [0.3.9] - 2025-05-25
 
 ### Changed
 - Several ux tweaks and improvements, including removing backgrounds, aligning buttons and improving user menu and button
 
-## [0.3.8] - 2025-04-21
+## [0.3.8] - 2025-05-21
 
 ### Changed
 - Added session context to avoid duplicate requests and redirect to login when invalid session
 - Multiple UX tweaks
 
-## [0.3.7] - 2025-04-19
+## [0.3.7] - 2025-05-19
 
 ### Changed
 - Made channel logos not draggable
 - Reordered sign up buttons
 
-## [0.3.6] - 2025-04-19
+## [0.3.6] - 2025-05-19
 
 ### Added
 - Added users backoffice
 
-## [0.3.5] - 2025-04-18
+## [0.3.5] - 2025-05-18
 
 ### Changed
 - Moved header into new component
 - Now in mobile only showing user icon
 - Resized header, made it smaller in mobile
 
-## [0.3.4] - 2025-04-18
+## [0.3.4] - 2025-05-18
 
 ### Added
 - Added reset password to login flow
 
-## [0.3.3] - 2025-04-18
+## [0.3.3] - 2025-05-18
 
 ### Added
 - Added profile page
 
-## [0.3.2] - 2025-04-17
+## [0.3.2] - 2025-05-17
 
 ### Removed
 - Removed backoffice login, now using user role
 
-## [0.3.1] - 2025-04-16
+## [0.3.1] - 2025-05-16
 
 ### Fixed
 - Migrated all sessions related logic to next-auth
 
-## [0.3.0] - 2025-04-16
+## [0.3.0] - 2025-05-16
 
 ### Added
 - Added user sign up and login
 
-## [0.2.4] - 2025-04-06
+## [0.2.4] - 2025-05-06
 
 ### Changed
 - Made some visual adjustments, including replacing 100vh for 100dvh
 
-## [0.2.3] - 2025-04-06
+## [0.2.3] - 2025-05-06
 
 ### Changed
 - Made blur effect greater in legal layout
 - Separated skeleton grid into two, one web and one mobile
 - Added a bit more margin for the automatic scroll
 
-## [0.2.2] - 2025-04-05
+## [0.2.2] - 2025-05-05
 
 ### Changed
 - Made skeleton grid 10 rows for mobile
 
-## [0.2.1] - 2025-04-04
+## [0.2.1] - 2025-05-04
 
 ### Changed
 - Reverted legal page condition to show real logos
 
-## [0.2.0] - 2025-04-04
+## [0.2.0] - 2025-05-04
 
 ### Added
 - Added sleketon loading grid
@@ -137,12 +153,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Changed
 - Optimized some backend requests
 
-## [0.1.21] - 2025-04-02
+## [0.1.21] - 2025-05-02
 
 ### Changed
 - Optimized loading times
 
-## [0.1.20] - 2025-04-02
+## [0.1.20] - 2025-05-02
 
 ### Added
 - Added search boxes in backoffice
@@ -151,12 +167,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Changed
 - Changed holiday alert for dialog
 
-## [0.1.19] - 2025-04-01
+## [0.1.19] - 2025-05-01
 
 ### Changed
 - Moved theme button
 
-## [0.1.18] - 2025-04-01
+## [0.1.18] - 2025-05-01
 
 ### Added
 - Added holiday message

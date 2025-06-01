@@ -109,11 +109,13 @@ export const ProgramBlock: React.FC<Props> = ({
     Clarity.setTag('program_name', name);
     Clarity.event(isLive ? 'click_youtube_live' : 'click_youtube_deferred');
 
-    gaEvent(
-      isLive ? 'click_youtube_live' : 'click_youtube_deferred',
-      {
-      category: 'program',
-      program_name: name,
+    gaEvent({
+      action: isLive ? 'click_youtube_live' : 'click_youtube_deferred',
+      params: {
+        category: 'program',
+        program_name: name,
+      },
+      userData: typedSession?.user
     });
 
     try {
@@ -180,12 +182,34 @@ export const ProgramBlock: React.FC<Props> = ({
           }
         );
         console.log(`✅ Subscribed to ${name}`);
+        
+        // Track subscription event
+        gaEvent({
+          action: 'program_subscribe',
+          params: {
+            program_id: id,
+            program_name: name,
+            notification_method: 'both',
+            has_push: !!pushSubscription,
+          },
+          userData: typedSession?.user
+        });
       } else {
         // Unsubscribe from program
         await api.delete(`/programs/${id}/subscribe`, {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
         console.log(`🚫 Unsubscribed from ${name}`);
+        
+        // Track unsubscription event
+        gaEvent({
+          action: 'program_unsubscribe',
+          params: {
+            program_id: id,
+            program_name: name,
+          },
+          userData: typedSession?.user
+        });
       }
       // Success: do nothing, UI already updated
     } catch (error) {
@@ -193,6 +217,18 @@ export const ProgramBlock: React.FC<Props> = ({
       setIsOn(prevIsOn);
       alert('Error updating subscription. Please try again.');
       console.error('Error updating subscription:', error);
+      
+      // Track subscription error
+      gaEvent({
+        action: 'subscription_error',
+        params: {
+          action: willSubscribe ? 'subscribe' : 'unsubscribe',
+          program_id: id,
+          program_name: name,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        },
+        userData: typedSession?.user
+      });
     } finally {
       setIsLoading(false);
     }

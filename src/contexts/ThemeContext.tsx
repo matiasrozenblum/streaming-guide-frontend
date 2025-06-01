@@ -153,11 +153,12 @@ export const CustomThemeProvider = ({ children }: { children: React.ReactNode })
     setMode((prevMode) => {
       const newMode = prevMode === 'light' ? 'dark' : 'light';
       localStorage.setItem('themeMode', newMode);
-      gaEvent(
-        'theme_change',
-        {
-        new_mode: newMode,
-        old_mode: prevMode,
+      gaEvent({
+        action: 'theme_change',
+        params: {
+          new_mode: newMode,
+          old_mode: prevMode,
+        }
       });
       return newMode;
     });

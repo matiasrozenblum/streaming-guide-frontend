@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -69,6 +69,8 @@ export function SchedulesTable() {
   const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
 
+  const hasFetched = useRef(false);
+
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
     try {
@@ -92,10 +94,15 @@ export function SchedulesTable() {
   }, [typedSession]);
 
   useEffect(() => {
-    if (status === 'authenticated' && typedSession?.user.role === 'admin') {
+    if (
+      status === 'authenticated' &&
+      typedSession?.user.role === 'admin' &&
+      !hasFetched.current
+    ) {
       fetchSchedules();
+      hasFetched.current = true;
     }
-  }, [status, typedSession?.accessToken]);
+  }, [status, fetchSchedules, typedSession?.user.role]);
 
   // Filtrado en vivo
   const filteredPrograms = programs.filter(p =>
@@ -122,9 +129,9 @@ export function SchedulesTable() {
     if (!editingSchedule) return;
     try {
       const updateData = {
-        day_of_week: formData.dayOfWeek,
-        start_time: formData.startTime,
-        end_time: formData.endTime,
+        dayOfWeek: formData.dayOfWeek,
+        startTime: formData.startTime,
+        endTime: formData.endTime,
       };
       const response = await api.put<ScheduleType>(
         `/schedules/${editingSchedule.id}`,
@@ -200,11 +207,15 @@ export function SchedulesTable() {
       if (!programFormData.dayOfWeek || !programFormData.startTime || !programFormData.endTime) {
         throw new Error('Todos los campos son requeridos');
       }
+      if (!selectedProgram.channel_id) {
+        throw new Error('El programa debe estar asociado a un canal');
+      }
       const newData = {
-        program_id: selectedProgram.id,
-        day_of_week: programFormData.dayOfWeek,
-        start_time: programFormData.startTime,
-        end_time: programFormData.endTime,
+        programId: selectedProgram.id.toString(),
+        channelId: selectedProgram.channel_id.toString(),
+        dayOfWeek: programFormData.dayOfWeek,
+        startTime: programFormData.startTime,
+        endTime: programFormData.endTime,
       };
       const resp = await api.post<ScheduleType>('/schedules', newData, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       const created = resp.data;
@@ -213,6 +224,11 @@ export function SchedulesTable() {
           ? { ...pr, schedules: [...pr.schedules, created] }
           : pr
       ));
+      setSelectedProgram(prev =>
+        prev && prev.id === selectedProgram.id
+          ? { ...prev, schedules: [...prev.schedules, created] }
+          : prev
+      );
       setSuccess('Nuevo horario agregado correctamente');
       setShowAddScheduleForm(false);
     } catch (err) {
