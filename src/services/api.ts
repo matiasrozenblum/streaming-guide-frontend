@@ -11,8 +11,8 @@ api.interceptors.response.use(
   response => response,
   error => {
     if (error.response?.status === 401) {
-      // Forzar logout y redirigir al login
-      signOut({ callbackUrl: '/login' });
+      // Forzar logout y redirigir al home
+      signOut({ callbackUrl: '/' });
     }
     return Promise.reject(error);
   }
