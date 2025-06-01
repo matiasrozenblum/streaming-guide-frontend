@@ -29,7 +29,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   };
 
   const openPlaylist = (listId: string) => {
-    // “videoseries?list=” es exactamente lo que usaba /embed/videoseries?list=...
+    // "videoseries?list=" es exactamente lo que usaba /embed/videoseries?list=...
     setEmbedPath(`videoseries?list=${listId}`);
     setOpen(true);
     setMinimized(false);
@@ -44,19 +44,19 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const minimizePlayer = () => {
     setMinimized(true);
     Clarity.event('minimize_youtube')
-    gaEvent(
-      'minimize_youtube',
-      {}
-    );
+    gaEvent({
+      action: 'minimize_youtube',
+      params: {}
+    });
   };
 
   const maximizePlayer = () => {
     setMinimized(false);
     Clarity.event('maximize_youtube')
-    gaEvent(
-      'maximize_youtube',
-      {}
-    );
+    gaEvent({
+      action: 'maximize_youtube',
+      params: {}
+    });
   };
 
   return (

@@ -127,10 +127,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               setSelectedDay(day.value);
               Clarity.setTag('selected_day', day.value);
               Clarity.event('day_change');
-              gaEvent(
-                'day_change',
-                { day: day.value, client: 'mobile' }
-              );
+              gaEvent({
+                action: 'day_change',
+                params: { day: day.value, client: 'mobile' }
+              });
             }}
             sx={{
               minWidth: '40px',
@@ -203,10 +203,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               setTimeout(() => scrollToNow(), 100);
             } else scrollToNow();
             Clarity.event('live_button_click');
-            gaEvent(
-              'live_button_click',
-              { client: 'mobile' }
-            );
+            gaEvent({
+              action: 'scroll_to_now',
+              params: { client: 'mobile' }
+            });
           }}
           sx={{
             position: 'fixed',

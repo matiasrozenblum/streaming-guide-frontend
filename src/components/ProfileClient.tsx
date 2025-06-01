@@ -116,10 +116,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
   // Track profile page visit
   useEffect(() => {
-    gaEvent('profile_page_visit', {
-      has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
+    gaEvent({
+      action: 'profile_page_visit',
+      params: {
+        has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
+      }
     });
-  }, []);
+  }, [initialUser.firstName, initialUser.lastName]);
 
   useEffect(() => {
     // If there is no real user, redirect to home
@@ -192,9 +195,14 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
 
     // Track successful profile update
     type ProfileFields = { firstName: string; lastName: string; gender: string; birthDate: string };
-    gaEvent('profile_update', {
-      fields_updated: ['firstName', 'lastName', 'gender', 'birthDate'].filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields]),
-      has_password_change: false,
+    gaEvent({
+      action: 'profile_update',
+      params: {
+        fields_updated: ['firstName', 'lastName', 'gender', 'birthDate']
+          .filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields])
+          .join(','),
+        has_password_change: false,
+      }
     });
   };
 

@@ -2,7 +2,6 @@
 
 import React, { useState, useRef, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { signOut } from 'next-auth/react';
 import {
   Button,
   Menu,
@@ -23,7 +22,11 @@ import type { SessionWithToken } from '@/types/session';
 
 const MIN_WIDTH = 155; // Minimum width based on natural "¡Hola, Matias!" size
 
-export default function UserMenu() {
+interface UserMenuProps {
+  onLogout: () => Promise<void>;
+}
+
+export default function UserMenu({ onLogout }: UserMenuProps) {
   const router = useRouter();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -57,9 +60,7 @@ export default function UserMenu() {
   const handleClose = () => setAnchorEl(null);
 
   const handleLogout = async () => {
-    handleClose(); // Close menu first
-    await signOut({ callbackUrl: '/login' });
-    router.refresh();
+    await onLogout();
   };
 
   return (

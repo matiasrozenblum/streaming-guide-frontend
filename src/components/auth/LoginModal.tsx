@@ -83,8 +83,11 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   // Track modal open
   useEffect(() => {
     if (open) {
-      gaEvent('auth_modal_open', {
-        is_existing_user: isUserExisting,
+      gaEvent({
+        action: 'auth_modal_open',
+        params: {
+          is_existing_user: isUserExisting,
+        }
       });
     }
   }, [open, isUserExisting]);
@@ -92,10 +95,13 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   // Track step changes
   useEffect(() => {
     if (open) {
-      gaEvent('auth_step_change', {
-        step,
-        is_existing_user: isUserExisting,
-        has_error: !!error,
+      gaEvent({
+        action: 'auth_step_change',
+        params: {
+          step,
+          is_existing_user: isUserExisting,
+          has_error: !!error,
+        }
       });
     }
   }, [step, open, isUserExisting, error]);
@@ -184,13 +190,20 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               });
               if (nxt?.error) {
                 setError('Credenciales inválidas');
-                gaEvent('login_error', {
-                  error_type: 'invalid_credentials',
-                  email_provided: !!email,
+                gaEvent({
+                  action: 'login_error',
+                  params: {
+                    method: 'password',
+                    error: 'invalid_credentials',
+                    email_provided: !!email,
+                  }
                 });
               } else {
-                gaEvent('login_success', {
-                  method: 'password',
+                gaEvent({
+                  action: 'login_success',
+                  params: {
+                    method: 'password',
+                  }
                 });
                 onClose(); window.location.reload();
               }
@@ -248,15 +261,21 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const body = await res.json();
                 if (!res.ok) throw new Error(body.message || 'Error');
                 if (body.isNew) {
-                  gaEvent('signup_step_complete', {
-                    step: 'email_verification',
-                    email_provided: !!email,
+                  gaEvent({
+                    action: 'signup_step_complete',
+                    params: {
+                      step: 'email_verification',
+                      email_provided: !!email,
+                    }
                   });
                   setRegistrationToken(body.registration_token);
                   setStep('profile');
                 } else {
-                  gaEvent('login_success', {
-                    method: 'otp',
+                  gaEvent({
+                    action: 'login_success',
+                    params: {
+                      method: 'otp',
+                    }
                   });
                   const nxt = await signIn('credentials', {
                     redirect: false,
@@ -268,9 +287,13 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 }
               } catch (err: unknown) {
                 setError(getErrorMessage(err));
-                gaEvent('login_error', {
-                  error_type: 'otp_verification_failed',
-                  email_provided: !!email,
+                gaEvent({
+                  action: 'login_error',
+                  params: {
+                    method: 'otp',
+                    error: err instanceof Error ? err.message : 'otp_verification_failed',
+                    email_provided: !!email,
+                  }
                 });
               }
               setIsLoading(false);
@@ -291,12 +314,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               setLastName(l);
               setBirthDate(b);
               setGender(g);
-              gaEvent('signup_step_complete', {
-                step: 'profile',
-                has_first_name: !!f,
-                has_last_name: !!l,
-                has_birth_date: !!b,
-                has_gender: !!g,
+              gaEvent({
+                action: 'signup_step_complete',
+                params: {
+                  step: 'profile',
+                  has_first_name: !!f,
+                  has_last_name: !!l,
+                  has_birth_date: !!b,
+                  has_gender: !!g,
+                }
               });
               setStep('password');
             }}
@@ -346,18 +372,24 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   accessToken: body.access_token,
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
-                gaEvent('signup_success', {
-                  has_first_name: !!firstName,
-                  has_last_name: !!lastName,
-                  has_birth_date: !!birthDate,
-                  has_gender: !!gender,
+                gaEvent({
+                  action: 'signup_success',
+                  params: {
+                    has_first_name: !!firstName,
+                    has_last_name: !!lastName,
+                    has_birth_date: !!birthDate,
+                    has_gender: !!gender,
+                  }
                 });
                 onClose(); window.location.reload();
               } catch (err: unknown) {
                 setError(getErrorMessage(err));
-                gaEvent('signup_error', {
-                  error_type: err instanceof Error ? err.message : 'unknown',
-                  step: 'final_registration',
+                gaEvent({
+                  action: 'signup_error',
+                  params: {
+                    step: 'final_registration',
+                    error: err instanceof Error ? err.message : 'unknown',
+                  }
                 });
               }
               setIsLoading(false);

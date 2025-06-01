@@ -109,11 +109,12 @@ export const ProgramBlock: React.FC<Props> = ({
     Clarity.setTag('program_name', name);
     Clarity.event(isLive ? 'click_youtube_live' : 'click_youtube_deferred');
 
-    gaEvent(
-      isLive ? 'click_youtube_live' : 'click_youtube_deferred',
-      {
-      category: 'program',
-      program_name: name,
+    gaEvent({
+      action: isLive ? 'click_youtube_live' : 'click_youtube_deferred',
+      params: {
+        category: 'program',
+        program_name: name,
+      }
     });
 
     try {
@@ -182,11 +183,14 @@ export const ProgramBlock: React.FC<Props> = ({
         console.log(`✅ Subscribed to ${name}`);
         
         // Track subscription event
-        gaEvent('program_subscribe', {
-          program_id: id,
-          program_name: name,
-          notification_method: 'both',
-          has_push: !!pushSubscription,
+        gaEvent({
+          action: 'program_subscribe',
+          params: {
+            program_id: id,
+            program_name: name,
+            notification_method: 'both',
+            has_push: !!pushSubscription,
+          }
         });
       } else {
         // Unsubscribe from program
@@ -196,9 +200,12 @@ export const ProgramBlock: React.FC<Props> = ({
         console.log(`🚫 Unsubscribed from ${name}`);
         
         // Track unsubscription event
-        gaEvent('program_unsubscribe', {
-          program_id: id,
-          program_name: name,
+        gaEvent({
+          action: 'program_unsubscribe',
+          params: {
+            program_id: id,
+            program_name: name,
+          }
         });
       }
       // Success: do nothing, UI already updated
@@ -209,11 +216,14 @@ export const ProgramBlock: React.FC<Props> = ({
       console.error('Error updating subscription:', error);
       
       // Track subscription error
-      gaEvent('subscription_error', {
-        program_id: id,
-        program_name: name,
-        action: willSubscribe ? 'subscribe' : 'unsubscribe',
-        error: error instanceof Error ? error.message : 'Unknown error',
+      gaEvent({
+        action: 'subscription_error',
+        params: {
+          action: willSubscribe ? 'subscribe' : 'unsubscribe',
+          program_id: id,
+          program_name: name,
+          error: error instanceof Error ? error.message : 'Unknown error',
+        }
       });
     } finally {
       setIsLoading(false);
