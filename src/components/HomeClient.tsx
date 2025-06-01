@@ -35,7 +35,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const startRef = useRef(performance.now());
   const router = useRouter();
   const { status, session } = useSessionContext();
-  const typedSession = session as SessionWithToken | null;
   const deviceId = useDeviceId();
   
   useEffect(() => {
@@ -69,22 +68,27 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   useEffect(() => {
     let isMounted = true;
+    console.log('Polling effect ran');
 
     // Update live statuses periodically
     const updateLiveStatuses = async () => {
-      if (!typedSession?.accessToken) {
+      // Read latest values inside the function
+      const currentSession = session as SessionWithToken | null;
+      const accessToken = currentSession?.accessToken;
+      const currentDeviceId = deviceId;
+      if (!accessToken) {
         console.warn('Attempted to update live statuses without an access token.');
         return;
       }
       try {
         const params: { live_status: boolean; deviceId?: string } = { live_status: true };
-        if (deviceId) {
-          params.deviceId = deviceId;
+        if (currentDeviceId) {
+          params.deviceId = currentDeviceId;
         }
 
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
           params,
-          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+          headers: { Authorization: `Bearer ${accessToken}` },
         });
         if (!isMounted) return;
 
@@ -110,13 +114,19 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     updateLiveStatuses();
 
     // Update live statuses every minute
-    const intervalId = setInterval(updateLiveStatuses, 60_000);
+    const intervalId = setInterval(() => {
+      console.log('Polling interval fired');
+      updateLiveStatuses();
+    }, 60_000);
+    console.log('Polling interval set');
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      console.log('Polling interval cleared');
     };
-  }, [setLiveStatuses, typedSession?.accessToken, deviceId]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Only run once on mount
 
   useEffect(() => {
     if (flattened.length > 0) {
