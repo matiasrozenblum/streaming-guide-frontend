@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [0.4.5] - 2025-06-01
+## [0.4.6] - 2025-06-01
 
 ### Added
 - Added integration to Posthog for metrics tracking
