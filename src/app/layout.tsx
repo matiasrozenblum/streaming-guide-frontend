@@ -12,6 +12,7 @@ import { ClarityLoader } from '@/components/ClarityLoader'
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import Head from 'next/head';
 import { PushProvider } from '@/contexts/PushContext';
+import posthog from 'posthog-js';
 
 const inter = Inter({ subsets: ['latin'] });
 const GTM_ID = 'GTM-TCGNQB97';
@@ -32,11 +33,22 @@ export const viewport: Viewport = {
   viewportFit: 'cover',
 };
 
+let posthogInitialized = false;
+
 export default function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  if (typeof window !== 'undefined' && !posthogInitialized) {
+    posthog.init('phc_ioX3gwDuENT8MoUWSacARsCFVE6bSbKaEh5u7Mie5oK', {
+      api_host: 'https://app.posthog.com',
+      loaded: (ph) => {
+        if (process.env.NODE_ENV === 'development') ph.opt_out_capturing();
+      }
+    });
+    posthogInitialized = true;
+  }
   return (
     <html lang="es" suppressHydrationWarning>
       {/* Preconnect para GA */}
