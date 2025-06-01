@@ -17,6 +17,7 @@ import ProfileStep from './steps/ProfileStep';
 import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
+import { event as gaEvent } from '@/lib/gtag';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -78,6 +79,26 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setForgotPassword(false);
     }
   }, [open]);
+
+  // Track modal open
+  useEffect(() => {
+    if (open) {
+      gaEvent('auth_modal_open', {
+        is_existing_user: isUserExisting,
+      });
+    }
+  }, [open, isUserExisting]);
+
+  // Track step changes
+  useEffect(() => {
+    if (open) {
+      gaEvent('auth_step_change', {
+        step,
+        is_existing_user: isUserExisting,
+        has_error: !!error,
+      });
+    }
+  }, [step, open, isUserExisting, error]);
 
   const steps = isUserExisting ? ALL_STEPS.existing : ALL_STEPS.new;
   const activeStep = steps.indexOf(step);
@@ -163,7 +184,14 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               });
               if (nxt?.error) {
                 setError('Credenciales inválidas');
+                gaEvent('login_error', {
+                  error_type: 'invalid_credentials',
+                  email_provided: !!email,
+                });
               } else {
+                gaEvent('login_success', {
+                  method: 'password',
+                });
                 onClose(); window.location.reload();
               }
               setIsLoading(false);
@@ -220,9 +248,16 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const body = await res.json();
                 if (!res.ok) throw new Error(body.message || 'Error');
                 if (body.isNew) {
+                  gaEvent('signup_step_complete', {
+                    step: 'email_verification',
+                    email_provided: !!email,
+                  });
                   setRegistrationToken(body.registration_token);
                   setStep('profile');
                 } else {
+                  gaEvent('login_success', {
+                    method: 'otp',
+                  });
                   const nxt = await signIn('credentials', {
                     redirect: false,
                     accessToken: body.access_token,
@@ -233,6 +268,10 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 }
               } catch (err: unknown) {
                 setError(getErrorMessage(err));
+                gaEvent('login_error', {
+                  error_type: 'otp_verification_failed',
+                  email_provided: !!email,
+                });
               }
               setIsLoading(false);
             }}
@@ -252,6 +291,13 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               setLastName(l);
               setBirthDate(b);
               setGender(g);
+              gaEvent('signup_step_complete', {
+                step: 'profile',
+                has_first_name: !!f,
+                has_last_name: !!l,
+                has_birth_date: !!b,
+                has_gender: !!g,
+              });
               setStep('password');
             }}
           />
@@ -300,9 +346,19 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   accessToken: body.access_token,
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
+                gaEvent('signup_success', {
+                  has_first_name: !!firstName,
+                  has_last_name: !!lastName,
+                  has_birth_date: !!birthDate,
+                  has_gender: !!gender,
+                });
                 onClose(); window.location.reload();
               } catch (err: unknown) {
                 setError(getErrorMessage(err));
+                gaEvent('signup_error', {
+                  error_type: err instanceof Error ? err.message : 'unknown',
+                  step: 'final_registration',
+                });
               }
               setIsLoading(false);
             }}
