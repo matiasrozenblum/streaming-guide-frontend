@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect } from 'react';
-import { signIn } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -21,15 +20,15 @@ export default function ProtectedRoute({ children }: ProtectedRouteProps) {
     if (status === 'loading') return;
 
     if (status === 'unauthenticated') {
-      // No autenticado → redirige al login
-      signIn(undefined, { callbackUrl: pathname });
+      // Redirect to home and open login modal
+      router.push('/?login=true');
     } else if (typedSession?.user.role !== 'admin') {
-      // No es admin → redirige al home público
+      // Not admin → redirect to home
       router.push('/');
     }
   }, [status, typedSession, router, pathname]);
 
-  // Si está cargando o no es admin (y no fue redirigido), muestra un loader o nada
+  // Show loader while loading or if not admin
   if (status === 'loading' || (status === 'authenticated' && typedSession?.user.role !== 'admin')) {
     return (
       <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>
