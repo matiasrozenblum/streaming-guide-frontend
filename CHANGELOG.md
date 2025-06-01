@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [0.4.5] - 2025-04-31
+
+### Added
+- Added several new GA4 events with demographics
+
+### Changed
+- Added demographics to preexisting events
+
 ## [0.4.4] - 2025-04-31
 
 ### Added
