@@ -67,12 +67,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const showSkeleton = flattened.length === 0;
 
   useEffect(() => {
+    if (!session || !deviceId) return; // Wait until both are available
+
     let isMounted = true;
     console.log('Polling effect ran');
 
-    // Update live statuses periodically
     const updateLiveStatuses = async () => {
-      // Read latest values inside the function
       const currentSession = session as SessionWithToken | null;
       const accessToken = currentSession?.accessToken;
       const currentDeviceId = deviceId;
@@ -110,10 +110,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
-    // Fire immediately on mount
     updateLiveStatuses();
 
-    // Update live statuses every minute
     const intervalId = setInterval(() => {
       console.log('Polling interval fired');
       updateLiveStatuses();
@@ -125,8 +123,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       clearInterval(intervalId);
       console.log('Polling interval cleared');
     };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Only run once on mount
+  }, [session, deviceId]); // Depend on both
 
   useEffect(() => {
     if (flattened.length > 0) {
