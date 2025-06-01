@@ -44,6 +44,16 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
   'existing-user': <VpnKeyIcon fontSize="small" />
 };
 
+const mapGenderToBackend = (g: string) => {
+  switch (g) {
+    case 'masculino': return 'male';
+    case 'femenino': return 'female';
+    case 'no_binario': return 'non_binary';
+    case 'prefiero_no_decir': return 'rather_not_say';
+    default: return 'rather_not_say';
+  }
+};
+
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
   const deviceId = useDeviceId();
@@ -57,6 +67,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [lastName, setLastName] = useState('');
   const [error, setError] = useState('');
   const [forgotPassword, setForgotPassword] = useState(false);
+  const [birthDate, setBirthDate] = useState('');
+  const [gender, setGender] = useState('');
 
   useEffect(() => {
     if (!open) {
@@ -231,41 +243,30 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
           <ProfileStep
             initialFirst={firstName}
             initialLast={lastName}
+            initialBirthDate={birthDate}
+            initialGender={gender}
             error={error}
             onBack={() => setStep('code')}
-            onSubmit={(f,l) => { setFirstName(f); setLastName(l); setStep('password'); }}
+            onSubmit={(f, l, b, g) => {
+              setFirstName(f);
+              setLastName(l);
+              setBirthDate(b);
+              setGender(g);
+              setStep('password');
+            }}
           />
         )}
 
         {step === 'password' && forgotPassword && (
-          <PasswordStep
+          <CodeStep
+            email={email}
+            initialCode={code}
             isLoading={isLoading}
             error={error}
-            onBack={() => setStep('code')}
-            submitLabel="Cambiar contraseña"
-            onSubmit={async (pw) => {
-              setIsLoading(true); setError('');
-              try {
-                // POST to reset-password endpoint with email, password, and code
-                const resetRes = await fetch('/api/users/reset-password', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email, password: pw, code }),
-                });
-                const resetBody = await resetRes.json();
-                if (!resetRes.ok) throw new Error(resetBody.message || 'Error al cambiar la contraseña');
-                // Now try to login
-                const nxt = await signIn('credentials', {
-                  redirect: false,
-                  email,
-                  password: pw,
-                });
-                if (nxt?.error) throw new Error('No se pudo iniciar sesión');
-                onClose(); window.location.reload();
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
-              }
-              setIsLoading(false);
+            onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
+            onSubmit={async (c) => {
+              setCode(c);
+              setStep('password');
             }}
           />
         )}
@@ -288,6 +289,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     lastName,
                     password: pw,
                     deviceId,
+                    birthDate: birthDate || undefined,
+                    gender: mapGenderToBackend(gender)
                   }),
                 });
                 const body = await res.json();
