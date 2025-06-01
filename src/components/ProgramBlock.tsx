@@ -180,12 +180,26 @@ export const ProgramBlock: React.FC<Props> = ({
           }
         );
         console.log(`✅ Subscribed to ${name}`);
+        
+        // Track subscription event
+        gaEvent('program_subscribe', {
+          program_id: id,
+          program_name: name,
+          notification_method: 'both',
+          has_push: !!pushSubscription,
+        });
       } else {
         // Unsubscribe from program
         await api.delete(`/programs/${id}/subscribe`, {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
         console.log(`🚫 Unsubscribed from ${name}`);
+        
+        // Track unsubscription event
+        gaEvent('program_unsubscribe', {
+          program_id: id,
+          program_name: name,
+        });
       }
       // Success: do nothing, UI already updated
     } catch (error) {
@@ -193,6 +207,14 @@ export const ProgramBlock: React.FC<Props> = ({
       setIsOn(prevIsOn);
       alert('Error updating subscription. Please try again.');
       console.error('Error updating subscription:', error);
+      
+      // Track subscription error
+      gaEvent('subscription_error', {
+        program_id: id,
+        program_name: name,
+        action: willSubscribe ? 'subscribe' : 'unsubscribe',
+        error: error instanceof Error ? error.message : 'Unknown error',
+      });
     } finally {
       setIsLoading(false);
     }

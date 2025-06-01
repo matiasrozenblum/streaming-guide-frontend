@@ -7,6 +7,8 @@ import { tokens } from '@/design-system/tokens';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { UserButton } from './UserButton';
+import { event as gaEvent } from '@/lib/gtag';
+import { signOut } from 'next-auth/react';
 
 export default function Header() {
   const { session } = useSessionContext();
@@ -21,6 +23,13 @@ export default function Header() {
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
   const headerHeight = isMobile ? '9.75vh' : '13vh';
+
+  const handleLogout = async () => {
+    gaEvent('logout_attempt', {});
+    await signOut({ redirect: false });
+    gaEvent('logout_success', {});
+    window.location.href = '/';
+  };
 
   return (
     <Container maxWidth="xl" disableGutters sx={{ px: 0, mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } }}>

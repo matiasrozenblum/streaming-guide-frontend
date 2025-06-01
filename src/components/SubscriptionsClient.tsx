@@ -36,6 +36,7 @@ import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
 import { getColorForChannel } from '@/utils/colors';
+import { event as gaEvent } from '@/lib/gtag';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -99,9 +100,23 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
       ));
       setSuccess('Preferencias de notificación actualizadas');
       setTimeout(() => setSuccess(null), 3000);
+
+      // Track notification method change
+      gaEvent('notification_method_change', {
+        subscription_id: subscriptionId,
+        new_method: notificationMethod,
+        program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
+      });
     } catch {
       setError('Error al actualizar las preferencias');
       setTimeout(() => setError(null), 3000);
+
+      // Track notification method change error
+      gaEvent('notification_method_change_error', {
+        subscription_id: subscriptionId,
+        attempted_method: notificationMethod,
+        program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
+      });
     } finally {
       setLoading(false);
     }
@@ -114,19 +129,43 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
     }
     try {
       setLoading(true);
+      const subscription = subscriptions.find(sub => sub.id === subscriptionId);
       await api.delete(`/subscriptions/${subscriptionId}`, {
         headers: { Authorization: `Bearer ${typedSession.accessToken}` },
       });
       setSubscriptions(prev => prev.filter(sub => sub.id !== subscriptionId));
       setSuccess('Suscripción cancelada correctamente');
       setTimeout(() => setSuccess(null), 3000);
+
+      // Track successful subscription removal
+      gaEvent('program_unsubscribe', {
+        program_id: subscription?.program.id,
+        program_name: subscription?.program.name,
+        location: 'subscriptions_page',
+        notification_method: subscription?.notificationMethod,
+      });
     } catch {
       setError('Error al cancelar la suscripción');
       setTimeout(() => setError(null), 3000);
+
+      // Track failed subscription removal
+      gaEvent('subscription_error', {
+        action: 'unsubscribe',
+        location: 'subscriptions_page',
+        error_message: 'Error al cancelar la suscripción',
+      });
     } finally {
       setLoading(false);
     }
   };
+
+  // Track subscriptions page visit
+  useEffect(() => {
+    gaEvent('subscriptions_page_visit', {
+      subscription_count: subscriptions.length,
+      has_active_subscriptions: subscriptions.some(s => s.notificationMethod),
+    });
+  }, [subscriptions]);
 
   if (loading) {
     return (
