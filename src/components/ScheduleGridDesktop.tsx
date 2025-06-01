@@ -16,6 +16,8 @@ import weekday from 'dayjs/plugin/weekday';
 import { useInView } from 'react-intersection-observer';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { SessionWithToken } from '@/types/session';
 
 dayjs.extend(weekday);
 
@@ -33,6 +35,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
   const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   // IntersectionObserver para el botón 'En vivo'
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
@@ -153,7 +157,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                   params: {
                     day: day.value,
                     client: 'desktop',
-                  }
+                  },
+                  userData: typedSession?.user
                 });
               }
             }
@@ -175,7 +180,8 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 action: 'scroll_to_now',
                 params: {
                   client: 'desktop',
-                }
+                },
+                userData: typedSession?.user
               });
               if (selectedDay !== today) {
                 setSelectedDay(today);

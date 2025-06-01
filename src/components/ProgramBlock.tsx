@@ -114,7 +114,8 @@ export const ProgramBlock: React.FC<Props> = ({
       params: {
         category: 'program',
         program_name: name,
-      }
+      },
+      userData: typedSession?.user
     });
 
     try {
@@ -190,7 +191,8 @@ export const ProgramBlock: React.FC<Props> = ({
             program_name: name,
             notification_method: 'both',
             has_push: !!pushSubscription,
-          }
+          },
+          userData: typedSession?.user
         });
       } else {
         // Unsubscribe from program
@@ -205,7 +207,8 @@ export const ProgramBlock: React.FC<Props> = ({
           params: {
             program_id: id,
             program_name: name,
-          }
+          },
+          userData: typedSession?.user
         });
       }
       // Success: do nothing, UI already updated
@@ -223,7 +226,8 @@ export const ProgramBlock: React.FC<Props> = ({
           program_id: id,
           program_name: name,
           error: error instanceof Error ? error.message : 'Unknown error',
-        }
+        },
+        userData: typedSession?.user
       });
     } finally {
       setIsLoading(false);

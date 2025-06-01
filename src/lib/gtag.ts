@@ -44,15 +44,20 @@ type NextData = {
  * En params puedes incluir lo que necesites: name, type, id, duration, index...
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
-export const event = ({ action, params }: { action: string; params?: GtagEventParams }) => {
-  // Get user data from session if available
-  const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
-  const userData = nextData?.props?.pageProps?.session?.user || {};
-  
+export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
+  // Use userData if provided, otherwise try to get from window.__NEXT_DATA__
+  let user = userData;
+  if (!user) {
+    const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
+    user = nextData?.props?.pageProps?.session?.user || {};
+  }
+  // Debug: log userData
+  console.log('userData for analytics', user);
+
   // Calculate age if birthDate is available
   let age: number | undefined;
-  if (userData.birthDate) {
-    const birthDate = new Date(userData.birthDate);
+  if (user?.birthDate) {
+    const birthDate = new Date(user.birthDate);
     const today = new Date();
     age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
@@ -64,20 +69,18 @@ export const event = ({ action, params }: { action: string; params?: GtagEventPa
   if (typeof window.gtag === 'function') {
     window.gtag('event', action, {
       ...params,
-      // Add user data if available
-      user_id: userData.id,
-      user_gender: userData.gender,
+      user_id: user?.id,
+      user_gender: user?.gender,
       user_age: age,
-      user_role: userData.role,
+      user_role: user?.role,
     });
   }
 
-  // Always send to PostHog
   posthog.capture(action, {
     ...params,
-    user_id: userData.id,
-    user_gender: userData.gender,
+    user_id: user?.id,
+    user_gender: user?.gender,
     user_age: age,
-    user_role: userData.role,
+    user_role: user?.role,
   });
 };

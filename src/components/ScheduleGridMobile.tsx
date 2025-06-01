@@ -14,6 +14,8 @@ import { useLayoutValues } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { SessionWithToken } from '@/types/session';
 
 interface Props {
   channels: Channel[];
@@ -31,6 +33,9 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
   const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -129,7 +134,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               Clarity.event('day_change');
               gaEvent({
                 action: 'day_change',
-                params: { day: day.value, client: 'mobile' }
+                params: { day: day.value, client: 'mobile' },
+                userData: typedSession?.user
               });
             }}
             sx={{
@@ -205,7 +211,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
             Clarity.event('live_button_click');
             gaEvent({
               action: 'scroll_to_now',
-              params: { client: 'mobile' }
+              params: { client: 'mobile' },
+              userData: typedSession?.user
             });
           }}
           sx={{
