@@ -18,19 +18,35 @@ export const pageview = (url: string) => {
   }
 };
 
+type GtagEventParams = {
+  [key: string]: string | number | boolean | undefined;
+};
+
+type NextData = {
+  props?: {
+    pageProps?: {
+      session?: {
+        user?: {
+          id?: string;
+          gender?: string;
+          birthDate?: string;
+          role?: string;
+        };
+      };
+    };
+  };
+};
+
 /**
  * Dispara un evento en GA4 con nombre `name` y parámetros `params`.
  * En params puedes incluir lo que necesites: name, type, id, duration, index...
- * Si hay una sesión activa, incluye datos del usuario como gender y age
+ * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
-export const event = (
-  name: string,
-  params: Record<string, unknown> = {}
-) => {
+export const event = ({ action, params }: { action: string; params?: GtagEventParams }) => {
   if (typeof window.gtag === 'function') {
     // Get user data from session if available
-    const session = (window as any).__NEXT_DATA__?.props?.pageProps?.session;
-    const userData = session?.user || {};
+    const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
+    const userData = nextData?.props?.pageProps?.session?.user || {};
     
     // Calculate age if birthDate is available
     let age: number | undefined;
@@ -44,7 +60,7 @@ export const event = (
       }
     }
 
-    window.gtag('event', name, {
+    window.gtag('event', action, {
       ...params,
       // Add user data if available
       user_id: userData.id,

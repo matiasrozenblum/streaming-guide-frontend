@@ -148,13 +148,13 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 setSelectedDay(day.value);
                 Clarity.setTag('selected_day', day.value);
                 Clarity.event('day_change');
-                gaEvent(
-                  'day_change',
-                  {
+                gaEvent({
+                  action: 'day_change',
+                  params: {
                     day: day.value,
                     client: 'desktop',
-                   }
-                );
+                  }
+                });
               }
             }
             sx={{
@@ -171,10 +171,12 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           <Button
             onClick={() => {
               Clarity.event('live_button_click');
-              gaEvent(
-                'live_button_click',
-                { client: 'desktop' }
-              );
+              gaEvent({
+                action: 'scroll_to_now',
+                params: {
+                  client: 'desktop',
+                }
+              });
               if (selectedDay !== today) {
                 setSelectedDay(today);
                 setTimeout(() => scrollToNow(), 100);

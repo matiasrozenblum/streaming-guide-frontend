@@ -95,7 +95,7 @@ export function SchedulesTable() {
     if (status === 'authenticated' && typedSession?.user.role === 'admin') {
       fetchSchedules();
     }
-  }, [status, typedSession?.accessToken]);
+  }, [status, typedSession?.accessToken, typedSession?.user.role, fetchSchedules]);
 
   // Filtrado en vivo
   const filteredPrograms = programs.filter(p =>

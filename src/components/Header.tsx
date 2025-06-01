@@ -25,9 +25,15 @@ export default function Header() {
   const headerHeight = isMobile ? '9.75vh' : '13vh';
 
   const handleLogout = async () => {
-    gaEvent('logout_attempt', {});
+    gaEvent({
+      action: 'logout_attempt',
+      params: {}
+    });
     await signOut({ redirect: false });
-    gaEvent('logout_success', {});
+    gaEvent({
+      action: 'logout_success',
+      params: {}
+    });
     window.location.href = '/';
   };
 
@@ -70,7 +76,7 @@ export default function Header() {
             <UserButton />
             </>
           ) : (
-            <UserMenu />
+            <UserMenu onLogout={handleLogout} />
           )}
           <ThemeToggle />
         </Box>
