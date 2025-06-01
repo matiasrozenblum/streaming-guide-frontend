@@ -92,7 +92,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     }
   }, [open, isUserExisting]);
 
-  // Track step changes
+  // Track step changes (for funnel analysis)
   useEffect(() => {
     if (open) {
       gaEvent({
@@ -108,6 +108,22 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   const steps = isUserExisting ? ALL_STEPS.existing : ALL_STEPS.new;
   const activeStep = steps.indexOf(step);
+
+  // Track signup step complete (for funnel)
+  const trackSignupStep = (stepName: string, extraParams = {}) => {
+    gaEvent({
+      action: 'signup_step_complete',
+      params: {
+        step: stepName,
+        email_provided: !!email,
+        has_first_name: !!firstName,
+        has_last_name: !!lastName,
+        has_birth_date: !!birthDate,
+        has_gender: !!gender,
+        ...extraParams
+      }
+    });
+  };
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
@@ -261,13 +277,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const body = await res.json();
                 if (!res.ok) throw new Error(body.message || 'Error');
                 if (body.isNew) {
-                  gaEvent({
-                    action: 'signup_step_complete',
-                    params: {
-                      step: 'email_verification',
-                      email_provided: !!email,
-                    }
-                  });
+                  trackSignupStep('email_verification');
                   setRegistrationToken(body.registration_token);
                   setStep('profile');
                 } else {
@@ -314,16 +324,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               setLastName(l);
               setBirthDate(b);
               setGender(g);
-              gaEvent({
-                action: 'signup_step_complete',
-                params: {
-                  step: 'profile',
-                  has_first_name: !!f,
-                  has_last_name: !!l,
-                  has_birth_date: !!b,
-                  has_gender: !!g,
-                }
-              });
+              trackSignupStep('profile', { has_first_name: !!f, has_last_name: !!l, has_birth_date: !!b, has_gender: !!g });
               setStep('password');
             }}
           />
