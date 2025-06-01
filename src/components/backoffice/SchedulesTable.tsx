@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
 import {
   Box,
   Paper,
@@ -69,6 +69,8 @@ export function SchedulesTable() {
   const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
 
+  const hasFetched = useRef(false);
+
   const fetchSchedules = useCallback(async () => {
     setLoading(true);
     try {
@@ -92,10 +94,15 @@ export function SchedulesTable() {
   }, [typedSession]);
 
   useEffect(() => {
-    if (status === 'authenticated' && typedSession?.user.role === 'admin') {
+    if (
+      status === 'authenticated' &&
+      typedSession?.user.role === 'admin' &&
+      !hasFetched.current
+    ) {
       fetchSchedules();
+      hasFetched.current = true;
     }
-  }, [status, typedSession?.accessToken, typedSession?.user.role, fetchSchedules]);
+  }, [status, fetchSchedules, typedSession?.user.role]);
 
   // Filtrado en vivo
   const filteredPrograms = programs.filter(p =>
@@ -217,6 +224,11 @@ export function SchedulesTable() {
           ? { ...pr, schedules: [...pr.schedules, created] }
           : pr
       ));
+      setSelectedProgram(prev =>
+        prev && prev.id === selectedProgram.id
+          ? { ...prev, schedules: [...prev.schedules, created] }
+          : prev
+      );
       setSuccess('Nuevo horario agregado correctamente');
       setShowAddScheduleForm(false);
     } catch (err) {
