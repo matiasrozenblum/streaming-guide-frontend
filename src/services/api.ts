@@ -1,8 +1,10 @@
 import axios from "axios";
 import { signOut } from "next-auth/react";
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
+
 export const api = axios.create({
-  baseURL: "/api",
+  baseURL: API_URL,
 });
 
 api.interceptors.response.use(
