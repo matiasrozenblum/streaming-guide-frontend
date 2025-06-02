@@ -17,6 +17,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.0] - 2025-06-01
+
+### Changed
+- Made home page public, without needing to have a session.
+- All redirects for logged out users are now pointing to home page instead of login page
+
+### Removed
+- Removed legacy login for the official launch
+- Removed backoffice login page as well
+
 ## [0.4.6] - 2025-06-01
 
 ### Added

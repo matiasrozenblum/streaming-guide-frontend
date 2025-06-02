@@ -25,7 +25,14 @@ const Footer: React.FC = () => {
         align="center"
         sx={{ fontSize: '0.5rem', lineHeight: 1.2, display: 'block', mb: 0.5 }}
       >
-        © 2025 LA GUÍA DEL STREAMING. Todos los derechos reservados.
+        © 2025 LA GUÍA DEL STREAMING. Todos los derechos reservados. -{' '}
+        <a
+          href="/terminos-y-condiciones"
+          target="_blank"
+          style={{ color: 'inherit', textDecoration: 'underline' }}
+        >
+          Términos y Condiciones
+        </a>
       </Typography>
       <Typography
         variant="caption"
