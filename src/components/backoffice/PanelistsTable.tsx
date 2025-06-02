@@ -124,13 +124,16 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         ? `/api/panelists/${editingPanelist.id}`
         : `/api/panelists`;
       const method = editingPanelist ? 'PATCH' : 'POST';
+      const filteredFormData = Object.fromEntries(
+        Object.entries(formData).filter(([value]) => value !== '' && value !== null)
+      );
       const response = await fetch(url, {
         method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${typedSession?.accessToken}`,
         },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(filteredFormData),
       });
       if (!response.ok) throw new Error('Failed to save panelist');
       handleCloseDialog();
