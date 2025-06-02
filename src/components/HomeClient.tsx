@@ -104,7 +104,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       clearInterval(intervalId);
       console.log('Polling interval cleared');
     };
-  }, [deviceId, setLiveStatuses]); // Added setLiveStatuses to dependencies
+  }, [deviceId]);
 
   useEffect(() => {
     if (flattened.length > 0) {
