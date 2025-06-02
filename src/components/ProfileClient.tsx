@@ -344,7 +344,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       credentials: 'include',
     });
     if (res.ok) {
-      await signOut({ callbackUrl: '/login' });
+      await signOut({ callbackUrl: '/' });
     } else {
       alert('Error al cancelar la cuenta');
     }

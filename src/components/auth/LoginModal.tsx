@@ -199,29 +199,52 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             onBack={() => setStep('email')}
             onSubmit={async (pw) => {
               setIsLoading(true); setError('');
-              const nxt = await signIn('credentials', {
-                redirect: false,
-                email,
-                password: pw,
-              });
-              if (nxt?.error) {
-                setError('Credenciales inválidas');
-                gaEvent({
-                  action: 'login_error',
-                  params: {
-                    method: 'password',
-                    error: 'invalid_credentials',
-                    email_provided: !!email,
-                  }
+              try {
+                // Call the login API route
+                const res = await fetch('/api/auth/login', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ email, password: pw }),
                 });
-              } else {
-                gaEvent({
-                  action: 'login_success',
-                  params: {
-                    method: 'password',
-                  }
+                if (!res.ok) {
+                  setError('Credenciales inválidas');
+                  gaEvent({
+                    action: 'login_error',
+                    params: {
+                      method: 'password',
+                      error: 'invalid_credentials',
+                      email_provided: !!email,
+                    }
+                  });
+                  setIsLoading(false);
+                  return;
+                }
+                const data = await res.json();
+                const nxt = await signIn('credentials', {
+                  redirect: false,
+                  accessToken: data.access_token,
                 });
-                onClose(); window.location.reload();
+                if (nxt?.error) {
+                  setError('Credenciales inválidas');
+                  gaEvent({
+                    action: 'login_error',
+                    params: {
+                      method: 'password',
+                      error: 'invalid_credentials',
+                      email_provided: !!email,
+                    }
+                  });
+                } else {
+                  gaEvent({
+                    action: 'login_success',
+                    params: {
+                      method: 'password',
+                    }
+                  });
+                  onClose(); window.location.reload();
+                }
+              } catch (err) {
+                setError(getErrorMessage(err));
               }
               setIsLoading(false);
             }}
