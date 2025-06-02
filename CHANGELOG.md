@@ -26,6 +26,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Removed
 - Removed legacy login for the official launch
 - Removed backoffice login page as well
+- Removed all console.log
 
 ## [0.4.6] - 2025-06-01
 
