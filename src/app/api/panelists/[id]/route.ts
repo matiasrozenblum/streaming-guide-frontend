@@ -14,24 +14,35 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
+    console.log('[PATCH /api/panelists/[id]] Incoming body:', body);
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`;
+    const backendReqBody = JSON.stringify(body);
+    console.log('[PATCH /api/panelists/[id]] Forwarding to backend:', backendUrl);
+    console.log('[PATCH /api/panelists/[id]] Backend request body:', backendReqBody);
+    const response = await fetch(backendUrl, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: backendReqBody,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to update panelist');
+    console.log('[PATCH /api/panelists/[id]] Backend response status:', response.status);
+    let data;
+    try {
+      data = await response.json();
+      console.log('[PATCH /api/panelists/[id]] Backend response body:', data);
+    } catch (e) {
+      data = null;
+      console.log('[PATCH /api/panelists/[id]] Backend response body: <not JSON>');
     }
-
-    const data = await response.json();
+    if (!response.ok) {
+      return NextResponse.json({ error: 'Failed to update panelist', backendStatus: response.status, backendBody: data }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating panelist:', error);
-    return NextResponse.json({ error: 'Failed to update panelist' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update panelist', details: error instanceof Error ? error.message : error }, { status: 500 });
   }
 }
 
