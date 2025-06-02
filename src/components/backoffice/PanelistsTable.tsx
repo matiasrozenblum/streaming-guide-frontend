@@ -125,7 +125,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
         : `/api/panelists`;
       const method = editingPanelist ? 'PATCH' : 'POST';
       const filteredFormData = Object.fromEntries(
-        Object.entries(formData).filter(([_, value]) => value !== '' && value !== null)
+        Object.entries(formData).filter(entry => entry[1] !== '' && entry[1] !== null)
       );
       const response = await fetch(url, {
         method,
