@@ -3,7 +3,6 @@ self.addEventListener('install', event => {
   });
 
   self.addEventListener('activate', event => {
-    console.log('SW activado');
     // opcional: limpiar caches antiguas
   });
 

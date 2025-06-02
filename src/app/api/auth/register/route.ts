@@ -7,17 +7,6 @@ export async function POST(request: NextRequest) {
   // Forward the user-agent header from the original request
   const userAgent = request.headers.get('user-agent') || 'Unknown';
   
-  console.log('🔍 [API] register called with:', {
-    hasRegistrationToken: !!registration_token,
-    firstName,
-    lastName,
-    deviceId,
-    gender,
-    birthDate,
-    userAgent,
-    timestamp: new Date().toISOString()
-  });
-  
   const res = await fetch(
     `${process.env.NEXT_PUBLIC_API_URL}/auth/register`,
     {
@@ -30,12 +19,6 @@ export async function POST(request: NextRequest) {
     }
   );
   const payload = await res.json();
-  
-  console.log('✅ [API] register response:', { 
-    status: res.status, 
-    hasAccessToken: !!payload.access_token,
-    hasDeviceId: !!payload.deviceId 
-  });
   
   if (!res.ok) {
     return NextResponse.json(payload, { status: res.status });

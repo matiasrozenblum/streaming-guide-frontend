@@ -24,11 +24,6 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
     if (!isModalOpen) {
       const updateCurrentHour = () => {
         const newHour = dayjs().hour();
-        console.log('⏰ TimeHeader hour updated:', {
-          oldHour: currentHour,
-          newHour,
-          timestamp: new Date().toISOString()
-        });
         setCurrentHour(newHour);
       };
 

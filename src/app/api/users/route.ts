@@ -10,14 +10,6 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([], { status: 401 });
     }
 
-    console.log('Making request to backend:', {
-      url: `${process.env.NEXT_PUBLIC_API_URL}/users`,
-      token: token.substring(0, 10) + '...',
-      headers: {
-        'Authorization': `Bearer ${token.substring(0, 10)}...`
-      }
-    });
-    
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -39,7 +31,6 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('Backend users response:', data);
     
     // Ensure we're returning an array
     if (!Array.isArray(data)) {

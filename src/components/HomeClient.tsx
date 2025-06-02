@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -29,7 +29,6 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-  const startRef = useRef(performance.now());
   const deviceId = useDeviceId();
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
@@ -58,7 +57,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     if (!deviceId) return; // Only wait for deviceId
 
     let isMounted = true;
-    console.log('Polling effect ran');
 
     const updateLiveStatuses = async () => {
       const currentDeviceId = deviceId;
@@ -94,23 +92,18 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     updateLiveStatuses();
 
     const intervalId = setInterval(() => {
-      console.log('Polling interval fired');
       updateLiveStatuses();
     }, 60_000);
-    console.log('Polling interval set');
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
-      console.log('Polling interval cleared');
     };
   }, [deviceId]);
 
   useEffect(() => {
     if (flattened.length > 0) {
-      console.log(
-        `🏁 Grid rendered in ${(performance.now() - startRef.current).toFixed(2)} ms`
-      );
+
     }
   }, [flattened]);
 

@@ -39,7 +39,6 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('Backend programs response:', data);
     
     // Ensure we're returning an array
     if (!Array.isArray(data)) {
