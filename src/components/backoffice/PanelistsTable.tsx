@@ -50,7 +50,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
 
   const fetchPanelists = useCallback(async () => {
     try {
-      const response = await api.get<Panelist[]>('/panelists', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      const response = await api.get<Panelist[]>('/api/panelists', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to fetch panelists');
       setPanelists(response.data);
     } catch (error) {
@@ -63,7 +63,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
 
   const fetchPrograms = useCallback(async () => {
     try {
-      const response = await api.get<Program[]>('/programs', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      const response = await api.get<Program[]>('/api/programs', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to fetch programs');
       setPrograms(response.data);
     } catch (error) {
@@ -136,7 +136,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleDelete = async (id: string) => {
     if (!confirm('Are you sure you want to delete this panelist?')) return;
     try {
-      const response = await api.delete(`/panelists/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      const response = await api.delete(`/api/panelists/${id}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to delete panelist');
       fetchPanelists();
     } catch (error) {
@@ -148,7 +148,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleAddToProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await api.post(`/panelists/${editingPanelist.id}/programs/${programId}`, null, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      const response = await api.post(`/api/panelists/${editingPanelist.id}/programs/${programId}`, null, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to add panelist to program');
       fetchPanelists();
     } catch (error) {
@@ -160,7 +160,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleRemoveFromProgram = async (programId: number) => {
     if (!editingPanelist) return;
     try {
-      const response = await api.delete(`/panelists/${editingPanelist.id}/programs/${programId}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
+      const response = await api.delete(`/api/panelists/${editingPanelist.id}/programs/${programId}`, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       if (!(response.status >= 200 && response.status < 300)) throw new Error('Failed to remove panelist from program');
       fetchPanelists();
     } catch (error) {
