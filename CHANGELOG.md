@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.0.0] - 2025-06-01
+## [1.0.0] - 2025-06-02
 
 ### Changed
 - Made home page public, without needing to have a session.
