@@ -32,7 +32,7 @@ export async function PATCH(
     try {
       data = await response.json();
       console.log('[PATCH /api/panelists/[id]] Backend response body:', data);
-    } catch (e) {
+    } catch {
       data = null;
       console.log('[PATCH /api/panelists/[id]] Backend response body: <not JSON>');
     }
