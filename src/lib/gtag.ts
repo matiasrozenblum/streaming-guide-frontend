@@ -51,8 +51,6 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
     user = nextData?.props?.pageProps?.session?.user || {};
   }
-  // Debug: log userData
-  console.log('userData for analytics', user);
 
   // Calculate age if birthDate is available
   let age: number | undefined;

@@ -181,7 +181,6 @@ export const ProgramBlock: React.FC<Props> = ({
             headers: { Authorization: `Bearer ${typedSession.accessToken}` },
           }
         );
-        console.log(`✅ Subscribed to ${name}`);
         
         // Track subscription event
         gaEvent({
@@ -199,7 +198,6 @@ export const ProgramBlock: React.FC<Props> = ({
         await api.delete(`/programs/${id}/subscribe`, {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
-        console.log(`🚫 Unsubscribed from ${name}`);
         
         // Track unsubscription event
         gaEvent({

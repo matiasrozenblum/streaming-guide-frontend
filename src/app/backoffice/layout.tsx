@@ -29,15 +29,15 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
   useEffect(() => {
     // si no hay sesión o el role no es admin, redirige
     if (status === 'authenticated' && typedSession?.user.role !== 'admin') {
-      router.push('/login');
+      router.push('/');
     }
     if (status === 'unauthenticated') {
-      router.push('/login');
+      router.push('/');
     }
   }, [status, typedSession, router, pathname]);
 
   const handleLogout = () => {
-    signOut({ callbackUrl: '/login' });
+    signOut({ callbackUrl: '/' });
   };
 
   const drawerWidth = 240;

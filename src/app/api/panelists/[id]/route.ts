@@ -14,24 +14,29 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`, {
+    const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`;
+    const backendReqBody = JSON.stringify(body);
+    const response = await fetch(backendUrl, {
       method: 'PATCH',
       headers: {
         'Authorization': `Bearer ${token}`,
         'Content-Type': 'application/json',
       },
-      body: JSON.stringify(body),
+      body: backendReqBody,
     });
-
-    if (!response.ok) {
-      throw new Error('Failed to update panelist');
+    let data;
+    try {
+      data = await response.json();
+    } catch {
+      data = null;
     }
-
-    const data = await response.json();
+    if (!response.ok) {
+      return NextResponse.json({ error: 'Failed to update panelist', backendStatus: response.status, backendBody: data }, { status: 500 });
+    }
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error updating panelist:', error);
-    return NextResponse.json({ error: 'Failed to update panelist' }, { status: 500 });
+    return NextResponse.json({ error: 'Failed to update panelist', details: error instanceof Error ? error.message : error }, { status: 500 });
   }
 }
 
@@ -40,7 +45,6 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   const token = await requireAccessToken(request);
-
   if (!token) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }

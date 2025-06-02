@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo, useRef } from 'react';
+import React, { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Container,
@@ -15,9 +15,6 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
-import { useSessionContext } from '@/contexts/SessionContext';
-import { useRouter } from 'next/navigation';
-import type { SessionWithToken } from '@/types/session';
 import { useDeviceId } from '@/hooks/useDeviceId';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
@@ -32,18 +29,8 @@ interface HomeClientProps {
 }
 
 export default function HomeClient({ initialData }: HomeClientProps) {
-  const startRef = useRef(performance.now());
-  const router = useRouter();
-  const { status, session } = useSessionContext();
   const deviceId = useDeviceId();
   
-  useEffect(() => {
-    // si no hay sesión, redirige
-    if (status === 'unauthenticated') {
-      router.push('/login');
-    }
-  }, [status, router]);
-
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
@@ -67,19 +54,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const showSkeleton = flattened.length === 0;
 
   useEffect(() => {
-    if (!session || !deviceId) return; // Wait until both are available
+    if (!deviceId) return; // Only wait for deviceId
 
     let isMounted = true;
-    console.log('Polling effect ran');
 
     const updateLiveStatuses = async () => {
-      const currentSession = session as SessionWithToken | null;
-      const accessToken = currentSession?.accessToken;
       const currentDeviceId = deviceId;
-      if (!accessToken) {
-        console.warn('Attempted to update live statuses without an access token.');
-        return;
-      }
       try {
         const params: { live_status: boolean; deviceId?: string } = { live_status: true };
         if (currentDeviceId) {
@@ -87,8 +67,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         }
 
         const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
-          params,
-          headers: { Authorization: `Bearer ${accessToken}` },
+          params
         });
         if (!isMounted) return;
 
@@ -113,23 +92,18 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     updateLiveStatuses();
 
     const intervalId = setInterval(() => {
-      console.log('Polling interval fired');
       updateLiveStatuses();
     }, 60_000);
-    console.log('Polling interval set');
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
-      console.log('Polling interval cleared');
     };
-  }, [session, deviceId]); // Depend on both
+  }, [deviceId]);
 
   useEffect(() => {
     if (flattened.length > 0) {
-      console.log(
-        `🏁 Grid rendered in ${(performance.now() - startRef.current).toFixed(2)} ms`
-      );
+
     }
   }, [flattened]);
 

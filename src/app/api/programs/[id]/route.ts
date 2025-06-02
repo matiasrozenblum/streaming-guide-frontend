@@ -17,13 +17,6 @@ export async function PATCH(
     const { id } = await params;
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/programs/${id}`;
     
-    console.log('API Request details:', {
-      url: apiUrl,
-      method: 'PATCH',
-      body,
-      params
-    });
-    
     const response = await fetch(apiUrl, {
       method: 'PATCH',
       headers: {

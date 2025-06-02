@@ -12,16 +12,14 @@ export default function BackofficeLoginPage() {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
 
-  // Si ya estamos autenticados como backoffice, redirigimos
+  // If already authenticated as backoffice, redirect
   useEffect(() => {
-    if (
-      status === 'authenticated' &&
-      typedSession?.user.id === 'backoffice'
-    ) {
+    if (status === 'authenticated' && typedSession?.user.role === 'admin') {
       router.push('/backoffice');
     }
-  }, [status, typedSession?.user.id, router]);
+  }, [status, typedSession?.user.role, router]);
 
+  const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
 
@@ -29,66 +27,72 @@ export default function BackofficeLoginPage() {
     e.preventDefault();
     setError('');
 
-    // 1) Invocamos el provider "legacy"
-    const res = await signIn('legacy', {
-      redirect: false,
-      password,
-      isBackoffice: 'true',
-      callbackUrl: '/backoffice',
-    });
+    try {
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password }),
+      });
 
-    if (res?.error) {
-      setError('Contraseña incorrecta');
-      return;
+      if (!res.ok) {
+        throw new Error('Invalid credentials');
+      }
+
+      const data = await res.json();
+      const result = await signIn('credentials', {
+        redirect: false,
+        accessToken: data.access_token,
+      });
+
+      if (result?.error) {
+        setError('Invalid credentials');
+        return;
+      }
+
+      router.push('/backoffice');
+    } catch {
+      setError('Invalid credentials');
     }
-
-    // 4) Redirigimos al panel de backoffice
-    router.push(res?.url || '/backoffice');
   };
 
   return (
-    <Box
-      sx={{
-        minHeight: '100dvh',
+    <Box sx={{
+      minHeight: '100dvh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      bgcolor: 'background.default'
+    }}>
+      <Paper elevation={3} sx={{
+        p: 4,
+        width: '100%',
+        maxWidth: 400,
         display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        bgcolor: 'background.default',
-      }}
-    >
-      <Paper
-        elevation={3}
-        sx={{
-          p: 4,
-          width: '100%',
-          maxWidth: 400,
-          display: 'flex',
-          flexDirection: 'column',
-          gap: 2,
-        }}
-      >
-        <Typography variant="h4" align="center" gutterBottom>
-          Acceso Backoffice
-        </Typography>
+        flexDirection: 'column',
+        gap: 2
+      }}>
+        <Typography variant="h4" align="center">Backoffice Login</Typography>
         <form onSubmit={handleSubmit}>
           <TextField
-            label="Contraseña"
-            type="password"
             fullWidth
-            margin="normal"
+            label="Email"
+            type="email"
+            value={email}
+            onChange={e => setEmail(e.target.value)}
+            error={!!error}
+            sx={{ mb: 2 }}
+          />
+          <TextField
+            fullWidth
+            label="Password"
+            type="password"
             value={password}
             onChange={e => setPassword(e.target.value)}
             error={!!error}
             helperText={error}
           />
-          <Button
-            type="submit"
-            variant="contained"
-            fullWidth
-            size="large"
-            sx={{ mt: 2 }}
-          >
-            Ingresar
+          <Button fullWidth variant="contained" type="submit" sx={{ mt: 2 }}>
+            Login
           </Button>
         </form>
       </Paper>

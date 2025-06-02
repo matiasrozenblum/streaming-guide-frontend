@@ -9,14 +9,6 @@ export async function GET(request: NextRequest) {
       console.error('No authentication token found');
       return NextResponse.json([], { status: 401 });
     }
-
-    console.log('Making request to backend:', {
-      url: `${process.env.NEXT_PUBLIC_API_URL}/programs`,
-      token: token.substring(0, 10) + '...',
-      headers: {
-        'Authorization': `Bearer ${token.substring(0, 10)}...`
-      }
-    });
     
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs`, {
       headers: {
@@ -39,7 +31,6 @@ export async function GET(request: NextRequest) {
     }
     
     const data = await response.json();
-    console.log('Backend programs response:', data);
     
     // Ensure we're returning an array
     if (!Array.isArray(data)) {
