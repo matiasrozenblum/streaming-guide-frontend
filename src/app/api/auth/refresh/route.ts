@@ -3,24 +3,23 @@ import type { NextRequest } from 'next/server';
 
 export async function POST(request: NextRequest) {
   try {
-    const { email, password } = await request.json();
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
         'User-Agent': request.headers.get('user-agent') || 'Unknown',
+        'Cookie': request.headers.get('cookie') || '',
       },
-      body: JSON.stringify({ email, password }),
     });
 
     if (!response.ok) {
-      throw new Error('Invalid credentials');
+      throw new Error('Failed to refresh token');
     }
 
     const data = await response.json();
     const nextResponse = NextResponse.json(data);
     
-    // Forward the refresh token cookie from the backend
+    // Forward any new refresh token cookie
     const refreshToken = response.headers.get('set-cookie');
     if (refreshToken) {
       nextResponse.headers.set('set-cookie', refreshToken);
@@ -28,7 +27,7 @@ export async function POST(request: NextRequest) {
     
     return nextResponse;
   } catch (error) {
-    console.error('Login error:', error);
-    return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
+    console.error('Token refresh error:', error);
+    return NextResponse.json({ error: 'Failed to refresh token' }, { status: 401 });
   }
 } 

@@ -1,6 +1,7 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
+import { signOut } from 'next-auth/react'
 
 interface JWTUser {
   id: string
@@ -19,6 +20,7 @@ interface DecodedJWT {
   role?: string;
   gender?: string;
   birthDate?: string;
+  exp?: number;
   [key: string]: unknown;
 }
 
@@ -57,9 +59,43 @@ export const authOptions: AuthOptions = {
         token.email = (user as JWTUser).email;
         token.sub = (user as JWTUser).id;
       }
+
+      // Check if token needs refresh
+      if (token.accessToken) {
+        const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
+        const shouldRefresh = decoded.exp ? decoded.exp * 1000 < Date.now() + 5 * 60 * 1000 : false;
+
+        if (shouldRefresh) {
+          try {
+            const response = await fetch('/api/auth/refresh', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+            });
+
+            if (response.ok) {
+              const data = await response.json();
+              token.accessToken = data.access_token;
+            } else {
+              // If refresh fails, sign out the user
+              await signOut({ redirect: true, callbackUrl: '/' });
+              return { ...token, error: 'RefreshAccessTokenError' };
+            }
+          } catch (error) {
+            console.error('Failed to refresh token:', error);
+            // If refresh fails, sign out the user
+            await signOut({ redirect: true, callbackUrl: '/' });
+            return { ...token, error: 'RefreshAccessTokenError' };
+          }
+        }
+      }
+
       return token;
     },
     async session({ session, token }) {
+      if (token.error === 'RefreshAccessTokenError') {
+        return session;
+      }
+      
       session.accessToken = token.accessToken as string;
       session.user.id = token.sub as string;
       session.user.role = token.role as string;
@@ -73,5 +109,15 @@ export const authOptions: AuthOptions = {
 
   pages: {
     signIn: '/',
+  },
+  session: {
+    strategy: 'jwt',
+    maxAge: 14 * 24 * 60 * 60, // 14 days
+  },
+  events: {
+    async signOut() {
+      // Clear refresh token cookie on sign out
+      await fetch('/api/auth/logout', { method: 'POST' });
+    },
   },
 }
