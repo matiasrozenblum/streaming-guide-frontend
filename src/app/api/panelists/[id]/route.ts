@@ -14,11 +14,8 @@ export async function PATCH(
 
   try {
     const body = await request.json();
-    console.log('[PATCH /api/panelists/[id]] Incoming body:', body);
     const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/panelists/${id}`;
     const backendReqBody = JSON.stringify(body);
-    console.log('[PATCH /api/panelists/[id]] Forwarding to backend:', backendUrl);
-    console.log('[PATCH /api/panelists/[id]] Backend request body:', backendReqBody);
     const response = await fetch(backendUrl, {
       method: 'PATCH',
       headers: {
@@ -27,14 +24,11 @@ export async function PATCH(
       },
       body: backendReqBody,
     });
-    console.log('[PATCH /api/panelists/[id]] Backend response status:', response.status);
     let data;
     try {
       data = await response.json();
-      console.log('[PATCH /api/panelists/[id]] Backend response body:', data);
     } catch {
       data = null;
-      console.log('[PATCH /api/panelists/[id]] Backend response body: <not JSON>');
     }
     if (!response.ok) {
       return NextResponse.json({ error: 'Failed to update panelist', backendStatus: response.status, backendBody: data }, { status: 500 });
