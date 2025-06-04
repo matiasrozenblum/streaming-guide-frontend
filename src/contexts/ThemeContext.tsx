@@ -133,7 +133,7 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
 
 export const CustomThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useState<ThemeMode>('light');
+  const [mode, setMode] = useState<ThemeMode>('dark');
 
   useEffect(() => {
     const savedMode = localStorage.getItem('themeMode') as ThemeMode;
