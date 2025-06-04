@@ -327,7 +327,7 @@ export const ProgramBlock: React.FC<Props> = ({
         ref={bellRef}
         sx={{
           mt: tokens.spacing.md,
-          color: isLoading ? undefined : (isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important'),
+          color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
         }}
         disabled={isLoading}
       >
@@ -340,7 +340,7 @@ export const ProgramBlock: React.FC<Props> = ({
             </svg>
           </Box>
         ) : (
-          <Notifications sx={{ color: isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important' }} />
+          <Notifications color={isOn ? "primary" : "disabled"} />
         )}
       </IconButton>
     </Box>
