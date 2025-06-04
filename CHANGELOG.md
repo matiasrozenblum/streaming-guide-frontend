@@ -17,6 +17,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.1] - 2025-06-04
+
+### Changed
+- Changed program colors
+- Changed bell button color
+- Now sign up step icons and separators get painted blue when completing steps like a progress bar
+- Changed session handling with refresh token
+
+### Removed
+- Removed sign up progress bar
+
 ## [1.0.0] - 2025-06-02
 
 ### Changed
