@@ -18,6 +18,7 @@ import { api } from '@/services/api';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
+import LoginModal from './auth/LoginModal';
 
 dayjs.extend(customParseFormat);
 
@@ -74,6 +75,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [openTooltip, setOpenTooltip] = useState(false);
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const [loginOpen, setLoginOpen] = useState(false);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -139,7 +141,7 @@ export const ProgramBlock: React.FC<Props> = ({
     e.stopPropagation();
     
     if (!typedSession?.accessToken) {
-      console.warn('No access token available');
+      setLoginOpen(true);
       return;
     }
 
@@ -151,65 +153,68 @@ export const ProgramBlock: React.FC<Props> = ({
     setIsLoading(true);
 
     try {
-      if (willSubscribe) {
-        // Get push subscription details if needed
-        let pushSubscription = null;
-        let endpoint = '';
-        let p256dh = '';
-        let auth = '';
-        try {
-          pushSubscription = await subscribeAndRegister();
-          if (pushSubscription) {
-            endpoint = pushSubscription.endpoint;
-            p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
-            auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
-          }
-        } catch (error) {
-          console.warn('Failed to get push subscription:', error);
+      let pushSubscription = null;
+      let endpoint = '';
+      let p256dh = '';
+      let auth = '';
+      let pushErrorReason = '';
+      try {
+        pushSubscription = await subscribeAndRegister();
+        if (pushSubscription) {
+          endpoint = pushSubscription.endpoint;
+          p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
+          auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
         }
+      } catch (error) {
+        pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
+        console.warn('Failed to get push subscription:', error);
+      }
 
-        // Subscribe to program (only one request)
-        await api.post(
-          `/programs/${id}/subscribe`,
-          { 
-            notificationMethod: 'both',
-            endpoint,
-            p256dh,
-            auth
-          },
-          {
-            headers: { Authorization: `Bearer ${typedSession.accessToken}` },
-          }
-        );
-        
-        // Track subscription event
+      // Validate push subscription before sending to backend
+      const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
+      if (!isValidPush) {
+        const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
+        console.warn('Not sending invalid push subscription:', reason);
         gaEvent({
-          action: 'program_subscribe',
+          action: 'push_subscription_invalid',
           params: {
             program_id: id,
             program_name: name,
-            notification_method: 'both',
+            reason,
+            endpoint,
+            p256dh,
+            auth,
             has_push: !!pushSubscription,
           },
           userData: typedSession?.user
         });
-      } else {
-        // Unsubscribe from program
-        await api.delete(`/programs/${id}/subscribe`, {
-          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
-        });
-        
-        // Track unsubscription event
-        gaEvent({
-          action: 'program_unsubscribe',
-          params: {
-            program_id: id,
-            program_name: name,
-          },
-          userData: typedSession?.user
-        });
       }
-      // Success: do nothing, UI already updated
+
+      // Subscribe to program (only one request)
+      await api.post(
+        `/programs/${id}/subscribe`,
+        { 
+          notificationMethod: 'both',
+          endpoint: isValidPush ? endpoint : undefined,
+          p256dh: isValidPush ? p256dh : undefined,
+          auth: isValidPush ? auth : undefined
+        },
+        {
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+        }
+      );
+      
+      // Track subscription event
+      gaEvent({
+        action: 'program_subscribe',
+        params: {
+          program_id: id,
+          program_name: name,
+          notification_method: 'both',
+          has_push: !!pushSubscription,
+        },
+        userData: typedSession?.user
+      });
     } catch (error) {
       // Revert UI on error
       setIsOn(prevIsOn);
@@ -322,7 +327,7 @@ export const ProgramBlock: React.FC<Props> = ({
         ref={bellRef}
         sx={{
           mt: tokens.spacing.md,
-          color: isLoading ? undefined : (isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important'),
+          color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
         }}
         disabled={isLoading}
       >
@@ -335,7 +340,7 @@ export const ProgramBlock: React.FC<Props> = ({
             </svg>
           </Box>
         ) : (
-          <Notifications sx={{ color: isOn ? '#fff !important' : 'rgba(255,255,255,0.5) !important' }} />
+          <Notifications color={isOn ? "primary" : "disabled"} />
         )}
       </IconButton>
     </Box>
@@ -350,138 +355,149 @@ export const ProgramBlock: React.FC<Props> = ({
         if (isMobile) setOpenTooltip(false);
       }
     }>
-      <Tooltip
-        title={tooltipContent}
-        arrow
-        placement="top"
-        open={openTooltip}
-        onOpen={handleTooltipOpen}
-        onClose={handleTooltipClose}
-        disableTouchListener={isMobile}
-        disableFocusListener={isMobile}
-        PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
-      >
-        <Box
-          className="program-block"
-          onMouseEnter={handleTooltipOpen}
-          onMouseLeave={handleTooltipClose}
-          onClick={() => isMobile && setOpenTooltip(!openTooltip)}
-          style={{
-            position: 'absolute',
-            left: `${offsetPx}px`,
-            width: `${widthPx}px`,
-            height: '100%',
-          }}
-          height="100%"
-          sx={{
-            backgroundColor: alpha(color, isPast ? 0.05 : isLive ? (mode === 'light' ? 0.2 : 0.3) : (mode === 'light' ? 0.1 : 0.15)),
-            border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
-            borderRadius: tokens.borderRadius.sm,
-            transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
-            cursor: 'pointer',
-            overflow: 'hidden',
-            boxShadow: tokens.boxShadow.sm,
-            '&:hover': {
-              backgroundColor: alpha(color, isPast ? (mode === 'light' ? 0.1 : 0.15) : isLive ? (mode === 'light' ? 0.3 : 0.4) : (mode === 'light' ? 0.2 : 0.25)),
-              transform: 'scale(1.01)',
-            },
-          }}
+      <>
+        <Tooltip
+          title={tooltipContent}
+          arrow
+          placement="top"
+          open={openTooltip}
+          onOpen={handleTooltipOpen}
+          onClose={handleTooltipClose}
+          disableTouchListener={isMobile}
+          disableFocusListener={isMobile}
+          PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
         >
           <Box
-            sx={{
-              p: tokens.spacing.sm,
+            className="program-block"
+            onMouseEnter={handleTooltipOpen}
+            onMouseLeave={handleTooltipClose}
+            onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+            style={{
+              position: 'absolute',
+              left: `${offsetPx}px`,
+              width: `${widthPx}px`,
               height: '100%',
-              display: 'flex',
-              flexDirection: 'column',
-              justifyContent: 'flex-start',
-              alignItems: 'center',
-              position: 'relative',
+            }}
+            height="100%"
+            sx={{
+              backgroundColor: isPast
+                ? alpha(color, 0.05)
+                : isLive
+                  ? alpha(color, 0.3)
+                  : alpha(color, 0.15),
+              border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
+              borderRadius: tokens.borderRadius.sm,
+              transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
+              cursor: 'pointer',
+              overflow: 'hidden',
+              boxShadow: tokens.boxShadow.sm,
+              '&:hover': {
+                backgroundColor: isPast
+                  ? alpha(color, mode === 'light' ? 0.36 : 0.28)
+                  : isLive
+                    ? alpha(color, mode === 'light' ? 0.38 : 0.48)
+                    : alpha(color, mode === 'light' ? 0.22 : 0.28),
+                transform: 'scale(1.01)',
+              },
             }}
           >
-            {isLive && (
-              <Box
-                sx={{
-                  position: 'absolute',
-                  top: tokens.spacing.xs,
-                  right: tokens.spacing.xs,
-                  backgroundColor: '#f44336',
-                  color: 'white',
-                  fontSize: '0.65rem',
-                  padding: '2px 6px',
-                  borderRadius: '4px',
-                  fontWeight: 'bold',
-                  zIndex: 5,
-                }}
-              >
-                LIVE
-              </Box>
-            )}
             <Box
               sx={{
-                display: 'flex',
-                flexDirection: 'row',
-                alignItems: 'center',
-                justifyContent: 'center',
+                p: tokens.spacing.sm,
                 height: '100%',
-                gap: 1,
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'flex-start',
+                alignItems: 'center',
+                position: 'relative',
               }}
             >
-              {logo_url && (
+              {isLive && (
                 <Box
-                  component="img"
-                  src={logo_url}
-                  alt={name}
                   sx={{
-                    width: '40px',
-                    height: '40px',
-                    objectFit: 'contain',
-                    opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                    position: 'absolute',
+                    top: tokens.spacing.xs,
+                    right: tokens.spacing.xs,
+                    backgroundColor: '#f44336',
+                    color: 'white',
+                    fontSize: '0.65rem',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    zIndex: 5,
                   }}
-                />
+                >
+                  LIVE
+                </Box>
               )}
               <Box
                 sx={{
                   display: 'flex',
-                  flexDirection: 'column',
+                  flexDirection: 'row',
                   alignItems: 'center',
-                  gap: 0.5,
+                  justifyContent: 'center',
+                  height: '100%',
+                  gap: 1,
                 }}
               >
-                <Typography
-                  variant="caption"
+                {logo_url && (
+                  <Box
+                    component="img"
+                    src={logo_url}
+                    alt={name}
+                    sx={{
+                      width: '40px',
+                      height: '40px',
+                      objectFit: 'contain',
+                      opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                    }}
+                  />
+                )}
+                <Box
                   sx={{
-                    fontWeight: 'bold',
-                    fontSize: '0.75rem',
-                    textAlign: 'center',
-                    color: isPast ? alpha(color, mode === 'light' ? 0.5 : 0.6) : color,
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 0.5,
                   }}
                 >
-                  {name.toUpperCase()}
-                </Typography>
-                {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
                   <Typography
                     variant="caption"
                     sx={{
-                      fontSize: '0.65rem',
+                      fontWeight: 'bold',
+                      fontSize: '0.75rem',
                       textAlign: 'center',
-                      color: isPast ? alpha(color, mode === 'light' ? 0.4 : 0.5) : alpha(color, 0.8),
-                      lineHeight: 1.2,
-                      maxWidth: '100%',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                      display: '-webkit-box',
-                      WebkitLineClamp: 2,
-                      WebkitBoxOrient: 'vertical',
+                      color: isPast ? alpha(color, 1) : color,
                     }}
                   >
-                    {panelists.map(p => p.name).join(', ')}
+                    {name.toUpperCase()}
                   </Typography>
-                )}
+                  {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
+                    <Typography
+                      variant="caption"
+                      sx={{
+                        fontSize: '0.65rem',
+                        textAlign: 'center',
+                        color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
+                        lineHeight: 1.2,
+                        maxWidth: '100%',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {panelists.map(p => p.name).join(', ')}
+                    </Typography>
+                  )}
+                </Box>
               </Box>
             </Box>
           </Box>
-        </Box>
-      </Tooltip>
+        </Tooltip>
+        <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+      </>
     </ClickAwayListener>
   );
 };

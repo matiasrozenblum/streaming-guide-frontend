@@ -1,12 +1,14 @@
 import { NextResponse } from 'next/server';
+import type { NextRequest } from 'next/server';
 
-export async function POST(request: Request) {
+export async function POST(request: NextRequest) {
   try {
     const { email, password } = await request.json();
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
+        'User-Agent': request.headers.get('user-agent') || 'Unknown',
       },
       body: JSON.stringify({ email, password }),
     });
