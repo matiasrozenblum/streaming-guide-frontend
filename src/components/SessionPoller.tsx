@@ -17,8 +17,8 @@ export default function SessionPoller() {
       const expiresIn = decoded.exp * 1000 - Date.now();
       console.log('[SessionPoller] Token expires in', Math.round(expiresIn / 1000), 'seconds');
 
-      // If less than 5 minutes to expire, refresh
-      if (expiresIn < 5 * 60 * 1000) {
+      // If less than 40 seconds to expire, refresh
+      if (expiresIn < 40 * 1000) {
         console.log('[SessionPoller] Attempting refresh...');
         const res = await fetch('/api/auth/refresh', { method: 'POST' });
         if (res.ok) {
@@ -29,7 +29,7 @@ export default function SessionPoller() {
           console.warn('[SessionPoller] Refresh failed', res.status);
         }
       }
-    }, 2 * 60 * 1000); // every 2 minutes
+    }, 20 * 1000); // every 20 seconds
 
     return () => clearInterval(interval);
   }, []);
