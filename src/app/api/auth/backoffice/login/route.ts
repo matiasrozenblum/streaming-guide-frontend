@@ -15,7 +15,7 @@ export async function POST(request: Request) {
     }
     const data = await res.json();
     // Use the access_token to sign in
-    const response = await signIn('credentials', { redirect: false, accessToken: data.access_token });
+    const response = await signIn('credentials', { redirect: false, accessToken: data.access_token, refreshToken: data.refresh_token });
     if (!response) {
       throw new Error('Invalid credentials');
     }

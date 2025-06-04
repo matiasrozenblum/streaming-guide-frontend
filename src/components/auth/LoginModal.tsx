@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from 'react';
 import {
-  Dialog, DialogTitle, DialogContent, LinearProgress,
+  Dialog, DialogTitle, DialogContent,
   IconButton, Box, Stepper, Step, StepLabel, useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
@@ -18,6 +18,9 @@ import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
+import { styled } from '@mui/material/styles';
+import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
+import type { StepIconProps } from '@mui/material/StepIcon';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -54,6 +57,45 @@ const mapGenderToBackend = (g: string) => {
     default: return 'rather_not_say';
   }
 };
+
+// Custom StepConnector
+const BlueConnector = styled(StepConnector)(({ theme }) => ({
+  [`& .${stepConnectorClasses.line}`]: {
+    borderTopWidth: 3,
+    borderRadius: 1,
+    transition: 'border-color 0.3s',
+    borderColor: theme.palette.divider,
+  },
+  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
+    borderColor: theme.palette.primary.main,
+  },
+  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
+    borderColor: theme.palette.primary.main,
+  },
+}));
+
+// Custom StepIcon that uses your icons and colors them blue for active/completed steps
+function CustomStepIcon(props: StepIconProps) {
+  const { active, completed, icon } = props;
+  const theme = useTheme();
+  const iconKey = typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon;
+  return (
+    <Box
+      sx={{
+        color: active || completed ? theme.palette.primary.main : theme.palette.text.disabled,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        width: 32,
+        height: 32,
+        fontSize: 22,
+        transition: 'color 0.3s',
+      }}
+    >
+      {STEP_ICONS[iconKey as StepKey]}
+    </Box>
+  );
+}
 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
@@ -144,14 +186,19 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      <LinearProgress variant="determinate" value={((activeStep+1)/steps.length)*100}
-        sx={{ height:4, bgcolor:theme.palette.divider }} />
-
       <Box sx={{ px:3, pt:2 }}>
-        <Stepper nonLinear alternativeLabel activeStep={activeStep}>
+        <Stepper
+          nonLinear
+          alternativeLabel
+          activeStep={activeStep}
+          connector={<BlueConnector />}
+        >
           {steps.map((key, idx) => (
             <Step key={key} completed={idx < activeStep}>
-              <StepLabel StepIconComponent={()=>STEP_ICONS[key]}>
+              <StepLabel
+                StepIconComponent={CustomStepIcon}
+                StepIconProps={{ icon: key }}
+              >
                 {STEP_LABELS[key]}
               </StepLabel>
             </Step>
@@ -223,6 +270,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const nxt = await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
+                  refreshToken: data.refresh_token,
                 });
                 if (nxt?.error) {
                   setError('Credenciales inválidas');
@@ -313,6 +361,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   const nxt = await signIn('credentials', {
                     redirect: false,
                     accessToken: body.access_token,
+                    refreshToken: body.refresh_token,
                   });
                   if (!nxt?.error) {
                     onClose(); window.location.reload();
@@ -394,6 +443,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const nxt = await signIn('credentials', {
                   redirect: false,
                   accessToken: body.access_token,
+                  refreshToken: body.refresh_token,
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
                 gaEvent({
