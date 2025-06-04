@@ -24,6 +24,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Changed bell button color
 - Now sign up step icons and separators get painted blue when completing steps like a progress bar
 - Changed session handling with refresh token
+- Dark mode by default now
+- Clicking on bell button logged out opens the login modal
 
 ### Removed
 - Removed sign up progress bar
