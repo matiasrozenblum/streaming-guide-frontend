@@ -270,6 +270,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const nxt = await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
+                  refreshToken: data.refresh_token,
                 });
                 if (nxt?.error) {
                   setError('Credenciales inválidas');
@@ -360,6 +361,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   const nxt = await signIn('credentials', {
                     redirect: false,
                     accessToken: body.access_token,
+                    refreshToken: body.refresh_token,
                   });
                   if (!nxt?.error) {
                     onClose(); window.location.reload();
@@ -441,6 +443,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const nxt = await signIn('credentials', {
                   redirect: false,
                   accessToken: body.access_token,
+                  refreshToken: body.refresh_token,
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
                 gaEvent({
