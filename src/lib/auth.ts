@@ -1,7 +1,12 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
-import { AuthOptions } from 'next-auth'
+import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
 import { signOut } from 'next-auth/react'
+
+interface ExtendedSession extends Session {
+  accessToken: string;
+  refreshToken: string;
+}
 
 interface JWTUser {
   id: string
@@ -36,7 +41,7 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.accessToken) return null;
-        const decoded: DecodedJWT = jwtDecode<DecodedJWT>(credentials.accessToken);
+        const decoded = jwtDecode<DecodedJWT>(credentials.accessToken);
         return {
           id: decoded.sub?.toString() || '',
           name: decoded.name || '',
@@ -50,9 +55,13 @@ export const authOptions: AuthOptions = {
       },
     }),
   ],
-
+  session: {
+    strategy: 'jwt',
+    maxAge: 14 * 24 * 60 * 60, // 14 days
+  },
   callbacks: {
     async jwt({ token, user }) {
+      // On login, persist tokens
       if (user) {
         token.accessToken = (user as JWTUser).accessToken;
         token.refreshToken = (user as JWTUser).refreshToken;
@@ -63,71 +72,58 @@ export const authOptions: AuthOptions = {
         token.email = (user as JWTUser).email;
         token.sub = (user as JWTUser).id;
       }
-
-      // Check if token needs refresh
-      if (token.accessToken) {
+      // Check if access token is about to expire
+      if (token.accessToken && token.refreshToken) {
         const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
-        const shouldRefresh = decoded.exp ? decoded.exp * 1000 < Date.now() + 5 * 60 * 1000 : false;
-
-        if (shouldRefresh) {
+        const exp = decoded.exp ? decoded.exp * 1000 : 0;
+        const now = Date.now();
+        if (exp - now < 5 * 60 * 1000) { // less than 5 min left
           try {
-            const response = await fetch('/api/auth/refresh', {
+            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
               method: 'POST',
-              headers: { 
+              headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${token.refreshToken}`,
               },
             });
-
-            if (response.ok) {
-              const data = await response.json();
+            if (res.ok) {
+              const data = await res.json();
               token.accessToken = data.access_token;
-              if (data.refresh_token) {
-                token.refreshToken = data.refresh_token;
-              }
+              token.refreshToken = data.refresh_token || token.refreshToken;
             } else {
-              // If refresh fails, sign out the user
               await signOut({ redirect: true, callbackUrl: '/' });
               return { ...token, error: 'RefreshAccessTokenError' };
             }
-          } catch (error) {
-            console.error('Failed to refresh token:', error);
-            // If refresh fails, sign out the user
+          } catch {
             await signOut({ redirect: true, callbackUrl: '/' });
             return { ...token, error: 'RefreshAccessTokenError' };
           }
         }
       }
-
       return token;
     },
     async session({ session, token }) {
-      if (token.error === 'RefreshAccessTokenError') {
-        return session;
-      }
-      
-      session.accessToken = token.accessToken as string;
-      session.user.id = token.sub as string;
-      session.user.role = token.role as string;
-      session.user.name = token.name as string || '';
-      session.user.email = token.email as string || '';
-      session.user.gender = token.gender as string;
-      session.user.birthDate = token.birthDate as string;
+      const extendedSession = session as ExtendedSession;
+      extendedSession.accessToken = token.accessToken as string;
+      extendedSession.refreshToken = token.refreshToken as string;
+      session.user = {
+        ...session.user,
+        id: (token.sub as string) || '',
+        name: (token.name as string) || '',
+        email: (token.email as string) || '',
+        role: (token.role as string) || 'user',
+        gender: (token.gender as string) || undefined,
+        birthDate: (token.birthDate as string) || undefined,
+      };
       return session;
     },
   },
-
   pages: {
     signIn: '/',
   },
-  session: {
-    strategy: 'jwt',
-    maxAge: 14 * 24 * 60 * 60, // 14 days
-  },
   events: {
     async signOut() {
-      // No need to clear refresh token cookie anymore
       await fetch('/api/auth/logout', { method: 'POST' });
     },
   },
-}
+};

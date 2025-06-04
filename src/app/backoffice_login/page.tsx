@@ -42,6 +42,7 @@ export default function BackofficeLoginPage() {
       const result = await signIn('credentials', {
         redirect: false,
         accessToken: data.access_token,
+        refreshToken: data.refresh_token,
       });
 
       if (result?.error) {
