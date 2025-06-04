@@ -5,8 +5,8 @@ const channelColors = [
   '#D500F9', // Purple
   '#FF9100', // Orange
   '#00B8D4', // Cyan
-  '#E91E63', // Pink
-  '#FA8072', // Peach Orange
+  '#F91E63', // Pink
+  '#FA8072', // Salmon
 ];
 
 export const getColorForChannel = (index: number): string => {
