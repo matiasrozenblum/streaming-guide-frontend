@@ -9,6 +9,7 @@ interface JWTUser {
   email: string
   role: string
   accessToken: string
+  refreshToken: string
   gender?: string
   birthDate?: string
 }
@@ -31,6 +32,7 @@ export const authOptions: AuthOptions = {
       name: 'Credentials',
       credentials: {
         accessToken: { label: 'Access Token', type: 'text' },
+        refreshToken: { label: 'Refresh Token', type: 'text' },
       },
       async authorize(credentials) {
         if (!credentials?.accessToken) return null;
@@ -41,6 +43,7 @@ export const authOptions: AuthOptions = {
           email: decoded.email || '',
           role: decoded.role || 'user',
           accessToken: credentials.accessToken,
+          refreshToken: credentials.refreshToken || '',
           gender: decoded.gender,
           birthDate: decoded.birthDate,
         } as JWTUser;
@@ -52,6 +55,7 @@ export const authOptions: AuthOptions = {
     async jwt({ token, user }) {
       if (user) {
         token.accessToken = (user as JWTUser).accessToken;
+        token.refreshToken = (user as JWTUser).refreshToken;
         token.role = (user as JWTUser).role;
         token.gender = (user as JWTUser).gender;
         token.birthDate = (user as JWTUser).birthDate;
@@ -69,12 +73,18 @@ export const authOptions: AuthOptions = {
           try {
             const response = await fetch('/api/auth/refresh', {
               method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
+              headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${token.refreshToken}`,
+              },
             });
 
             if (response.ok) {
               const data = await response.json();
               token.accessToken = data.access_token;
+              if (data.refresh_token) {
+                token.refreshToken = data.refresh_token;
+              }
             } else {
               // If refresh fails, sign out the user
               await signOut({ redirect: true, callbackUrl: '/' });
@@ -116,7 +126,7 @@ export const authOptions: AuthOptions = {
   },
   events: {
     async signOut() {
-      // Clear refresh token cookie on sign out
+      // No need to clear refresh token cookie anymore
       await fetch('/api/auth/logout', { method: 'POST' });
     },
   },
