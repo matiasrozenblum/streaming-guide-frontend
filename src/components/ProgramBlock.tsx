@@ -381,10 +381,10 @@ export const ProgramBlock: React.FC<Props> = ({
             height="100%"
             sx={{
               backgroundColor: isPast
-                ? alpha(color, mode === 'light' ? 0.32 : 0.22)
+                ? alpha(color, 0.05)
                 : isLive
-                  ? alpha(color, mode === 'light' ? 0.28 : 0.38)
-                  : alpha(color, mode === 'light' ? 0.16 : 0.22),
+                  ? alpha(color, 0.3)
+                  : alpha(color, 0.15),
               border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
               borderRadius: tokens.borderRadius.sm,
               transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
@@ -467,7 +467,7 @@ export const ProgramBlock: React.FC<Props> = ({
                       fontWeight: 'bold',
                       fontSize: '0.75rem',
                       textAlign: 'center',
-                      color: isPast ? alpha(color, 0.7) : color,
+                      color: isPast ? alpha(color, 1) : color,
                     }}
                   >
                     {name.toUpperCase()}
@@ -478,7 +478,7 @@ export const ProgramBlock: React.FC<Props> = ({
                       sx={{
                         fontSize: '0.65rem',
                         textAlign: 'center',
-                        color: isPast ? alpha(color, 0.6) : alpha(color, 0.8),
+                        color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
                         lineHeight: 1.2,
                         maxWidth: '100%',
                         overflow: 'hidden',
