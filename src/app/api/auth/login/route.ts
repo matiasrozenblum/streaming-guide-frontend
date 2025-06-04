@@ -18,15 +18,7 @@ export async function POST(request: NextRequest) {
     }
 
     const data = await response.json();
-    const nextResponse = NextResponse.json(data);
-    
-    // Forward the refresh token cookie from the backend
-    const refreshToken = response.headers.get('set-cookie');
-    if (refreshToken) {
-      nextResponse.headers.set('set-cookie', refreshToken);
-    }
-    
-    return nextResponse;
+    return NextResponse.json(data);
   } catch (error) {
     console.error('Login error:', error);
     return NextResponse.json({ error: 'Invalid credentials' }, { status: 401 });
