@@ -354,7 +354,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                               width: 56, 
                               height: 56, 
                               mr: 2,
-                              backgroundColor: getColorForChannel(subscription.program.channel.order ?? 0, mode),
+                              backgroundColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
                               fontSize: '1.5rem',
                               fontWeight: 600,
                               color: 'white',
@@ -374,8 +374,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                             sx={{ 
                               borderRadius: 1.5,
                               fontWeight: 500,
-                              borderColor: getColorForChannel(subscription.program.channel.order ?? 0, mode),
-                              color: getColorForChannel(subscription.program.channel.order ?? 0, mode),
+                              borderColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                              color: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
                             }}
                           />
                         </Box>
