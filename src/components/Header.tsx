@@ -19,10 +19,15 @@ export default function Header() {
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [isHomePage, setIsHomePage] = React.useState(false);
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
   const headerHeight = isMobile ? '9.75vh' : '13vh';
+
+  React.useEffect(() => {
+    setIsHomePage(window.location.pathname === '/');
+  }, []);
 
   const handleLogout = async () => {
     gaEvent({
@@ -41,7 +46,7 @@ export default function Header() {
 
   const handleLogoClick = () => {
     // Only navigate if not already on home page
-    if (window.location.pathname !== '/') {
+    if (!isHomePage) {
       window.location.href = '/';
     }
   };
@@ -64,11 +69,11 @@ export default function Header() {
           sx={{
             display: 'flex',
             alignItems: 'center',
-            cursor: window.location.pathname !== '/' ? 'pointer' : 'default',
-            '&:hover': window.location.pathname !== '/' ? {
+            cursor: 'pointer',
+            '&:hover': {
               opacity: 0.8,
               transition: 'opacity 0.2s ease-in-out'
-            } : {}
+            }
           }}
         >
           <Box component="img" src={logo} alt="Logo" sx={{ height: logoHeight, width: 'auto' }} />
