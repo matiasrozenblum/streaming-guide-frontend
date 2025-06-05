@@ -101,11 +101,7 @@ function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: 
   const iconKey = stepKey || (typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon);
   
   const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
-  
-  // Special handling for existing-user step: only blue when completed, not when active
-  const shouldBeBlue = stepKey === 'existing-user' 
-    ? isStepCompleted 
-    : isStepCompleted || (active && !isLoading);
+  const shouldBeBlue = isStepCompleted || (active && !isLoading);
   const shouldAnimate = active && isLoading;
 
   return (

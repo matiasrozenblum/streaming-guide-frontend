@@ -57,6 +57,7 @@ export interface UserSubscription {
     channel: {
       id: number;
       name: string;
+      order?: number;
     };
   };
   notificationMethod: NotificationMethod;
@@ -353,7 +354,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                               width: 56, 
                               height: 56, 
                               mr: 2,
-                              backgroundColor: getColorForChannel(subscription.program.channel.id - 1),
+                              backgroundColor: getColorForChannel(subscription.program.channel.order ?? 0, mode),
                               fontSize: '1.5rem',
                               fontWeight: 600,
                               color: 'white',
@@ -373,8 +374,8 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                             sx={{ 
                               borderRadius: 1.5,
                               fontWeight: 500,
-                              borderColor: getColorForChannel(subscription.program.channel.id - 1),
-                              color: getColorForChannel(subscription.program.channel.id - 1),
+                              borderColor: getColorForChannel(subscription.program.channel.order ?? 0, mode),
+                              color: getColorForChannel(subscription.program.channel.order ?? 0, mode),
                             }}
                           />
                         </Box>
