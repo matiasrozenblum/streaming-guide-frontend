@@ -191,7 +191,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 is_live: s.program.is_live,
                 stream_url: s.program.stream_url || undefined,
               }))}
-              color={getColorForChannel(idx)}
+              color={getColorForChannel(idx, mode)}
               isToday={isToday}
             />
           ))}
