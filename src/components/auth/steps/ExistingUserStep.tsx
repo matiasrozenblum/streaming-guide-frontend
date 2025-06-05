@@ -16,6 +16,8 @@ import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface ExistingUserStepProps {
   email: string;
+  firstName?: string;
+  gender?: string;
   onSubmit: (password: string) => void;
   onBack: () => void;
   isLoading: boolean;
@@ -25,6 +27,8 @@ interface ExistingUserStepProps {
 
 export default function ExistingUserStep({
   email,
+  firstName,
+  gender,
   onSubmit,
   onBack,
   isLoading,
@@ -34,6 +38,29 @@ export default function ExistingUserStep({
   const [password, setPassword] = useState('');
   const [show, setShow] = useState(false);
   const [localErr, setLocalErr] = useState('');
+
+  const getWelcomeMessage = () => {
+    if (!firstName) {
+      return (
+        <>Bienvenido de nuevo, <strong>{email}</strong></>
+      );
+    }
+    
+    switch (gender) {
+      case 'male':
+        return (
+          <>Bienvenido de nuevo, <strong>{firstName}</strong>!</>
+        );
+      case 'female':
+        return (
+          <>Bienvenida de nuevo, <strong>{firstName}</strong>!</>
+        );
+      default: // non_binary, rather_not_say, or any other value
+        return (
+          <>Bienvenid@ de nuevo, <strong>{firstName}</strong>!</>
+        );
+    }
+  };
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,7 +75,7 @@ export default function ExistingUserStep({
   return (
     <Box component="form" onSubmit={handle} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="body2" textAlign="center">
-        Bienvenido de nuevo, <strong>{email}</strong>
+        {getWelcomeMessage()}
       </Typography>
       <TextField
         label="Contraseña"
