@@ -259,6 +259,21 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  // Apertura inmediata al hacer click
+  const handleTooltipClick = () => {
+    // Cancelar cualquier timeout pendiente
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    // Abrir tooltip inmediatamente
+    setOpenTooltip(!openTooltip);
+  };
+
   // Cierre rápido
   const handleTooltipClose = () => {
     if (openTimeoutRef.current) {
@@ -371,7 +386,7 @@ export const ProgramBlock: React.FC<Props> = ({
             className="program-block"
             onMouseEnter={handleTooltipOpen}
             onMouseLeave={handleTooltipClose}
-            onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+            onClick={handleTooltipClick}
             style={{
               position: 'absolute',
               left: `${offsetPx}px`,
