@@ -42,22 +42,22 @@ export default function ExistingUserStep({
   const getWelcomeMessage = () => {
     if (!firstName) {
       return (
-        <>Bienvenido de nuevo, <strong>{email}</strong></>
+        <>¡Bienvenido de nuevo, <strong>{email}</strong></>
       );
     }
     
     switch (gender) {
       case 'male':
         return (
-          <>Bienvenido de nuevo, <strong>{firstName}</strong>!</>
+          <>¡Bienvenido de nuevo, <strong>{firstName}</strong>!</>
         );
       case 'female':
         return (
-          <>Bienvenida de nuevo, <strong>{firstName}</strong>!</>
+          <>¡Bienvenida de nuevo, <strong>{firstName}</strong>!</>
         );
       default: // non_binary, rather_not_say, or any other value
         return (
-          <>Bienvenid@ de nuevo, <strong>{firstName}</strong>!</>
+          <>¡Bienvenid@ de nuevo, <strong>{firstName}</strong>!</>
         );
     }
   };
