@@ -19,10 +19,15 @@ export default function Header() {
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const [isHomePage, setIsHomePage] = React.useState(false);
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
   const headerHeight = isMobile ? '9.75vh' : '13vh';
+
+  React.useEffect(() => {
+    setIsHomePage(window.location.pathname === '/');
+  }, []);
 
   const handleLogout = async () => {
     gaEvent({
@@ -39,6 +44,13 @@ export default function Header() {
     window.location.href = '/';
   };
 
+  const handleLogoClick = () => {
+    // Only navigate if not already on home page
+    if (!isHomePage) {
+      window.location.href = '/';
+    }
+  };
+
   return (
     <Container maxWidth="xl" disableGutters sx={{ px: 0, mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } }}>
       <Box
@@ -51,17 +63,31 @@ export default function Header() {
           position: 'relative',
         }}
       >
-        <Box component="img" src={logo} alt="Logo" sx={{ height: logoHeight, width: 'auto' }} />
+        {/* Clickable logo container */}
         <Box
-          component="img"
-          src={text}
-          alt="Texto"
-          sx={{ 
-            pl: { xs: tokens.spacing.sm, sm: tokens.spacing.md }, 
-            height: logoHeight, 
-            width: 'auto' 
+          onClick={handleLogoClick}
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            cursor: 'pointer',
+            '&:hover': {
+              opacity: 0.8,
+              transition: 'opacity 0.2s ease-in-out'
+            }
           }}
-        />
+        >
+          <Box component="img" src={logo} alt="Logo" sx={{ height: logoHeight, width: 'auto' }} />
+          <Box
+            component="img"
+            src={text}
+            alt="Texto"
+            sx={{ 
+              pl: { xs: tokens.spacing.sm, sm: tokens.spacing.md }, 
+              height: logoHeight, 
+              width: 'auto' 
+            }}
+          />
+        </Box>
         <Box
           sx={{
             position: 'absolute',

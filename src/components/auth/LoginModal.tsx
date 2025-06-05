@@ -58,31 +58,56 @@ const mapGenderToBackend = (g: string) => {
   }
 };
 
-// Custom StepConnector
-const BlueConnector = styled(StepConnector)(({ theme }) => ({
+// Custom StepConnector with loading animation
+const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(({ theme, isLoading }) => ({
   [`& .${stepConnectorClasses.line}`]: {
     borderTopWidth: 3,
     borderRadius: 1,
-    transition: 'border-color 0.3s',
     borderColor: theme.palette.divider,
+    position: 'relative',
+    overflow: 'hidden',
+    transition: 'border-color 0.3s',
   },
   [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
     borderColor: theme.palette.primary.main,
   },
   [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.primary.main,
+    borderColor: isLoading ? theme.palette.divider : theme.palette.primary.main,
+    '&::after': isLoading ? {
+      content: '""',
+      position: 'absolute',
+      top: 0,
+      left: 0,
+      height: '100%',
+      width: '100%',
+      background: `linear-gradient(90deg, transparent 0%, ${theme.palette.primary.main} 50%, transparent 100%)`,
+      animation: 'progress-wave 1.5s infinite',
+    } : {},
+  },
+  '@keyframes progress-wave': {
+    '0%': {
+      transform: 'translateX(-100%)',
+    },
+    '100%': {
+      transform: 'translateX(100%)',
+    },
   },
 }));
 
 // Custom StepIcon that uses your icons and colors them blue for active/completed steps
-function CustomStepIcon(props: StepIconProps) {
-  const { active, completed, icon } = props;
+function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: boolean; completedSteps?: Set<StepKey> }) {
+  const { active, completed, icon, stepKey, isLoading, completedSteps } = props;
   const theme = useTheme();
-  const iconKey = typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon;
+  const iconKey = stepKey || (typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon);
+  
+  const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
+  const shouldBeBlue = isStepCompleted || (active && !isLoading);
+  const shouldAnimate = active && isLoading;
+
   return (
     <Box
       sx={{
-        color: active || completed ? theme.palette.primary.main : theme.palette.text.disabled,
+        color: shouldBeBlue ? theme.palette.primary.main : theme.palette.text.disabled,
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -90,6 +115,15 @@ function CustomStepIcon(props: StepIconProps) {
         height: 32,
         fontSize: 22,
         transition: 'color 0.3s',
+        animation: shouldAnimate ? 'pulse 1.5s infinite' : 'none',
+        '@keyframes pulse': {
+          '0%, 100%': {
+            opacity: 0.5,
+          },
+          '50%': {
+            opacity: 1,
+          },
+        },
       }}
     >
       {STEP_ICONS[iconKey as StepKey]}
@@ -103,6 +137,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const [completedSteps, setCompletedSteps] = useState<Set<StepKey>>(new Set());
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [registrationToken, setRegistrationToken] = useState('');
@@ -112,13 +147,18 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [forgotPassword, setForgotPassword] = useState(false);
   const [birthDate, setBirthDate] = useState('');
   const [gender, setGender] = useState('');
+  const [userFirstName, setUserFirstName] = useState('');
+  const [userGender, setUserGender] = useState('');
 
   useEffect(() => {
     if (!open) {
       setStep('email'); setIsUserExisting(false);
+      setCompletedSteps(new Set());
       setEmail(''); setCode(''); setRegistrationToken('');
       setFirstName(''); setLastName(''); setError(''); setIsLoading(false);
       setForgotPassword(false);
+      setBirthDate(''); setGender('');
+      setUserFirstName(''); setUserGender('');
     }
   }, [open]);
 
@@ -191,18 +231,30 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
           nonLinear
           alternativeLabel
           activeStep={activeStep}
-          connector={<BlueConnector />}
+          connector={<BlueConnector isLoading={isLoading} />}
         >
-          {steps.map((key, idx) => (
-            <Step key={key} completed={idx < activeStep}>
-              <StepLabel
-                StepIconComponent={CustomStepIcon}
-                StepIconProps={{ icon: key }}
-              >
-                {STEP_LABELS[key]}
-              </StepLabel>
-            </Step>
-          ))}
+          {steps.map((key) => {
+            const isCompleted = completedSteps.has(key);
+            const isActive = step === key;
+            const isCurrentlyLoading = isActive && isLoading;
+            
+            return (
+              <Step key={key} completed={isCompleted} active={isActive}>
+                <StepLabel
+                  StepIconComponent={(props) => (
+                    <CustomStepIcon 
+                      {...props} 
+                      stepKey={key}
+                      isLoading={isCurrentlyLoading}
+                      completedSteps={completedSteps}
+                    />
+                  )}
+                >
+                  {STEP_LABELS[key]}
+                </StepLabel>
+              </Step>
+            );
+          })}
         </Stepper>
       </Box>
 
@@ -217,9 +269,14 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               try {
                 const res = await fetch(`/api/users/email/${e}`);
                 if (res.ok) {
+                  const userData = await res.json();
+                  setUserFirstName(userData.firstName || '');
+                  setUserGender(userData.gender || '');
+                  setCompletedSteps(prev => new Set([...prev, 'email']));
                   setIsUserExisting(true);
                   setStep('existing-user');
                 } else if (res.status === 404) {
+                  setCompletedSteps(prev => new Set([...prev, 'email']));
                   setIsUserExisting(false);
                   await fetch('/api/auth/send-code', {
                     method:'POST',
@@ -241,6 +298,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         {step === 'existing-user' && (
           <ExistingUserStep
             email={email}
+            firstName={userFirstName}
+            gender={userGender}
             isLoading={isLoading}
             error={error}
             onBack={() => setStep('email')}
@@ -283,6 +342,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     }
                   });
                 } else {
+                  setCompletedSteps(prev => new Set([...prev, 'existing-user']));
                   gaEvent({
                     action: 'login_success',
                     params: {
@@ -348,10 +408,12 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 const body = await res.json();
                 if (!res.ok) throw new Error(body.message || 'Error');
                 if (body.isNew) {
+                  setCompletedSteps(prev => new Set([...prev, 'code']));
                   trackSignupStep('email_verification');
                   setRegistrationToken(body.registration_token);
                   setStep('profile');
                 } else {
+                  setCompletedSteps(prev => new Set([...prev, 'code']));
                   gaEvent({
                     action: 'login_success',
                     params: {
@@ -396,6 +458,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               setLastName(l);
               setBirthDate(b);
               setGender(g);
+              setCompletedSteps(prev => new Set([...prev, 'profile']));
               trackSignupStep('profile', { has_first_name: !!f, has_last_name: !!l, has_birth_date: !!b, has_gender: !!g });
               setStep('password');
             }}
@@ -446,6 +509,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   refreshToken: body.refresh_token,
                 });
                 if (nxt?.error) throw new Error('No se pudo iniciar sesión');
+                setCompletedSteps(prev => new Set([...prev, 'password']));
                 gaEvent({
                   action: 'signup_success',
                   params: {

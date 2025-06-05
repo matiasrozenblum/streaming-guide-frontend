@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.2] - 2025-06-05
+
+### Changed
+- Now we have 2 color palletes, one for each theme dark and light
+- Subscription section colors are now the same as the grid's
+- Changed existing step user message to use user first name and gender
+- Made webpage logo clickable and with a redirect to the home page in pages other than the home page
+
 ## [1.0.1] - 2025-06-04
 
 ### Changed
