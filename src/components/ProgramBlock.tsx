@@ -19,6 +19,7 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
 import LoginModal from './auth/LoginModal';
+import IOSNotificationSetup from './IOSNotificationSetup';
 
 dayjs.extend(customParseFormat);
 
@@ -71,11 +72,12 @@ export const ProgramBlock: React.FC<Props> = ({
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister } = usePush();
+  const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
   const [openTooltip, setOpenTooltip] = useState(false);
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [iosSetupOpen, setIOSSetupOpen] = useState(false);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -168,6 +170,15 @@ export const ProgramBlock: React.FC<Props> = ({
       } catch (error) {
         pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
         console.warn('Failed to get push subscription:', error);
+        
+        // For iOS users who need to set up PWA, show the setup dialog
+        if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
+            error.message.includes('home screen')) {
+          setIsOn(prevIsOn); // Revert UI
+          setIsLoading(false);
+          setIOSSetupOpen(true);
+          return;
+        }
       }
 
       // Validate push subscription before sending to backend
@@ -218,7 +229,18 @@ export const ProgramBlock: React.FC<Props> = ({
     } catch (error) {
       // Revert UI on error
       setIsOn(prevIsOn);
-      alert('Error updating subscription. Please try again.');
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Error updating subscription. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('pantalla de inicio') || error.message.includes('home screen')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('permission') || error.message.includes('notificaciones')) {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
       console.error('Error updating subscription:', error);
       
       // Track subscription error
@@ -512,6 +534,17 @@ export const ProgramBlock: React.FC<Props> = ({
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <IOSNotificationSetup 
+          open={iosSetupOpen} 
+          onClose={() => setIOSSetupOpen(false)} 
+          onComplete={() => {
+            setIOSSetupOpen(false);
+            // Optionally trigger the subscription again after setup
+            if (isPWAInstalled) {
+              handleBellClick({ stopPropagation: () => {} } as React.MouseEvent);
+            }
+          }}
+        />
       </>
     </ClickAwayListener>
   );
