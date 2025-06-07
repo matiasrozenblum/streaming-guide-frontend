@@ -44,3 +44,5 @@ next-env.d.ts
 scripts/*.tmp
 scripts/*.log
 scripts/*.sh~
+
+public/workbox-*.js
