@@ -52,17 +52,35 @@ const isPWAInstalled = () => {
   // Check for generic PWA standalone mode
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
   
-  // Check if launched from home screen (iOS specific)
-  const isIOSHomescreen = isIOSDevice() && isIOSStandalone;
+  // Additional iOS checks
+  const isIOSDeviceCheck = isIOSDevice();
+  const isInStandaloneMode = isIOSDeviceCheck && isIOSStandalone;
   
-  console.log('PWA Detection:', {
+  // Check URL parameters for PWA detection
+  const urlParams = new URLSearchParams(window.location.search);
+  const isPWAFromURL = urlParams.get('source') === 'pwa';
+  
+  // Check if app was launched from home screen icon (iOS specific method)
+  const isFromHomeScreen = window.location.search.includes('source=pwa') || 
+                           (isIOSDeviceCheck && window.location.href.includes('?'));
+  
+  const result = isStandalone || isIOSStandalone || isPWAFromURL;
+  
+  console.log('🔍 PWA Detection Details:', {
     isIOSStandalone,
     isStandalone,
-    isIOSHomescreen,
-    userAgent: navigator.userAgent
+    isIOSDeviceCheck,
+    isInStandaloneMode,
+    isPWAFromURL,
+    isFromHomeScreen,
+    currentURL: window.location.href,
+    displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
+    navigatorStandalone: (window.navigator as { standalone?: boolean }).standalone,
+    userAgent: navigator.userAgent,
+    finalResult: result
   });
   
-  return isStandalone || isIOSStandalone;
+  return result;
 };
 
 export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false, installPrompt = null }) => {
@@ -82,10 +100,25 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
     // Check PWA status periodically (useful for iOS when user installs after opening the app)
     const checkPWAStatus = () => {
       const currentPWAStatus = isPWAInstalled();
+              console.log('🔄 Periodic PWA check:', { currentPWAStatus });
       setIsPWA(currentPWAStatus);
     };
 
-    const interval = setInterval(checkPWAStatus, 2000); // Check every 2 seconds
+    // More frequent checks for iOS devices since PWA installation can happen
+    const checkInterval = isIOSDevice() ? 1000 : 3000; // Check every 1s for iOS, 3s for others
+    const interval = setInterval(checkPWAStatus, checkInterval);
+
+    // Also check when the page becomes visible (user returns from installing)
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        console.log('📱 Page became visible, checking PWA status');
+        setTimeout(checkPWAStatus, 500); // Slight delay to ensure state is ready
+      }
+    };
+
+    if (typeof document !== 'undefined') {
+      document.addEventListener('visibilitychange', handleVisibilityChange);
+    }
 
     if (!enabled) return;
 
@@ -115,9 +148,12 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       setNotificationPermission(Notification.permission);
     }
 
-    // Cleanup interval
+    // Cleanup interval and event listeners
     return () => {
       clearInterval(interval);
+      if (typeof document !== 'undefined') {
+        document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
     };
   }, [enabled]);
 

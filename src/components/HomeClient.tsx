@@ -16,6 +16,7 @@ import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
 import { useDeviceId } from '@/hooks/useDeviceId';
+import PWADebugger from './PWADebugger';
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -99,7 +100,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [deviceId]);
+  }, [deviceId, setLiveStatuses]);
 
   useEffect(() => {
     if (flattened.length > 0) {
@@ -125,6 +126,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         }}
       >
         <Header />
+        <PWADebugger />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
           <MotionBox
