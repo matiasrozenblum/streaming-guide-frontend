@@ -8,6 +8,7 @@ export default function PWADebugger() {
   const { isIOSDevice, isPWAInstalled, notificationPermission } = usePush();
   
   const [debugInfo, setDebugInfo] = React.useState<Record<string, unknown>>({});
+  const [isVisible, setIsVisible] = React.useState(true);
 
   const refreshDebugInfo = React.useCallback(() => {
     if (typeof window === 'undefined') return;
@@ -45,12 +46,37 @@ export default function PWADebugger() {
     return null;
   }
 
+  if (!isVisible) {
+    return (
+      <Box sx={{ position: 'fixed', top: 20, right: 20, zIndex: 1000 }}>
+        <Button 
+          variant="contained" 
+          onClick={() => setIsVisible(true)}
+          size="small"
+          sx={{ bgcolor: 'warning.main', color: 'warning.contrastText' }}
+        >
+          🐛 Show Debug
+        </Button>
+      </Box>
+    );
+  }
+
   return (
-    <Card sx={{ m: 2, bgcolor: 'warning.light' }}>
+    <Card sx={{ m: 2, bgcolor: 'warning.light', position: 'relative' }}>
       <CardContent>
-        <Typography variant="h6" sx={{ mb: 2, color: 'warning.dark' }}>
-          🐛 PWA Debug Info (iOS only)
-        </Typography>
+        <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
+          <Typography variant="h6" sx={{ color: 'warning.dark' }}>
+            🐛 PWA Debug Info (iOS only)
+          </Typography>
+          <Button 
+            variant="outlined" 
+            onClick={() => setIsVisible(false)}
+            size="small"
+            sx={{ minWidth: 'auto', px: 1 }}
+          >
+            ✕
+          </Button>
+        </Box>
         
         <Box sx={{ mb: 2 }}>
           <Chip 
