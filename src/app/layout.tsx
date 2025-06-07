@@ -12,6 +12,7 @@ import { ClarityLoader } from '@/components/ClarityLoader'
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import Head from 'next/head';
 import { PushProvider } from '@/contexts/PushContext';
+import { TooltipProvider } from '@/contexts/TooltipContext';
 import posthog from 'posthog-js';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
@@ -104,15 +105,17 @@ export default function RootLayout({
         <HotjarLoader />
         <SessionProviderWrapper>
           <PushProvider enabled={true} installPrompt={null}>
-            <CustomThemeProvider>
-              <YouTubePlayerProvider>
-                <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-                {children}
-                <Footer />
-              </div>
-              <YouTubeGlobalPlayer />
-              </YouTubePlayerProvider>
-            </CustomThemeProvider>
+            <TooltipProvider>
+              <CustomThemeProvider>
+                <YouTubePlayerProvider>
+                  <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+                  {children}
+                  <Footer />
+                </div>
+                <YouTubeGlobalPlayer />
+                </YouTubePlayerProvider>
+              </CustomThemeProvider>
+            </TooltipProvider>
           </PushProvider>
         </SessionProviderWrapper>
       </body>

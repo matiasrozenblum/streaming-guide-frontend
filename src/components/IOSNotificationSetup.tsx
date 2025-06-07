@@ -23,6 +23,7 @@ import {
   CheckCircle,
 } from '@mui/icons-material';
 import { usePush } from '@/contexts/PushContext';
+import { useTooltip } from '@/contexts/TooltipContext';
 
 interface IOSNotificationSetupProps {
   open: boolean;
@@ -36,6 +37,14 @@ export default function IOSNotificationSetup({
   onComplete 
 }: IOSNotificationSetupProps) {
   const { isIOSDevice, isPWAInstalled, notificationPermission } = usePush();
+  const { closeTooltip } = useTooltip();
+
+  // Close all tooltips when this modal opens
+  React.useEffect(() => {
+    if (open) {
+      closeTooltip();
+    }
+  }, [open, closeTooltip]);
   
   const steps = [
     {
@@ -144,23 +153,23 @@ export default function IOSNotificationSetup({
               </StepLabel>
               
               <StepContent>
-                <Paper sx={{ p: 2, bgcolor: 'grey.50', mt: 1 }}>
-                  <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600 }}>
-                    Instrucciones:
-                  </Typography>
-                  <Box component="ol" sx={{ pl: 2, m: 0 }}>
-                    {step.instructions.map((instruction, idx) => (
-                      <Typography 
-                        key={idx}
-                        component="li" 
-                        variant="body2" 
-                        sx={{ mb: 0.5 }}
-                      >
-                        {instruction}
-                      </Typography>
-                    ))}
-                  </Box>
-                </Paper>
+                                 <Paper sx={{ p: 2, bgcolor: 'grey.50', mt: 1 }}>
+                   <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.primary' }}>
+                     Instrucciones:
+                   </Typography>
+                   <Box component="ol" sx={{ pl: 2, m: 0 }}>
+                     {step.instructions.map((instruction, idx) => (
+                       <Typography 
+                         key={idx}
+                         component="li" 
+                         variant="body2" 
+                         sx={{ mb: 0.5, color: 'text.primary' }}
+                       >
+                         {instruction}
+                       </Typography>
+                     ))}
+                   </Box>
+                 </Paper>
 
                 {step.completed && (
                   <Alert severity="success" sx={{ mt: 2 }}>

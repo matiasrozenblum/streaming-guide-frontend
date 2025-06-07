@@ -45,8 +45,24 @@ const isIOSDevice = () => {
 // PWA installation detection
 const isPWAInstalled = () => {
   if (typeof window === 'undefined') return false;
-  return window.matchMedia('(display-mode: standalone)').matches || 
-         (window.navigator as { standalone?: boolean }).standalone === true;
+  
+  // Check for iOS standalone mode
+  const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
+  
+  // Check for generic PWA standalone mode
+  const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
+  
+  // Check if launched from home screen (iOS specific)
+  const isIOSHomescreen = isIOSDevice() && isIOSStandalone;
+  
+  console.log('PWA Detection:', {
+    isIOSStandalone,
+    isStandalone,
+    isIOSHomescreen,
+    userAgent: navigator.userAgent
+  });
+  
+  return isStandalone || isIOSStandalone;
 };
 
 export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false, installPrompt = null }) => {
@@ -62,6 +78,14 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
     // Set client-side only values
     setIsIOS(isIOSDevice());
     setIsPWA(isPWAInstalled());
+
+    // Check PWA status periodically (useful for iOS when user installs after opening the app)
+    const checkPWAStatus = () => {
+      const currentPWAStatus = isPWAInstalled();
+      setIsPWA(currentPWAStatus);
+    };
+
+    const interval = setInterval(checkPWAStatus, 2000); // Check every 2 seconds
 
     if (!enabled) return;
 
@@ -90,6 +114,11 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
     if (typeof window !== 'undefined' && 'Notification' in window) {
       setNotificationPermission(Notification.permission);
     }
+
+    // Cleanup interval
+    return () => {
+      clearInterval(interval);
+    };
   }, [enabled]);
 
   const requestNotificationPermission = async (): Promise<NotificationPermission> => {
