@@ -55,6 +55,10 @@ export default function RootLayout({
     <html lang="es" suppressHydrationWarning>
       {/* Preconnect para GA */}
       <Head>
+        <meta name="apple-mobile-web-app-capable" content="yes" />
+        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+        <meta name="apple-mobile-web-app-title" content="La Guía del Streaming" />
+        <link rel="apple-touch-icon" href="/img/logo.png" />
         <link rel="preconnect" href="https://www.googletagmanager.com" />
         <link rel="preconnect" href="https://www.google-analytics.com" />
         <link rel="manifest" href="/manifest.json" />
