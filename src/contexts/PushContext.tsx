@@ -60,10 +60,11 @@ const isPWAInstalled = () => {
   const urlParams = new URLSearchParams(window.location.search);
   const isPWAFromURL = urlParams.get('source') === 'pwa';
   const isStandaloneFromURL = urlParams.get('standalone') === 'true';
+  const isManualPWATest = urlParams.get('manual_pwa') === 'true';
   
   // For iOS devices, prioritize URL parameter detection over navigator.standalone
   // This addresses issues with iOS 17.x where navigator.standalone may not work correctly
-  const result = isPWAFromURL || isStandaloneFromURL || isStandalone || isIOSStandalone;
+  const result = isPWAFromURL || isStandaloneFromURL || isManualPWATest || isStandalone || isIOSStandalone;
   
   console.log('🔍 PWA Detection Details:', {
     isIOSStandalone,
@@ -72,6 +73,7 @@ const isPWAInstalled = () => {
     isInStandaloneMode,
     isPWAFromURL,
     isStandaloneFromURL,
+    isManualPWATest,
     currentURL: window.location.href,
     displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
     navigatorStandalone: (window.navigator as { standalone?: boolean }).standalone,

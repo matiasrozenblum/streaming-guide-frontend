@@ -83,8 +83,24 @@ export default function PWADebugger() {
           variant="outlined" 
           onClick={refreshDebugInfo}
           size="small"
+          sx={{ mr: 1 }}
         >
           Refresh Debug Info
+        </Button>
+        
+        <Button 
+          variant="contained" 
+          onClick={() => {
+            if (window.location.search.includes('manual_pwa=true')) {
+              window.location.href = window.location.pathname;
+            } else {
+              window.location.href = window.location.pathname + '?manual_pwa=true&source=pwa';
+            }
+          }}
+          size="small"
+          color="primary"
+        >
+          {window.location.search.includes('manual_pwa=true') ? 'Remove Manual PWA' : 'Test Manual PWA'}
         </Button>
         
         <Typography variant="caption" sx={{ display: 'block', mt: 1, color: 'text.secondary' }}>
