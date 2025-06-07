@@ -144,10 +144,10 @@ export default function IOSNotificationSetup({
                   </Box>
                 )}
               >
-                <Typography variant="h6" sx={{ fontWeight: 600 }}>
+                <Typography variant="h6" sx={{ fontWeight: 600, color: 'text.primary' }}>
                   {step.label}
                 </Typography>
-                <Typography variant="body2" color="text.secondary">
+                <Typography variant="body2" sx={{ color: 'text.secondary' }}>
                   {step.description}
                 </Typography>
               </StepLabel>
