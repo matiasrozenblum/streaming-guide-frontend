@@ -10,7 +10,6 @@ import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import { ClarityLoader } from '@/components/ClarityLoader'
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
-import Head from 'next/head';
 import { PushProvider } from '@/contexts/PushContext';
 import { TooltipProvider } from '@/contexts/TooltipContext';
 import posthog from 'posthog-js';
@@ -53,17 +52,6 @@ export default function RootLayout({
   }
   return (
     <html lang="es" suppressHydrationWarning>
-      {/* Preconnect para GA */}
-      <Head>
-        <meta name="apple-mobile-web-app-capable" content="yes" />
-        <meta name="apple-mobile-web-app-status-bar-style" content="default" />
-        <meta name="apple-mobile-web-app-title" content="La Guía del Streaming" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link rel="manifest" href="/manifest.json" />
-      </Head> 
-      
       {/* Google Tag Manager */}
       <Script
         id="gtm-script"
