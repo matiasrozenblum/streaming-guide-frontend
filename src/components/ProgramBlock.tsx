@@ -20,6 +20,7 @@ import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
 import LoginModal from './auth/LoginModal';
 import IOSNotificationSetup from './IOSNotificationSetup';
+import { useTooltip } from '@/contexts/TooltipContext';
 
 dayjs.extend(customParseFormat);
 
@@ -73,11 +74,14 @@ export const ProgramBlock: React.FC<Props> = ({
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
-  const [openTooltip, setOpenTooltip] = useState(false);
+  const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
+  
+  const tooltipId = `program-${id}`;
+  const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -176,6 +180,7 @@ export const ProgramBlock: React.FC<Props> = ({
             error.message.includes('home screen')) {
           setIsOn(prevIsOn); // Revert UI
           setIsLoading(false);
+          globalCloseTooltip(tooltipId); // Close tooltip before opening modal
           setIOSSetupOpen(true);
           return;
         }
@@ -276,7 +281,7 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(true);
+        globalOpenTooltip(tooltipId);
       }, 500);
     }
   };
@@ -292,8 +297,12 @@ export const ProgramBlock: React.FC<Props> = ({
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
-    // Abrir tooltip inmediatamente
-    setOpenTooltip(!openTooltip);
+    // Abrir/cerrar tooltip inmediatamente
+    if (isTooltipOpenForThis) {
+      globalCloseTooltip(tooltipId);
+    } else {
+      globalOpenTooltip(tooltipId);
+    }
   };
 
   // Cierre rápido
@@ -304,7 +313,7 @@ export const ProgramBlock: React.FC<Props> = ({
     }
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(false);
+        globalCloseTooltip(tooltipId);
       }, 100);
     }
   };
@@ -389,7 +398,7 @@ export const ProgramBlock: React.FC<Props> = ({
         if (bellRef.current?.contains(event.target as Node)) {
           return;
         }
-        if (isMobile) setOpenTooltip(false);
+        if (isMobile) globalCloseTooltip(tooltipId);
       }
     }>
       <>
@@ -397,7 +406,7 @@ export const ProgramBlock: React.FC<Props> = ({
           title={tooltipContent}
           arrow
           placement="top"
-          open={openTooltip}
+          open={isTooltipOpenForThis}
           onOpen={handleTooltipOpen}
           onClose={handleTooltipClose}
           disableTouchListener={isMobile}
