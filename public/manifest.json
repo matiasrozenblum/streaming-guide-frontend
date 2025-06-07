@@ -1,7 +1,7 @@
 {
     "name": "La Guía del Streaming",
     "short_name": "Streaming",
-    "start_url": "/?source=pwa",
+    "start_url": "/?source=pwa&standalone=true",
     "scope": "/",
     "display": "standalone",
     "background_color": "#0f172a",

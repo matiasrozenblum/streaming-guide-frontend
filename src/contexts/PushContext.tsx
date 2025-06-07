@@ -56,15 +56,14 @@ const isPWAInstalled = () => {
   const isIOSDeviceCheck = isIOSDevice();
   const isInStandaloneMode = isIOSDeviceCheck && isIOSStandalone;
   
-  // Check URL parameters for PWA detection
+  // Check URL parameters for PWA detection (most reliable for iOS)
   const urlParams = new URLSearchParams(window.location.search);
   const isPWAFromURL = urlParams.get('source') === 'pwa';
+  const isStandaloneFromURL = urlParams.get('standalone') === 'true';
   
-  // Check if app was launched from home screen icon (iOS specific method)
-  const isFromHomeScreen = window.location.search.includes('source=pwa') || 
-                           (isIOSDeviceCheck && window.location.href.includes('?'));
-  
-  const result = isStandalone || isIOSStandalone || isPWAFromURL;
+  // For iOS devices, prioritize URL parameter detection over navigator.standalone
+  // This addresses issues with iOS 17.x where navigator.standalone may not work correctly
+  const result = isPWAFromURL || isStandaloneFromURL || isStandalone || isIOSStandalone;
   
   console.log('🔍 PWA Detection Details:', {
     isIOSStandalone,
@@ -72,7 +71,7 @@ const isPWAInstalled = () => {
     isIOSDeviceCheck,
     isInStandaloneMode,
     isPWAFromURL,
-    isFromHomeScreen,
+    isStandaloneFromURL,
     currentURL: window.location.href,
     displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
     navigatorStandalone: (window.navigator as { standalone?: boolean }).standalone,
