@@ -5,20 +5,10 @@ const withPWA = require('next-pwa')({
   register: true,
   skipWaiting: true,
   disable: process.env.NODE_ENV === 'development',
-  // Let next-pwa generate the service worker automatically
-  runtimeCaching: [
-    {
-      urlPattern: /^https?.*/, 
-      handler: 'NetworkFirst',
-      options: {
-        cacheName: 'offlineCache',
-        expiration: {
-          maxEntries: 200,
-          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
-        },
-      },
-    },
-  ],
+  // Use custom service worker that includes push notification handling
+  swSrc: 'service-worker.js',
+  // Note: runtimeCaching is not compatible with custom service worker (InjectManifest mode)
+  // Runtime caching is handled manually in the custom service worker
 });
 
 /** @type {import('next').NextConfig} */
