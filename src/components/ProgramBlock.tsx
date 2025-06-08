@@ -164,66 +164,61 @@ export const ProgramBlock: React.FC<Props> = ({
       let p256dh = '';
       let auth = '';
       let pushErrorReason = '';
-
-      // Only get push subscription when subscribing (not when unsubscribing)
-      if (willSubscribe) {
-        try {
-          pushSubscription = await subscribeAndRegister();
-          if (pushSubscription) {
-            endpoint = pushSubscription.endpoint;
-            
-            // Enhanced cross-platform key extraction with detailed logging
-            try {
-              const p256dhKey = pushSubscription.getKey('p256dh');
-              const authKey = pushSubscription.getKey('auth');
-              
-              console.log('Push subscription keys debug:', {
-                endpoint: endpoint,
-                p256dhKey: p256dhKey ? 'present' : 'missing',
-                authKey: authKey ? 'present' : 'missing',
-                p256dhLength: p256dhKey?.byteLength,
-                authLength: authKey?.byteLength,
-                isIOS: isIOSDevice,
-                isPWA: isPWAInstalled,
-                userAgent: navigator.userAgent
-              });
-              
-              if (p256dhKey && authKey) {
-                p256dh = arrayBufferToBase64(p256dhKey);
-                auth = arrayBufferToBase64(authKey);
-                
-                console.log('Encoded keys:', {
-                  p256dh: p256dh ? 'encoded' : 'failed',
-                  auth: auth ? 'encoded' : 'failed',
-                  p256dhLength: p256dh.length,
-                  authLength: auth.length
-                });
-              } else {
-                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
-              }
-            } catch (keyError) {
-              console.error('Failed to extract push subscription keys:', keyError);
-              pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
-            }
-          } else {
-            console.warn('Push subscription is null');
-          }
-        } catch (error) {
-          pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
-          console.warn('Failed to get push subscription:', error);
+      
+      try {
+        pushSubscription = await subscribeAndRegister();
+        if (pushSubscription) {
+          endpoint = pushSubscription.endpoint;
           
-          // For iOS users who need to set up PWA, show the setup dialog
-          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
-              error.message.includes('home screen')) {
-            setIsOn(prevIsOn); // Revert UI
-            setIsLoading(false);
-            globalCloseTooltip(tooltipId); // Close tooltip before opening modal
-            setIOSSetupOpen(true);
-            return;
+          // Enhanced cross-platform key extraction with detailed logging
+          try {
+            const p256dhKey = pushSubscription.getKey('p256dh');
+            const authKey = pushSubscription.getKey('auth');
+            
+            console.log('Push subscription keys debug:', {
+              endpoint: endpoint,
+              p256dhKey: p256dhKey ? 'present' : 'missing',
+              authKey: authKey ? 'present' : 'missing',
+              p256dhLength: p256dhKey?.byteLength,
+              authLength: authKey?.byteLength,
+              isIOS: isIOSDevice,
+              isPWA: isPWAInstalled,
+              userAgent: navigator.userAgent
+            });
+            
+            if (p256dhKey && authKey) {
+              p256dh = arrayBufferToBase64(p256dhKey);
+              auth = arrayBufferToBase64(authKey);
+              
+              console.log('Encoded keys:', {
+                p256dh: p256dh ? 'encoded' : 'failed',
+                auth: auth ? 'encoded' : 'failed',
+                p256dhLength: p256dh.length,
+                authLength: auth.length
+              });
+            } else {
+              console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+            }
+          } catch (keyError) {
+            console.error('Failed to extract push subscription keys:', keyError);
+            pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
           }
+        } else {
+          console.warn('Push subscription is null');
         }
-      } else {
-        console.log('🔄 Unsubscribing - no push subscription needed');
+      } catch (error) {
+        pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
+        console.warn('Failed to get push subscription:', error);
+        
+        // For iOS users who need to set up PWA, show the setup dialog
+        if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
+            error.message.includes('home screen')) {
+          setIsOn(prevIsOn); // Revert UI
+          setIsLoading(false);
+          globalCloseTooltip(tooltipId); // Close tooltip before opening modal
+          setIOSSetupOpen(true);
+          return;
+        }
       }
 
       // Enhanced validation with detailed debugging
@@ -240,52 +235,9 @@ export const ProgramBlock: React.FC<Props> = ({
         willProceedWithRequest: true
       });
       
-      console.log('Push subscription validation:', {
-        willSubscribe,
-        hasSubscription: !!pushSubscription,
-        hasEndpoint: !!endpoint,
-        hasP256dh: !!p256dh,
-        hasAuth: !!auth,
-        isValidPush,
-        endpoint: endpoint || 'empty',
-        p256dhLength: p256dh?.length || 0,
-        authLength: auth?.length || 0,
-        pushErrorReason: pushErrorReason || 'none'
-      });
-      
-      // Only validate push subscription for subscribing (not unsubscribing)
-      if (willSubscribe && !isValidPush) {
+      if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
-        
-        // For non-iOS platforms that should support push, show error instead of sending invalid request
-        if (!isIOSDevice) {
-          setIsOn(prevIsOn); // Revert UI
-          setIsLoading(false);
-          
-          const errorMessage = pushErrorReason.includes('permission') 
-            ? 'Debes permitir las notificaciones para suscribirte a este programa.'
-            : 'Error al configurar las notificaciones push. Por favor, intenta de nuevo.';
-            
-          alert(errorMessage);
-          
-          gaEvent({
-            action: 'push_subscription_invalid',
-            params: {
-              program_id: id,
-              program_name: name,
-              reason,
-              endpoint: endpoint || 'empty',
-              p256dh: p256dh || 'empty', 
-              auth: auth || 'empty',
-              has_push: !!pushSubscription,
-            },
-            userData: typedSession?.user
-          });
-          
-          return; // Don't send request with invalid push data
-        }
-        
         gaEvent({
           action: 'push_subscription_invalid',
           params: {
@@ -301,26 +253,14 @@ export const ProgramBlock: React.FC<Props> = ({
         });
       }
 
-      // Build request payload
-      const payload: {
-        notificationMethod: string;
-        endpoint?: string;
-        p256dh?: string;
-        auth?: string;
-      } = { 
-        notificationMethod: 'both'
-      };
-      
-      // Only include push data when subscribing and we have valid push subscription
-      if (willSubscribe && isValidPush) {
-        payload.endpoint = endpoint;
-        payload.p256dh = p256dh;
-        payload.auth = auth;
-      }
-
       console.log('🚀 ABOUT TO SEND REQUEST:', {
         url: `/programs/${id}/subscribe`,
-        payload,
+        payload: { 
+          notificationMethod: 'both',
+          endpoint: isValidPush ? endpoint : undefined,
+          p256dh: isValidPush ? p256dh : undefined,
+          auth: isValidPush ? auth : undefined
+        },
         willSubscribe,
         isValidPush,
         hasToken: !!typedSession.accessToken
@@ -328,7 +268,12 @@ export const ProgramBlock: React.FC<Props> = ({
       
       await api.post(
         `/programs/${id}/subscribe`,
-        payload,
+        { 
+          notificationMethod: 'both',
+          endpoint: isValidPush ? endpoint : undefined,
+          p256dh: isValidPush ? p256dh : undefined,
+          auth: isValidPush ? auth : undefined
+        },
         {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }
