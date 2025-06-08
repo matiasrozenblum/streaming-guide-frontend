@@ -35,6 +35,7 @@ import type { SessionWithToken } from '@/types/session';
 import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
 import { event as gaEvent } from '@/lib/gtag';
 
@@ -273,6 +274,9 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+          
+          {/* iOS Push Guide - only shown for iOS users */}
+          <IOSPushGuide />
           {subscriptions.length === 0 ? (
             <MotionCard
               initial={{ opacity: 0, y: 20 }}
