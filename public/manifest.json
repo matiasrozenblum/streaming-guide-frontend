@@ -21,7 +21,7 @@
         "purpose": "any maskable"
       }
     ],
-    "start_url": "/",
+    "start_url": "/?source=pwa&standalone=true",
     "categories": ["entertainment", "lifestyle"],
     "screenshots": [],
     "prefer_related_applications": false

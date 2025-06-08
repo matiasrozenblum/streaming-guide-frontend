@@ -46,34 +46,58 @@ const isIOSDevice = () => {
 const isPWAInstalled = () => {
   if (typeof window === 'undefined') return false;
   
-  // Check for iOS standalone mode
+  // Check for iOS standalone mode (primary method for iOS)
   const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
   
   // Check for generic PWA standalone mode
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
   
-  // Additional iOS checks
-  const isIOSDeviceCheck = isIOSDevice();
-  const isInStandaloneMode = isIOSDeviceCheck && isIOSStandalone;
-  
-  // Check URL parameters for PWA detection (most reliable for iOS)
+  // Check URL parameters for PWA detection (set by manifest start_url)
   const urlParams = new URLSearchParams(window.location.search);
   const isPWAFromURL = urlParams.get('source') === 'pwa';
   const isStandaloneFromURL = urlParams.get('standalone') === 'true';
   const isManualPWATest = urlParams.get('manual_pwa') === 'true';
   
-  // For iOS devices, prioritize URL parameter detection over navigator.standalone
-  // This addresses issues with iOS 17.x where navigator.standalone may not work correctly
-  const result = isPWAFromURL || isStandaloneFromURL || isManualPWATest || isStandalone || isIOSStandalone;
+  // Additional iOS-specific checks
+  const isIOSDeviceCheck = isIOSDevice();
+  
+  // Check for minimal-ui or fullscreen modes (alternative PWA modes)
+  const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
+  const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
+  
+  // Check window dimensions (PWA on iOS often has different dimensions)
+  const hasNonStandardDimensions = isIOSDeviceCheck && (
+    window.screen.height !== window.innerHeight || 
+    window.screen.width !== window.innerWidth
+  );
+  
+  // Combine all detection methods - prioritize native iOS detection
+  let result = false;
+  
+  if (isIOSDeviceCheck) {
+    // For iOS, use multiple detection methods
+    result = isIOSStandalone || isPWAFromURL || isStandaloneFromURL || isManualPWATest || hasNonStandardDimensions;
+  } else {
+    // For other platforms, use standard PWA detection
+    result = isStandalone || isMinimalUI || isFullscreen || isPWAFromURL || isStandaloneFromURL || isManualPWATest;
+  }
   
   console.log('🔍 PWA Detection Details:', {
     isIOSStandalone,
     isStandalone,
     isIOSDeviceCheck,
-    isInStandaloneMode,
     isPWAFromURL,
     isStandaloneFromURL,
     isManualPWATest,
+    isMinimalUI,
+    isFullscreen,
+    hasNonStandardDimensions,
+    windowDimensions: { 
+      screenH: window.screen.height, 
+      screenW: window.screen.width, 
+      innerH: window.innerHeight, 
+      innerW: window.innerWidth 
+    },
     currentURL: window.location.href,
     displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
     navigatorStandalone: (window.navigator as { standalone?: boolean }).standalone,
