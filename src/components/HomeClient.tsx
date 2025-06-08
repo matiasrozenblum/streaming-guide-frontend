@@ -113,7 +113,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       <main 
         className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200"
         style={{
-          paddingTop: 'max(env(safe-area-inset-top), 1rem)',
           paddingLeft: 'env(safe-area-inset-left)',
           paddingRight: 'env(safe-area-inset-right)',
         }}
