@@ -16,7 +16,7 @@ import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
 import { useDeviceId } from '@/hooks/useDeviceId';
-import PWADebugger from './PWADebugger';
+
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -109,39 +109,49 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   }, [flattened]);
 
   return (
-    <>
-      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
-
-      <Box
-        sx={{
-          minHeight: '100dvh',
-          maxWidth: '100vw',
-          background:
-            mode === 'light'
-              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
-          display: 'flex',
-          flexDirection: 'column'
+    <div className="flex-grow">
+      <main 
+        className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200"
+        style={{
+          paddingTop: 'max(env(safe-area-inset-top), 1rem)',
+          paddingLeft: 'env(safe-area-inset-left)',
+          paddingRight: 'env(safe-area-inset-right)',
         }}
       >
-        <Header />
-        <PWADebugger />
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+          {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          <MotionBox
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+          <Box
             sx={{
-              flex: 1,
-              backdropFilter: 'blur(8px)',
+              minHeight: '100dvh',
+              maxWidth: '100vw',
+              background:
+                mode === 'light'
+                  ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+                  : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+              py: { xs: 1, sm: 2 },
+              display: 'flex',
+              flexDirection: 'column'
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
-          </MotionBox>
-        </Container>
-      </Box>
-    </>
+            <Header />
+
+            <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+              <MotionBox
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                sx={{
+                  flex: 1,
+                  backdropFilter: 'blur(8px)',
+                }}
+              >
+                {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
+              </MotionBox>
+            </Container>
+          </Box>
+        </div>
+      </main>
+    </div>
   );
 }
