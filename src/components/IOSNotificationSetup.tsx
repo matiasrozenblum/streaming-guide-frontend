@@ -153,7 +153,7 @@ export default function IOSNotificationSetup({
               </StepLabel>
               
               <StepContent>
-                                 <Paper sx={{ p: 2, bgcolor: 'grey.50', mt: 1 }}>
+                                 <Paper sx={{ p: 2, bgcolor: 'primary.main', mt: 1 }}>
                    <Typography variant="subtitle2" sx={{ mb: 1, fontWeight: 600, color: 'text.primary' }}>
                      Instrucciones:
                    </Typography>
