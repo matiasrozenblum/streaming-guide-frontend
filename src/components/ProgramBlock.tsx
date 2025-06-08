@@ -164,60 +164,69 @@ export const ProgramBlock: React.FC<Props> = ({
       let p256dh = '';
       let auth = '';
       let pushErrorReason = '';
-      
-      try {
-        pushSubscription = await subscribeAndRegister();
-        if (pushSubscription) {
-          endpoint = pushSubscription.endpoint;
-          
-          // Enhanced cross-platform key extraction with detailed logging
-          try {
-            const p256dhKey = pushSubscription.getKey('p256dh');
-            const authKey = pushSubscription.getKey('auth');
+      let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
+
+      // For iOS users without PWA, use email-only subscription to reduce friction
+      if (isIOSDevice && !isPWAInstalled && willSubscribe) {
+        console.log('📱 iOS user without PWA - creating email-only subscription');
+        notificationMethod = 'email';
+        // Skip push subscription setup for smoother UX
+      } else {
+        // Normal push subscription flow for other platforms or iOS with PWA
+        try {
+          pushSubscription = await subscribeAndRegister();
+          if (pushSubscription) {
+            endpoint = pushSubscription.endpoint;
             
-            console.log('Push subscription keys debug:', {
-              endpoint: endpoint,
-              p256dhKey: p256dhKey ? 'present' : 'missing',
-              authKey: authKey ? 'present' : 'missing',
-              p256dhLength: p256dhKey?.byteLength,
-              authLength: authKey?.byteLength,
-              isIOS: isIOSDevice,
-              isPWA: isPWAInstalled,
-              userAgent: navigator.userAgent
-            });
-            
-            if (p256dhKey && authKey) {
-              p256dh = arrayBufferToBase64(p256dhKey);
-              auth = arrayBufferToBase64(authKey);
+            // Enhanced cross-platform key extraction with detailed logging
+            try {
+              const p256dhKey = pushSubscription.getKey('p256dh');
+              const authKey = pushSubscription.getKey('auth');
               
-              console.log('Encoded keys:', {
-                p256dh: p256dh ? 'encoded' : 'failed',
-                auth: auth ? 'encoded' : 'failed',
-                p256dhLength: p256dh.length,
-                authLength: auth.length
+              console.log('Push subscription keys debug:', {
+                endpoint: endpoint,
+                p256dhKey: p256dhKey ? 'present' : 'missing',
+                authKey: authKey ? 'present' : 'missing',
+                p256dhLength: p256dhKey?.byteLength,
+                authLength: authKey?.byteLength,
+                isIOS: isIOSDevice,
+                isPWA: isPWAInstalled,
+                userAgent: navigator.userAgent
               });
-            } else {
-              console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+              
+              if (p256dhKey && authKey) {
+                p256dh = arrayBufferToBase64(p256dhKey);
+                auth = arrayBufferToBase64(authKey);
+                
+                console.log('Encoded keys:', {
+                  p256dh: p256dh ? 'encoded' : 'failed',
+                  auth: auth ? 'encoded' : 'failed',
+                  p256dhLength: p256dh.length,
+                  authLength: auth.length
+                });
+              } else {
+                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+              }
+            } catch (keyError) {
+              console.error('Failed to extract push subscription keys:', keyError);
+              pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
             }
-          } catch (keyError) {
-            console.error('Failed to extract push subscription keys:', keyError);
-            pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
+          } else {
+            console.warn('Push subscription is null');
           }
-        } else {
-          console.warn('Push subscription is null');
-        }
-      } catch (error) {
-        pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
-        console.warn('Failed to get push subscription:', error);
-        
-        // For iOS users who need to set up PWA, show the setup dialog
-        if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
-            error.message.includes('home screen')) {
-          setIsOn(prevIsOn); // Revert UI
-          setIsLoading(false);
-          globalCloseTooltip(tooltipId); // Close tooltip before opening modal
-          setIOSSetupOpen(true);
-          return;
+        } catch (error) {
+          pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
+          console.warn('Failed to get push subscription:', error);
+          
+          // For critical errors, still show setup dialog
+          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
+              error.message.includes('home screen')) {
+            setIsOn(prevIsOn); // Revert UI
+            setIsLoading(false);
+            globalCloseTooltip(tooltipId); // Close tooltip before opening modal
+            setIOSSetupOpen(true);
+            return;
+          }
         }
       }
 
@@ -256,7 +265,7 @@ export const ProgramBlock: React.FC<Props> = ({
       console.log('🚀 ABOUT TO SEND REQUEST:', {
         url: `/programs/${id}/subscribe`,
         payload: { 
-          notificationMethod: 'both',
+          notificationMethod,
           endpoint: isValidPush ? endpoint : undefined,
           p256dh: isValidPush ? p256dh : undefined,
           auth: isValidPush ? auth : undefined
@@ -269,7 +278,7 @@ export const ProgramBlock: React.FC<Props> = ({
       await api.post(
         `/programs/${id}/subscribe`,
         { 
-          notificationMethod: 'both',
+          notificationMethod,
           endpoint: isValidPush ? endpoint : undefined,
           p256dh: isValidPush ? p256dh : undefined,
           auth: isValidPush ? auth : undefined
@@ -281,13 +290,21 @@ export const ProgramBlock: React.FC<Props> = ({
       
       console.log('✅ REQUEST COMPLETED SUCCESSFULLY');
       
+      // Show helpful message for iOS users who subscribed via email
+      if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
+        setTimeout(() => {
+          // We'll add a toast notification here in the next step
+          console.log('📧 iOS user subscribed via email - could show toast about push options');
+        }, 1000);
+      }
+      
       // Track subscription event
       gaEvent({
         action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
         params: {
           program_id: id,
           program_name: name,
-          notification_method: 'both',
+          notification_method: notificationMethod,
           has_push: !!pushSubscription,
         },
         userData: typedSession?.user
@@ -427,29 +444,42 @@ export const ProgramBlock: React.FC<Props> = ({
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
         </BaseButton>
       )}
-      <IconButton
-        size="small"
-        aria-label="Notificarme"
-        onClick={handleBellClick}
-        ref={bellRef}
-        sx={{
-          mt: tokens.spacing.md,
-          color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
-        }}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
-            <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
-              <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
-                <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
-              </circle>
-            </svg>
-          </Box>
-        ) : (
-          <Notifications color={isOn ? "primary" : "disabled"} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: tokens.spacing.md }}>
+        <IconButton
+          size="small"
+          aria-label="Notificarme"
+          onClick={handleBellClick}
+          ref={bellRef}
+          sx={{
+            color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
+              <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
+                <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
+                  <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+            </Box>
+          ) : (
+            <Notifications color={isOn ? "primary" : "disabled"} />
+          )}
+        </IconButton>
+        {isOn && isIOSDevice && !isPWAInstalled && (
+          <Typography 
+            variant="caption" 
+            sx={{ 
+              fontSize: '0.65rem',
+              color: 'primary.main',
+              fontWeight: 600,
+            }}
+          >
+            📧
+          </Typography>
         )}
-      </IconButton>
+      </Box>
     </Box>
   );
 
