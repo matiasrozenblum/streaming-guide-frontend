@@ -227,34 +227,60 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       return null;
     }
 
+    console.log('🔄 Starting push subscription process:', {
+      isIOS,
+      isPWA,
+      vapidKey: vapidKey ? 'loaded' : 'missing',
+      deviceId: deviceId ? 'present' : 'missing',
+      userAgent: navigator.userAgent,
+      notificationPermission: Notification.permission
+    });
+
     try {
       // 1) Request notification permission first
+      console.log('📱 Requesting notification permission...');
       await requestNotificationPermission();
+      console.log('✅ Notification permission granted');
 
       // 2) Asegurarnos de tener el SW listo
+      console.log('🔧 Waiting for service worker...');
       const registration = await navigator.serviceWorker.ready;
+      console.log('✅ Service worker ready:', {
+        scope: registration.scope,
+        active: !!registration.active,
+        installing: !!registration.installing,
+        waiting: !!registration.waiting
+      });
 
       // 3) Mirar si ya hay una subscripción
+      console.log('🔍 Checking existing subscription...');
       let subscription = await registration.pushManager.getSubscription();
+      console.log('📋 Existing subscription:', subscription ? 'found' : 'none');
       
       if (!subscription) {
         // 4) Si no, crearla
-        subscription = await registration.pushManager.subscribe({
-          userVisibleOnly: true,
-          applicationServerKey: urlBase64ToUint8Array(vapidKey),
-        });
+        console.log('🆕 Creating new push subscription...');
+        try {
+          subscription = await registration.pushManager.subscribe({
+            userVisibleOnly: true,
+            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+          });
+          console.log('✅ Push subscription created successfully:', {
+            endpoint: subscription.endpoint,
+            hasKeys: !!(subscription.getKey('p256dh') && subscription.getKey('auth'))
+          });
+        } catch (subscribeError) {
+          console.error('❌ Failed to create push subscription:', subscribeError);
+          throw subscribeError;
+        }
       }
 
       hasSubscribedRef.current = true;
-      console.log('Push subscription successful:', {
-        endpoint: subscription.endpoint,
-        isIOS,
-        isPWA
-      });
+      console.log('🎉 Push subscription process completed successfully');
       
       return subscription;
     } catch (error) {
-      console.error('Failed to create push subscription:', error);
+      console.error('💥 Push subscription process failed:', error);
       
       // Provide user-friendly error messages
       if (error instanceof Error) {
