@@ -54,8 +54,7 @@ const isPWAInstalled = () => {
   
   // URL parameter detection (set by manifest start_url when launching from home screen)
   const urlParams = new URLSearchParams(window.location.search);
-  const isPWAFromURL = urlParams.get('source') === 'pwa';
-  const isStandaloneFromURL = urlParams.get('standalone') === 'true';
+  const isPWAFromURL = urlParams.get('pwa') === 'true';
   const isManualPWATest = urlParams.get('manual_pwa') === 'true';
   
   // Additional display modes
@@ -66,11 +65,11 @@ const isPWAInstalled = () => {
   let result = false;
   
   if (isIOSDeviceCheck) {
-    // For iOS, be strict: require either standalone mode OR URL parameters from manifest
-    result = isIOSStandalone || (isPWAFromURL && isStandaloneFromURL) || isManualPWATest;
+    // For iOS, be strict: require either standalone mode OR URL parameter from manifest
+    result = isIOSStandalone || isPWAFromURL || isManualPWATest;
   } else {
     // For other platforms, use standard PWA detection
-    result = isStandalone || isMinimalUI || isFullscreen || isPWAFromURL || isStandaloneFromURL || isManualPWATest;
+    result = isStandalone || isMinimalUI || isFullscreen || isPWAFromURL || isManualPWATest;
   }
   
   console.log('🔍 PWA Detection Details:', {
@@ -78,7 +77,6 @@ const isPWAInstalled = () => {
     isStandalone,
     isIOSDeviceCheck,
     isPWAFromURL,
-    isStandaloneFromURL,
     isManualPWATest,
     isMinimalUI,
     isFullscreen,
