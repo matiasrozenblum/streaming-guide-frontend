@@ -1,21 +1,28 @@
 {
     "name": "La Guía del Streaming",
     "short_name": "La Guía",
+    "description": "Guía de programación de streaming",
     "scope": "/",
     "display": "standalone",
+    "orientation": "portrait-primary",
     "background_color": "#0f172a",
     "theme_color": "#2563eb",
     "icons": [
       {
         "src": "/icons/icon-192.png",
         "sizes": "192x192",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
       },
       {
         "src": "/icons/icon-512.png",
         "sizes": "512x512",
-        "type": "image/png"
+        "type": "image/png",
+        "purpose": "any maskable"
       }
     ],
-    "start_url": "/"
+    "start_url": "/",
+    "categories": ["entertainment", "lifestyle"],
+    "screenshots": [],
+    "prefer_related_applications": false
   }
