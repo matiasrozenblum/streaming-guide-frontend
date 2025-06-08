@@ -238,6 +238,35 @@ export const ProgramBlock: React.FC<Props> = ({
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
+        
+        // For non-iOS platforms that should support push, show error instead of sending invalid request
+        if (!isIOSDevice) {
+          setIsOn(prevIsOn); // Revert UI
+          setIsLoading(false);
+          
+          const errorMessage = pushErrorReason.includes('permission') 
+            ? 'Debes permitir las notificaciones para suscribirte a este programa.'
+            : 'Error al configurar las notificaciones push. Por favor, intenta de nuevo.';
+            
+          alert(errorMessage);
+          
+          gaEvent({
+            action: 'push_subscription_invalid',
+            params: {
+              program_id: id,
+              program_name: name,
+              reason,
+              endpoint: endpoint || 'empty',
+              p256dh: p256dh || 'empty', 
+              auth: auth || 'empty',
+              has_push: !!pushSubscription,
+            },
+            userData: typedSession?.user
+          });
+          
+          return; // Don't send request with invalid push data
+        }
+        
         gaEvent({
           action: 'push_subscription_invalid',
           params: {
