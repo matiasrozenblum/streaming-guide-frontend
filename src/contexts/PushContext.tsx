@@ -123,19 +123,20 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
 
     if (!enabled) return;
 
-    // 1) Registro del Service Worker
+    // 1) Registro del Service Worker para PWA (next-pwa se encarga automáticamente)
+    // 2) Registro del Service Worker para push notifications
     if ('serviceWorker' in navigator) {
       navigator.serviceWorker
-        .register('/sw.js')
+        .register('/push-sw.js')
         .then((registration) => {
-          console.log('Service Worker registered successfully');
+          console.log('Push Service Worker registered successfully');
           // For iOS, ensure service worker is active
           const currentIsIOS = isIOSDevice();
           if (currentIsIOS && registration.waiting) {
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
         })
-        .catch((err) => console.error('SW registration failed:', err));
+        .catch((err) => console.error('Push SW registration failed:', err));
     }
 
     // 2) Obtención de la clave VAPID desde el backend

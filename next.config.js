@@ -4,17 +4,27 @@ const withPWA = require('next-pwa')({
   dest: 'public',
   register: true,
   skipWaiting: true,
-  disable: process.env.NODE_ENV === 'development', // desactiva PWA en dev
-  mode: 'injectManifest',        // 👉 cambiamos de generateSW a injectManifest
-  swSrc: 'public/sw.js',         // 👉 tu Service Worker “raw”
+  disable: process.env.NODE_ENV === 'development',
+  // Let next-pwa generate the service worker automatically
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/, 
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+  ],
 });
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  experimental: {
-    appDir: true, // necesario para App Router
-  },
+  // appDir is now stable in Next.js 15, no need for experimental flag
   images: {
     remotePatterns: [
       {
