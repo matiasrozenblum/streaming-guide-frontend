@@ -109,48 +109,38 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   }, [flattened]);
 
   return (
-    <div className="flex-grow">
-      <main 
-        className="min-h-screen bg-gray-50 dark:bg-slate-900 transition-colors duration-200"
-        style={{
-          paddingLeft: 'env(safe-area-inset-left)',
-          paddingRight: 'env(safe-area-inset-right)',
+    <>
+      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
+
+      <Box
+        sx={{
+          minHeight: '100dvh',
+          maxWidth: '100vw',
+          background:
+            mode === 'light'
+              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          py: { xs: 1, sm: 2 },
+          display: 'flex',
+          flexDirection: 'column'
         }}
       >
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
-          {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
+        <Header />
 
-          <Box
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          <MotionBox
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            transition={{ duration: 0.5, delay: 0.2 }}
             sx={{
-              minHeight: '100dvh',
-              maxWidth: '100vw',
-              background:
-                mode === 'light'
-                  ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-                  : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-              py: { xs: 1, sm: 2 },
-              display: 'flex',
-              flexDirection: 'column'
+              flex: 1,
+              backdropFilter: 'blur(8px)',
             }}
           >
-            <Header />
-
-            <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-              <MotionBox
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5, delay: 0.2 }}
-                sx={{
-                  flex: 1,
-                  backdropFilter: 'blur(8px)',
-                }}
-              >
-                {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
-              </MotionBox>
-            </Container>
-          </Box>
-        </div>
-      </main>
-    </div>
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
+          </MotionBox>
+        </Container>
+      </Box>
+    </>
   );
 }
