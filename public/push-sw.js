@@ -1,36 +1,6 @@
-// service-worker.js
-// Custom service worker that combines PWA functionality with push notifications
+// public/push-sw.js
+// Dedicated service worker for push notifications
 
-import { cleanupOutdatedCaches, createHandlerBoundToURL, precacheAndRoute } from 'workbox-precaching';
-import { NavigationRoute, registerRoute } from 'workbox-routing';
-import { NetworkFirst } from 'workbox-strategies';
-
-// Precache and route handling
-cleanupOutdatedCaches();
-precacheAndRoute(self.__WB_MANIFEST);
-
-// Handle navigation requests
-const handler = createHandlerBoundToURL('/');
-const navigationRoute = new NavigationRoute(handler);
-registerRoute(navigationRoute);
-
-// Add runtime caching
-registerRoute(
-  /^https?.*/,
-  new NetworkFirst({
-    cacheName: 'offlineCache',
-    plugins: [
-      {
-        cacheKeyWillBeUsed: async ({ request }) => {
-          return `${request.url}`;
-        },
-      },
-    ],
-  }),
-  'GET'
-);
-
-// Push notification handling
 self.addEventListener('push', (event) => {
   console.log('Push notification received:', event);
   
@@ -87,16 +57,15 @@ self.addEventListener('notificationclick', (event) => {
   );
 });
 
-// Handle service worker installation
+// Handle service worker installation and activation
 self.addEventListener('install', (event) => {
-  console.log('Service worker installing...');
+  console.log('Push service worker installing...');
   self.skipWaiting();
 });
 
-// Handle service worker activation
 self.addEventListener('activate', (event) => {
-  console.log('Service worker activating...');
+  console.log('Push service worker activating...');
   event.waitUntil(self.clients.claim());
 });
 
-console.log('Custom PWA + Push service worker loaded'); 
+console.log('Push service worker loaded'); 

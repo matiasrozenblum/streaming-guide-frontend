@@ -168,8 +168,42 @@ export const ProgramBlock: React.FC<Props> = ({
         pushSubscription = await subscribeAndRegister();
         if (pushSubscription) {
           endpoint = pushSubscription.endpoint;
-          p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
-          auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
+          
+          // Enhanced cross-platform key extraction with detailed logging
+          try {
+            const p256dhKey = pushSubscription.getKey('p256dh');
+            const authKey = pushSubscription.getKey('auth');
+            
+            console.log('Push subscription keys debug:', {
+              endpoint: endpoint,
+              p256dhKey: p256dhKey ? 'present' : 'missing',
+              authKey: authKey ? 'present' : 'missing',
+              p256dhLength: p256dhKey?.byteLength,
+              authLength: authKey?.byteLength,
+              isIOS: isIOSDevice,
+              isPWA: isPWAInstalled,
+              userAgent: navigator.userAgent
+            });
+            
+            if (p256dhKey && authKey) {
+              p256dh = arrayBufferToBase64(p256dhKey);
+              auth = arrayBufferToBase64(authKey);
+              
+              console.log('Encoded keys:', {
+                p256dh: p256dh ? 'encoded' : 'failed',
+                auth: auth ? 'encoded' : 'failed',
+                p256dhLength: p256dh.length,
+                authLength: auth.length
+              });
+            } else {
+              console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+            }
+          } catch (keyError) {
+            console.error('Failed to extract push subscription keys:', keyError);
+            pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
+          }
+        } else {
+          console.warn('Push subscription is null');
         }
       } catch (error) {
         pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
@@ -186,8 +220,21 @@ export const ProgramBlock: React.FC<Props> = ({
         }
       }
 
-      // Validate push subscription before sending to backend
+      // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
+      
+      console.log('Push subscription validation:', {
+        hasSubscription: !!pushSubscription,
+        hasEndpoint: !!endpoint,
+        hasP256dh: !!p256dh,
+        hasAuth: !!auth,
+        isValidPush,
+        endpoint: endpoint || 'empty',
+        p256dhLength: p256dh?.length || 0,
+        authLength: auth?.length || 0,
+        pushErrorReason: pushErrorReason || 'none'
+      });
+      
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
@@ -197,9 +244,9 @@ export const ProgramBlock: React.FC<Props> = ({
             program_id: id,
             program_name: name,
             reason,
-            endpoint,
-            p256dh,
-            auth,
+            endpoint: endpoint || 'empty',
+            p256dh: p256dh || 'empty', 
+            auth: auth || 'empty',
             has_push: !!pushSubscription,
           },
           userData: typedSession?.user
