@@ -22,8 +22,8 @@ self.addEventListener('push', (event) => {
     const title = payload.title || 'La Guía del Streaming';
     const options = {
       body: payload.options?.body || 'Tienes una nueva notificación',
-      icon: payload.options?.icon || '/icons/icon-192.png',
-      badge: '/icons/icon-192.png',
+      icon: payload.options?.icon || '/img/logo.png',
+      badge: '/img/logo.png',
       tag: payload.options?.tag || 'default',
       data: payload.options?.data || {},
       requireInteraction: false,
