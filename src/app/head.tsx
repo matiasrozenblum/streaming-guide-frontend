@@ -10,8 +10,19 @@ export default function Head() {
         <meta name="apple-mobile-web-app-capable" content="yes" />
         <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent" />
         <meta name="apple-mobile-web-app-title" content="La Guía del Streaming" />
-        <link rel="apple-touch-icon" href="/icons/icon-192.png" />
-        <link rel="apple-touch-icon" sizes="180x180" href="/icons/icon-192.png" />
+        
+        {/* iOS Icons - multiple sizes for better compatibility */}
+        <link rel="apple-touch-icon" sizes="180x180" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="152x152" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="144x144" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="120x120" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="114x114" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="76x76" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="72x72" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="60x60" href="/img/logo.png" />
+        <link rel="apple-touch-icon" sizes="57x57" href="/img/logo.png" />
+        <link rel="apple-touch-icon" href="/img/logo.png" />
+        
         <meta name="theme-color" content="#2563eb" />
         <meta name="msapplication-TileColor" content="#2563eb" />
         <meta name="msapplication-config" content="/browserconfig.xml" />
