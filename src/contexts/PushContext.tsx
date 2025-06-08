@@ -218,7 +218,6 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       return null;
     }
     
-    // If we already have a subscription process running, get the existing subscription
     if (hasSubscribedRef.current) {
       console.log('🔄 Push subscription already exists, retrieving existing subscription...');
       const registration = await navigator.serviceWorker.ready;
