@@ -120,7 +120,7 @@ export default function PWADebugger() {
             if (window.location.search.includes('manual_pwa=true')) {
               window.location.href = window.location.pathname;
             } else {
-              window.location.href = window.location.pathname + '?manual_pwa=true&source=pwa';
+              window.location.href = window.location.pathname + '?manual_pwa=true';
             }
           }}
           size="small"

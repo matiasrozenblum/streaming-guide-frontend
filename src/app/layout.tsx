@@ -21,8 +21,20 @@ const GTM_ID = 'GTM-TCGNQB97';
 export const metadata: Metadata = {
   title: 'La Guía del Streaming',
   description: 'Guía de programación de streaming',
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.png',
+    apple: '/icons/icon-192.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'La Guía del Streaming',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'black-translucent',
+    'apple-mobile-web-app-title': 'La Guía del Streaming',
   },
 };
 

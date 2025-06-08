@@ -9,13 +9,13 @@
     "theme_color": "#2563eb",
     "icons": [
       {
-        "src": "/img/logo.png",
+        "src": "/icons/icon-192.png",
         "sizes": "192x192",
         "type": "image/png",
         "purpose": "any"
       },
       {
-        "src": "/img/logo.png",
+        "src": "/icons/icon-192.png",
         "sizes": "192x192",
         "type": "image/png",
         "purpose": "maskable"
@@ -33,7 +33,7 @@
         "purpose": "maskable"
       }
     ],
-    "start_url": "/?source=pwa&standalone=true",
+    "start_url": "/?pwa=true",
     "categories": ["entertainment", "lifestyle"],
     "screenshots": [],
     "prefer_related_applications": false
