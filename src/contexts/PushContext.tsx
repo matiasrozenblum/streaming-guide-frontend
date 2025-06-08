@@ -27,12 +27,6 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
   return outputArray;
 }
 
-// Helper to encode ArrayBuffer to base64
-function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
-  if (!buffer) return '';
-  return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer))));
-}
-
 interface BeforeInstallPromptEvent extends Event {
     prompt(): Promise<void>;
     userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
@@ -151,20 +145,20 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
 
     if (!enabled) return;
 
-    // Use the main PWA service worker instead of registering a separate one
-    // This avoids conflicts between multiple service workers
+    // 1) Registro del Service Worker para PWA (next-pwa se encarga automáticamente)
+    // 2) Registro del Service Worker para push notifications
     if ('serviceWorker' in navigator) {
-      // Wait for the main PWA service worker to be ready
-      navigator.serviceWorker.ready
+      navigator.serviceWorker
+        .register('/push-sw.js')
         .then((registration) => {
-          console.log('Using main PWA Service Worker for push notifications');
+          console.log('Push Service Worker registered successfully');
           // For iOS, ensure service worker is active
           const currentIsIOS = isIOSDevice();
           if (currentIsIOS && registration.waiting) {
             registration.waiting.postMessage({ type: 'SKIP_WAITING' });
           }
         })
-        .catch((err) => console.error('Main SW not ready for push:', err));
+        .catch((err) => console.error('Push SW registration failed:', err));
     }
 
     // 2) Obtención de la clave VAPID desde el backend
@@ -249,28 +243,6 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
           userVisibleOnly: true,
           applicationServerKey: urlBase64ToUint8Array(vapidKey),
         });
-      }
-
-      // 5) Register the subscription with the backend
-      try {
-        await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            deviceId,
-            subscription: {
-              endpoint: subscription.endpoint,
-              keys: {
-                p256dh: arrayBufferToBase64(subscription.getKey('p256dh')),
-                auth: arrayBufferToBase64(subscription.getKey('auth')),
-              },
-            },
-          }),
-        });
-        console.log('✅ Push subscription registered with backend');
-      } catch (backendError) {
-        console.error('Failed to register push subscription with backend:', backendError);
-        // Don't throw here - we still want to return the subscription for the UI to work
       }
 
       hasSubscribedRef.current = true;
