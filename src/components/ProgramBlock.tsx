@@ -223,6 +223,16 @@ export const ProgramBlock: React.FC<Props> = ({
       // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
       
+      console.log('🔍 DETAILED VALIDATION DEBUG:', {
+        pushSubscription: pushSubscription ? 'OBJECT_EXISTS' : 'NULL',
+        endpoint: endpoint ? `EXISTS_${endpoint.length}chars` : 'EMPTY',
+        p256dh: p256dh ? `EXISTS_${p256dh.length}chars` : 'EMPTY',
+        auth: auth ? `EXISTS_${auth.length}chars` : 'EMPTY',
+        isValidPush,
+        pushErrorReason: pushErrorReason || 'none',
+        willProceedWithRequest: true
+      });
+      
       console.log('Push subscription validation:', {
         hasSubscription: !!pushSubscription,
         hasEndpoint: !!endpoint,
@@ -283,6 +293,18 @@ export const ProgramBlock: React.FC<Props> = ({
       }
 
       // Subscribe to program (only one request)
+      console.log('🚀 ABOUT TO SEND REQUEST:', {
+        url: `/programs/${id}/subscribe`,
+        payload: { 
+          notificationMethod: 'both',
+          endpoint: isValidPush ? endpoint : undefined,
+          p256dh: isValidPush ? p256dh : undefined,
+          auth: isValidPush ? auth : undefined
+        },
+        isValidPush,
+        hasToken: !!typedSession.accessToken
+      });
+      
       await api.post(
         `/programs/${id}/subscribe`,
         { 
@@ -295,6 +317,8 @@ export const ProgramBlock: React.FC<Props> = ({
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }
       );
+      
+      console.log('✅ REQUEST COMPLETED SUCCESSFULLY');
       
       // Track subscription event
       gaEvent({
