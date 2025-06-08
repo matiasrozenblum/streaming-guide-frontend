@@ -218,8 +218,13 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       return null;
     }
     
+    // If we already have a subscription process running, get the existing subscription
     if (hasSubscribedRef.current) {
-      return null; // ya suscrito
+      console.log('🔄 Push subscription already exists, retrieving existing subscription...');
+      const registration = await navigator.serviceWorker.ready;
+      const existingSubscription = await registration.pushManager.getSubscription();
+      console.log('📋 Retrieved existing subscription:', existingSubscription ? 'found' : 'none');
+      return existingSubscription;
     }
 
     if (!deviceId) {
