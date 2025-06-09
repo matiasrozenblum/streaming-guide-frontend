@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -79,6 +79,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
+  const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
@@ -293,8 +294,7 @@ export const ProgramBlock: React.FC<Props> = ({
       // Show helpful message for iOS users who subscribed via email
       if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
         setTimeout(() => {
-          // We'll add a toast notification here in the next step
-          console.log('📧 iOS user subscribed via email - could show toast about push options');
+          setShowIOSPushSnackbar(true);
         }, 1000);
       }
       
@@ -645,6 +645,35 @@ export const ProgramBlock: React.FC<Props> = ({
             }
           }}
         />
+        <Snackbar
+          open={showIOSPushSnackbar}
+          autoHideDuration={8000}
+          onClose={() => setShowIOSPushSnackbar(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        >
+          <Alert 
+            severity="info" 
+            onClose={() => setShowIOSPushSnackbar(false)}
+            action={
+              <Button 
+                color="inherit" 
+                size="small" 
+                href="/subscriptions"
+                sx={{ textDecoration: 'underline' }}
+              >
+                Tus favoritos
+              </Button>
+            }
+            sx={{ 
+              minWidth: 280,
+              '& .MuiAlert-message': {
+                flex: 1,
+              }
+            }}
+          >
+            Para recibir notificaciones push en iOS, dirígete a{' '}
+          </Alert>
+        </Snackbar>
       </>
     </ClickAwayListener>
   );
