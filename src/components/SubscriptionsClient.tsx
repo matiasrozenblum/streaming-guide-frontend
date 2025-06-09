@@ -38,6 +38,7 @@ import Header from '@/components/Header';
 import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
 import { event as gaEvent } from '@/lib/gtag';
+import { usePush } from '@/contexts/PushContext';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -75,16 +76,22 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
+  const { isIOSDevice, isPWAInstalled } = usePush();
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // If there is no real user, redirect to home
-    if (!typedSession?.user || !typedSession.user.id) {
-      router.push('/');
-    }
+    // Only redirect if we're sure there's no session (not just loading)
+    // Add a small delay to ensure session context has loaded
+    const timer = setTimeout(() => {
+      if (!typedSession?.user || !typedSession.user.id) {
+        router.push('/');
+      }
+    }, 500); // Give session context time to load
+
+    return () => clearTimeout(timer);
   }, [typedSession, router]);
 
   const updateNotificationMethod = async (subscriptionId: string, notificationMethod: NotificationMethod) => {
@@ -423,24 +430,56 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                               }
                             }}
                           >
-                            <MenuItem value={NotificationMethod.BOTH}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <NotificationsActive fontSize="small" />
-                                Push y Email
-                              </Box>
-                            </MenuItem>
-                            <MenuItem value={NotificationMethod.PUSH}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Notifications fontSize="small" />
-                                Solo Push
-                              </Box>
-                            </MenuItem>
-                            <MenuItem value={NotificationMethod.EMAIL}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Email fontSize="small" />
-                                Solo Email
-                              </Box>
-                            </MenuItem>
+                            {/* For iOS users without PWA, only show email option when selecting */}
+                            {(isIOSDevice && !isPWAInstalled) ? (
+                              // Show current value even if it's not email, but only allow email as new selection
+                              <>
+                                {subscription.notificationMethod === NotificationMethod.BOTH && (
+                                  <MenuItem value={NotificationMethod.BOTH} disabled>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <NotificationsActive fontSize="small" />
+                                      Push y Email
+                                    </Box>
+                                  </MenuItem>
+                                )}
+                                {subscription.notificationMethod === NotificationMethod.PUSH && (
+                                  <MenuItem value={NotificationMethod.PUSH} disabled>
+                                    <Box display="flex" alignItems="center" gap={1}>
+                                      <Notifications fontSize="small" />
+                                      Solo Push
+                                    </Box>
+                                  </MenuItem>
+                                )}
+                                <MenuItem value={NotificationMethod.EMAIL}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Email fontSize="small" />
+                                    Solo Email
+                                  </Box>
+                                </MenuItem>
+                              </>
+                            ) : (
+                              // Normal options for PWA users or non-iOS users
+                              <>
+                                <MenuItem value={NotificationMethod.BOTH}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <NotificationsActive fontSize="small" />
+                                    Push y Email
+                                  </Box>
+                                </MenuItem>
+                                <MenuItem value={NotificationMethod.PUSH}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Notifications fontSize="small" />
+                                    Solo Push
+                                  </Box>
+                                </MenuItem>
+                                <MenuItem value={NotificationMethod.EMAIL}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Email fontSize="small" />
+                                    Solo Email
+                                  </Box>
+                                </MenuItem>
+                              </>
+                            )}
                           </Select>
                         </FormControl>
                       </Box>
