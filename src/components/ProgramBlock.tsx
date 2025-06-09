@@ -647,24 +647,30 @@ export const ProgramBlock: React.FC<Props> = ({
           <Alert 
             severity="info" 
             onClose={() => setShowIOSPushSnackbar(false)}
-            action={
-              <Button 
-                color="inherit" 
-                size="small" 
-                href="/subscriptions"
-                sx={{ textDecoration: 'underline' }}
-              >
-                Tus favoritos
-              </Button>
-            }
             sx={{ 
               minWidth: 280,
-              '& .MuiAlert-message': {
-                flex: 1,
-              }
             }}
           >
             Para recibir notificaciones push en iOS, dirígete a{' '}
+            <Button 
+              color="inherit" 
+              size="small" 
+              href="/subscriptions"
+              sx={{ 
+                textDecoration: 'underline',
+                p: 0,
+                minWidth: 'auto',
+                fontSize: 'inherit',
+                fontWeight: 'inherit',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                }
+              }}
+            >
+              Tus favoritos
+            </Button>
           </Alert>
         </Snackbar>
       </>
