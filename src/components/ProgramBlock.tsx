@@ -643,6 +643,7 @@ export const ProgramBlock: React.FC<Props> = ({
           autoHideDuration={8000}
           onClose={() => setShowIOSPushSnackbar(false)}
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{ zIndex: 9999 }}
         >
           <Alert 
             severity="info" 
