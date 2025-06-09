@@ -37,7 +37,14 @@ export default function IOSPushGuide() {
       completed: isPWAInstalled,
       description: 'Instalá la app en tu iPhone para recibir notificaciones',
       instructions: [
-        <>Tocá el botón compartir (<IosShare fontSize="small" sx={{ mx: 0.5 }} />) abajo en Safari</>,
+        <span key="step1">
+        Tocá el botón compartir 
+          <IosShare 
+            fontSize="inherit" 
+            sx={{ verticalAlign: 'middle', display: 'inline-block' }} 
+          />
+          abajo en Safari
+      </span>,
         'Buscá "Agregar a inicio"',
         'Tocá "Agregar" y ¡listo!'
       ]
