@@ -168,10 +168,15 @@ export const ProgramBlock: React.FC<Props> = ({
       let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
 
       // For iOS users without PWA, use email-only subscription to reduce friction
-      if (isIOSDevice && !isPWAInstalled && willSubscribe) {
-        console.log('📱 iOS user without PWA - creating email-only subscription');
-        notificationMethod = 'email';
-        // Skip push subscription setup for smoother UX
+      if (isIOSDevice && !isPWAInstalled) {
+        if (willSubscribe) {
+          console.log('📱 iOS user without PWA - creating email-only subscription');
+          notificationMethod = 'email';
+        } else {
+          console.log('📱 iOS user without PWA - unsubscribing from email notifications');
+          notificationMethod = 'email'; // Keep it simple for unsubscription
+        }
+        // Skip push subscription setup entirely for iOS without PWA
       } else {
         // Normal push subscription flow for other platforms or iOS with PWA
         try {
