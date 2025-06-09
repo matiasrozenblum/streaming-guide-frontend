@@ -17,6 +17,7 @@ import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
 import { useDeviceId } from '@/hooks/useDeviceId';
 
+
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
 
@@ -99,7 +100,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [deviceId]);
+  }, [deviceId, setLiveStatuses]);
 
   useEffect(() => {
     if (flattened.length > 0) {

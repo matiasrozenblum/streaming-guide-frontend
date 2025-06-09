@@ -10,8 +10,8 @@ import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import { ClarityLoader } from '@/components/ClarityLoader'
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
-import Head from 'next/head';
 import { PushProvider } from '@/contexts/PushContext';
+import { TooltipProvider } from '@/contexts/TooltipContext';
 import posthog from 'posthog-js';
 import { PostHogProvider } from '@/components/PostHogProvider';
 
@@ -21,8 +21,21 @@ const GTM_ID = 'GTM-TCGNQB97';
 export const metadata: Metadata = {
   title: 'La Guía del Streaming',
   description: 'Guía de programación de streaming',
+  manifest: '/manifest.json',
   icons: {
     icon: '/favicon.png',
+    apple: '/icons/icon-192.png',
+  },
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'default',
+    title: 'La Guía del Streaming',
+  },
+  other: {
+    'apple-mobile-web-app-capable': 'yes',
+    'apple-mobile-web-app-status-bar-style': 'default',
+    'apple-mobile-web-app-title': 'La Guía del Streaming',
+    'theme-color': '#f8fafc',
   },
 };
 
@@ -52,13 +65,6 @@ export default function RootLayout({
   }
   return (
     <html lang="es" suppressHydrationWarning>
-      {/* Preconnect para GA */}
-      <Head>
-        <link rel="preconnect" href="https://www.googletagmanager.com" />
-        <link rel="preconnect" href="https://www.google-analytics.com" />
-        <link rel="manifest" href="/manifest.json" />
-      </Head> 
-      
       {/* Google Tag Manager */}
       <Script
         id="gtm-script"
@@ -104,15 +110,17 @@ export default function RootLayout({
         <HotjarLoader />
         <SessionProviderWrapper>
           <PushProvider enabled={true} installPrompt={null}>
-            <CustomThemeProvider>
-              <YouTubePlayerProvider>
-                <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
-                {children}
-                <Footer />
-              </div>
-              <YouTubeGlobalPlayer />
-              </YouTubePlayerProvider>
-            </CustomThemeProvider>
+            <TooltipProvider>
+              <CustomThemeProvider>
+                <YouTubePlayerProvider>
+                  <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+                  {children}
+                  <Footer />
+                </div>
+                <YouTubeGlobalPlayer />
+                </YouTubePlayerProvider>
+              </CustomThemeProvider>
+            </TooltipProvider>
           </PushProvider>
         </SessionProviderWrapper>
       </body>

@@ -1,13 +1,40 @@
 {
     "name": "La Guía del Streaming",
-    "short_name": "Streaming",
-    "start_url": "/?source=pwa",
+    "short_name": "La Guía",
+    "description": "Guía de programación de streaming",
     "scope": "/",
     "display": "standalone",
+    "orientation": "portrait-primary",
     "background_color": "#0f172a",
-    "theme_color": "#2563eb",
+    "theme_color": "#f8fafc",
     "icons": [
-      { "src": "/img/logo.png", "sizes": "192x192", "type": "image/png" },
-      { "src": "/img/logo.png", "sizes": "512x512", "type": "image/png" }
-    ]
+      {
+        "src": "/icons/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/icon-192.png",
+        "sizes": "192x192",
+        "type": "image/png",
+        "purpose": "maskable"
+      },
+      {
+        "src": "/icons/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "any"
+      },
+      {
+        "src": "/icons/icon-512.png",
+        "sizes": "512x512",
+        "type": "image/png",
+        "purpose": "maskable"
+      }
+    ],
+    "start_url": "/?pwa=true",
+    "categories": ["entertainment", "lifestyle"],
+    "screenshots": [],
+    "prefer_related_applications": false
   }

@@ -35,8 +35,10 @@ import type { SessionWithToken } from '@/types/session';
 import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
 import { event as gaEvent } from '@/lib/gtag';
+import { usePush } from '@/contexts/PushContext';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -74,16 +76,22 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
+  const { isIOSDevice, isPWAInstalled } = usePush();
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
 
   useEffect(() => {
-    // If there is no real user, redirect to home
-    if (!typedSession?.user || !typedSession.user.id) {
-      router.push('/');
-    }
+    // Only redirect if we're sure there's no session (not just loading)
+    // Add a small delay to ensure session context has loaded
+    const timer = setTimeout(() => {
+      if (!typedSession?.user || !typedSession.user.id) {
+        router.push('/');
+      }
+    }, 500); // Give session context time to load
+
+    return () => clearTimeout(timer);
   }, [typedSession, router]);
 
   const updateNotificationMethod = async (subscriptionId: string, notificationMethod: NotificationMethod) => {
@@ -273,6 +281,9 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
+          
+          {/* iOS Push Guide - only shown for iOS users */}
+          <IOSPushGuide />
           {subscriptions.length === 0 ? (
             <MotionCard
               initial={{ opacity: 0, y: 20 }}
@@ -419,13 +430,20 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                               }
                             }}
                           >
-                            <MenuItem value={NotificationMethod.BOTH}>
+                            {/* Always show all options first, then add restrictions for iOS without PWA */}
+                            <MenuItem 
+                              value={NotificationMethod.BOTH}
+                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.BOTH}
+                            >
                               <Box display="flex" alignItems="center" gap={1}>
                                 <NotificationsActive fontSize="small" />
                                 Push y Email
                               </Box>
                             </MenuItem>
-                            <MenuItem value={NotificationMethod.PUSH}>
+                            <MenuItem 
+                              value={NotificationMethod.PUSH}
+                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.PUSH}
+                            >
                               <Box display="flex" alignItems="center" gap={1}>
                                 <Notifications fontSize="small" />
                                 Solo Push

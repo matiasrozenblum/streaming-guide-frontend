@@ -17,6 +17,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.0.3] - 2025-06-09
+
+### Added
+- Added push notification logic for iOS.
+- Added alert dialog indicating iOS users that subscriptions will be email-only unless installing PWA.
+- Added PWA installation guide in the subscriptions page for iOS users with message of completion.
+- Added notification method filter por iOS users.
+
+### Changed
+- Refactored sw logic
+
 ## [1.0.2] - 2025-06-05
 
 ### Changed

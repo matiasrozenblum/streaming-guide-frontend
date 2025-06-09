@@ -19,6 +19,7 @@ import ExistingUserStep from './steps/ExistingUserStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
 import { styled } from '@mui/material/styles';
+import { useTooltip } from '@/contexts/TooltipContext';
 import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
 import type { StepIconProps } from '@mui/material/StepIcon';
 
@@ -134,6 +135,7 @@ function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
   const deviceId = useDeviceId();
+  const { closeTooltip } = useTooltip();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -162,9 +164,10 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     }
   }, [open]);
 
-  // Track modal open
+  // Track modal open and close tooltips
   useEffect(() => {
     if (open) {
+      closeTooltip(); // Close all tooltips when modal opens
       gaEvent({
         action: 'auth_modal_open',
         params: {
@@ -172,7 +175,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         }
       });
     }
-  }, [open, isUserExisting]);
+  }, [open, isUserExisting, closeTooltip]);
 
   // Track step changes (for funnel analysis)
   useEffect(() => {
