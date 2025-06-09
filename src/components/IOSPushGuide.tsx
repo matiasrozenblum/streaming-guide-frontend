@@ -18,6 +18,7 @@ import {
   CheckCircle,
   ExpandMore,
   ExpandLess,
+  IosShare,
 } from '@mui/icons-material';
 import { usePush } from '@/contexts/PushContext';
 
@@ -31,24 +32,25 @@ export default function IOSPushGuide() {
 
   const steps = [
     {
-      label: 'Añadir a pantalla de inicio',
+      label: 'Agregar a pantalla de inicio',
       icon: <AddToHomeScreen />,
       completed: isPWAInstalled,
-      description: 'Instala la app en tu iPhone para recibir notificaciones',
+      description: 'Instalá la app en tu iPhone para recibir notificaciones',
       instructions: [
-        'Toca el botón compartir (📤) abajo en Safari',
-        'Busca "Añadir a pantalla de inicio"',
-        'Toca "Añadir" y ¡listo!'
+        <>Tocá el botón compartir (<IosShare fontSize="small" sx={{ mx: 0.5 }} />) abajo en Safari</>,
+        'Buscá "Agregar a inicio"',
+        'Tocá "Agregar" y ¡listo!'
       ]
     },
     {
       label: 'Activar notificaciones',
       icon: <Notifications />,
       completed: notificationPermission === 'granted',
-      description: 'Permite las notificaciones desde la app instalada',
+      description: 'Permití las notificaciones desde la app instalada',
       instructions: [
         'Abre la app desde tu pantalla de inicio',
-        'Acepta las notificaciones cuando aparezca el mensaje',
+        'Suscribite al programa que desees',
+        'Aceptá las notificaciones cuando aparezca el mensaje',
         '¡Ya recibirás alertas de tus programas!'
       ]
     }
