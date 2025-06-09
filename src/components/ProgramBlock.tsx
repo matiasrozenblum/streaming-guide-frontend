@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -19,6 +19,8 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
 import LoginModal from './auth/LoginModal';
+import IOSNotificationSetup from './IOSNotificationSetup';
+import { useTooltip } from '@/contexts/TooltipContext';
 
 dayjs.extend(customParseFormat);
 
@@ -71,11 +73,16 @@ export const ProgramBlock: React.FC<Props> = ({
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister } = usePush();
-  const [openTooltip, setOpenTooltip] = useState(false);
+  const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
+  const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [iosSetupOpen, setIOSSetupOpen] = useState(false);
+  const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
+  
+  const tooltipId = `program-${id}`;
+  const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -158,20 +165,91 @@ export const ProgramBlock: React.FC<Props> = ({
       let p256dh = '';
       let auth = '';
       let pushErrorReason = '';
-      try {
-        pushSubscription = await subscribeAndRegister();
-        if (pushSubscription) {
-          endpoint = pushSubscription.endpoint;
-          p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
-          auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
+      let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
+
+      // For iOS users without PWA, use email-only subscription to reduce friction
+      if (isIOSDevice && !isPWAInstalled) {
+        if (willSubscribe) {
+          console.log('📱 iOS user without PWA - creating email-only subscription');
+          notificationMethod = 'email';
+        } else {
+          console.log('📱 iOS user without PWA - unsubscribing from email notifications');
+          notificationMethod = 'email'; // Keep it simple for unsubscription
         }
-      } catch (error) {
-        pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
-        console.warn('Failed to get push subscription:', error);
+        // Skip push subscription setup entirely for iOS without PWA
+      } else {
+        // Normal push subscription flow for other platforms or iOS with PWA
+        try {
+          pushSubscription = await subscribeAndRegister();
+          if (pushSubscription) {
+            endpoint = pushSubscription.endpoint;
+            
+            // Enhanced cross-platform key extraction with detailed logging
+            try {
+              const p256dhKey = pushSubscription.getKey('p256dh');
+              const authKey = pushSubscription.getKey('auth');
+              
+              console.log('Push subscription keys debug:', {
+                endpoint: endpoint,
+                p256dhKey: p256dhKey ? 'present' : 'missing',
+                authKey: authKey ? 'present' : 'missing',
+                p256dhLength: p256dhKey?.byteLength,
+                authLength: authKey?.byteLength,
+                isIOS: isIOSDevice,
+                isPWA: isPWAInstalled,
+                userAgent: navigator.userAgent
+              });
+              
+              if (p256dhKey && authKey) {
+                p256dh = arrayBufferToBase64(p256dhKey);
+                auth = arrayBufferToBase64(authKey);
+                
+                console.log('Encoded keys:', {
+                  p256dh: p256dh ? 'encoded' : 'failed',
+                  auth: auth ? 'encoded' : 'failed',
+                  p256dhLength: p256dh.length,
+                  authLength: auth.length
+                });
+              } else {
+                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+              }
+            } catch (keyError) {
+              console.error('Failed to extract push subscription keys:', keyError);
+              pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
+            }
+          } else {
+            console.warn('Push subscription is null');
+          }
+        } catch (error) {
+          pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
+          console.warn('Failed to get push subscription:', error);
+          
+          // For critical errors, still show setup dialog
+          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
+              error.message.includes('home screen')) {
+            setIsOn(prevIsOn); // Revert UI
+            setIsLoading(false);
+            globalCloseTooltip(tooltipId); // Close tooltip before opening modal
+            setIOSSetupOpen(true);
+            return;
+          }
+        }
       }
 
-      // Validate push subscription before sending to backend
+      // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
+      
+      console.log('🔍 DETAILED VALIDATION DEBUG:', {
+        willSubscribe,
+        pushSubscription: pushSubscription ? 'OBJECT_EXISTS' : 'NULL',
+        endpoint: endpoint ? `EXISTS_${endpoint.length}chars` : 'EMPTY',
+        p256dh: p256dh ? `EXISTS_${p256dh.length}chars` : 'EMPTY',
+        auth: auth ? `EXISTS_${auth.length}chars` : 'EMPTY',
+        isValidPush,
+        pushErrorReason: pushErrorReason || 'none',
+        willProceedWithRequest: true
+      });
+      
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
@@ -181,20 +259,32 @@ export const ProgramBlock: React.FC<Props> = ({
             program_id: id,
             program_name: name,
             reason,
-            endpoint,
-            p256dh,
-            auth,
+            endpoint: endpoint || 'empty',
+            p256dh: p256dh || 'empty', 
+            auth: auth || 'empty',
             has_push: !!pushSubscription,
           },
           userData: typedSession?.user
         });
       }
 
-      // Subscribe to program (only one request)
+      console.log('🚀 ABOUT TO SEND REQUEST:', {
+        url: `/programs/${id}/subscribe`,
+        payload: { 
+          notificationMethod,
+          endpoint: isValidPush ? endpoint : undefined,
+          p256dh: isValidPush ? p256dh : undefined,
+          auth: isValidPush ? auth : undefined
+        },
+        willSubscribe,
+        isValidPush,
+        hasToken: !!typedSession.accessToken
+      });
+      
       await api.post(
         `/programs/${id}/subscribe`,
         { 
-          notificationMethod: 'both',
+          notificationMethod,
           endpoint: isValidPush ? endpoint : undefined,
           p256dh: isValidPush ? p256dh : undefined,
           auth: isValidPush ? auth : undefined
@@ -204,13 +294,22 @@ export const ProgramBlock: React.FC<Props> = ({
         }
       );
       
+      console.log('✅ REQUEST COMPLETED SUCCESSFULLY');
+      
+      // Show helpful message for iOS users who subscribed via email
+      if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
+        setTimeout(() => {
+          setShowIOSPushSnackbar(true);
+        }, 1000);
+      }
+      
       // Track subscription event
       gaEvent({
-        action: 'program_subscribe',
+        action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
         params: {
           program_id: id,
           program_name: name,
-          notification_method: 'both',
+          notification_method: notificationMethod,
           has_push: !!pushSubscription,
         },
         userData: typedSession?.user
@@ -218,7 +317,18 @@ export const ProgramBlock: React.FC<Props> = ({
     } catch (error) {
       // Revert UI on error
       setIsOn(prevIsOn);
-      alert('Error updating subscription. Please try again.');
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Error updating subscription. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('pantalla de inicio') || error.message.includes('home screen')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('permission') || error.message.includes('notificaciones')) {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
       console.error('Error updating subscription:', error);
       
       // Track subscription error
@@ -254,7 +364,7 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(true);
+        globalOpenTooltip(tooltipId);
       }, 500);
     }
   };
@@ -270,8 +380,12 @@ export const ProgramBlock: React.FC<Props> = ({
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
-    // Abrir tooltip inmediatamente
-    setOpenTooltip(!openTooltip);
+    // Abrir/cerrar tooltip inmediatamente
+    if (isTooltipOpenForThis) {
+      globalCloseTooltip(tooltipId);
+    } else {
+      globalOpenTooltip(tooltipId);
+    }
   };
 
   // Cierre rápido
@@ -282,7 +396,7 @@ export const ProgramBlock: React.FC<Props> = ({
     }
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(false);
+        globalCloseTooltip(tooltipId);
       }, 100);
     }
   };
@@ -335,29 +449,30 @@ export const ProgramBlock: React.FC<Props> = ({
           {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
         </BaseButton>
       )}
-      <IconButton
-        size="small"
-        aria-label="Notificarme"
-        onClick={handleBellClick}
-        ref={bellRef}
-        sx={{
-          mt: tokens.spacing.md,
-          color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
-        }}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
-            <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
-              <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
-                <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
-              </circle>
-            </svg>
-          </Box>
-        ) : (
-          <Notifications color={isOn ? "primary" : "disabled"} />
-        )}
-      </IconButton>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: tokens.spacing.md }}>
+        <IconButton
+          size="small"
+          aria-label="Notificarme"
+          onClick={handleBellClick}
+          ref={bellRef}
+          sx={{
+            color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
+              <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
+                <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
+                  <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+            </Box>
+          ) : (
+            <Notifications color={isOn ? "primary" : "disabled"} />
+          )}
+        </IconButton>
+      </Box>
     </Box>
   );
 
@@ -367,7 +482,7 @@ export const ProgramBlock: React.FC<Props> = ({
         if (bellRef.current?.contains(event.target as Node)) {
           return;
         }
-        if (isMobile) setOpenTooltip(false);
+        if (isMobile) globalCloseTooltip(tooltipId);
       }
     }>
       <>
@@ -375,7 +490,7 @@ export const ProgramBlock: React.FC<Props> = ({
           title={tooltipContent}
           arrow
           placement="top"
-          open={openTooltip}
+          open={isTooltipOpenForThis}
           onOpen={handleTooltipOpen}
           onClose={handleTooltipClose}
           disableTouchListener={isMobile}
@@ -512,6 +627,53 @@ export const ProgramBlock: React.FC<Props> = ({
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <IOSNotificationSetup 
+          open={iosSetupOpen} 
+          onClose={() => setIOSSetupOpen(false)} 
+          onComplete={() => {
+            setIOSSetupOpen(false);
+            // Optionally trigger the subscription again after setup
+            if (isPWAInstalled) {
+              handleBellClick({ stopPropagation: () => {} } as React.MouseEvent);
+            }
+          }}
+        />
+        <Snackbar
+          open={showIOSPushSnackbar}
+          autoHideDuration={8000}
+          onClose={() => setShowIOSPushSnackbar(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{ zIndex: 9999 }}
+        >
+          <Alert 
+            severity="info" 
+            onClose={() => setShowIOSPushSnackbar(false)}
+            sx={{ 
+              minWidth: 280,
+            }}
+          >
+            Para recibir notificaciones push en iOS, dirígete a{' '}
+            <Button 
+              color="inherit" 
+              size="small" 
+              href="/subscriptions"
+              sx={{ 
+                textDecoration: 'underline',
+                p: 0,
+                minWidth: 'auto',
+                fontSize: 'inherit',
+                fontWeight: 'inherit',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                }
+              }}
+            >
+              Tus favoritos
+            </Button>
+          </Alert>
+        </Snackbar>
       </>
     </ClickAwayListener>
   );
