@@ -430,56 +430,31 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                               }
                             }}
                           >
-                            {/* For iOS users without PWA, only show email option when selecting */}
-                            {(isIOSDevice && !isPWAInstalled) ? (
-                              // Show current value even if it's not email, but only allow email as new selection
-                              <>
-                                {subscription.notificationMethod === NotificationMethod.BOTH && (
-                                  <MenuItem value={NotificationMethod.BOTH} disabled>
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <NotificationsActive fontSize="small" />
-                                      Push y Email
-                                    </Box>
-                                  </MenuItem>
-                                )}
-                                {subscription.notificationMethod === NotificationMethod.PUSH && (
-                                  <MenuItem value={NotificationMethod.PUSH} disabled>
-                                    <Box display="flex" alignItems="center" gap={1}>
-                                      <Notifications fontSize="small" />
-                                      Solo Push
-                                    </Box>
-                                  </MenuItem>
-                                )}
-                                <MenuItem value={NotificationMethod.EMAIL}>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <Email fontSize="small" />
-                                    Solo Email
-                                  </Box>
-                                </MenuItem>
-                              </>
-                            ) : (
-                              // Normal options for PWA users or non-iOS users
-                              <>
-                                <MenuItem value={NotificationMethod.BOTH}>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <NotificationsActive fontSize="small" />
-                                    Push y Email
-                                  </Box>
-                                </MenuItem>
-                                <MenuItem value={NotificationMethod.PUSH}>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <Notifications fontSize="small" />
-                                    Solo Push
-                                  </Box>
-                                </MenuItem>
-                                <MenuItem value={NotificationMethod.EMAIL}>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <Email fontSize="small" />
-                                    Solo Email
-                                  </Box>
-                                </MenuItem>
-                              </>
-                            )}
+                            {/* Always show all options first, then add restrictions for iOS without PWA */}
+                            <MenuItem 
+                              value={NotificationMethod.BOTH}
+                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.BOTH}
+                            >
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <NotificationsActive fontSize="small" />
+                                Push y Email
+                              </Box>
+                            </MenuItem>
+                            <MenuItem 
+                              value={NotificationMethod.PUSH}
+                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.PUSH}
+                            >
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Notifications fontSize="small" />
+                                Solo Push
+                              </Box>
+                            </MenuItem>
+                            <MenuItem value={NotificationMethod.EMAIL}>
+                              <Box display="flex" alignItems="center" gap={1}>
+                                <Email fontSize="small" />
+                                Solo Email
+                              </Box>
+                            </MenuItem>
                           </Select>
                         </FormControl>
                       </Box>
