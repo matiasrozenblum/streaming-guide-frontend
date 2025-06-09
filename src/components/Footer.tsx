@@ -1,9 +1,12 @@
+'use client';
 import React from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
 
 const Footer: React.FC = () => {
   const email = 'laguiadelstreaming@gmail.com';
+  const { openPreferences } = useCookieConsent();
 
   return (
     <Box
@@ -33,6 +36,27 @@ const Footer: React.FC = () => {
         >
           Términos y Condiciones
         </a>
+        {' '}-{' '}
+        <Button
+          variant="text"
+          size="small"
+          onClick={openPreferences}
+          sx={{ 
+            p: 0, 
+            minWidth: 'auto', 
+            textDecoration: 'underline',
+            fontSize: '0.5rem',
+            lineHeight: 1.2,
+            color: 'inherit',
+            verticalAlign: 'baseline',
+            '&:hover': {
+              backgroundColor: 'transparent',
+              textDecoration: 'underline',
+            }
+          }}
+        >
+          Configurar Cookies
+        </Button>
       </Typography>
       <Typography
         variant="caption"
