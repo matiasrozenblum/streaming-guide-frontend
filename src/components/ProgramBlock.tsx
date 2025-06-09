@@ -467,18 +467,6 @@ export const ProgramBlock: React.FC<Props> = ({
             <Notifications color={isOn ? "primary" : "disabled"} />
           )}
         </IconButton>
-        {isOn && isIOSDevice && !isPWAInstalled && (
-          <Typography 
-            variant="caption" 
-            sx={{ 
-              fontSize: '0.65rem',
-              color: 'primary.main',
-              fontWeight: 600,
-            }}
-          >
-            📧
-          </Typography>
-        )}
       </Box>
     </Box>
   );
