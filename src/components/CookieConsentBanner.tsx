@@ -6,7 +6,6 @@ import {
   Typography,
   Button,
   Stack,
-  Slide,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
@@ -24,28 +23,28 @@ export function CookieConsentBanner() {
   if (!showBanner || showPreferences) return null;
 
   return (
-    <Slide direction="up" in={showBanner} mountOnEnter unmountOnExit>
-      <Box
+    <Box
+      sx={{
+        position: 'fixed',
+        bottom: 0,
+        left: 0,
+        right: 0,
+        zIndex: 9999,
+        p: { xs: 1, sm: 2 },
+        transform: showBanner ? 'translateY(0)' : 'translateY(100%)',
+        transition: 'transform 0.3s ease-in-out',
+      }}
+    >
+      <Paper
+        elevation={8}
         sx={{
-          position: 'fixed',
-          bottom: 0,
-          left: 0,
-          right: 0,
-          zIndex: 9999,
-          p: { xs: 1, sm: 2 },
+          p: { xs: 1.5, sm: 2 },
+          borderRadius: 1,
+          backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+          border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
+          maxWidth: '100%',
         }}
       >
-        <Paper
-          elevation={8}
-          sx={{
-            p: { xs: 1.5, sm: 2 },
-            borderRadius: 1,
-            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-            border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
-            backdropFilter: 'blur(10px)',
-            maxWidth: '100%',
-          }}
-        >
           <Stack 
             direction={isMobile ? 'column' : 'row'} 
             spacing={2} 
@@ -134,6 +133,5 @@ export function CookieConsentBanner() {
           </Stack>
         </Paper>
       </Box>
-    </Slide>
   );
 } 

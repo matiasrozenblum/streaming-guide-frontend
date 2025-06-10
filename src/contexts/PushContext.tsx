@@ -87,22 +87,6 @@ const isPWAInstalled = () => {
     result = isStandalone || isMinimalUI || isFullscreen || isPWAFromURL || isManualPWATest;
   }
   
-  console.log('🔍 PWA Detection Details:', {
-    isIOSStandalone,
-    isStandalone,
-    isIOSDeviceCheck,
-    isPWAFromURL,
-    isManualPWATest,
-    isMinimalUI,
-    isFullscreen,
-    currentURL: window.location.href,
-    urlSearchParams: window.location.search,
-    displayMode: window.matchMedia('(display-mode: standalone)').matches ? 'standalone' : 'browser',
-    navigatorStandalone: (window.navigator as { standalone?: boolean }).standalone,
-    userAgent: navigator.userAgent,
-    finalResult: result
-  });
-  
   return result;
 };
 
@@ -230,14 +214,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       await requestNotificationPermission();
 
       // 2) Asegurarnos de tener el SW listo
-      console.log('🔧 Waiting for service worker...');
       const registration = await navigator.serviceWorker.ready;
-      console.log('✅ Service worker ready:', {
-        scope: registration.scope,
-        active: !!registration.active,
-        installing: !!registration.installing,
-        waiting: !!registration.waiting
-      });
 
       // 3) Mirar si ya hay una subscripción
       let subscription = await registration.pushManager.getSubscription();
