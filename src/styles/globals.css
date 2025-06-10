@@ -52,12 +52,10 @@ html[data-theme="light"] ::-webkit-scrollbar {
 
 html[data-theme="light"] ::-webkit-scrollbar-track {
   background: #f1f5f9;
-  border-radius: 4px;
 }
 
 html[data-theme="light"] ::-webkit-scrollbar-thumb {
   background: #cbd5e1;
-  border-radius: 4px;
   border: 2px solid #f1f5f9;
 }
 
@@ -73,12 +71,10 @@ html[data-theme="dark"] ::-webkit-scrollbar {
 
 html[data-theme="dark"] ::-webkit-scrollbar-track {
   background: #1e293b;
-  border-radius: 4px;
 }
 
 html[data-theme="dark"] ::-webkit-scrollbar-thumb {
   background: #475569;
-  border-radius: 4px;
   border: 2px solid #1e293b;
 }
 
