@@ -33,7 +33,6 @@ export default function PWADebugger() {
     };
     
     setDebugInfo(info);
-    console.log('🐛 PWA Debug Info:', info);
   }, [isIOSDevice, isPWAInstalled, notificationPermission]);
 
   React.useEffect(() => {

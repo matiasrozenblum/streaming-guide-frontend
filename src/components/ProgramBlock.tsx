@@ -170,10 +170,8 @@ export const ProgramBlock: React.FC<Props> = ({
       // For iOS users without PWA, use email-only subscription to reduce friction
       if (isIOSDevice && !isPWAInstalled) {
         if (willSubscribe) {
-          console.log('📱 iOS user without PWA - creating email-only subscription');
           notificationMethod = 'email';
         } else {
-          console.log('📱 iOS user without PWA - unsubscribing from email notifications');
           notificationMethod = 'email'; // Keep it simple for unsubscription
         }
         // Skip push subscription setup entirely for iOS without PWA
@@ -189,27 +187,9 @@ export const ProgramBlock: React.FC<Props> = ({
               const p256dhKey = pushSubscription.getKey('p256dh');
               const authKey = pushSubscription.getKey('auth');
               
-              console.log('Push subscription keys debug:', {
-                endpoint: endpoint,
-                p256dhKey: p256dhKey ? 'present' : 'missing',
-                authKey: authKey ? 'present' : 'missing',
-                p256dhLength: p256dhKey?.byteLength,
-                authLength: authKey?.byteLength,
-                isIOS: isIOSDevice,
-                isPWA: isPWAInstalled,
-                userAgent: navigator.userAgent
-              });
-              
               if (p256dhKey && authKey) {
                 p256dh = arrayBufferToBase64(p256dhKey);
                 auth = arrayBufferToBase64(authKey);
-                
-                console.log('Encoded keys:', {
-                  p256dh: p256dh ? 'encoded' : 'failed',
-                  auth: auth ? 'encoded' : 'failed',
-                  p256dhLength: p256dh.length,
-                  authLength: auth.length
-                });
               } else {
                 console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
               }
@@ -239,17 +219,6 @@ export const ProgramBlock: React.FC<Props> = ({
       // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
       
-      console.log('🔍 DETAILED VALIDATION DEBUG:', {
-        willSubscribe,
-        pushSubscription: pushSubscription ? 'OBJECT_EXISTS' : 'NULL',
-        endpoint: endpoint ? `EXISTS_${endpoint.length}chars` : 'EMPTY',
-        p256dh: p256dh ? `EXISTS_${p256dh.length}chars` : 'EMPTY',
-        auth: auth ? `EXISTS_${auth.length}chars` : 'EMPTY',
-        isValidPush,
-        pushErrorReason: pushErrorReason || 'none',
-        willProceedWithRequest: true
-      });
-      
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
@@ -267,19 +236,6 @@ export const ProgramBlock: React.FC<Props> = ({
           userData: typedSession?.user
         });
       }
-
-      console.log('🚀 ABOUT TO SEND REQUEST:', {
-        url: `/programs/${id}/subscribe`,
-        payload: { 
-          notificationMethod,
-          endpoint: isValidPush ? endpoint : undefined,
-          p256dh: isValidPush ? p256dh : undefined,
-          auth: isValidPush ? auth : undefined
-        },
-        willSubscribe,
-        isValidPush,
-        hasToken: !!typedSession.accessToken
-      });
       
       await api.post(
         `/programs/${id}/subscribe`,
@@ -293,8 +249,6 @@ export const ProgramBlock: React.FC<Props> = ({
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }
       );
-      
-      console.log('✅ REQUEST COMPLETED SUCCESSFULLY');
       
       // Show helpful message for iOS users who subscribed via email
       if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {

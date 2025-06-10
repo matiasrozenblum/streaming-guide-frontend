@@ -73,9 +73,6 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     saveConsentToStorage(allAccepted);
     setShowBanner(false);
     setShowPreferences(false);
-    
-    // Reload to initialize tracking scripts
-    window.location.reload();
   };
 
   const rejectAll = () => {
@@ -98,9 +95,6 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
     saveConsentToStorage(finalPreferences);
     setShowBanner(false);
     setShowPreferences(false);
-    
-    // Reload to apply new preferences
-    window.location.reload();
   };
 
   const hasConsent = (type: keyof CookieConsentState): boolean => {
