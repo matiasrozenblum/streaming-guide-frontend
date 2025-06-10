@@ -34,6 +34,8 @@ import Header from '@/components/Header';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
+import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 
 const MotionBox = motion(Box);
 
@@ -113,6 +115,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
+  const { consent, openPreferences } = useCookieConsent();
 
   // Track profile page visit
   useEffect(() => {
@@ -635,6 +638,47 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 }
                 onEdit={() => setEditSection('password')}
               />
+              
+              <ProfileSection
+                title="Preferencias de Cookies"
+                value={
+                  <Grid container spacing={2}>
+                    <Grid component="div" size={6}>
+                      <Typography color="text.secondary" gutterBottom>
+                        Cookies de Análisis
+                      </Typography>
+                      <Typography variant="body1">
+                        {consent?.analytics ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                      </Typography>
+                    </Grid>
+                    <Grid component="div" size={6}>
+                      <Typography color="text.secondary" gutterBottom>
+                        Cookies de Marketing
+                      </Typography>
+                      <Typography variant="body1">
+                        {consent?.marketing ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                      </Typography>
+                    </Grid>
+                    <Grid component="div" size={6}>
+                      <Typography color="text.secondary" gutterBottom>
+                        Cookies de Preferencias
+                      </Typography>
+                      <Typography variant="body1">
+                        {consent?.preferences ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                      </Typography>
+                    </Grid>
+                    <Grid component="div" size={6}>
+                      <Typography color="text.secondary" gutterBottom>
+                        Cookies Necesarias
+                      </Typography>
+                      <Typography variant="body1">
+                        ✅ Siempre habilitadas
+                      </Typography>
+                    </Grid>
+                  </Grid>
+                }
+                onEdit={() => openPreferences()}
+              />
             </Stack>
             <Box sx={{ mt: 6, textAlign: 'center' }}>
               <Button
@@ -890,6 +934,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           </Button>
         </DialogActions>
       </Dialog>
+      
+      {/* Cookie Preferences Modal */}
+      <CookiePreferencesModal />
     </Box>
   );
 } 

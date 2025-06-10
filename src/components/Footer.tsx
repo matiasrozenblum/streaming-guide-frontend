@@ -1,9 +1,12 @@
+'use client';
 import React from 'react';
-import { Box, Typography, IconButton } from '@mui/material';
+import { Box, Typography, IconButton, Button } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
+import { useCookieConsent } from '@/contexts/CookieConsentContext';
 
 const Footer: React.FC = () => {
   const email = 'laguiadelstreaming@gmail.com';
+  const { openPreferences } = useCookieConsent();
 
   return (
     <Box
@@ -33,6 +36,52 @@ const Footer: React.FC = () => {
         >
           Términos y Condiciones
         </a>
+        {' '}-{' '}
+        <a
+          href="/legal/politica-de-privacidad"
+          target="_blank"
+          style={{ color: 'inherit', textDecoration: 'underline' }}
+        >
+          Política de Privacidad
+        </a>
+        {' '}-{' '}
+        <Button
+          variant="text"
+          size="small"
+          onClick={openPreferences}
+          sx={{ 
+            p: 0, 
+            minWidth: 'auto', 
+            textDecoration: 'underline',
+            fontSize: '0.5rem',
+            lineHeight: 1.2,
+            color: 'inherit',
+            verticalAlign: 'baseline',
+            '&:hover': {
+              backgroundColor: 'transparent',
+              textDecoration: 'underline',
+            }
+          }}
+        >
+          Configurar Cookies
+        </Button>
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ fontSize: '0.5rem', lineHeight: 1.2, display: 'block', mb: 0.5 }}
+      >
+        Al usar este sitio, aceptas los{' '}
+        <a
+          href="https://www.youtube.com/t/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'underline' }}
+        >
+          Términos de Servicio de YouTube
+        </a>
+        . Utilizamos YouTube API Services.
       </Typography>
       <Typography
         variant="caption"
