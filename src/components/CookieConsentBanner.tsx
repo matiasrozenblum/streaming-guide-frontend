@@ -38,7 +38,7 @@ export function CookieConsentBanner() {
       <Paper
         elevation={12}
         sx={{
-          p: { xs: 2, sm: 2.5 },
+          p: { xs: 1, sm: 2.5 },
           borderRadius: 3,
           backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
           border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
@@ -50,7 +50,7 @@ export function CookieConsentBanner() {
       >
           <Stack 
             direction={isMobile ? 'column' : 'row'} 
-            spacing={2} 
+            spacing={isMobile ? 0.5 : 2} 
             alignItems={isMobile ? 'flex-start' : 'center'}
             justifyContent="space-between"
           >
@@ -94,7 +94,7 @@ export function CookieConsentBanner() {
             {/* Compact buttons */}
             <Stack 
               direction={isMobile ? 'column' : 'row'} 
-              spacing={1}
+              spacing={isMobile ? 0.5 : 1}
               sx={{ 
                 flexShrink: 0,
                 width: isMobile ? '100%' : 'auto'

@@ -17,6 +17,20 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.1.1] - 2025-06-10
+
+### Changed
+- Reduced spacing in cookie banner for mobile
+
+## [1.1.0] - 2025-06-10
+
+### Added
+- Added cookies preference
+- Added privacy policy page
+- Added more information to TyC page
+- Added YouTube compliance info to both pages
+- Added more info to footer
+
 ## [1.0.3] - 2025-06-09
 
 ### Added
