@@ -1,15 +1,34 @@
+'use client';
 import React from 'react';
-import { Container, Typography, Box, Paper, Divider } from '@mui/material';
-
-export const metadata = {
-  title: 'Política de Privacidad - La Guía del Streaming',
-  description: 'Política de privacidad y uso de cookies de La Guía del Streaming',
-};
+import { Container, Typography, Box, Paper, Divider, useTheme } from '@mui/material';
+import Header from '@/components/Header';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 export default function PrivacyPolicyPage() {
+  const { mode } = useThemeContext();
+  const theme = useTheme();
+  
   return (
-    <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper elevation={1} sx={{ p: 4 }}>
+    <Box
+      sx={{
+        minHeight: '100dvh',
+        background: mode === 'light'
+          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        py: { xs: 1, sm: 2 },
+        color: theme.palette.text.primary,
+      }}
+    >
+      <Header />
+      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper 
+        elevation={1} 
+        sx={{ 
+          p: 4,
+          backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 41, 59, 0.9)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
         <Typography variant="h3" component="h1" gutterBottom align="center">
           Política de Privacidad
         </Typography>
@@ -144,5 +163,6 @@ export default function PrivacyPolicyPage() {
         </Box>
       </Paper>
     </Container>
+    </Box>
   );
 } 

@@ -10,13 +10,15 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { Settings as SettingsIcon } from '@mui/icons-material';
+
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 export function CookieConsentBanner() {
   const theme = useTheme();
+  const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { showBanner, acceptAll, rejectAll, openPreferences } = useCookieConsent();
+  const { showBanner, acceptAll, openPreferences } = useCookieConsent();
 
   if (!showBanner) return null;
 
@@ -29,85 +31,85 @@ export function CookieConsentBanner() {
           left: 0,
           right: 0,
           zIndex: 9999,
-          p: isMobile ? 2 : 3,
+          p: { xs: 1, sm: 2 },
         }}
       >
         <Paper
           elevation={8}
           sx={{
-            p: isMobile ? 2 : 3,
-            borderRadius: 2,
-            backgroundColor: theme.palette.background.paper,
-            border: `1px solid ${theme.palette.divider}`,
+            p: { xs: 1.5, sm: 2 },
+            borderRadius: 1,
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+            border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
             backdropFilter: 'blur(10px)',
             maxWidth: '100%',
           }}
         >
-          <Stack spacing={2}>
-            <Box display="flex" justifyContent="space-between" alignItems="flex-start">
-              <Typography variant="h6" component="h2" sx={{ fontWeight: 600 }}>
-                🍪 Configuración de cookies
+          <Stack 
+            direction={isMobile ? 'column' : 'row'} 
+            spacing={2} 
+            alignItems={isMobile ? 'flex-start' : 'center'}
+            justifyContent="space-between"
+          >
+            {/* Compact text section */}
+            <Box sx={{ flex: 1, minWidth: 0 }}>
+              <Typography 
+                variant="body2" 
+                                 sx={{ 
+                   fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                   lineHeight: 1.4,
+                   color: mode === 'light' ? '#000000' : '#ffffff',
+                 }}
+              >
+                Usamos cookies para mejorar tu experiencia en La Guía del Streaming. Consultar más en nuestro{' '}
+                <Button
+                  variant="text"
+                  size="small"
+                  sx={{ 
+                    p: 0, 
+                    minWidth: 'auto', 
+                    textDecoration: 'underline',
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    verticalAlign: 'baseline',
+                    color: mode === 'light' ? '#1976d2' : '#64b5f6',
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      textDecoration: 'underline',
+                    }
+                  }}
+                  onClick={() => window.open('/legal/politica-de-privacidad', '_blank')}
+                >
+                  Centro de Privacidad
+                </Button>
+                .
               </Typography>
             </Box>
 
-            <Typography variant="body2" color="text.secondary" sx={{ lineHeight: 1.6 }}>
-              Utilizamos cookies para mejorar tu experiencia, analizar el tráfico del sitio y personalizar el contenido. 
-              Puedes elegir qué tipos de cookies aceptar. Para más información, consulta nuestra{' '}
+            {/* Compact buttons */}
+            <Stack 
+              direction={isMobile ? 'column' : 'row'} 
+              spacing={1}
+              sx={{ 
+                flexShrink: 0,
+                width: isMobile ? '100%' : 'auto'
+              }}
+            >
               <Button
                 variant="text"
                 size="small"
-                sx={{ 
-                  p: 0, 
-                  minWidth: 'auto', 
-                  textDecoration: 'underline',
-                  fontSize: 'inherit',
-                  lineHeight: 'inherit',
-                  verticalAlign: 'baseline'
-                }}
-                onClick={() => window.open('/legal/politica-de-privacidad', '_blank')}
-              >
-                política de privacidad
-              </Button>
-              .
-            </Typography>
-
-            <Stack 
-              direction={isMobile ? 'column' : 'row'} 
-              spacing={1} 
-              justifyContent="flex-end"
-              alignItems={isMobile ? 'stretch' : 'center'}
-            >
-              <Button
-                variant="outlined"
-                size="small"
-                startIcon={<SettingsIcon />}
                 onClick={openPreferences}
                 sx={{ 
-                  borderColor: theme.palette.divider,
-                  color: theme.palette.text.secondary,
+                  fontSize: '0.8rem',
+                  p: { xs: '6px 12px', sm: '4px 8px' },
+                  minWidth: 'auto',
+                  color: mode === 'light' ? '#1976d2' : '#64b5f6',
                   '&:hover': {
-                    borderColor: theme.palette.primary.main,
-                    backgroundColor: theme.palette.action.hover,
+                    backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
                   }
                 }}
               >
-                Configurar
-              </Button>
-              
-              <Button
-                variant="outlined"
-                size="small"
-                onClick={rejectAll}
-                sx={{ 
-                  borderColor: theme.palette.divider,
-                  color: theme.palette.text.secondary,
-                  '&:hover': {
-                    borderColor: theme.palette.error.main,
-                    backgroundColor: theme.palette.error.main + '10',
-                  }
-                }}
-              >
-                Rechazar todo
+                Configurar cookies
               </Button>
               
               <Button
@@ -115,13 +117,17 @@ export function CookieConsentBanner() {
                 size="small"
                 onClick={acceptAll}
                 sx={{
-                  backgroundColor: theme.palette.primary.main,
+                  fontSize: '0.8rem',
+                  p: { xs: '6px 16px', sm: '4px 12px' },
+                  minWidth: 'auto',
+                  backgroundColor: mode === 'light' ? '#1976d2' : '#64b5f6',
+                  color: '#ffffff',
                   '&:hover': {
-                    backgroundColor: theme.palette.primary.dark,
+                    backgroundColor: mode === 'light' ? '#1565c0' : '#42a5f5',
                   }
                 }}
               >
-                Aceptar todo
+                Aceptar cookies
               </Button>
             </Stack>
           </Stack>
