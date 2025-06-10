@@ -87,15 +87,19 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
 }
 
 /* Firefox scrollbar styles - Light theme */
-html[data-theme="light"] * {
-  scrollbar-width: thin;
-  scrollbar-color: #cbd5e1 #f1f5f9;
+@-moz-document url-prefix() {
+  html[data-theme="light"] * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
 }
 
 /* Firefox scrollbar styles - Dark theme */
-html[data-theme="dark"] * {
-  scrollbar-width: thin;
-  scrollbar-color: #475569 #1e293b;
+@-moz-document url-prefix() {
+  html[data-theme="dark"] * {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e293b;
+  }
 }
 
 /* Hide scrollbar for mobile - Light theme */
