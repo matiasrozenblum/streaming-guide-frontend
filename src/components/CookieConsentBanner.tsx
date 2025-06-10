@@ -50,7 +50,7 @@ export function CookieConsentBanner() {
       >
           <Stack 
             direction={isMobile ? 'column' : 'row'} 
-            spacing={isMobile ? 0.5 : 2} 
+            spacing={isMobile ? 0.25 : 2} 
             alignItems={isMobile ? 'flex-start' : 'center'}
             justifyContent="space-between"
           >
@@ -94,7 +94,7 @@ export function CookieConsentBanner() {
             {/* Compact buttons */}
             <Stack 
               direction={isMobile ? 'column' : 'row'} 
-              spacing={isMobile ? 0.5 : 1}
+              spacing={isMobile ? 0.25 : 1}
               sx={{ 
                 flexShrink: 0,
                 width: isMobile ? '100%' : 'auto'
@@ -106,7 +106,7 @@ export function CookieConsentBanner() {
                 onClick={openPreferences}
                 sx={{ 
                   fontSize: '0.8rem',
-                  p: { xs: '6px 12px', sm: '4px 8px' },
+                  p: { xs: '4px 8px', sm: '4px 8px' },
                   minWidth: 'auto',
                   color: mode === 'light' ? '#1976d2' : '#64b5f6',
                   '&:hover': {
@@ -123,7 +123,7 @@ export function CookieConsentBanner() {
                 onClick={acceptAll}
                 sx={{
                   fontSize: '0.8rem',
-                  p: { xs: '6px 16px', sm: '4px 12px' },
+                  p: { xs: '4px 12px', sm: '4px 12px' },
                   minWidth: 'auto',
                   backgroundColor: mode === 'light' ? '#1976d2' : '#64b5f6',
                   color: '#ffffff',
