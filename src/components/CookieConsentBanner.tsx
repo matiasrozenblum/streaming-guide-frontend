@@ -31,7 +31,7 @@ export function CookieConsentBanner() {
         transform: showBanner ? 'translate(-50%, 0)' : 'translate(-50%, 120%)',
         zIndex: 9999,
         transition: 'transform 0.3s ease-in-out',
-        maxWidth: { xs: 'calc(100vw - 32px)', sm: '600px', md: '500px' },
+        maxWidth: { xs: 'calc(100vw - 32px)', sm: '800px', md: '800px' },
         width: '100%',
       }}
     >
@@ -64,7 +64,9 @@ export function CookieConsentBanner() {
                    color: mode === 'light' ? '#000000' : '#ffffff',
                  }}
               >
-                Usamos cookies para mejorar tu experiencia en La Guía del Streaming. Consultar más en nuestro{' '}
+                Usamos cookies para mejorar tu experiencia en La Guía.{' '}
+                <br />
+                Descubrí{' '}
                 <Button
                   variant="text"
                   size="small"
@@ -76,6 +78,7 @@ export function CookieConsentBanner() {
                     lineHeight: 'inherit',
                     verticalAlign: 'baseline',
                     color: mode === 'light' ? '#1976d2' : '#64b5f6',
+                    textTransform: 'none',
                     '&:hover': {
                       backgroundColor: 'transparent',
                       textDecoration: 'underline',
@@ -83,7 +86,7 @@ export function CookieConsentBanner() {
                   }}
                   onClick={() => window.open('/legal/politica-de-privacidad', '_blank')}
                 >
-                  Centro de Privacidad
+                 más información
                 </Button>
                 .
               </Typography>

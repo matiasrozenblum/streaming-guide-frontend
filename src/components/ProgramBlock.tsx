@@ -11,7 +11,6 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
-import Clarity from '@microsoft/clarity';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
@@ -115,8 +114,16 @@ export const ProgramBlock: React.FC<Props> = ({
     e.preventDefault();
     if (!streamUrl) return;
 
-    Clarity.setTag('program_name', name);
-    Clarity.event(isLive ? 'click_youtube_live' : 'click_youtube_deferred');
+    // Safe Clarity calls - only if Clarity is loaded
+    if (typeof window !== 'undefined' && 'clarity' in window) {
+      try {
+        const clarityWindow = window as Window & { clarity: (action: string, ...args: unknown[]) => void };
+        clarityWindow.clarity('set', 'program_name', name);
+        clarityWindow.clarity('event', isLive ? 'click_youtube_live' : 'click_youtube_deferred');
+      } catch (error) {
+        console.warn('Clarity tracking failed:', error);
+      }
+    }
 
     gaEvent({
       action: isLive ? 'click_youtube_live' : 'click_youtube_deferred',
@@ -384,14 +391,8 @@ export const ProgramBlock: React.FC<Props> = ({
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
         {streamUrl && (
           <BaseButton
-            onClick={(e) => {
-              e.stopPropagation();
-              handleClick(e);
-            }}
-            onTouchStart={(e) => {
-              e.stopPropagation();
-              handleClick(e);
-            }}
+            onClick={handleClick}
+            onTouchStart={handleClick}
             variant="contained"
             size="small"
             startIcon={<OpenInNew />}
@@ -412,10 +413,7 @@ export const ProgramBlock: React.FC<Props> = ({
         <IconButton
           size="small"
           aria-label="Notificarme"
-          onClick={(e) => {
-            e.stopPropagation();
-            handleBellClick(e);
-          }}
+          onClick={handleBellClick}
           ref={bellRef}
           sx={{
             color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),

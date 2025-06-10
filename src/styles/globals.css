@@ -50,6 +50,10 @@ html[data-theme="light"] ::-webkit-scrollbar {
   height: 8px;
 }
 
+html[data-theme="light"] ::-webkit-scrollbar-corner {
+  background: #f1f5f9;
+}
+
 html[data-theme="light"] ::-webkit-scrollbar-track {
   background: #f1f5f9;
 }
@@ -67,6 +71,10 @@ html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
 html[data-theme="dark"] ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-corner {
+  background: #1e293b;
 }
 
 html[data-theme="dark"] ::-webkit-scrollbar-track {
