@@ -76,7 +76,7 @@ export default function PrivacyPolicyPage() {
             <Typography variant="body2" paragraph>
               Nos ayudan a entender cómo interactúas con nuestro sitio web. Utilizamos:
             </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
               <li><strong>Google Analytics:</strong> Análisis de tráfico y comportamiento de usuarios</li>
               <li><strong>PostHog:</strong> Análisis de producto y experiencia de usuario</li>
               <li><strong>Microsoft Clarity:</strong> Mapas de calor y grabaciones de sesión</li>
@@ -123,7 +123,7 @@ export default function PrivacyPolicyPage() {
             <Typography variant="body2" paragraph>
               A través de YouTube API Services, accedemos únicamente a información pública como:
             </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 1 }}>
               <li>Información de canales de YouTube (nombres, IDs)</li>
               <li>Estado de transmisiones en vivo</li>
               <li>IDs de videos públicos</li>
@@ -230,7 +230,7 @@ export default function PrivacyPolicyPage() {
             <Typography variant="body1" paragraph>
               Tienes derecho a:
             </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 1 }}>
               <li>Configurar tus preferencias de cookies en cualquier momento</li>
               <li>Solicitar información sobre los datos que tenemos sobre ti</li>
               <li>Solicitar la eliminación de tus datos</li>

@@ -95,18 +95,17 @@ export function ConditionalClarityLoader() {
 
   useEffect(() => {
     if (hasConsent('analytics') && typeof window !== 'undefined' && !clarityLoaded) {
-      // Dynamically import and initialize Clarity
-      import('@microsoft/clarity').then((clarityModule) => {
-        const windowWithClarity = window as typeof window & { clarity?: unknown };
-        if (!windowWithClarity.clarity) {
-          const clarity = clarityModule as unknown as { clarity: (action: string, config: Record<string, string>) => void };
-          clarity.clarity('start', {
-            projectId: 'mhxe0rpxz1',
-            upload: 'https://www.clarity.ms/collect'
-          });
-          setClarityLoaded(true);
-        }
-      });
+      // Load Clarity script directly without dynamic import
+      const script = document.createElement('script');
+      script.innerHTML = `
+        (function(c,l,a,r,i,t,y){
+          c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+          t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+          y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+        })(window, document, "clarity", "script", "mhxe0rpxz1");
+      `;
+      document.head.appendChild(script);
+      setClarityLoaded(true);
     }
   }, [hasConsent, clarityLoaded]);
 
