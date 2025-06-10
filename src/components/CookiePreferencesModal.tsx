@@ -37,15 +37,17 @@ export function CookiePreferencesModal() {
   
   const [preferences, setPreferences] = useState<CookieConsentState>({
     necessary: true,
-    analytics: false,
-    marketing: false,
-    preferences: false,
+    analytics: true,  // Default to enabled
+    marketing: true,  // Default to enabled
+    preferences: true, // Default to enabled
   });
 
   useEffect(() => {
     if (consent) {
+      // If user has existing preferences, use those
       setPreferences(consent);
     }
+    // If no consent exists yet, keep the default enabled state
   }, [consent]);
 
   const handleToggle = (type: keyof CookieConsentState) => {
