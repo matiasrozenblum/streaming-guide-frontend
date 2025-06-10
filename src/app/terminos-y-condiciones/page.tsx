@@ -30,6 +30,18 @@ export default function TerminosYCondiciones() {
           </Typography>
           <Typography variant="h6" gutterBottom>2. Uso del sitio</Typography>
           <Typography paragraph>
+            Al utilizar este sitio web, usted acepta estar sujeto a los{' '}
+            <a 
+              href="https://www.youtube.com/t/terms" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
+            >
+              Términos de Servicio de YouTube
+            </a>
+            .
+          </Typography>
+          <Typography paragraph>
             El uso del sitio debe ser legal y respetuoso. Queda prohibido:
           </Typography>
           <ul style={{ marginLeft: 24 }}>

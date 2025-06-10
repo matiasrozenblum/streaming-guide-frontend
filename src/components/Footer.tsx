@@ -37,6 +37,14 @@ const Footer: React.FC = () => {
           Términos y Condiciones
         </a>
         {' '}-{' '}
+        <a
+          href="/legal/politica-de-privacidad"
+          target="_blank"
+          style={{ color: 'inherit', textDecoration: 'underline' }}
+        >
+          Política de Privacidad
+        </a>
+        {' '}-{' '}
         <Button
           variant="text"
           size="small"
@@ -57,6 +65,23 @@ const Footer: React.FC = () => {
         >
           Configurar Cookies
         </Button>
+      </Typography>
+      <Typography
+        variant="caption"
+        color="text.secondary"
+        align="center"
+        sx={{ fontSize: '0.5rem', lineHeight: 1.2, display: 'block', mb: 0.5 }}
+      >
+        Al usar este sitio, aceptas los{' '}
+        <a
+          href="https://www.youtube.com/t/terms"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ color: 'inherit', textDecoration: 'underline' }}
+        >
+          Términos de Servicio de YouTube
+        </a>
+        . Utilizamos YouTube API Services.
       </Typography>
       <Typography
         variant="caption"

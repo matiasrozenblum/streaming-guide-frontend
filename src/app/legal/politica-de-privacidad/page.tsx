@@ -99,23 +99,133 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <Typography variant="h5" component="h2" gutterBottom>
-              3. Servicios de Terceros
+              3. Uso de YouTube API Services
             </Typography>
             <Typography variant="body1" paragraph>
-              Utilizamos servicios de terceros que pueden recopilar información:
+              <strong>Este sitio web utiliza YouTube API Services.</strong> Al usar nuestro sitio, usted también acepta las políticas de YouTube y Google.
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Para más información sobre cómo Google maneja sus datos, consulte la{' '}
+              <a 
+                href="http://www.google.com/policies/privacy" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
+              >
+                Política de Privacidad de Google
+              </a>
+              .
+            </Typography>
+            
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Datos de YouTube que Accedemos
+            </Typography>
+            <Typography variant="body2" paragraph>
+              A través de YouTube API Services, accedemos únicamente a información pública como:
             </Typography>
             <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li><strong>YouTube:</strong> Para mostrar contenido de video (sujeto a las políticas de Google/YouTube)</li>
-              <li><strong>Google Analytics:</strong> Para análisis web</li>
-              <li><strong>PostHog:</strong> Para análisis de producto</li>
-              <li><strong>Microsoft Clarity:</strong> Para análisis de comportamiento</li>
-              <li><strong>Hotjar:</strong> Para análisis de experiencia de usuario</li>
+              <li>Información de canales de YouTube (nombres, IDs)</li>
+              <li>Estado de transmisiones en vivo</li>
+              <li>IDs de videos públicos</li>
+              <li>Metadatos públicos de contenido</li>
+            </Typography>
+            <Typography variant="body2" paragraph>
+              <strong>No accedemos ni almacenamos datos privados de cuentas de YouTube de usuarios.</strong>
+            </Typography>
+
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Revocación de Acceso
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Si desea revocar el acceso de aplicaciones a su cuenta de Google/YouTube, puede hacerlo en{' '}
+              <a 
+                href="https://security.google.com/settings/" 
+                target="_blank" 
+                rel="noopener noreferrer"
+                style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
+              >
+                Google Security Settings
+              </a>
+              .
             </Typography>
           </section>
 
           <section>
             <Typography variant="h5" component="h2" gutterBottom>
-              4. Tus Derechos
+              4. Otros Servicios de Terceros
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Además de YouTube API Services, utilizamos otros servicios de terceros:
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <li><strong>Google Analytics:</strong> Para análisis web</li>
+              <li><strong>PostHog:</strong> Para análisis de producto</li>
+              <li><strong>Microsoft Clarity:</strong> Para análisis de comportamiento</li>
+              <li><strong>Hotjar:</strong> Para análisis de experiencia de usuario</li>
+            </Typography>
+            
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Contenido y Publicidad de Terceros
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Nuestro sitio permite que terceros sirvan contenido, incluyendo:
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <li>Videos embebidos de YouTube (que pueden incluir publicidad)</li>
+              <li>Contenido analítico de servicios de terceros</li>
+              <li>Scripts de seguimiento y análisis</li>
+            </Typography>
+          </section>
+
+          <section>
+            <Typography variant="h5" component="h2" gutterBottom>
+              5. Almacenamiento y Procesamiento de Datos
+            </Typography>
+            <Typography variant="body1" paragraph>
+              Explicamos cómo utilizamos, procesamos y compartimos su información:
+            </Typography>
+            
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Uso Interno
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <li>Mejorar la experiencia de usuario en nuestro sitio</li>
+              <li>Analizar patrones de uso y preferencias</li>
+              <li>Mantener y optimizar el funcionamiento del sitio</li>
+              <li>Proporcionar recomendaciones personalizadas</li>
+            </Typography>
+
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Compartir con Terceros
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Compartimos información con terceros únicamente en las siguientes circunstancias:
+            </Typography>
+            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
+              <li>Con servicios de análisis (Google Analytics, PostHog, Microsoft Clarity, Hotjar) para mejorar nuestro sitio</li>
+              <li>Con YouTube/Google para el funcionamiento de contenido embebido</li>
+              <li>Datos agregados y anónimos para análisis estadístico</li>
+              <li>Cuando sea requerido por ley</li>
+            </Typography>
+
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Almacenamiento de Datos
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Sus datos se almacenan de forma segura y se conservan únicamente mientras sea necesario para los fines descritos o según requiera la ley.
+            </Typography>
+            
+            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
+              Eliminación de Datos
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Para solicitar la eliminación de sus datos almacenados, contáctenos usando la información proporcionada en la sección de contacto. Procesaremos su solicitud de acuerdo con la legislación aplicable.
+            </Typography>
+          </section>
+
+          <section>
+            <Typography variant="h5" component="h2" gutterBottom>
+              6. Tus Derechos
             </Typography>
             <Typography variant="body1" paragraph>
               Tienes derecho a:
@@ -133,7 +243,7 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <Typography variant="h5" component="h2" gutterBottom>
-              5. Seguridad de los Datos
+              7. Seguridad de los Datos
             </Typography>
             <Typography variant="body1" paragraph>
               Implementamos medidas de seguridad apropiadas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción.
@@ -142,22 +252,30 @@ export default function PrivacyPolicyPage() {
 
           <section>
             <Typography variant="h5" component="h2" gutterBottom>
-              6. Contacto
+              8. Información de Contacto
             </Typography>
             <Typography variant="body1" paragraph>
-              Si tienes preguntas sobre esta política de privacidad o sobre el tratamiento de tus datos, puedes contactarnos en:
+              Si tienes preguntas sobre esta política de privacidad, sobre el tratamiento de tus datos, o deseas ejercer tus derechos de privacidad, puedes contactarnos en:
             </Typography>
-            <Typography variant="body2">
-              Email: laguiadelstreaming@gmail.com
+            <Typography variant="body2" paragraph>
+              <strong>Email:</strong> laguiadelstreaming@gmail.com<br />
+              <strong>Sitio web:</strong> https://laguiadelstreaming.com<br />
+              <strong>Responsable:</strong> La Guía del Streaming
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Responderemos a tu consulta en un plazo razonable de acuerdo con la legislación aplicable.
             </Typography>
           </section>
 
           <section>
             <Typography variant="h5" component="h2" gutterBottom>
-              7. Cambios en esta Política
+              9. Cambios en esta Política
             </Typography>
             <Typography variant="body1" paragraph>
-              Podemos actualizar esta política de privacidad ocasionalmente. Te notificaremos sobre cambios significativos actualizando la fecha en la parte superior de esta página.
+              Podemos actualizar esta política de privacidad ocasionalmente. Te notificaremos sobre cambios significativos actualizando la fecha en la parte superior de esta página y, cuando sea apropiado, a través de otros medios de comunicación.
+            </Typography>
+            <Typography variant="body2" paragraph>
+              Te recomendamos revisar esta política periódicamente para mantenerte informado sobre cómo protegemos tu información.
             </Typography>
           </section>
         </Box>

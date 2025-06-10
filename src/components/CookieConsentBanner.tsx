@@ -64,9 +64,31 @@ export function CookieConsentBanner() {
                    color: mode === 'light' ? '#000000' : '#ffffff',
                  }}
               >
-                Usamos cookies para mejorar tu experiencia en La Guía.{' '}
+                Usamos cookies y YouTube API Services para mejorar tu experiencia.{' '}
                 <br />
-                Descubrí{' '}
+                Al usar este sitio, aceptas los{' '}
+                <Button
+                  variant="text"
+                  size="small"
+                  sx={{ 
+                    p: 0, 
+                    minWidth: 'auto', 
+                    textDecoration: 'underline',
+                    fontSize: 'inherit',
+                    lineHeight: 'inherit',
+                    verticalAlign: 'baseline',
+                    color: mode === 'light' ? '#1976d2' : '#64b5f6',
+                    textTransform: 'none',
+                    '&:hover': {
+                      backgroundColor: 'transparent',
+                      textDecoration: 'underline',
+                    }
+                  }}
+                  onClick={() => window.open('https://www.youtube.com/t/terms', '_blank')}
+                >
+                 términos de YouTube
+                </Button>
+                . Descubrí{' '}
                 <Button
                   variant="text"
                   size="small"

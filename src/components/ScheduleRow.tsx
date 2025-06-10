@@ -196,7 +196,7 @@ export const ScheduleRow = ({
           {programs.map((p) => {
 
             // Get live status from context
-            const currentLiveStatus = liveStatus[p.id];
+            const currentLiveStatus = liveStatus[p.id.toString()];
             const isLive = currentLiveStatus?.is_live || p.is_live;
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
