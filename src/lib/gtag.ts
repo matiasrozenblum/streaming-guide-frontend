@@ -13,6 +13,21 @@ declare global {
 }
 
 export const pageview = (url: string) => {
+  // Check if analytics consent is given
+  const consent = localStorage.getItem('cookie-consent');
+  if (consent) {
+    try {
+      const consentData = JSON.parse(consent);
+      if (!consentData.preferences?.analytics) {
+        return; // Don't track if analytics consent not given
+      }
+    } catch {
+      return; // Don't track if consent data is invalid
+    }
+  } else {
+    return; // Don't track if no consent data
+  }
+
   if (typeof window.gtag === 'function') {
     window.gtag('config', GA_TRACKING_ID, {
       page_path: url,
@@ -45,6 +60,22 @@ type NextData = {
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
 export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
+  // Check if analytics consent is given
+  const consent = localStorage.getItem('cookie-consent');
+  let hasAnalyticsConsent = false;
+  if (consent) {
+    try {
+      const consentData = JSON.parse(consent);
+      hasAnalyticsConsent = consentData.preferences?.analytics || false;
+    } catch {
+      // Don't track if consent data is invalid
+      return;
+    }
+  } else {
+    // Don't track if no consent data
+    return;
+  }
+
   // Use userData if provided, otherwise try to get from window.__NEXT_DATA__
   let user = userData;
   if (!user) {
@@ -64,21 +95,21 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     }
   }
 
-  if (typeof window.gtag === 'function') {
-    window.gtag('event', action, {
-      ...params,
-      user_id: user?.id,
-      user_gender: user?.gender,
-      user_age: age,
-      user_role: user?.role,
-    });
-  }
-
-  posthog.capture(action, {
+  const eventData = {
     ...params,
     user_id: user?.id,
     user_gender: user?.gender,
     user_age: age,
     user_role: user?.role,
-  });
+  };
+
+  // Only send to Google Analytics if analytics consent is given
+  if (hasAnalyticsConsent && typeof window.gtag === 'function') {
+    window.gtag('event', action, eventData);
+  }
+
+  // Only send to PostHog if analytics consent is given and PostHog is loaded
+  if (hasAnalyticsConsent && posthog.__loaded) {
+    posthog.capture(action, eventData);
+  }
 };

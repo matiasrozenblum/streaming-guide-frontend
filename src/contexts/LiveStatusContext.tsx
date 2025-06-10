@@ -1,6 +1,6 @@
 'use client';
 
-import React, { createContext, useContext, useState, useEffect } from 'react';
+import React, { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import dayjs from 'dayjs';
 
 interface LiveStatus {
@@ -27,9 +27,9 @@ export const LiveStatusProvider: React.FC<{children:React.ReactNode}> = ({childr
   const [currentHour, setCurrentHour] = useState(dayjs().hour());
 
   // Expuesto para inyectar batch desde HomeClient
-  const setLiveStatuses = (map: LiveStatus) => {
+  const setLiveStatuses = useCallback((map: LiveStatus) => {
     setLiveStatus(map);
-  };
+  }, []);
 
   // Solo reactuar a cambio de hora si quieres refrescar
   useEffect(() => {
