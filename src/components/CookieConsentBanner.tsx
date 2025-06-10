@@ -18,9 +18,10 @@ export function CookieConsentBanner() {
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
-  const { showBanner, acceptAll, openPreferences } = useCookieConsent();
+  const { showBanner, showPreferences, acceptAll, openPreferences } = useCookieConsent();
 
-  if (!showBanner) return null;
+  // Hide banner when preferences modal is open or when banner should not be shown
+  if (!showBanner || showPreferences) return null;
 
   return (
     <Slide direction="up" in={showBanner} mountOnEnter unmountOnExit>
