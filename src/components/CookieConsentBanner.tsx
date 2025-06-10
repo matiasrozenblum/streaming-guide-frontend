@@ -26,23 +26,26 @@ export function CookieConsentBanner() {
     <Box
       sx={{
         position: 'fixed',
-        bottom: 0,
-        left: 0,
-        right: 0,
+        bottom: 20,
+        left: '50%',
+        transform: showBanner ? 'translate(-50%, 0)' : 'translate(-50%, 120%)',
         zIndex: 9999,
-        p: { xs: 1, sm: 2 },
-        transform: showBanner ? 'translateY(0)' : 'translateY(100%)',
         transition: 'transform 0.3s ease-in-out',
+        maxWidth: { xs: 'calc(100vw - 32px)', sm: '600px', md: '500px' },
+        width: '100%',
       }}
     >
       <Paper
-        elevation={8}
+        elevation={12}
         sx={{
-          p: { xs: 1.5, sm: 2 },
-          borderRadius: 1,
+          p: { xs: 2, sm: 2.5 },
+          borderRadius: 3,
           backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
           border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
-          maxWidth: '100%',
+          backdropFilter: 'blur(10px)',
+          boxShadow: mode === 'light' 
+            ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
+            : '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
         }}
       >
           <Stack 

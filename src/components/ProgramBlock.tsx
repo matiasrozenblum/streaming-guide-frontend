@@ -381,33 +381,41 @@ export const ProgramBlock: React.FC<Props> = ({
           </Text>
         </Box>
       ) : null}
-      {streamUrl && (
-        <BaseButton
-          onClick={handleClick}
-          onTouchStart={handleClick}
-          variant="contained"
-          size="small"
-          startIcon={<OpenInNew />}
-          className="youtube-button"
-          sx={{
-            mt: tokens.spacing.md,
-            backgroundColor: '#FF0000',
-            '&:hover': { backgroundColor: '#cc0000' },
-            fontWeight: tokens.typography.fontWeight.bold,
-            textTransform: 'none',
-            fontSize: tokens.typography.fontSize.sm,
-            boxShadow: 'none',
-            touchAction: 'manipulation',
-          }}
-        >
-          {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-        </BaseButton>
-      )}
-      <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, mt: tokens.spacing.md }}>
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
+        {streamUrl && (
+          <BaseButton
+            onClick={(e) => {
+              e.stopPropagation();
+              handleClick(e);
+            }}
+            onTouchStart={(e) => {
+              e.stopPropagation();
+              handleClick(e);
+            }}
+            variant="contained"
+            size="small"
+            startIcon={<OpenInNew />}
+            className="youtube-button"
+            sx={{
+              backgroundColor: '#FF0000',
+              '&:hover': { backgroundColor: '#cc0000' },
+              fontWeight: tokens.typography.fontWeight.bold,
+              textTransform: 'none',
+              fontSize: tokens.typography.fontSize.sm,
+              boxShadow: 'none',
+              touchAction: 'manipulation',
+            }}
+          >
+            {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+          </BaseButton>
+        )}
         <IconButton
           size="small"
           aria-label="Notificarme"
-          onClick={handleBellClick}
+          onClick={(e) => {
+            e.stopPropagation();
+            handleBellClick(e);
+          }}
           ref={bellRef}
           sx={{
             color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
