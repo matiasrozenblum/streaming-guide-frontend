@@ -235,8 +235,8 @@ export function CookiePreferencesModal() {
 
         <Box sx={{ mt: 3, p: 2, backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)', borderRadius: 1 }}>
           <Typography variant="body2" sx={{ fontSize: '0.85rem', color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)' }}>
-            <strong style={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>Nota:</strong> Tus preferencias se guardarán durante 30 días. Puedes cambiar estas 
-            configuraciones en cualquier momento desde el footer del sitio.
+            <strong style={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>Nota:</strong> Tus preferencias se guardarán indefinidamente. Puedes cambiar estas 
+            configuraciones en cualquier momento desde tu perfil o el footer del sitio.
           </Typography>
         </Box>
       </DialogContent>
