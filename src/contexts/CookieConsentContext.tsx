@@ -23,7 +23,6 @@ interface CookieConsentContextType {
 const CookieConsentContext = createContext<CookieConsentContextType | undefined>(undefined);
 
 const CONSENT_KEY = 'cookie-consent';
-const CONSENT_TIMESTAMP_KEY = 'cookie-consent-timestamp';
 const CONSENT_VERSION = '1.0'; // Increment this when privacy policy changes
 
 export function CookieConsentProvider({ children }: { children: ReactNode }) {
@@ -33,21 +32,17 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
 
   useEffect(() => {
     const savedConsent = localStorage.getItem(CONSENT_KEY);
-    const savedTimestamp = localStorage.getItem(CONSENT_TIMESTAMP_KEY);
     
-    if (savedConsent && savedTimestamp) {
+    if (savedConsent) {
       try {
         const consentData = JSON.parse(savedConsent);
-        const timestamp = parseInt(savedTimestamp);
-        const now = Date.now();
-        const thirtyDaysInMs = 30 * 24 * 60 * 60 * 1000;
         
-        // Check if consent is still valid (less than 30 days old)
-        if (now - timestamp < thirtyDaysInMs && consentData.version === CONSENT_VERSION) {
+        // Check if consent version matches (only re-ask if privacy policy changes)
+        if (consentData.version === CONSENT_VERSION) {
           setConsent(consentData.preferences);
           setShowBanner(false);
         } else {
-          // Consent expired or version changed, show banner again
+          // Version changed (privacy policy updated), show banner again
           setShowBanner(true);
         }
       } catch (error) {
@@ -65,7 +60,6 @@ export function CookieConsentProvider({ children }: { children: ReactNode }) {
       version: CONSENT_VERSION,
     };
     localStorage.setItem(CONSENT_KEY, JSON.stringify(consentData));
-    localStorage.setItem(CONSENT_TIMESTAMP_KEY, Date.now().toString());
   };
 
   const acceptAll = () => {

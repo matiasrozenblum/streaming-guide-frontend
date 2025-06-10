@@ -27,9 +27,11 @@ import {
   Settings as SettingsIcon,
 } from '@mui/icons-material';
 import { useCookieConsent, CookieConsentState } from '@/contexts/CookieConsentContext';
+import { useThemeContext } from '@/contexts/ThemeContext';
 
 export function CookiePreferencesModal() {
   const theme = useTheme();
+  const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { showPreferences, closePreferences, savePreferences, consent } = useCookieConsent();
   
@@ -127,22 +129,30 @@ export function CookiePreferencesModal() {
         sx: {
           borderRadius: isMobile ? 0 : 2,
           maxHeight: isMobile ? '100vh' : '90vh',
+          backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+          color: mode === 'light' ? '#000000' : '#ffffff',
         }
       }}
     >
       <DialogTitle sx={{ pb: 1 }}>
         <Box display="flex" justifyContent="space-between" alignItems="center">
-          <Typography variant="h6" component="h2">
+          <Typography variant="h6" component="h2" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
             🍪 Configuración de Cookies
           </Typography>
-          <IconButton onClick={closePreferences} size="small">
+          <IconButton onClick={closePreferences} size="small" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
             <CloseIcon />
           </IconButton>
         </Box>
       </DialogTitle>
 
-      <DialogContent dividers sx={{ py: 0 }}>
-        <Typography variant="body2" color="text.secondary" sx={{ mb: 3, lineHeight: 1.6 }}>
+      <DialogContent 
+        dividers 
+        sx={{ 
+          py: 0,
+          borderColor: mode === 'light' ? '#e0e0e0' : '#374151',
+        }}
+      >
+        <Typography variant="body2" sx={{ mb: 3, lineHeight: 1.6, color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)' }}>
           Gestiona tus preferencias de cookies. Puedes habilitar o deshabilitar diferentes tipos de cookies 
           según tus necesidades. Ten en cuenta que deshabilitar algunas cookies puede afectar tu experiencia 
           en el sitio.
@@ -154,28 +164,31 @@ export function CookiePreferencesModal() {
               key={category.key}
               defaultExpanded={index === 0}
               sx={{ 
-                border: `1px solid ${theme.palette.divider}`,
+                border: `1px solid ${mode === 'light' ? '#e0e0e0' : '#374151'}`,
                 '&:before': { display: 'none' },
                 borderRadius: 1,
-                overflow: 'hidden'
+                overflow: 'hidden',
+                backgroundColor: mode === 'light' ? '#ffffff' : '#374151',
+                color: mode === 'light' ? '#000000' : '#ffffff',
               }}
             >
               <AccordionSummary
-                expandIcon={<ExpandMoreIcon />}
+                expandIcon={<ExpandMoreIcon sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }} />}
                 sx={{ 
-                  backgroundColor: theme.palette.action.hover,
+                  backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
+                  color: mode === 'light' ? '#000000' : '#ffffff',
                   '&:hover': {
-                    backgroundColor: theme.palette.action.selected,
+                    backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.12)',
                   }
                 }}
               >
                 <Box display="flex" alignItems="center" justifyContent="space-between" width="100%">
                   <Box display="flex" alignItems="center" gap={2}>
                     {React.cloneElement(category.icon, { 
-                      sx: { color: theme.palette.primary.main } 
+                      sx: { color: mode === 'light' ? '#1976d2' : '#64b5f6' } 
                     })}
                     <Box>
-                      <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                      <Typography variant="subtitle2" sx={{ fontWeight: 600, color: mode === 'light' ? '#000000' : '#ffffff' }}>
                         {category.title}
                         {category.required && (
                           <Typography 
@@ -183,7 +196,7 @@ export function CookiePreferencesModal() {
                             variant="caption" 
                             sx={{ 
                               ml: 1, 
-                              color: theme.palette.error.main,
+                              color: mode === 'light' ? '#d32f2f' : '#f44336',
                               fontSize: '0.7rem'
                             }}
                           >
@@ -191,7 +204,7 @@ export function CookiePreferencesModal() {
                           </Typography>
                         )}
                       </Typography>
-                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                      <Typography variant="body2" sx={{ fontSize: '0.85rem', color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)' }}>
                         {category.description}
                       </Typography>
                     </Box>
@@ -211,8 +224,8 @@ export function CookiePreferencesModal() {
                   />
                 </Box>
               </AccordionSummary>
-              <AccordionDetails sx={{ pt: 1 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+              <AccordionDetails sx={{ pt: 1, backgroundColor: mode === 'light' ? '#ffffff' : '#374151' }}>
+                <Typography variant="body2" sx={{ fontSize: '0.85rem', color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)' }}>
                   {category.details}
                 </Typography>
               </AccordionDetails>
@@ -220,10 +233,10 @@ export function CookiePreferencesModal() {
           ))}
         </Stack>
 
-        <Box sx={{ mt: 3, p: 2, backgroundColor: theme.palette.action.hover, borderRadius: 1 }}>
-          <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-            <strong>Nota:</strong> Tus preferencias se guardarán durante 30 días. Puedes cambiar estas 
-            configuraciones en cualquier momento desde el footer del sitio.
+        <Box sx={{ mt: 3, p: 2, backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)', borderRadius: 1 }}>
+          <Typography variant="body2" sx={{ fontSize: '0.85rem', color: mode === 'light' ? 'rgba(0, 0, 0, 0.6)' : 'rgba(255, 255, 255, 0.7)' }}>
+            <strong style={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>Nota:</strong> Tus preferencias se guardarán indefinidamente. Puedes cambiar estas 
+            configuraciones en cualquier momento desde tu perfil o el footer del sitio.
           </Typography>
         </Box>
       </DialogContent>
