@@ -68,14 +68,14 @@ export default function RootLayout({
                     </div>
                     <YouTubeGlobalPlayer />
                   </YouTubePlayerProvider>
+                  
+                  {/* Cookie Consent Components */}
+                  <CookieConsentBanner />
+                  <CookiePreferencesModal />
                 </CustomThemeProvider>
               </TooltipProvider>
             </PushProvider>
           </SessionProviderWrapper>
-          
-          {/* Cookie Consent Components */}
-          <CookieConsentBanner />
-          <CookiePreferencesModal />
           
           {/* Conditional Tracking Scripts */}
           <ConditionalTrackingLoader />
