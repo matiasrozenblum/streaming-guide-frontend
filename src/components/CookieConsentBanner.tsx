@@ -60,11 +60,12 @@ export function CookieConsentBanner() {
                 variant="body2" 
                                  sx={{ 
                    fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                   lineHeight: 1.4,
+                   lineHeight: 0.5,
                    color: mode === 'light' ? '#000000' : '#ffffff',
                  }}
               >
-                Usamos cookies y YouTube API Services para mejorar tu experiencia.{' '}
+                Usamos cookies para mejorar tu experiencia.{' '}
+                <br />
                 Descubrí{' '}
                 <Button
                   variant="text"
@@ -100,22 +101,24 @@ export function CookieConsentBanner() {
                 width: isMobile ? '100%' : 'auto'
               }}
             >
-              <Button
-                variant="text"
-                size="small"
-                onClick={openPreferences}
-                sx={{ 
-                  fontSize: '0.8rem',
-                  p: { xs: '4px 8px', sm: '4px 8px' },
-                  minWidth: 'auto',
-                  color: mode === 'light' ? '#1976d2' : '#64b5f6',
-                  '&:hover': {
-                    backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
-                  }
-                }}
-              >
-                Configurar cookies
-              </Button>
+              {!isMobile && (
+                <Button
+                  variant="text"
+                  size="small"
+                  onClick={openPreferences}
+                  sx={{ 
+                    fontSize: '0.8rem',
+                    p: { xs: '4px 8px', sm: '4px 8px' },
+                    minWidth: 'auto',
+                    color: mode === 'light' ? '#1976d2' : '#64b5f6',
+                    '&:hover': {
+                      backgroundColor: mode === 'light' ? 'rgba(0, 0, 0, 0.04)' : 'rgba(255, 255, 255, 0.08)',
+                    }
+                  }}
+                >
+                  Configurar cookies
+                </Button>
+              )}
               
               <Button
                 variant="contained"
@@ -125,11 +128,6 @@ export function CookieConsentBanner() {
                   fontSize: '0.8rem',
                   p: { xs: '4px 12px', sm: '4px 12px' },
                   minWidth: 'auto',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#64b5f6',
-                  color: '#ffffff',
-                  '&:hover': {
-                    backgroundColor: mode === 'light' ? '#1565c0' : '#42a5f5',
-                  }
                 }}
               >
                 Aceptar cookies
