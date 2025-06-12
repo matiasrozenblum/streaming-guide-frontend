@@ -126,7 +126,7 @@ export function WeeklyOverridesTable() {
         fetch('/api/weekly-overrides', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
-        fetch('/api/channels/with-schedules', {
+        fetch('/api/schedules', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
         fetch('/api/weekly-schedule-manager/current-week-stats', {
@@ -150,21 +150,9 @@ export function WeeklyOverridesTable() {
       }
 
       if (schedulesRes.ok) {
-        const channelsData = await schedulesRes.json();
-        console.log('Channels data:', channelsData);
-        
-        // Extract all schedules from all channels
-        const allSchedules: ScheduleType[] = [];
-        if (Array.isArray(channelsData)) {
-          channelsData.forEach((channelWithSchedules: { schedules?: ScheduleType[] }) => {
-            if (channelWithSchedules.schedules && Array.isArray(channelWithSchedules.schedules)) {
-              allSchedules.push(...channelWithSchedules.schedules);
-            }
-          });
-        }
-        
-        console.log('Extracted schedules length:', allSchedules.length);
-        setSchedules(allSchedules);
+        const schedulesData = await schedulesRes.json();
+        console.log('Schedules data length:', schedulesData?.length);
+        setSchedules(schedulesData || []);
       } else {
         console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
       }
