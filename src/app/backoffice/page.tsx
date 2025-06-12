@@ -41,7 +41,8 @@ export default function DashboardPage() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loadingYouTube, setLoadingYouTube] = useState(false);
+  const [loadingCache, setLoadingCache] = useState(false);
 
   useEffect(() => {
     // 2) Esperamos hasta que Next-Auth confirme que estamos "authenticated"
@@ -73,7 +74,7 @@ export default function DashboardPage() {
 
   const handleFetchYoutubeLiveIds = async () => {
     try {
-      setLoading(true);
+      setLoadingYouTube(true);
       setError(null);
       const response = await fetch('/api/youtube/fetch-live-ids', {
         method: 'POST',
@@ -89,13 +90,13 @@ export default function DashboardPage() {
       console.error('Error fetching YouTube live IDs:', err);
       setError(err instanceof Error ? err.message : 'Failed to fetch YouTube live IDs');
     } finally {
-      setLoading(false);
+      setLoadingYouTube(false);
     }
   };
 
   const handleClearCache = async () => {
     try {
-      setLoading(true);
+      setLoadingCache(true);
       setError(null);
       const response = await fetch('/api/cache/clear-schedules', {
         method: 'POST',
@@ -111,7 +112,7 @@ export default function DashboardPage() {
       console.error('Error clearing cache:', err);
       setError(err instanceof Error ? err.message : 'Failed to clear schedule cache');
     } finally {
-      setLoading(false);
+      setLoadingCache(false);
     }
   };
 
@@ -213,10 +214,10 @@ export default function DashboardPage() {
                 variant="contained"
                 startIcon={<Refresh />}
                 onClick={handleFetchYoutubeLiveIds}
-                disabled={loading}
+                disabled={loadingYouTube}
                 color="error"
               >
-                {loading ? 'Actualizando...' : 'Actualizar YouTube Live IDs'}
+                {loadingYouTube ? 'Actualizando...' : 'Actualizar YouTube Live IDs'}
               </Button>
             </CardActions>
           </Card>
@@ -239,10 +240,10 @@ export default function DashboardPage() {
                 variant="contained"
                 startIcon={<ClearAll />}
                 onClick={handleClearCache}
-                disabled={loading}
+                disabled={loadingCache}
                 color="warning"
               >
-                {loading ? 'Limpiando...' : 'Limpiar Cache de Horarios'}
+                {loadingCache ? 'Limpiando...' : 'Limpiar Cache de Horarios'}
               </Button>
             </CardActions>
           </Card>
