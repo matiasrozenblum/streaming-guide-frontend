@@ -102,6 +102,7 @@ export function WeeklyOverridesTable() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleType | null>(null);
+  const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     targetWeek: 'current' as 'current' | 'next',
     overrideType: 'cancel' as 'cancel' | 'time_change' | 'reschedule',
@@ -319,8 +320,11 @@ export function WeeklyOverridesTable() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-        <CircularProgress />
+      <Box display="flex" flexDirection="column" justifyContent="center" alignItems="center" minHeight="50vh" gap={2}>
+        <CircularProgress size={48} />
+        <Typography variant="body1" color="text.secondary">
+          Cargando datos de cambios semanales...
+        </Typography>
       </Box>
     );
   }
@@ -368,9 +372,18 @@ export function WeeklyOverridesTable() {
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
-          <Tab label={`Semana Actual (${currentWeekOverrides.length} cambios)`} />
-          <Tab label={`Próxima Semana (${nextWeekOverrides.length} cambios)`} />
-          <Tab label="Crear Cambios" />
+          <Tab 
+            label={`Semana Actual (${currentWeekOverrides.length} cambios)`} 
+            sx={{ fontWeight: 600, color: 'text.primary' }}
+          />
+          <Tab 
+            label={`Próxima Semana (${nextWeekOverrides.length} cambios)`} 
+            sx={{ fontWeight: 600, color: 'text.primary' }}
+          />
+          <Tab 
+            label="Crear Cambios" 
+            sx={{ fontWeight: 600, color: 'text.primary' }}
+          />
         </Tabs>
       </Box>
 
@@ -507,82 +520,172 @@ export function WeeklyOverridesTable() {
       {/* Create Changes Tab */}
       {currentTab === 2 && (
         <Paper sx={{ p: 3 }}>
-          <Typography variant="h6" gutterBottom>
+          <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
             Selecciona un programa para crear un cambio semanal
           </Typography>
-          <TableContainer>
-            <Table>
-              <TableHead>
-                <TableRow>
-                  <TableCell>Programa</TableCell>
-                  <TableCell>Canal</TableCell>
-                  <TableCell>Horario</TableCell>
-                  <TableCell>Acciones</TableCell>
-                </TableRow>
-              </TableHead>
-              <TableBody>
-                {schedules.map((schedule) => (
-                  <TableRow key={schedule.id}>
-                    <TableCell>{schedule.program.name}</TableCell>
-                    <TableCell>{schedule.program.channel?.name || 'Sin canal'}</TableCell>
-                    <TableCell>
-                      {getDayLabel(schedule.day_of_week)} {formatTime(schedule.start_time)}-{formatTime(schedule.end_time)}
-                    </TableCell>
-                    <TableCell>
-                      <Button
-                        variant="contained"
-                        startIcon={<Add />}
-                        onClick={() => handleOpenDialog(schedule)}
-                      >
-                        Crear Cambio
-                      </Button>
-                    </TableCell>
+          
+          {/* Search Box */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              label="Buscar programa o canal..."
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Escribe para filtrar programas y canales"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'background.paper',
+                },
+              }}
+            />
+          </Box>
+
+          {schedules.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body1" color="text.secondary">
+                No hay horarios disponibles para crear cambios
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Programa</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Canal</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Horario</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
                   </TableRow>
-                ))}
-              </TableBody>
-            </Table>
-          </TableContainer>
+                </TableHead>
+                <TableBody>
+                  {schedules
+                    .filter((schedule) => {
+                      const searchLower = searchTerm.toLowerCase();
+                      return (
+                        schedule.program.name.toLowerCase().includes(searchLower) ||
+                        (schedule.program.channel?.name || '').toLowerCase().includes(searchLower)
+                      );
+                    })
+                    .map((schedule) => (
+                      <TableRow key={schedule.id} hover>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold">
+                            {schedule.program.name}
+                          </Typography>
+                          {schedule.program.description && (
+                            <Typography variant="caption" color="text.secondary">
+                              {schedule.program.description}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            {schedule.program.channel?.name || 'Sin canal'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {getDayLabel(schedule.day_of_week)} {formatTime(schedule.start_time)}-{formatTime(schedule.end_time)}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Button
+                            variant="contained"
+                            startIcon={<Add />}
+                            onClick={() => handleOpenDialog(schedule)}
+                            size="small"
+                          >
+                            Crear Cambio
+                          </Button>
+                        </TableCell>
+                      </TableRow>
+                    ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* Show filtered results count */}
+          {searchTerm && (
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Mostrando {schedules.filter((schedule) => {
+                  const searchLower = searchTerm.toLowerCase();
+                  return (
+                    schedule.program.name.toLowerCase().includes(searchLower) ||
+                    (schedule.program.channel?.name || '').toLowerCase().includes(searchLower)
+                  );
+                }).length} de {schedules.length} programas
+              </Typography>
+            </Box>
+          )}
         </Paper>
       )}
 
       {/* Create Override Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>
-          Crear Cambio Semanal
+          <Typography variant="h6" sx={{ fontWeight: 600 }}>
+            Crear Cambio Semanal
+          </Typography>
           {selectedSchedule && (
-            <Typography variant="body2" color="text.secondary">
-              {selectedSchedule.program.name} - {getDayLabel(selectedSchedule.day_of_week)} {formatTime(selectedSchedule.start_time)}-{formatTime(selectedSchedule.end_time)}
-            </Typography>
+            <Box sx={{ mt: 1, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
+              <Typography variant="body1" fontWeight="bold">
+                {selectedSchedule.program.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Canal: {selectedSchedule.program.channel?.name || 'Sin canal'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Horario actual: {getDayLabel(selectedSchedule.day_of_week)} {formatTime(selectedSchedule.start_time)}-{formatTime(selectedSchedule.end_time)}
+              </Typography>
+            </Box>
           )}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2 }}>
-            <FormControl fullWidth>
-              <InputLabel>Semana objetivo</InputLabel>
-              <Select
-                value={formData.targetWeek}
-                onChange={(e) => setFormData({ ...formData, targetWeek: e.target.value as 'current' | 'next' })}
-                label="Semana objetivo"
-              >
-                <MenuItem value="current">Semana actual</MenuItem>
-                <MenuItem value="next">Próxima semana</MenuItem>
-              </Select>
-            </FormControl>
+            <Box sx={{ display: 'flex', gap: 2 }}>
+              <FormControl fullWidth>
+                <InputLabel>Semana objetivo</InputLabel>
+                <Select
+                  value={formData.targetWeek}
+                  onChange={(e) => setFormData({ ...formData, targetWeek: e.target.value as 'current' | 'next' })}
+                  label="Semana objetivo"
+                >
+                  <MenuItem value="current">Semana actual</MenuItem>
+                  <MenuItem value="next">Próxima semana</MenuItem>
+                </Select>
+              </FormControl>
 
-            <FormControl fullWidth>
-              <InputLabel>Tipo de cambio</InputLabel>
-              <Select
-                value={formData.overrideType}
-                onChange={(e) => setFormData({ ...formData, overrideType: e.target.value as 'cancel' | 'time_change' | 'reschedule' })}
-                label="Tipo de cambio"
-              >
-                {OVERRIDE_TYPES.map((type) => (
-                  <MenuItem key={type.value} value={type.value}>
-                    {type.label}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+              <FormControl fullWidth>
+                <InputLabel>Tipo de cambio</InputLabel>
+                <Select
+                  value={formData.overrideType}
+                  onChange={(e) => setFormData({ ...formData, overrideType: e.target.value as 'cancel' | 'time_change' | 'reschedule' })}
+                  label="Tipo de cambio"
+                >
+                  {OVERRIDE_TYPES.map((type) => (
+                    <MenuItem key={type.value} value={type.value}>
+                      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                        <type.icon fontSize="small" />
+                        {type.label}
+                      </Box>
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Help text for override types */}
+            <Box sx={{ p: 2, backgroundColor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
+              <Typography variant="body2">
+                {formData.overrideType === 'cancel' && '🚫 Cancelar: El programa no se emitirá en el horario programado'}
+                {formData.overrideType === 'time_change' && '⏰ Cambio de horario: El programa se emitirá en un horario diferente el mismo día'}
+                {formData.overrideType === 'reschedule' && '📅 Reprogramar: El programa se moverá a otro día y/u horario'}
+              </Typography>
+            </Box>
 
             {formData.overrideType !== 'cancel' && (
               <>
@@ -634,9 +737,20 @@ export function WeeklyOverridesTable() {
             />
           </Box>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained">
+        <DialogActions sx={{ p: 3, gap: 1 }}>
+          <Button onClick={handleCloseDialog} variant="outlined">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={handleSubmit} 
+            variant="contained" 
+            startIcon={<Add />}
+            disabled={
+              formData.overrideType !== 'cancel' && 
+              (!formData.newStartTime || !formData.newEndTime || 
+               (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
+            }
+          >
             Crear Cambio
           </Button>
         </DialogActions>

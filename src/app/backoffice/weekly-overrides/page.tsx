@@ -12,7 +12,7 @@ export default function WeeklyOverridesPage() {
           <Typography variant="h4" component="h1" gutterBottom>
             Gestión de Cambios Semanales
           </Typography>
-          <Typography variant="body1" color="text.secondary" sx={{ mb: 3 }}>
+          <Typography variant="body1" sx={{ mb: 3, color: 'text.primary', fontWeight: 500 }}>
             Modifica horarios de manera temporal para la semana actual o próxima. 
             Los cambios se resetean automáticamente cada domingo.
           </Typography>
