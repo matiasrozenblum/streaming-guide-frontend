@@ -120,6 +120,8 @@ export function WeeklyOverridesTable() {
 
     try {
       setLoading(true);
+      console.log('Fetching weekly overrides data...');
+      
       const [overridesRes, schedulesRes, statsRes] = await Promise.all([
         fetch('/api/weekly-overrides', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
@@ -132,20 +134,36 @@ export function WeeklyOverridesTable() {
         }),
       ]);
 
+      console.log('Response statuses:', {
+        overrides: overridesRes.status,
+        schedules: schedulesRes.status,
+        stats: statsRes.status
+      });
+
       if (overridesRes.ok) {
         const overridesData = await overridesRes.json();
+        console.log('Overrides data:', overridesData);
         setCurrentWeekOverrides(overridesData.currentWeek || []);
         setNextWeekOverrides(overridesData.nextWeek || []);
+      } else {
+        console.error('Failed to fetch overrides:', overridesRes.status, await overridesRes.text());
       }
 
       if (schedulesRes.ok) {
         const schedulesData = await schedulesRes.json();
+        console.log('Schedules data length:', schedulesData?.length);
         setSchedules(schedulesData || []);
+      } else {
+        console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
       }
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
+        console.log('Stats data:', statsData);
         setStats(statsData);
+      } else {
+        console.error('Failed to fetch stats (non-critical):', statsRes.status);
+        // Stats are not critical, so we don't show an error for this
       }
     } catch (err) {
       console.error('Error fetching data:', err);
