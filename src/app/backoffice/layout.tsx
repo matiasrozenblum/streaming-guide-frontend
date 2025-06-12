@@ -71,7 +71,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           <ListItem key={item.text} disablePadding>
             <ListItemButton 
               onClick={() => router.push(item.path)}
-              selected={pathname.startsWith(item.path)}
+              selected={item.path === '/backoffice' ? pathname === item.path : pathname.startsWith(item.path)}
               sx={{
                 '&.Mui-selected': {
                   backgroundColor: mode === 'light' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(59, 130, 246, 0.2)',

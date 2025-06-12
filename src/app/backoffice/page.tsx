@@ -84,7 +84,7 @@ export default function DashboardPage() {
   return (
     <>
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" color="text.primary" gutterBottom>
           Dashboard
         </Typography>
 
@@ -126,13 +126,13 @@ export default function DashboardPage() {
                   : undefined,
               }}
             >
-              <Typography variant="h6">{label}</Typography>
-              <Typography variant="h3">{value}</Typography>
+              <Typography variant="h6" color="text.primary">{label}</Typography>
+              <Typography variant="h3" color="text.primary">{value}</Typography>
             </Paper>
           ))}
         </Box>
 
-        <Typography variant="h5" gutterBottom>
+        <Typography variant="h5" color="text.primary" gutterBottom>
           Panelistas
         </Typography>
         <ProtectedRoute>
