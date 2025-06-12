@@ -15,7 +15,8 @@ import {
   TrackChanges,
   ToggleOn,
   Movie,
-  Mic
+  Mic,
+  CalendarMonth
 } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
 
@@ -47,6 +48,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     { text: 'Programas',  icon: <Movie />,   path: '/backoffice/programs' },
     { text: 'Panelistas', icon: <Mic />,     path: '/backoffice/panelists' },
     { text: 'Horarios',   icon: <Schedule />,   path: '/backoffice/schedules' },
+    { text: 'Cambios Semanales', icon: <CalendarMonth />, path: '/backoffice/weekly-overrides' },
     { text: 'Configs',    icon: <ToggleOn />, path: '/backoffice/configs' },
     { text: 'Cambios',    icon: <TrackChanges />, path: '/backoffice/changes' },
     { text: 'Usuarios',   icon: <People />,     path: '/backoffice/users' },
