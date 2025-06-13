@@ -11,9 +11,12 @@ import {
   Alert,
   useTheme,
   CircularProgress,
+  Button,
+  Card,
+  CardContent,
+  CardActions,
 } from '@mui/material';
-import ProtectedRoute from '@/components/ProtectedRoute';
-import PanelistsTable from '@/components/backoffice/PanelistsTable';
+import { YouTube, ClearAll, Refresh } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
 
 interface DashboardStats {
@@ -37,6 +40,9 @@ export default function DashboardPage() {
     schedules: 0,
   });
   const [error, setError] = useState<string | null>(null);
+  const [success, setSuccess] = useState<string | null>(null);
+  const [loadingYouTube, setLoadingYouTube] = useState(false);
+  const [loadingCache, setLoadingCache] = useState(false);
 
   useEffect(() => {
     // 2) Esperamos hasta que Next-Auth confirme que estamos "authenticated"
@@ -66,6 +72,50 @@ export default function DashboardPage() {
     })();
   }, [status, typedSession]);
 
+  const handleFetchYoutubeLiveIds = async () => {
+    try {
+      setLoadingYouTube(true);
+      setError(null);
+      const response = await fetch('/api/youtube/fetch-live-ids', {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to fetch YouTube live IDs');
+      }
+      
+      const data = await response.json();
+      setSuccess(data.message || 'YouTube live IDs fetched successfully');
+    } catch (err) {
+      console.error('Error fetching YouTube live IDs:', err);
+      setError(err instanceof Error ? err.message : 'Failed to fetch YouTube live IDs');
+    } finally {
+      setLoadingYouTube(false);
+    }
+  };
+
+  const handleClearCache = async () => {
+    try {
+      setLoadingCache(true);
+      setError(null);
+      const response = await fetch('/api/cache/clear-schedules', {
+        method: 'POST',
+      });
+      
+      if (!response.ok) {
+        throw new Error('Failed to clear schedule cache');
+      }
+      
+      const data = await response.json();
+      setSuccess(data.message || 'Schedule cache cleared successfully');
+    } catch (err) {
+      console.error('Error clearing cache:', err);
+      setError(err instanceof Error ? err.message : 'Failed to clear schedule cache');
+    } finally {
+      setLoadingCache(false);
+    }
+  };
+
   if (status === 'loading') {
     return (
       <Box
@@ -84,7 +134,7 @@ export default function DashboardPage() {
   return (
     <>
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" color="text.primary" gutterBottom>
           Dashboard
         </Typography>
 
@@ -126,35 +176,92 @@ export default function DashboardPage() {
                   : undefined,
               }}
             >
-              <Typography variant="h6">{label}</Typography>
-              <Typography variant="h3">{value}</Typography>
+              <Typography variant="h6" color="text.primary">{label}</Typography>
+              <Typography variant="h3" color="text.primary">{value}</Typography>
             </Paper>
           ))}
         </Box>
 
-        <Typography variant="h5" gutterBottom>
-          Panelistas
+        {/* Admin Actions */}
+        <Typography variant="h5" color="text.primary" gutterBottom>
+          Acciones de Administración
         </Typography>
-        <ProtectedRoute>
-          {/* tu tabla de panelistas aquí */}
-          <PanelistsTable
-            onError={(err) => console.error(err)}
-          />
-        </ProtectedRoute>
+        <Box
+          sx={{
+            display: 'grid',
+            gap: 3,
+            gridTemplateColumns: {
+              xs: '1fr',
+              md: 'repeat(2, 1fr)',
+            },
+          }}
+        >
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <YouTube sx={{ mr: 1, color: 'error.main' }} />
+                <Typography variant="h6" color="text.primary">
+                  YouTube Live IDs
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Actualiza manualmente los IDs de videos en vivo de YouTube para todos los canales.
+                Esto fuerza una búsqueda inmediata de streams activos.
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button
+                variant="contained"
+                startIcon={<Refresh />}
+                onClick={handleFetchYoutubeLiveIds}
+                disabled={loadingYouTube}
+                color="error"
+              >
+                {loadingYouTube ? 'Actualizando...' : 'Actualizar YouTube Live IDs'}
+              </Button>
+            </CardActions>
+          </Card>
+
+          <Card>
+            <CardContent>
+              <Box sx={{ display: 'flex', alignItems: 'center', mb: 2 }}>
+                <ClearAll sx={{ mr: 1, color: 'warning.main' }} />
+                <Typography variant="h6" color="text.primary">
+                  Limpiar Cache
+                </Typography>
+              </Box>
+              <Typography variant="body2" color="text.secondary">
+                Limpia la cache de horarios para forzar una actualización inmediata de los datos.
+                Útil después de hacer cambios importantes en el sistema.
+              </Typography>
+            </CardContent>
+            <CardActions>
+              <Button
+                variant="contained"
+                startIcon={<ClearAll />}
+                onClick={handleClearCache}
+                disabled={loadingCache}
+                color="warning"
+              >
+                {loadingCache ? 'Limpiando...' : 'Limpiar Cache de Horarios'}
+              </Button>
+            </CardActions>
+          </Card>
+        </Box>
       </Box>
 
       <Snackbar
-        open={!!error}
+        open={!!error || !!success}
         autoHideDuration={6000}
-        onClose={() => setError(null)}
+        onClose={() => { setError(null); setSuccess(null); }}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
       >
         <Alert
-          onClose={() => setError(null)}
-          severity="error"
+          onClose={() => { setError(null); setSuccess(null); }}
+          severity={error ? 'error' : 'success'}
           sx={{ width: '100%' }}
         >
-          {error}
+          {error || success}
         </Alert>
       </Snackbar>
     </>

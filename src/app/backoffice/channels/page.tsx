@@ -166,7 +166,7 @@ export default function ChannelsPage() {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Canales</Typography>
+        <Typography variant="h4" color="text.primary">Canales</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
           Nuevo Canal
         </Button>
