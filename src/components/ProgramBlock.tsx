@@ -528,9 +528,9 @@ export const ProgramBlock: React.FC<Props> = ({
                 <Box
                   sx={{
                     position: 'absolute',
-                    top: 10,
-                    left: -16,
-                    display: 'inline-block',
+                    top: 8,
+                    left: '-20%',
+                    width: '140%',
                     backgroundColor: overrideType === 'cancel'
                       ? '#f44336'
                       : overrideType === 'time_change'
@@ -538,17 +538,14 @@ export const ProgramBlock: React.FC<Props> = ({
                         : '#2196f3',
                     color: 'white',
                     fontWeight: 'bold',
-                    fontSize: '0.75rem',
+                    fontSize: '1.1rem',
                     textAlign: 'center',
-                    px: 2, // horizontal padding
-                    py: 0.5, // vertical padding
-                    borderRadius: '2px',
-                    transform: 'rotate(-20deg)',
-                    zIndex: 6,
+                    py: 0.5,
                     boxShadow: 2,
+                    borderRadius: '4px',
+                    transform: 'rotate(-15deg)',
+                    zIndex: 10,
                     pointerEvents: 'none',
-                    minWidth: 'fit-content',
-                    maxWidth: 'none',
                     whiteSpace: 'nowrap',
                   }}
                 >
