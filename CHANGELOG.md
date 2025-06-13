@@ -17,7 +17,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.2.0] - 2025-06-12
+## [1.2.1] - 2025-06-13
+
+### Changed
+- Changed browser alerts for MUI alerts in profile page
+- Now cookies preferences appear collapsed by default
+
+### Fixed
+- Fixed date formatting
+
+## [1.2.0] - 2025-06-13
 
 ### Added
 - Added weekly updates backoffice section and functionalities
