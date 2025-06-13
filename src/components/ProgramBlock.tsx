@@ -528,22 +528,26 @@ export const ProgramBlock: React.FC<Props> = ({
                 <Box
                   sx={{
                     position: 'absolute',
-                    top: tokens.spacing.xs,
-                    left: tokens.spacing.xs,
+                    top: 10,
+                    left: -36,
+                    width: 150,
+                    transform: 'rotate(-20deg)',
                     backgroundColor: overrideType === 'cancel' 
                       ? '#f44336'  // Red for cancellations
                       : overrideType === 'time_change'
                         ? '#ff9800'  // Orange for time changes
                         : '#2196f3',  // Blue for reschedules
                     color: 'white',
-                    fontSize: '0.65rem',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
                     fontWeight: 'bold',
-                    zIndex: 5,
+                    fontSize: '0.75rem',
+                    textAlign: 'center',
+                    padding: '2px 0',
+                    zIndex: 6,
+                    boxShadow: 2,
+                    pointerEvents: 'none',
                   }}
                 >
-                  {overrideType === 'cancel'
+                  {overrideType === 'cancel' 
                     ? 'Cancelado'
                     : overrideType === 'time_change'
                       ? '¡Solo por hoy!'
