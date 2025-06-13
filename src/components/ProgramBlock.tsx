@@ -37,6 +37,8 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
+  isWeeklyOverride?: boolean;
+  overrideType?: string;
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -58,6 +60,8 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
+  isWeeklyOverride,
+  overrideType,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -79,6 +83,8 @@ export const ProgramBlock: React.FC<Props> = ({
   const [loginOpen, setLoginOpen] = useState(false);
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
+  const blockRef = useRef<HTMLDivElement>(null);
+  const [blockWidth, setBlockWidth] = useState<number | null>(null);
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
@@ -362,6 +368,45 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  useEffect(() => {
+    if (!blockRef.current) return;
+    const handleResize = () => {
+      setBlockWidth(blockRef.current ? blockRef.current.offsetWidth : null);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Responsive pill styles
+  let pillFontSize = '0.82rem';
+  let pillPx = 1;
+  let pillPy = 0.1;
+  let pillTop = 6;
+  let pillLeft = 6;
+  let pillLabel = overrideType === 'cancel'
+    ? 'Cancelado'
+    : overrideType === 'time_change'
+      ? '¡Solo por hoy!'
+      : 'Reprogramado';
+  if (blockWidth !== null) {
+    if (blockWidth < 90) {
+      pillFontSize = '0.7rem';
+      pillPx = 0.5;
+      pillPy = 0;
+      pillTop = 3;
+      pillLeft = 3;
+      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
+    } else if (blockWidth < 130) {
+      pillFontSize = '0.76rem';
+      pillPx = 0.7;
+      pillPy = 0.05;
+      pillTop = 4;
+      pillLeft = 4;
+      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
+    }
+  }
+
   // Contenido del tooltip
   const tooltipContent = (
     <Box
@@ -490,6 +535,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 transform: 'scale(1.01)',
               },
             }}
+            ref={blockRef}
           >
             <Box
               sx={{
@@ -518,6 +564,36 @@ export const ProgramBlock: React.FC<Props> = ({
                   }}
                 >
                   LIVE
+                </Box>
+              )}
+              {isWeeklyOverride && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: pillTop,
+                    left: pillLeft,
+                    backgroundColor: 'rgba(255, 152, 0, 0.18)',
+                    color: '#ff9800',
+                    fontWeight: 700,
+                    fontSize: pillFontSize,
+                    borderRadius: '999px',
+                    px: pillPx,
+                    py: pillPy,
+                    border: '1px solid #ff9800',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    boxShadow: 1,
+                    zIndex: 5,
+                    pointerEvents: 'none',
+                    whiteSpace: 'nowrap',
+                    maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
+                    textOverflow: 'ellipsis',
+                    overflow: 'hidden',
+                  }}
+                  title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
+                >
+                  {pillLabel}
                 </Box>
               )}
               <Box

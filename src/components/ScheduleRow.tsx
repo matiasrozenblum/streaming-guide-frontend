@@ -3,7 +3,7 @@
 import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
-import { ProgramBlock, getProgramBlockPosition } from './ProgramBlock';
+import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
@@ -42,7 +42,7 @@ export const ScheduleRow = ({
   const theme = useTheme();
   const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { channelLabelWidth, rowHeight, pixelsPerMinute } = useLayoutValues();
+  const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const { liveStatus } = useLiveStatus();
@@ -201,48 +201,8 @@ export const ScheduleRow = ({
             const isLive = currentLiveStatus?.is_live || p.is_live;
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
-            // Calculate position for override chip
-            const { offsetPx, widthPx } = getProgramBlockPosition(p.start_time, p.end_time, pixelsPerMinute);
-
-            // Determine chip color and label
-            let chipColor = '#2196f3';
-            let chipLabel = 'Reprogramado';
-            if (p.overrideType === 'cancel') {
-              chipColor = '#f44336';
-              chipLabel = 'Cancelado';
-            } else if (p.overrideType === 'time_change') {
-              chipColor = '#ff9800';
-              chipLabel = '¡Solo por hoy!';
-            }
-
             return (
               <React.Fragment key={p.id}>
-                {p.isWeeklyOverride && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 8,
-                      left: `calc(${offsetPx}px - 12%)`,
-                      width: `124%`,
-                      backgroundColor: chipColor,
-                      color: 'white',
-                      fontWeight: 'bold',
-                      fontSize: '1.1rem',
-                      textAlign: 'center',
-                      py: 0.5,
-                      boxShadow: 2,
-                      borderRadius: '4px',
-                      transform: 'rotate(-15deg)',
-                      zIndex: 10,
-                      pointerEvents: 'none',
-                      whiteSpace: 'nowrap',
-                      minWidth: `${widthPx * 1.2}px`,
-                      maxWidth: 'none',
-                    }}
-                  >
-                    {chipLabel}
-                  </Box>
-                )}
                 <ProgramBlock
                   id={p.id}
                   name={p.name}
@@ -257,6 +217,8 @@ export const ScheduleRow = ({
                   stream_url={currentStreamUrl}
                   is_live={isLive}
                   subscribed={p.subscribed ?? false}
+                  isWeeklyOverride={p.isWeeklyOverride ?? false}
+                  overrideType={p.overrideType ?? ''}
                 />
               </React.Fragment>
             );
