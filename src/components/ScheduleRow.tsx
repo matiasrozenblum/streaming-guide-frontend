@@ -20,6 +20,8 @@ interface Program {
   stream_url?: string;
   is_live?: boolean;
   subscribed?: boolean;
+  isWeeklyOverride?: boolean;
+  overrideType?: 'cancel' | 'time_change' | 'reschedule';
 }
 
 interface Props {
@@ -216,6 +218,8 @@ export const ScheduleRow = ({
                 stream_url={currentStreamUrl}
                 is_live={isLive}
                 subscribed={p.subscribed ?? false}
+                isWeeklyOverride={p.isWeeklyOverride}
+                overrideType={p.overrideType}
               />
             );
           })}

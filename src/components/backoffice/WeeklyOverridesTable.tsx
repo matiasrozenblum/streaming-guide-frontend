@@ -126,7 +126,7 @@ export function WeeklyOverridesTable() {
         fetch('/api/weekly-overrides', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
-        fetch('/api/schedules', {
+        fetch('/api/schedules?raw=true', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
         fetch('/api/weekly-schedule-manager/current-week-stats', {
