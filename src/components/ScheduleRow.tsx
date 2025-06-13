@@ -196,31 +196,31 @@ export const ScheduleRow = ({
 
         <Box position="relative" flex="1" height="100%">
           {programs.map((p) => {
-
             // Get live status from context
             const currentLiveStatus = liveStatus[p.id.toString()];
             const isLive = currentLiveStatus?.is_live || p.is_live;
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
             return (
-              <ProgramBlock
-                key={p.id}
-                id={p.id}
-                name={p.name}
-                start={p.start_time}
-                end={p.end_time}
-                description={p.description}
-                panelists={p.panelists}
-                logo_url={p.logo_url}
-                channelName={channelName}
-                color={color}
-                isToday={isToday}
-                stream_url={currentStreamUrl}
-                is_live={isLive}
-                subscribed={p.subscribed ?? false}
-                isWeeklyOverride={p.isWeeklyOverride}
-                overrideType={p.overrideType}
-              />
+              <React.Fragment key={p.id}>
+                <ProgramBlock
+                  id={p.id}
+                  name={p.name}
+                  start={p.start_time}
+                  end={p.end_time}
+                  description={p.description}
+                  panelists={p.panelists}
+                  logo_url={p.logo_url}
+                  channelName={channelName}
+                  color={color}
+                  isToday={isToday}
+                  stream_url={currentStreamUrl}
+                  is_live={isLive}
+                  subscribed={p.subscribed ?? false}
+                  isWeeklyOverride={p.isWeeklyOverride ?? false}
+                  overrideType={p.overrideType ?? ''}
+                />
+              </React.Fragment>
             );
           })}
         </Box>
