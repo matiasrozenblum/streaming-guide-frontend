@@ -18,4 +18,6 @@ export interface Schedule {
       logo_url: string | null;
     };
   };
+  isWeeklyOverride?: boolean;
+  overrideType?: 'cancel' | 'time_change' | 'reschedule';
 }

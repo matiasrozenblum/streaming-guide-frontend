@@ -17,6 +17,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.0] - 2025-06-12
+
+### Added
+- Added weekly updates backoffice section and functionalities
+
+### Changed
+- Changed backoffice dashboard to have two new buttons to clean cache and refresh youtube video ids
+- Now all backoffice pages have dark mode implemented
+
 ## [1.1.1] - 2025-06-10
 
 ### Changed

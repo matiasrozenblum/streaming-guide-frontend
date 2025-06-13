@@ -37,6 +37,8 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
+  isWeeklyOverride?: boolean;
+  overrideType?: 'cancel' | 'time_change' | 'reschedule';
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -58,6 +60,8 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
+  isWeeklyOverride,
+  overrideType,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -518,6 +522,32 @@ export const ProgramBlock: React.FC<Props> = ({
                   }}
                 >
                   LIVE
+                </Box>
+              )}
+              {isWeeklyOverride && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    top: tokens.spacing.xs,
+                    left: tokens.spacing.xs,
+                    backgroundColor: overrideType === 'cancel' 
+                      ? '#f44336'  // Red for cancellations
+                      : overrideType === 'time_change'
+                        ? '#ff9800'  // Orange for time changes
+                        : '#2196f3',  // Blue for reschedules
+                    color: 'white',
+                    fontSize: '0.65rem',
+                    padding: '2px 6px',
+                    borderRadius: '4px',
+                    fontWeight: 'bold',
+                    zIndex: 5,
+                  }}
+                >
+                  {overrideType === 'cancel' 
+                    ? 'Cancelado'
+                    : overrideType === 'time_change'
+                      ? 'Cambio de horario'
+                      : 'Reprogramado'}
                 </Box>
               )}
               <Box
