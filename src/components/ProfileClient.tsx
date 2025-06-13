@@ -22,6 +22,8 @@ import {
   InputAdornment,
   LinearProgress,
   MenuItem,
+  Collapse,
+  Snackbar,
 } from '@mui/material';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -36,6 +38,9 @@ import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
+import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
+import dayjs from 'dayjs';
+import MuiAlert from '@mui/material/Alert';
 
 const MotionBox = motion(Box);
 
@@ -145,7 +150,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [email, setEmail] = useState(initialUser.email);
   const [phone, setPhone] = useState(initialUser.phone);
   const [gender, setGender] = useState(initialUser.gender || '');
-  const [birthDate, setBirthDate] = useState(initialUser.birthDate || '');
+  const [birthDate, setBirthDate] = useState(
+    initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : ''
+  );
   const [personalError, setPersonalError] = useState('');
 
   // códigos de verificación
@@ -166,6 +173,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
+  // cookies section collapse
+  const [cookiesOpen, setCookiesOpen] = useState(false);
+
+  // Snackbar for success and error messages
+  const [successMessage, setSuccessMessage] = useState<string | null>(null);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
+
   // --- All handlers from original ProfilePage ---
   const saveNames = async () => {
     if (!typedSession) return;
@@ -173,6 +187,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     // Validate birthDate (must be 18+)
     if (!birthDate) {
       setPersonalError('La fecha de nacimiento es obligatoria');
+      setErrorMessage('La fecha de nacimiento es obligatoria');
       return;
     }
     const birth = new Date(birthDate);
@@ -184,6 +199,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     }
     if (age < 18) {
       setPersonalError('Debes ser mayor de 18 años para registrarte');
+      setErrorMessage('Debes ser mayor de 18 años para registrarte');
       return;
     }
     const id = typedSession.user.id;
@@ -194,8 +210,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ firstName, lastName, gender, birthDate }),
       });
-    alert(res.ok ? 'Datos actualizados' : 'Error al actualizar');
-    if (res.ok) setEditSection('none');
+    if (res.ok) {
+      setSuccessMessage('Datos actualizados correctamente');
+      setEditSection('none');
+    } else {
+      setPersonalError('Error al actualizar');
+      setErrorMessage('Error al actualizar los datos');
+    }
 
     // Track successful profile update
     type ProfileFields = { firstName: string; lastName: string; gender: string; birthDate: string };
@@ -228,6 +249,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       setCodeSent(prev => ({ ...prev, [field]: true }));
     } catch (error) {
       alert(error instanceof Error ? error.message : 'Error al enviar el código');
+      setErrorMessage(error instanceof Error ? error.message : 'Error al enviar el código');
     }
   };
 
@@ -252,10 +274,12 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           setPasswordCode('');
         } catch (error) {
           alert(error instanceof Error ? error.message : 'Error al verificar el código');
+          setErrorMessage(error instanceof Error ? error.message : 'Error al verificar el código');
         }
       } else if (passwordStep === 'change') {
         if (newPassword !== confirmPassword) {
           alert('Las contraseñas no coinciden');
+          setErrorMessage('Las contraseñas no coinciden');
           return;
         }
 
@@ -281,6 +305,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           alert('Contraseña actualizada exitosamente');
         } catch (error) {
           alert(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
+          setErrorMessage(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
         }
       }
     } else if (field === 'email') {
@@ -318,6 +343,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         setCodeSent(prev => ({ ...prev, email: false }));
       } catch (error) {
         alert(error instanceof Error ? error.message : 'Error al cambiar el email');
+        setErrorMessage(error instanceof Error ? error.message : 'Error al cambiar el email');
       }
     } else if (field === 'phone') {
       try {
@@ -335,6 +361,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         setCodeSent(prev => ({ ...prev, phone: true }));
       } catch (error) {
         alert(error instanceof Error ? error.message : 'Error al enviar el código');
+        setErrorMessage(error instanceof Error ? error.message : 'Error al enviar el código');
       }
     }
   };
@@ -350,6 +377,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       await signOut({ callbackUrl: '/' });
     } else {
       alert('Error al cancelar la cuenta');
+      setErrorMessage('Error al cancelar la cuenta');
     }
   };
 
@@ -446,7 +474,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           Fecha de nacimiento
                         </Typography>
                         <Typography variant="body1">
-                          {birthDate ? new Date(birthDate).toLocaleDateString() : '—'}
+                          {birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '—'}
                         </Typography>
                       </Grid>
                       <Grid component="div" size={6}>
@@ -642,40 +670,59 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               <ProfileSection
                 title="Preferencias de Cookies"
                 value={
-                  <Grid container spacing={2}>
-                    <Grid component="div" size={6}>
-                      <Typography color="text.secondary" gutterBottom>
-                        Cookies de Análisis
-                      </Typography>
-                      <Typography variant="body1">
-                        {consent?.analytics ? '✅ Habilitadas' : '❌ Deshabilitadas'}
-                      </Typography>
-                    </Grid>
-                    <Grid component="div" size={6}>
-                      <Typography color="text.secondary" gutterBottom>
-                        Cookies de Marketing
-                      </Typography>
-                      <Typography variant="body1">
-                        {consent?.marketing ? '✅ Habilitadas' : '❌ Deshabilitadas'}
-                      </Typography>
-                    </Grid>
-                    <Grid component="div" size={6}>
-                      <Typography color="text.secondary" gutterBottom>
-                        Cookies de Preferencias
-                      </Typography>
-                      <Typography variant="body1">
-                        {consent?.preferences ? '✅ Habilitadas' : '❌ Deshabilitadas'}
-                      </Typography>
-                    </Grid>
-                    <Grid component="div" size={6}>
-                      <Typography color="text.secondary" gutterBottom>
-                        Cookies Necesarias
-                      </Typography>
-                      <Typography variant="body1">
-                        ✅ Siempre habilitadas
-                      </Typography>
-                    </Grid>
-                  </Grid>
+                  <>
+                    <Button
+                      onClick={() => setCookiesOpen((open) => !open)}
+                      endIcon={
+                        <ExpandMoreIcon
+                          style={{
+                            transform: cookiesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
+                            transition: 'transform 0.2s',
+                          }}
+                        />
+                      }
+                      sx={{ mb: 1, textTransform: 'none' }}
+                      size="small"
+                    >
+                      {cookiesOpen ? 'Ocultar detalles' : 'Ver detalles'}
+                    </Button>
+                    <Collapse in={cookiesOpen}>
+                      <Grid container spacing={2}>
+                        <Grid component="div" size={6}>
+                          <Typography color="text.secondary" gutterBottom>
+                            Cookies de Análisis
+                          </Typography>
+                          <Typography variant="body1">
+                            {consent?.analytics ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                          </Typography>
+                        </Grid>
+                        <Grid component="div" size={6}>
+                          <Typography color="text.secondary" gutterBottom>
+                            Cookies de Marketing
+                          </Typography>
+                          <Typography variant="body1">
+                            {consent?.marketing ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                          </Typography>
+                        </Grid>
+                        <Grid component="div" size={6}>
+                          <Typography color="text.secondary" gutterBottom>
+                            Cookies de Preferencias
+                          </Typography>
+                          <Typography variant="body1">
+                            {consent?.preferences ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                          </Typography>
+                        </Grid>
+                        <Grid component="div" size={6}>
+                          <Typography color="text.secondary" gutterBottom>
+                            Cookies Necesarias
+                          </Typography>
+                          <Typography variant="body1">
+                            ✅ Siempre habilitadas
+                          </Typography>
+                        </Grid>
+                      </Grid>
+                    </Collapse>
+                  </>
                 }
                 onEdit={() => openPreferences()}
               />
@@ -937,6 +984,27 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       
       {/* Cookie Preferences Modal */}
       <CookiePreferencesModal />
+      {/* Snackbar for success and error messages */}
+      <Snackbar
+        open={!!successMessage}
+        autoHideDuration={4000}
+        onClose={() => setSuccessMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <MuiAlert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+          {successMessage}
+        </MuiAlert>
+      </Snackbar>
+      <Snackbar
+        open={!!errorMessage}
+        autoHideDuration={5000}
+        onClose={() => setErrorMessage(null)}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <MuiAlert onClose={() => setErrorMessage(null)} severity="error" sx={{ width: '100%' }}>
+          {errorMessage}
+        </MuiAlert>
+      </Snackbar>
     </Box>
   );
 } 
