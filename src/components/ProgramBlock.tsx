@@ -415,8 +415,13 @@ export const ProgramBlock: React.FC<Props> = ({
       <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
         {name}
       </Text>
-      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
+      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important', display: 'flex', alignItems: 'center', gap: 1 }}>
         {start} - {end}
+        {isWeeklyOverride && (
+          <span style={{ color: '#ff9800', fontWeight: 700, marginLeft: 8, fontSize: '0.95em', whiteSpace: 'nowrap' }}>
+            ¡Horario especial!
+          </span>
+        )}
       </Text>
       {description && (
         <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
