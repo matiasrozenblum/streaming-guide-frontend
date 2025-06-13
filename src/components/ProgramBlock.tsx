@@ -37,8 +37,6 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
-  isWeeklyOverride?: boolean;
-  overrideType?: 'cancel' | 'time_change' | 'reschedule';
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -60,8 +58,6 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
-  isWeeklyOverride,
-  overrideType,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -524,38 +520,6 @@ export const ProgramBlock: React.FC<Props> = ({
                   LIVE
                 </Box>
               )}
-              {isWeeklyOverride && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: 8,
-                    left: '-20%',
-                    width: '140%',
-                    backgroundColor: overrideType === 'cancel'
-                      ? '#f44336'
-                      : overrideType === 'time_change'
-                        ? '#ff9800'
-                        : '#2196f3',
-                    color: 'white',
-                    fontWeight: 'bold',
-                    fontSize: '1.1rem',
-                    textAlign: 'center',
-                    py: 0.5,
-                    boxShadow: 2,
-                    borderRadius: '4px',
-                    transform: 'rotate(-15deg)',
-                    zIndex: 10,
-                    pointerEvents: 'none',
-                    whiteSpace: 'nowrap',
-                  }}
-                >
-                  {overrideType === 'cancel'
-                    ? 'Cancelado'
-                    : overrideType === 'time_change'
-                      ? '¡Solo por hoy!'
-                      : 'Reprogramado'}
-                </Box>
-              )}
               <Box
                 sx={{
                   display: 'flex',
@@ -674,3 +638,14 @@ export const ProgramBlock: React.FC<Props> = ({
     </ClickAwayListener>
   );
 };
+
+export function getProgramBlockPosition(start: string, end: string, pixelsPerMinute: number) {
+  const [startHours, startMinutes] = start.split(':').map(Number);
+  const [endHours, endMinutes] = end.split(':').map(Number);
+  const minutesFromMidnightStart = startHours * 60 + startMinutes;
+  const minutesFromMidnightEnd = endHours * 60 + endMinutes;
+  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
+  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  const widthPx = duration * pixelsPerMinute - 1;
+  return { offsetPx, widthPx };
+}
