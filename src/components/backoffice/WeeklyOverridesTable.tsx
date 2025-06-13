@@ -47,6 +47,7 @@ import {
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import type { Schedule as ScheduleType } from '@/types/schedule';
+import { useTheme } from '@mui/material/styles';
 
 // Types
 interface WeeklyOverride {
@@ -92,6 +93,7 @@ const OVERRIDE_TYPES = [
 export function WeeklyOverridesTable() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const theme = useTheme();
 
   // State
   const [currentTab, setCurrentTab] = useState(0);
@@ -643,14 +645,24 @@ export function WeeklyOverridesTable() {
       )}
 
       {/* Create Override Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
+      <Dialog 
+        open={openDialog} 
+        onClose={handleCloseDialog} 
+        maxWidth="md" 
+        fullWidth
+        PaperProps={{
+          sx: {
+            backgroundColor: theme.palette.background.paper,
+          }
+        }}
+      >
         <DialogTitle>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
             Crear Cambio Semanal
           </Typography>
           {selectedSchedule && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: 'grey.50', borderRadius: 1 }}>
-              <Typography variant="body1" fontWeight="bold">
+            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+              <Typography variant="body1" fontWeight="bold" color="text.primary">
                 {selectedSchedule.program.name}
               </Typography>
               <Typography variant="body2" color="text.secondary">
