@@ -567,34 +567,56 @@ export const ProgramBlock: React.FC<Props> = ({
                 </Box>
               )}
               {isWeeklyOverride && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: pillTop,
-                    left: pillLeft,
-                    backgroundColor: 'rgba(255, 152, 0, 0.18)',
-                    color: '#ff9800',
-                    fontWeight: 700,
-                    fontSize: pillFontSize,
-                    borderRadius: '999px',
-                    px: pillPx,
-                    py: pillPy,
-                    border: '1px solid #ff9800',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    boxShadow: 1,
-                    zIndex: 5,
-                    pointerEvents: 'none',
-                    whiteSpace: 'nowrap',
-                    maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
-                    textOverflow: 'ellipsis',
-                    overflow: 'hidden',
-                  }}
-                  title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
-                >
-                  {pillLabel}
-                </Box>
+                isMobile ? (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 6,
+                      left: 6,
+                      width: 14,
+                      height: 14,
+                      backgroundColor: '#ff9800',
+                      borderRadius: '50%',
+                      border: '2px solid #fff',
+                      zIndex: 5,
+                      pointerEvents: 'none',
+                      boxShadow: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: pillTop,
+                      left: pillLeft,
+                      backgroundColor: 'rgba(255, 152, 0, 0.18)',
+                      color: '#ff9800',
+                      fontWeight: 700,
+                      fontSize: pillFontSize,
+                      borderRadius: '999px',
+                      px: pillPx,
+                      py: pillPy,
+                      border: '1px solid #ff9800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: 1,
+                      zIndex: 5,
+                      pointerEvents: 'none',
+                      whiteSpace: 'nowrap',
+                      maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
+                  >
+                    {pillLabel}
+                  </Box>
+                )
               )}
               <Box
                 sx={{
