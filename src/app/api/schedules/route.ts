@@ -9,7 +9,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/schedules`, {
+    // Forward 'raw' query param if present
+    const raw = request.nextUrl.searchParams.get('raw');
+    const url = new URL(`${process.env.NEXT_PUBLIC_API_URL}/schedules`);
+    if (raw) url.searchParams.set('raw', raw);
+
+    const response = await fetch(url.toString(), {
       headers: {
         'Authorization': `Bearer ${token}`,
       },

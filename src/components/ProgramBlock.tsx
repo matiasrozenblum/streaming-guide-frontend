@@ -546,7 +546,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   {overrideType === 'cancel' 
                     ? 'Cancelado'
                     : overrideType === 'time_change'
-                      ? 'Cambio de horario'
+                      ? '¡Solo por hoy!'
                       : 'Reprogramado'}
                 </Box>
               )}
