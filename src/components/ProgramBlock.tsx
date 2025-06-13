@@ -543,7 +543,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     zIndex: 5,
                   }}
                 >
-                  {overrideType === 'cancel' 
+                  {overrideType === 'cancel'
                     ? 'Cancelado'
                     : overrideType === 'time_change'
                       ? '¡Solo por hoy!'
