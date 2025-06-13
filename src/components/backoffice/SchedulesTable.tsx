@@ -248,7 +248,7 @@ export function SchedulesTable() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h5">Programas y Horarios</Typography>
+        <Typography variant="h5" color="text.primary">Programas y Horarios</Typography>
       </Box>
 
       {/* Buscador en vivo */}
@@ -312,7 +312,7 @@ export function SchedulesTable() {
             <Box>
               {/* Horarios actuales y botón Agregar */}
               <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6">Horarios actuales</Typography>
+                <Typography variant="h6" color="text.primary">Horarios actuales</Typography>
                 {!showAddScheduleForm && (
                   <Button variant="outlined" startIcon={<Add />} onClick={handleShowAddScheduleForm}>
                     Agregar Horario
@@ -396,7 +396,7 @@ export function SchedulesTable() {
               {showAddScheduleForm && (
                 <Box sx={{ mt: 3 }}>
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6">Agregar Nuevo Horario</Typography>
+                    <Typography variant="h6" color="text.primary">Agregar Nuevo Horario</Typography>
                     <Button
                       variant="text"
                       onClick={() => setShowAddScheduleForm(false)}

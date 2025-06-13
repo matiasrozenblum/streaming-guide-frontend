@@ -9,7 +9,7 @@ export default function UsersPage() {
     <ProtectedRoute>
       <Container maxWidth="xl">
         <Box sx={{ my: 4 }}>
-          <Typography variant="h4" component="h1" gutterBottom>
+          <Typography variant="h4" color="text.primary" component="h1" gutterBottom>
             Gestión de Usuarios
           </Typography>
           <UsersTable />

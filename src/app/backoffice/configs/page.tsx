@@ -73,7 +73,7 @@ const ConfigPage = () => {
 
   return (
     <Box sx={{ p: 3 }}>
-      <Typography variant="h4" gutterBottom>
+      <Typography variant="h4" color="text.primary" gutterBottom>
         Manage Configurations
       </Typography>
       <TableContainer component={Paper} sx={{ mb: 3 }}>
@@ -118,55 +118,11 @@ const ConfigPage = () => {
           label="Key"
           value={newConfig.key}
           onChange={(e) => setNewConfig({ ...newConfig, key: e.target.value })}
-          sx={{
-            '& .MuiInputBase-input': {
-              color: 'black',
-            },
-            '& .MuiInputLabel-root': {
-              color: 'gray',
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: 'black',
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: 'gray',
-              },
-              '&:hover fieldset': {
-                borderColor: 'black',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'black',
-              },
-            },
-          }}
         />
         <TextField
           label="Value"
           value={newConfig.value}
           onChange={(e) => setNewConfig({ ...newConfig, value: e.target.value })}
-          sx={{
-            '& .MuiInputBase-input': {
-              color: 'black',
-            },
-            '& .MuiInputLabel-root': {
-              color: 'gray',
-            },
-            '& .MuiInputLabel-root.Mui-focused': {
-              color: 'black',
-            },
-            '& .MuiOutlinedInput-root': {
-              '& fieldset': {
-                borderColor: 'gray',
-              },
-              '&:hover fieldset': {
-                borderColor: 'black',
-              },
-              '&.Mui-focused fieldset': {
-                borderColor: 'black',
-              },
-            },
-          }}
         />
         <Button
           variant="contained"
@@ -180,10 +136,10 @@ const ConfigPage = () => {
       <Dialog open={dialogOpen} onClose={() => setDialogOpen(false)}>
         <DialogTitle>Confirm Update</DialogTitle>
         <DialogContent>
-          <Typography>
+          <Typography color="text.primary">
             Estás seguro de que querés actualizar la config?
           </Typography>
-          <Typography>
+          <Typography color="text.secondary">
             {dialogConfig?.key} {dialogConfig?.oldValue} &gt; {dialogConfig?.newValue}
           </Typography>
         </DialogContent>

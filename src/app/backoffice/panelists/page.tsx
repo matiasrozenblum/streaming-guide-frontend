@@ -8,7 +8,7 @@ export default function PanelistsPage() {
   return (
     <ProtectedRoute>
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" gutterBottom>
+        <Typography variant="h4" color="text.primary" gutterBottom>
           Panelistas
         </Typography>
         <PanelistsTable onError={(error) => console.error(error)} />
