@@ -18,8 +18,8 @@ export default function StepIndicator({ currentStep, isUserExisting }: StepIndic
       ]
     : [
         { id: 'email', icon: MailOutlineIcon, label: 'Correo' },
-        { id: 'code', icon: VpnKeyIcon, label: 'Verificar' },
-        { id: 'profile', icon: PersonOutlineIcon, label: 'Perfil' },
+        { id: 'code', icon: VpnKeyIcon, label: 'Verificación' },
+        { id: 'profile', icon: PersonOutlineIcon, label: 'Datos' },
         { id: 'password', icon: LockOutlinedIcon, label: 'Contraseña' }
       ];
 
