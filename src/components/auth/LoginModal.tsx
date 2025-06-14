@@ -151,6 +151,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [gender, setGender] = useState('');
   const [userFirstName, setUserFirstName] = useState('');
   const [userGender, setUserGender] = useState('');
+  const [phase, setPhase] = useState<'email'|'flow'>('email');
 
   useEffect(() => {
     if (!open) {
@@ -161,6 +162,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setForgotPassword(false);
       setBirthDate(''); setGender('');
       setUserFirstName(''); setUserGender('');
+      setPhase('email');
     }
   }, [open]);
 
@@ -215,7 +217,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       PaperProps={{ sx:{ borderRadius:2, bgcolor:theme.palette.background.paper } }}
     >
       <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2 }}>
-        { isUserExisting && step==='existing-user'
+        {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
+          isUserExisting && step==='existing-user'
             ? 'Iniciar Sesión'
             : !isUserExisting && step==='email'
             ? 'Acceder / Registrarse'
@@ -225,44 +228,46 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             ? 'Completa tu perfil'
             : step==='password'
             ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
-            : '' }
+            : ''
+        )}
         <IconButton onClick={onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      <Box sx={{ px:3, pt:2 }}>
-        <Stepper
-          nonLinear
-          alternativeLabel
-          activeStep={activeStep}
-          connector={<BlueConnector isLoading={isLoading} />}
-        >
-          {steps.map((key) => {
-            const isCompleted = completedSteps.has(key);
-            const isActive = step === key;
-            const isCurrentlyLoading = isActive && isLoading;
-            
-            return (
-              <Step key={key} completed={isCompleted} active={isActive}>
-                <StepLabel
-                  StepIconComponent={(props) => (
-                    <CustomStepIcon 
-                      {...props} 
-                      stepKey={key}
-                      isLoading={isCurrentlyLoading}
-                      completedSteps={completedSteps}
-                    />
-                  )}
-                >
-                  {STEP_LABELS[key]}
-                </StepLabel>
-              </Step>
-            );
-          })}
-        </Stepper>
-      </Box>
+      {phase === 'flow' && (
+        <Box sx={{ px:3, pt:2 }}>
+          <Stepper
+            nonLinear
+            alternativeLabel
+            activeStep={activeStep}
+            connector={<BlueConnector isLoading={isLoading} />}
+          >
+            {steps.map((key) => {
+              const isCompleted = completedSteps.has(key);
+              const isActive = step === key;
+              const isCurrentlyLoading = isActive && isLoading;
+              return (
+                <Step key={key} completed={isCompleted} active={isActive}>
+                  <StepLabel
+                    StepIconComponent={(props) => (
+                      <CustomStepIcon 
+                        {...props} 
+                        stepKey={key}
+                        isLoading={isCurrentlyLoading}
+                        completedSteps={completedSteps}
+                      />
+                    )}
+                  >
+                    {STEP_LABELS[key]}
+                  </StepLabel>
+                </Step>
+              );
+            })}
+          </Stepper>
+        </Box>
+      )}
 
       <DialogContent sx={{ px:3, py:2 }}>
-        {step === 'email' && (
+        {phase === 'email' && (
           <EmailStep
             initialEmail={email}
             isLoading={isLoading}
@@ -278,6 +283,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   setCompletedSteps(prev => new Set([...prev, 'email']));
                   setIsUserExisting(true);
                   setStep('existing-user');
+                  setPhase('flow');
                 } else if (res.status === 404) {
                   setCompletedSteps(prev => new Set([...prev, 'email']));
                   setIsUserExisting(false);
@@ -287,6 +293,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     body: JSON.stringify({ identifier: e }),
                   });
                   setStep('code');
+                  setPhase('flow');
                 } else {
                   throw new Error('Error inesperado');
                 }
@@ -305,7 +312,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             gender={userGender}
             isLoading={isLoading}
             error={error}
-            onBack={() => setStep('email')}
+            onBack={() => { setStep('email'); setPhase('email'); }}
             onSubmit={async (pw) => {
               setIsLoading(true); setError('');
               try {
@@ -399,7 +406,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             initialCode={code}
             isLoading={isLoading}
             error={error}
-            onBack={() => setStep('email')}
+            onBack={() => { setStep('email'); setPhase('email'); }}
             onSubmit={async (c) => {
               setIsLoading(true); setError(''); setCode(c);
               try {
