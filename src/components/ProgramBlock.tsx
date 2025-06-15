@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -71,6 +71,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const streamUrl = dynamic.stream_url;
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const theme = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState(subscribed);
@@ -409,13 +410,26 @@ export const ProgramBlock: React.FC<Props> = ({
 
   // Contenido del tooltip
   const tooltipContent = (
-    <Box
-      sx={{ p: tokens.spacing.sm }}
-    >
-      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
+    <Box sx={{ p: tokens.spacing.sm }}>
+      <Text
+        variant="subtitle1"
+        fontWeight={tokens.typography.fontWeight.bold}
+        sx={{
+          color: mode === 'dark' ? '#fff' : theme.palette.text.primary
+        }}
+      >
         {name}
       </Text>
-      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important', display: 'flex', alignItems: 'center', gap: 1 }}>
+      <Text
+        variant="body2"
+        sx={{
+          mt: tokens.spacing.sm,
+          color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}
+      >
         {start} - {end}
         {isWeeklyOverride && (
           <span style={{ color: '#ff9800', fontWeight: 700, marginLeft: 8, fontSize: '0.95em', whiteSpace: 'nowrap' }}>
@@ -424,16 +438,29 @@ export const ProgramBlock: React.FC<Props> = ({
         )}
       </Text>
       {description && (
-        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
+        <Text
+          variant="body2"
+          sx={{
+            mt: tokens.spacing.sm,
+            color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary
+          }}
+        >
           {description}
         </Text>
       )}
       {panelists?.length ? (
         <Box sx={{ mt: tokens.spacing.sm }}>
-          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
+          <Text
+            variant="body2"
+            fontWeight={tokens.typography.fontWeight.bold}
+            sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
+          >
             Panelistas:
           </Text>
-          <Text variant="body2" sx={{ color: 'rgba(255,255,255,0.8) !important' }}>
+          <Text
+            variant="body2"
+            sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary }}
+          >
             {panelists.map(p => p.name).join(', ')}
           </Text>
         </Box>
@@ -505,7 +532,21 @@ export const ProgramBlock: React.FC<Props> = ({
           onClose={handleTooltipClose}
           disableTouchListener={isMobile}
           disableFocusListener={isMobile}
-          PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
+          PopperProps={{
+            onMouseEnter: handleTooltipOpen,
+            onMouseLeave: handleTooltipClose,
+            sx: {
+              '& .MuiTooltip-tooltip': {
+                backgroundColor: mode === 'light'
+                  ? theme.palette.background.paper
+                  : '#0F172A',
+                color: mode === 'light'
+                  ? theme.palette.text.primary
+                  : '#fff',
+                boxShadow: theme.shadows[3],
+              }
+            }
+          }}
         >
           <Box
             className="program-block"
@@ -741,14 +782,3 @@ export const ProgramBlock: React.FC<Props> = ({
     </ClickAwayListener>
   );
 };
-
-export function getProgramBlockPosition(start: string, end: string, pixelsPerMinute: number) {
-  const [startHours, startMinutes] = start.split(':').map(Number);
-  const [endHours, endMinutes] = end.split(':').map(Number);
-  const minutesFromMidnightStart = startHours * 60 + startMinutes;
-  const minutesFromMidnightEnd = endHours * 60 + endMinutes;
-  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
-  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * pixelsPerMinute - 1;
-  return { offsetPx, widthPx };
-}

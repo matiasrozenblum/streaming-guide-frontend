@@ -28,10 +28,37 @@ export const pageview = (url: string) => {
     return; // Don't track if no consent data
   }
 
+  // Get user data from window.__NEXT_DATA__
+  const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
+  const user = nextData?.props?.pageProps?.session?.user || {};
+
+  // Calculate age if birthDate is available
+  let age: number | undefined;
+  if (user?.birthDate) {
+    const birthDate = new Date(user.birthDate);
+    const today = new Date();
+    age = today.getFullYear() - birthDate.getFullYear();
+    const monthDiff = today.getMonth() - birthDate.getMonth();
+    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+      age--;
+    }
+  }
+
+  const pageviewData = {
+    page_path: url,
+    user_id: user?.id,
+    user_gender: user?.gender,
+    user_age: age,
+    user_role: user?.role,
+  };
+
   if (typeof window.gtag === 'function') {
-    window.gtag('config', GA_TRACKING_ID, {
-      page_path: url,
-    });
+    window.gtag('config', GA_TRACKING_ID, pageviewData);
+  }
+
+  // Send to PostHog if loaded
+  if (posthog.__loaded) {
+    posthog.capture('$pageview', pageviewData);
   }
 };
 
