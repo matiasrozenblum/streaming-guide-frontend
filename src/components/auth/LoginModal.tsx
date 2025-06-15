@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent,
-  IconButton, Box, Stepper, Step, StepLabel, useTheme
+  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
@@ -18,10 +18,8 @@ import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
-import { styled } from '@mui/material/styles';
 import { useTooltip } from '@/contexts/TooltipContext';
-import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
-import type { StepIconProps } from '@mui/material/StepIcon';
+import { styled, Theme } from '@mui/material/styles';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -49,18 +47,8 @@ const STEP_ICONS: Record<StepKey, React.ReactNode> = {
   'existing-user': <VpnKeyIcon fontSize="small" />
 };
 
-const mapGenderToBackend = (g: string) => {
-  switch (g) {
-    case 'masculino': return 'male';
-    case 'femenino': return 'female';
-    case 'no_binario': return 'non_binary';
-    case 'prefiero_no_decir': return 'rather_not_say';
-    default: return 'rather_not_say';
-  }
-};
-
 // Custom StepConnector with loading animation
-const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(({ theme, isLoading }) => ({
+const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(({ theme, isLoading }: { theme: Theme; isLoading?: boolean }) => ({
   [`& .${stepConnectorClasses.line}`]: {
     borderTopWidth: 3,
     borderRadius: 1,
@@ -100,7 +88,7 @@ function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: 
   const { active, completed, icon, stepKey, isLoading, completedSteps } = props;
   const theme = useTheme();
   const iconKey = stepKey || (typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon);
-  
+
   const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
   const shouldBeBlue = isStepCompleted || (active && !isLoading);
   const shouldAnimate = active && isLoading;
@@ -131,6 +119,16 @@ function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: 
     </Box>
   );
 }
+
+const mapGenderToBackend = (g: string) => {
+  switch (g) {
+    case 'masculino': return 'male';
+    case 'femenino': return 'female';
+    case 'no_binario': return 'non_binary';
+    case 'prefiero_no_decir': return 'rather_not_say';
+    default: return 'rather_not_say';
+  }
+};
 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
@@ -214,9 +212,16 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
-      PaperProps={{ sx:{ borderRadius:2, bgcolor:theme.palette.background.paper } }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper
+          }
+        }
+      }}
     >
-      <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2 }}>
+      <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
           isUserExisting && step==='existing-user'
             ? 'Iniciar Sesión'
@@ -234,12 +239,20 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       </DialogTitle>
 
       {phase === 'flow' && (
-        <Box sx={{ px:3, pt:2 }}>
+        <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
           <Stepper
             nonLinear
             alternativeLabel
             activeStep={activeStep}
             connector={<BlueConnector isLoading={isLoading} />}
+            sx={{
+              width: '100%',
+              minWidth: 0,
+              backgroundColor: 'transparent',
+              '.MuiStepConnector-line': {
+                minWidth: 24,
+              },
+            }}
           >
             {steps.map((key) => {
               const isCompleted = completedSteps.has(key);
@@ -248,6 +261,27 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               return (
                 <Step key={key} completed={isCompleted} active={isActive}>
                   <StepLabel
+                    sx={{
+                      mt: 0,
+                      mb: 0,
+                      '.MuiStepLabel-label': {
+                        marginTop: '0px',
+                        marginBottom: '0px',
+                        lineHeight: 1.1,
+                        color: (theme) => theme.palette.text.secondary,
+                        fontWeight: 600,
+                        fontSize: 13,
+                      },
+                      '.MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed': {
+                        color: (theme) => theme.palette.primary.main,
+                        marginTop: '0px',
+                        marginBottom: '0px',
+                      },
+                      '.MuiStepLabel-label.MuiStepLabel-alternativeLabel': {
+                        marginTop: '0px !important',
+                        marginBottom: '0px !important',
+                      },
+                    }}
                     StepIconComponent={(props) => (
                       <CustomStepIcon 
                         {...props} 
@@ -266,7 +300,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         </Box>
       )}
 
-      <DialogContent sx={{ px:3, py:2 }}>
+      <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' && (
           <EmailStep
             initialEmail={email}
