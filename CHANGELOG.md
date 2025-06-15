@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.3] - 2025-06-15
+
+### Changed
+- Login modal dark background is now dark blue
+
+### Fixed
+- Fixed login modal step separators in mobile viewport
+
 ## [1.2.2] - 2025-06-14
 
 ### Added

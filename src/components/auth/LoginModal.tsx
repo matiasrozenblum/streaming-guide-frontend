@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent,
-  IconButton, Box, Stepper, Step, StepLabel, useTheme
+  IconButton, Box, useTheme
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
@@ -18,10 +18,7 @@ import PasswordStep from './steps/PasswordStep';
 import ExistingUserStep from './steps/ExistingUserStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
-import { styled } from '@mui/material/styles';
 import { useTooltip } from '@/contexts/TooltipContext';
-import StepConnector, { stepConnectorClasses } from '@mui/material/StepConnector';
-import type { StepIconProps } from '@mui/material/StepIcon';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -59,75 +56,69 @@ const mapGenderToBackend = (g: string) => {
   }
 };
 
-// Custom StepConnector with loading animation
-const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(({ theme, isLoading }) => ({
-  [`& .${stepConnectorClasses.line}`]: {
-    borderTopWidth: 3,
-    borderRadius: 1,
-    borderColor: theme.palette.divider,
-    position: 'relative',
-    overflow: 'hidden',
-    transition: 'border-color 0.3s',
-  },
-  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.primary.main,
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-    borderColor: isLoading ? theme.palette.divider : theme.palette.primary.main,
-    '&::after': isLoading ? {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      height: '100%',
-      width: '100%',
-      background: `linear-gradient(90deg, transparent 0%, ${theme.palette.primary.main} 50%, transparent 100%)`,
-      animation: 'progress-wave 1.5s infinite',
-    } : {},
-  },
-  '@keyframes progress-wave': {
-    '0%': {
-      transform: 'translateX(-100%)',
-    },
-    '100%': {
-      transform: 'translateX(100%)',
-    },
-  },
-}));
-
-// Custom StepIcon that uses your icons and colors them blue for active/completed steps
-function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: boolean; completedSteps?: Set<StepKey> }) {
-  const { active, completed, icon, stepKey, isLoading, completedSteps } = props;
+// FlexStepper: Custom stepper with even connectors
+function FlexStepper({ steps, activeStep, completedSteps, isLoading, stepLabels, stepIcons }: { steps: StepKey[], activeStep: number, completedSteps: Set<StepKey>, isLoading: boolean, stepLabels: Record<StepKey, string>, stepIcons: Record<StepKey, React.ReactNode> }) {
   const theme = useTheme();
-  const iconKey = stepKey || (typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon);
-  
-  const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
-  const shouldBeBlue = isStepCompleted || (active && !isLoading);
-  const shouldAnimate = active && isLoading;
-
   return (
-    <Box
-      sx={{
-        color: shouldBeBlue ? theme.palette.primary.main : theme.palette.text.disabled,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 32,
-        height: 32,
-        fontSize: 22,
-        transition: 'color 0.3s',
-        animation: shouldAnimate ? 'pulse 1.5s infinite' : 'none',
-        '@keyframes pulse': {
-          '0%, 100%': {
-            opacity: 0.5,
-          },
-          '50%': {
-            opacity: 1,
-          },
-        },
-      }}
-    >
-      {STEP_ICONS[iconKey as StepKey]}
+    <Box display="flex" alignItems="center" width="100%" mb={2}>
+      {steps.map((key, idx) => {
+        const isCompleted = completedSteps.has(key);
+        const isActive = activeStep === idx;
+        const isLast = idx === steps.length - 1;
+        return (
+          <React.Fragment key={key}>
+            <Box display="flex" flexDirection="column" alignItems="center" minWidth={0}>
+              <Box
+                sx={{
+                  color: isCompleted || (isActive && !isLoading)
+                    ? theme.palette.primary.main
+                    : theme.palette.text.disabled,
+                  fontSize: 22,
+                  mb: 1,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  width: 32,
+                  height: 32,
+                }}
+              >
+                {stepIcons[key]}
+              </Box>
+              <Box
+                sx={{
+                  fontSize: 13,
+                  fontWeight: isActive ? 600 : 400,
+                  color: isActive || isCompleted
+                    ? theme.palette.primary.main
+                    : theme.palette.text.secondary,
+                  mt: '2px',
+                  mb: 0,
+                  textAlign: 'center',
+                  minWidth: 0,
+                  maxWidth: 60,
+                  overflow: 'hidden',
+                  textOverflow: 'ellipsis',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                {stepLabels[key]}
+              </Box>
+            </Box>
+            {!isLast && (
+              <Box flex={1} height={3} mx={0.5} alignSelf="center"
+                sx={{
+                  background:
+                    isCompleted
+                      ? theme.palette.primary.main
+                      : theme.palette.divider,
+                  borderRadius: 1,
+                  minWidth: 12,
+                }}
+              />
+            )}
+          </React.Fragment>
+        );
+      })}
     </Box>
   );
 }
@@ -214,9 +205,16 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
-      PaperProps={{ sx:{ borderRadius:2, bgcolor:theme.palette.background.paper } }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper
+          }
+        }
+      }}
     >
-      <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2 }}>
+      <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
           isUserExisting && step==='existing-user'
             ? 'Iniciar Sesión'
@@ -234,39 +232,19 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       </DialogTitle>
 
       {phase === 'flow' && (
-        <Box sx={{ px:3, pt:2 }}>
-          <Stepper
-            nonLinear
-            alternativeLabel
+        <Box sx={{ px:3, pt:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+          <FlexStepper
+            steps={steps}
             activeStep={activeStep}
-            connector={<BlueConnector isLoading={isLoading} />}
-          >
-            {steps.map((key) => {
-              const isCompleted = completedSteps.has(key);
-              const isActive = step === key;
-              const isCurrentlyLoading = isActive && isLoading;
-              return (
-                <Step key={key} completed={isCompleted} active={isActive}>
-                  <StepLabel
-                    StepIconComponent={(props) => (
-                      <CustomStepIcon 
-                        {...props} 
-                        stepKey={key}
-                        isLoading={isCurrentlyLoading}
-                        completedSteps={completedSteps}
-                      />
-                    )}
-                  >
-                    {STEP_LABELS[key]}
-                  </StepLabel>
-                </Step>
-              );
-            })}
-          </Stepper>
+            completedSteps={completedSteps}
+            isLoading={isLoading}
+            stepLabels={STEP_LABELS}
+            stepIcons={STEP_ICONS}
+          />
         </Box>
       )}
 
-      <DialogContent sx={{ px:3, py:2 }}>
+      <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' && (
           <EmailStep
             initialEmail={email}
