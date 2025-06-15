@@ -17,6 +17,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.2] - 2025-06-14
+
+### Added
+- Added home page visit event
+
+### Changed
+- Email step in login modal refined, cleaned texts and now not defaulting to sign up stepper
+
+### Fixed
+- Fixed tooltip light mode
+
 ## [1.2.1] - 2025-06-13
 
 ### Changed

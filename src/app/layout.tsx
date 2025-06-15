@@ -16,6 +16,7 @@ import {
   ConditionalClarityLoader, 
   ConditionalHotjarLoader 
 } from '@/components/ConditionalTrackingLoader';
+import PageviewTracker from '@/components/PageviewTracker';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -63,6 +64,7 @@ export default function RootLayout({
                 <CustomThemeProvider>
                   <YouTubePlayerProvider>
                     <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+                      <PageviewTracker />
                       {children}
                       <Footer />
                     </div>
