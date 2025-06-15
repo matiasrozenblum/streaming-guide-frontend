@@ -268,6 +268,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         marginTop: '0px',
                         marginBottom: '0px',
                         lineHeight: 1.1,
+                        color: (theme) => (isActive || isCompleted) ? theme.palette.primary.main : theme.palette.text.secondary,
                       },
                     }}
                     StepIconComponent={(props) => (
