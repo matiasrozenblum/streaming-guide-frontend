@@ -268,7 +268,14 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         marginTop: '0px',
                         marginBottom: '0px',
                         lineHeight: 1.1,
-                        color: (theme) => (isActive || isCompleted) ? theme.palette.primary.main : theme.palette.text.secondary,
+                        color: (theme) => theme.palette.text.secondary,
+                        fontWeight: 600,
+                        fontSize: 13,
+                      },
+                      '.MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed': {
+                        color: (theme) => theme.palette.primary.main,
+                        marginTop: '0px',
+                        marginBottom: '0px',
                       },
                     }}
                     StepIconComponent={(props) => (
