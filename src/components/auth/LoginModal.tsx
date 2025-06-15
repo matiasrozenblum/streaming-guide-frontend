@@ -277,6 +277,10 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         marginTop: '0px',
                         marginBottom: '0px',
                       },
+                      '.MuiStepLabel-label.MuiStepLabel-alternativeLabel': {
+                        marginTop: '0px !important',
+                        marginBottom: '0px !important',
+                      },
                     }}
                     StepIconComponent={(props) => (
                       <CustomStepIcon 
