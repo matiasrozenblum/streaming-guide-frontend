@@ -1,6 +1,6 @@
 "use client";
 import Header from '@/components/Header';
-import { Box, Container, Typography } from '@mui/material';
+import { Box, Container, Typography, Paper, Divider } from '@mui/material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useTheme } from '@mui/material';
 
@@ -19,20 +19,47 @@ export default function TerminosYCondiciones() {
       }}
     >
       <Header />
-      <Container maxWidth="sm" sx={{ mt: 4, mb: 8 }}>
-        <Typography variant="h4" gutterBottom>
+      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Paper 
+        elevation={1} 
+        sx={{ 
+          p: 4,
+          backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 41, 59, 0.9)',
+          backdropFilter: 'blur(8px)',
+        }}
+      >
+        <Typography variant="h3" component="h1" gutterBottom align="center">
           Términos y Condiciones
         </Typography>
-        <Box sx={{ mt: 3 }}>
+        
+        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
+          Última actualización: {new Date().toLocaleDateString('es-ES')}
+        </Typography>
+
+        <Divider sx={{ my: 3 }} />
+
+        <Box sx={{ '& > *': { mb: 3 } }}>
           <Typography variant="h6" gutterBottom>1. Descripción del servicio</Typography>
           <Typography paragraph>
             LA GUÍA DEL STREAMING es un sitio web que organiza y presenta la programación de contenidos de YouTube, destacando programas relevantes, populares o de interés general para el público argentino. A través de una grilla interactiva, los usuarios pueden acceder a programas pasados, en vivo o programados para el futuro mediante redirecciones a la plataforma de YouTube.
           </Typography>
           <Typography variant="h6" gutterBottom>2. Uso del sitio</Typography>
           <Typography paragraph>
+            Al utilizar este sitio web, usted acepta estar sujeto a los{' '}
+            <a 
+              href="https://www.youtube.com/t/terms" 
+              target="_blank" 
+              rel="noopener noreferrer"
+              style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
+            >
+              Términos de Servicio de YouTube
+            </a>
+            .
+          </Typography>
+          <Typography paragraph>
             El uso del sitio debe ser legal y respetuoso. Queda prohibido:
           </Typography>
-          <ul style={{ marginLeft: 24 }}>
+          <ul style={{ marginLeft: 24, marginBottom: 16 }}>
             <li>Reproducir, copiar o distribuir el contenido del sitio sin autorización.</li>
             <li>Utilizar herramientas automáticas (bots) para acceder masivamente al sitio.</li>
             <li>Modificar o interferir con el funcionamiento de la plataforma.</li>
@@ -51,7 +78,8 @@ export default function TerminosYCondiciones() {
             Nos reservamos el derecho de modificar estos términos en cualquier momento. Las actualizaciones serán publicadas en esta misma página.
           </Typography>
         </Box>
-      </Container>
+      </Paper>
+    </Container>
     </Box>
   );
 } 

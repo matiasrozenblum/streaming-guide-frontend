@@ -195,7 +195,7 @@ export default function ProgramsPage() {
   return (
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
-        <Typography variant="h4">Programas</Typography>
+        <Typography variant="h4" color="text.primary">Programas</Typography>
         <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
           Nuevo Programa
         </Button>

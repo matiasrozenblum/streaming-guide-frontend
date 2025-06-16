@@ -16,6 +16,10 @@ import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import type { ChannelWithSchedules } from '@/types/channel';
 import Header from './Header';
 import { useDeviceId } from '@/hooks/useDeviceId';
+import { event as gaEvent } from '@/lib/gtag';
+import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
+
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
 const MotionBox = motion(Box);
@@ -30,6 +34,8 @@ interface HomeClientProps {
 
 export default function HomeClient({ initialData }: HomeClientProps) {
   const deviceId = useDeviceId();
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
@@ -99,13 +105,22 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       isMounted = false;
       clearInterval(intervalId);
     };
-  }, [deviceId]);
+  }, [deviceId, setLiveStatuses]);
 
   useEffect(() => {
     if (flattened.length > 0) {
-
+      gaEvent({
+        action: 'home_page_visit',
+        params: {
+          has_schedules: flattened.length > 0,
+          channel_count: channels.length,
+          schedule_count: flattened.length,
+        },
+        userData: typedSession?.user
+      });
     }
-  }, [flattened]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   return (
     <>

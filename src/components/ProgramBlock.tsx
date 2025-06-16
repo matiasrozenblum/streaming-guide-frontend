@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -11,7 +11,6 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
-import Clarity from '@microsoft/clarity';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
@@ -19,6 +18,8 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { usePush } from '@/contexts/PushContext';
 import LoginModal from './auth/LoginModal';
+import IOSNotificationSetup from './IOSNotificationSetup';
+import { useTooltip } from '@/contexts/TooltipContext';
 
 dayjs.extend(customParseFormat);
 
@@ -36,6 +37,8 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
+  isWeeklyOverride?: boolean;
+  overrideType?: string;
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -57,6 +60,8 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
+  isWeeklyOverride,
+  overrideType,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -66,16 +71,24 @@ export const ProgramBlock: React.FC<Props> = ({
   const streamUrl = dynamic.stream_url;
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
+  const theme = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister } = usePush();
-  const [openTooltip, setOpenTooltip] = useState(false);
+  const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
+  const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
+  const [iosSetupOpen, setIOSSetupOpen] = useState(false);
+  const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
+  const blockRef = useRef<HTMLDivElement>(null);
+  const [blockWidth, setBlockWidth] = useState<number | null>(null);
+  
+  const tooltipId = `program-${id}`;
+  const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -108,8 +121,16 @@ export const ProgramBlock: React.FC<Props> = ({
     e.preventDefault();
     if (!streamUrl) return;
 
-    Clarity.setTag('program_name', name);
-    Clarity.event(isLive ? 'click_youtube_live' : 'click_youtube_deferred');
+    // Safe Clarity calls - only if Clarity is loaded
+    if (typeof window !== 'undefined' && 'clarity' in window) {
+      try {
+        const clarityWindow = window as Window & { clarity: (action: string, ...args: unknown[]) => void };
+        clarityWindow.clarity('set', 'program_name', name);
+        clarityWindow.clarity('event', isLive ? 'click_youtube_live' : 'click_youtube_deferred');
+      } catch (error) {
+        console.warn('Clarity tracking failed:', error);
+      }
+    }
 
     gaEvent({
       action: isLive ? 'click_youtube_live' : 'click_youtube_deferred',
@@ -158,20 +179,60 @@ export const ProgramBlock: React.FC<Props> = ({
       let p256dh = '';
       let auth = '';
       let pushErrorReason = '';
-      try {
-        pushSubscription = await subscribeAndRegister();
-        if (pushSubscription) {
-          endpoint = pushSubscription.endpoint;
-          p256dh = arrayBufferToBase64(pushSubscription.getKey('p256dh'));
-          auth = arrayBufferToBase64(pushSubscription.getKey('auth'));
+      let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
+
+      // For iOS users without PWA, use email-only subscription to reduce friction
+      if (isIOSDevice && !isPWAInstalled) {
+        if (willSubscribe) {
+          notificationMethod = 'email';
+        } else {
+          notificationMethod = 'email'; // Keep it simple for unsubscription
         }
-      } catch (error) {
-        pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
-        console.warn('Failed to get push subscription:', error);
+        // Skip push subscription setup entirely for iOS without PWA
+      } else {
+        // Normal push subscription flow for other platforms or iOS with PWA
+        try {
+          pushSubscription = await subscribeAndRegister();
+          if (pushSubscription) {
+            endpoint = pushSubscription.endpoint;
+            
+            // Enhanced cross-platform key extraction with detailed logging
+            try {
+              const p256dhKey = pushSubscription.getKey('p256dh');
+              const authKey = pushSubscription.getKey('auth');
+              
+              if (p256dhKey && authKey) {
+                p256dh = arrayBufferToBase64(p256dhKey);
+                auth = arrayBufferToBase64(authKey);
+              } else {
+                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+              }
+            } catch (keyError) {
+              console.error('Failed to extract push subscription keys:', keyError);
+              pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
+            }
+          } else {
+            console.warn('Push subscription is null');
+          }
+        } catch (error) {
+          pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
+          console.warn('Failed to get push subscription:', error);
+          
+          // For critical errors, still show setup dialog
+          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
+              error.message.includes('home screen')) {
+            setIsOn(prevIsOn); // Revert UI
+            setIsLoading(false);
+            globalCloseTooltip(tooltipId); // Close tooltip before opening modal
+            setIOSSetupOpen(true);
+            return;
+          }
+        }
       }
 
-      // Validate push subscription before sending to backend
+      // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
+      
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
@@ -181,20 +242,19 @@ export const ProgramBlock: React.FC<Props> = ({
             program_id: id,
             program_name: name,
             reason,
-            endpoint,
-            p256dh,
-            auth,
+            endpoint: endpoint || 'empty',
+            p256dh: p256dh || 'empty', 
+            auth: auth || 'empty',
             has_push: !!pushSubscription,
           },
           userData: typedSession?.user
         });
       }
-
-      // Subscribe to program (only one request)
+      
       await api.post(
         `/programs/${id}/subscribe`,
         { 
-          notificationMethod: 'both',
+          notificationMethod,
           endpoint: isValidPush ? endpoint : undefined,
           p256dh: isValidPush ? p256dh : undefined,
           auth: isValidPush ? auth : undefined
@@ -204,13 +264,20 @@ export const ProgramBlock: React.FC<Props> = ({
         }
       );
       
+      // Show helpful message for iOS users who subscribed via email
+      if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
+        setTimeout(() => {
+          setShowIOSPushSnackbar(true);
+        }, 1000);
+      }
+      
       // Track subscription event
       gaEvent({
-        action: 'program_subscribe',
+        action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
         params: {
           program_id: id,
           program_name: name,
-          notification_method: 'both',
+          notification_method: notificationMethod,
           has_push: !!pushSubscription,
         },
         userData: typedSession?.user
@@ -218,7 +285,18 @@ export const ProgramBlock: React.FC<Props> = ({
     } catch (error) {
       // Revert UI on error
       setIsOn(prevIsOn);
-      alert('Error updating subscription. Please try again.');
+      
+      // Provide user-friendly error messages
+      let errorMessage = 'Error updating subscription. Please try again.';
+      if (error instanceof Error) {
+        if (error.message.includes('pantalla de inicio') || error.message.includes('home screen')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('permission') || error.message.includes('notificaciones')) {
+          errorMessage = error.message;
+        }
+      }
+      
+      alert(errorMessage);
       console.error('Error updating subscription:', error);
       
       // Track subscription error
@@ -254,8 +332,27 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(true);
+        globalOpenTooltip(tooltipId);
       }, 500);
+    }
+  };
+
+  // Apertura inmediata al hacer click
+  const handleTooltipClick = () => {
+    // Cancelar cualquier timeout pendiente
+    if (openTimeoutRef.current) {
+      clearTimeout(openTimeoutRef.current);
+      openTimeoutRef.current = null;
+    }
+    if (closeTimeoutRef.current) {
+      clearTimeout(closeTimeoutRef.current);
+      closeTimeoutRef.current = null;
+    }
+    // Abrir/cerrar tooltip inmediatamente
+    if (isTooltipOpenForThis) {
+      globalCloseTooltip(tooltipId);
+    } else {
+      globalOpenTooltip(tooltipId);
     }
   };
 
@@ -267,82 +364,150 @@ export const ProgramBlock: React.FC<Props> = ({
     }
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
-        setOpenTooltip(false);
+        globalCloseTooltip(tooltipId);
       }, 100);
     }
   };
 
+  useEffect(() => {
+    if (!blockRef.current) return;
+    const handleResize = () => {
+      setBlockWidth(blockRef.current ? blockRef.current.offsetWidth : null);
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  // Responsive pill styles
+  let pillFontSize = '0.82rem';
+  let pillPx = 1;
+  let pillPy = 0.1;
+  let pillTop = 6;
+  let pillLeft = 6;
+  let pillLabel = overrideType === 'cancel'
+    ? 'Cancelado'
+    : '¡Hoy!';
+  if (blockWidth !== null) {
+    if (blockWidth < 90) {
+      pillFontSize = '0.7rem';
+      pillPx = 0.5;
+      pillPy = 0;
+      pillTop = 3;
+      pillLeft = 3;
+      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
+    } else if (blockWidth < 130) {
+      pillFontSize = '0.76rem';
+      pillPx = 0.7;
+      pillPy = 0.05;
+      pillTop = 4;
+      pillLeft = 4;
+      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
+    }
+  }
+
   // Contenido del tooltip
   const tooltipContent = (
-    <Box
-      sx={{ p: tokens.spacing.sm }}
-    >
-      <Text variant="subtitle1" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
+    <Box sx={{ p: tokens.spacing.sm }}>
+      <Text
+        variant="subtitle1"
+        fontWeight={tokens.typography.fontWeight.bold}
+        sx={{
+          color: mode === 'dark' ? '#fff' : theme.palette.text.primary
+        }}
+      >
         {name}
       </Text>
-      <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
+      <Text
+        variant="body2"
+        sx={{
+          mt: tokens.spacing.sm,
+          color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1
+        }}
+      >
         {start} - {end}
+        {isWeeklyOverride && (
+          <span style={{ color: '#ff9800', fontWeight: 700, marginLeft: 8, fontSize: '0.95em', whiteSpace: 'nowrap' }}>
+            ¡Horario especial!
+          </span>
+        )}
       </Text>
       {description && (
-        <Text variant="body2" sx={{ mt: tokens.spacing.sm, color: 'rgba(255,255,255,0.8) !important' }}>
+        <Text
+          variant="body2"
+          sx={{
+            mt: tokens.spacing.sm,
+            color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary
+          }}
+        >
           {description}
         </Text>
       )}
       {panelists?.length ? (
         <Box sx={{ mt: tokens.spacing.sm }}>
-          <Text variant="body2" fontWeight={tokens.typography.fontWeight.bold} sx={{ color: '#fff !important' }}>
+          <Text
+            variant="body2"
+            fontWeight={tokens.typography.fontWeight.bold}
+            sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
+          >
             Panelistas:
           </Text>
-          <Text variant="body2" sx={{ color: 'rgba(255,255,255,0.8) !important' }}>
+          <Text
+            variant="body2"
+            sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary }}
+          >
             {panelists.map(p => p.name).join(', ')}
           </Text>
         </Box>
       ) : null}
-      {streamUrl && (
-        <BaseButton
-          onClick={handleClick}
-          onTouchStart={handleClick}
-          variant="contained"
-          size="small"
-          startIcon={<OpenInNew />}
-          className="youtube-button"
-          sx={{
-            mt: tokens.spacing.md,
-            backgroundColor: '#FF0000',
-            '&:hover': { backgroundColor: '#cc0000' },
-            fontWeight: tokens.typography.fontWeight.bold,
-            textTransform: 'none',
-            fontSize: tokens.typography.fontSize.sm,
-            boxShadow: 'none',
-            touchAction: 'manipulation',
-          }}
-        >
-          {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-        </BaseButton>
-      )}
-      <IconButton
-        size="small"
-        aria-label="Notificarme"
-        onClick={handleBellClick}
-        ref={bellRef}
-        sx={{
-          mt: tokens.spacing.md,
-          color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
-        }}
-        disabled={isLoading}
-      >
-        {isLoading ? (
-          <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
-            <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
-              <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
-                <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
-              </circle>
-            </svg>
-          </Box>
-        ) : (
-          <Notifications color={isOn ? "primary" : "disabled"} />
+      <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
+        {streamUrl && (
+          <BaseButton
+            onClick={handleClick}
+            onTouchStart={handleClick}
+            variant="contained"
+            size="small"
+            startIcon={<OpenInNew />}
+            className="youtube-button"
+            sx={{
+              backgroundColor: '#FF0000',
+              '&:hover': { backgroundColor: '#cc0000' },
+              fontWeight: tokens.typography.fontWeight.bold,
+              textTransform: 'none',
+              fontSize: tokens.typography.fontSize.sm,
+              boxShadow: 'none',
+              touchAction: 'manipulation',
+            }}
+          >
+            {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+          </BaseButton>
         )}
-      </IconButton>
+        <IconButton
+          size="small"
+          aria-label="Notificarme"
+          onClick={handleBellClick}
+          ref={bellRef}
+          sx={{
+            color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
+          }}
+          disabled={isLoading}
+        >
+          {isLoading ? (
+            <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
+              <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
+                <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
+                  <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
+                </circle>
+              </svg>
+            </Box>
+          ) : (
+            <Notifications color={isOn ? "primary" : "disabled"} />
+          )}
+        </IconButton>
+      </Box>
     </Box>
   );
 
@@ -352,7 +517,7 @@ export const ProgramBlock: React.FC<Props> = ({
         if (bellRef.current?.contains(event.target as Node)) {
           return;
         }
-        if (isMobile) setOpenTooltip(false);
+        if (isMobile) globalCloseTooltip(tooltipId);
       }
     }>
       <>
@@ -360,18 +525,32 @@ export const ProgramBlock: React.FC<Props> = ({
           title={tooltipContent}
           arrow
           placement="top"
-          open={openTooltip}
+          open={isTooltipOpenForThis}
           onOpen={handleTooltipOpen}
           onClose={handleTooltipClose}
           disableTouchListener={isMobile}
           disableFocusListener={isMobile}
-          PopperProps={{ onMouseEnter: handleTooltipOpen, onMouseLeave: handleTooltipClose }}
+          PopperProps={{
+            onMouseEnter: handleTooltipOpen,
+            onMouseLeave: handleTooltipClose,
+            sx: {
+              '& .MuiTooltip-tooltip': {
+                backgroundColor: mode === 'light'
+                  ? theme.palette.background.paper
+                  : '#0F172A',
+                color: mode === 'light'
+                  ? theme.palette.text.primary
+                  : '#fff',
+                boxShadow: theme.shadows[3],
+              }
+            }
+          }}
         >
           <Box
             className="program-block"
             onMouseEnter={handleTooltipOpen}
             onMouseLeave={handleTooltipClose}
-            onClick={() => isMobile && setOpenTooltip(!openTooltip)}
+            onClick={handleTooltipClick}
             style={{
               position: 'absolute',
               left: `${offsetPx}px`,
@@ -400,6 +579,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 transform: 'scale(1.01)',
               },
             }}
+            ref={blockRef}
           >
             <Box
               sx={{
@@ -429,6 +609,58 @@ export const ProgramBlock: React.FC<Props> = ({
                 >
                   LIVE
                 </Box>
+              )}
+              {isWeeklyOverride && (
+                (isMobile || duration < 120) ? (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: 6,
+                      left: 6,
+                      width: 14,
+                      height: 14,
+                      backgroundColor: 'rgba(255, 152, 0, 0.5)',
+                      borderRadius: '50%',
+                      border: '1px solid rgba(255, 152, 0, 1)',
+                      zIndex: 5,
+                      pointerEvents: 'none',
+                      boxShadow: 1,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                    }}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
+                  />
+                ) : (
+                  <Box
+                    sx={{
+                      position: 'absolute',
+                      top: pillTop,
+                      left: pillLeft,
+                      backgroundColor: 'rgba(255, 152, 0, 0.18)',
+                      color: '#ff9800',
+                      fontWeight: 700,
+                      fontSize: pillFontSize,
+                      borderRadius: '999px',
+                      px: pillPx,
+                      py: pillPy,
+                      border: '1px solid #ff9800',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      boxShadow: 1,
+                      zIndex: 5,
+                      pointerEvents: 'none',
+                      whiteSpace: 'nowrap',
+                      maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
+                      textOverflow: 'ellipsis',
+                      overflow: 'hidden',
+                    }}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
+                  >
+                    {pillLabel}
+                  </Box>
+                )
               )}
               <Box
                 sx={{
@@ -497,6 +729,53 @@ export const ProgramBlock: React.FC<Props> = ({
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
+        <IOSNotificationSetup 
+          open={iosSetupOpen} 
+          onClose={() => setIOSSetupOpen(false)} 
+          onComplete={() => {
+            setIOSSetupOpen(false);
+            // Optionally trigger the subscription again after setup
+            if (isPWAInstalled) {
+              handleBellClick({ stopPropagation: () => {} } as React.MouseEvent);
+            }
+          }}
+        />
+        <Snackbar
+          open={showIOSPushSnackbar}
+          autoHideDuration={8000}
+          onClose={() => setShowIOSPushSnackbar(false)}
+          anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+          sx={{ zIndex: 9999 }}
+        >
+          <Alert 
+            severity="info" 
+            onClose={() => setShowIOSPushSnackbar(false)}
+            sx={{ 
+              minWidth: 280,
+            }}
+          >
+            Para recibir notificaciones push en iOS, dirígete a{' '}
+            <Button 
+              color="inherit" 
+              size="small" 
+              href="/subscriptions"
+              sx={{ 
+                textDecoration: 'underline',
+                p: 0,
+                minWidth: 'auto',
+                fontSize: 'inherit',
+                fontWeight: 'inherit',
+                textTransform: 'none',
+                '&:hover': {
+                  backgroundColor: 'transparent',
+                  textDecoration: 'underline',
+                }
+              }}
+            >
+              Tus favoritos
+            </Button>
+          </Alert>
+        </Snackbar>
       </>
     </ClickAwayListener>
   );

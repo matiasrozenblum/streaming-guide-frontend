@@ -43,7 +43,7 @@ export default function EmailStep({
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <TextField
-        label="Correo electrónico"
+        placeholder="Correo electrónico"
         type="email"
         fullWidth
         value={email}

@@ -35,7 +35,7 @@ export function useDeviceId() {
     } catch (error) {
       console.error('❌ [useDeviceId] Failed to register device:', error);
     }
-  }, [typedSession?.accessToken, typedSession?.user?.id, typedSession?.user?.role]);
+  }, [typedSession?.accessToken, typedSession?.user?.id]);
 
   useEffect(() => {
     let id = localStorage.getItem('device_id');
@@ -48,7 +48,7 @@ export function useDeviceId() {
     if (typedSession?.accessToken && id) {
       registerDevice(id);
     }
-  }, [typedSession?.accessToken, typedSession?.user?.id, typedSession?.user?.role, registerDevice]);
+  }, [typedSession?.accessToken, typedSession?.user?.id, registerDevice]);
 
   return deviceId;
 }

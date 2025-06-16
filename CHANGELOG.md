@@ -17,6 +17,81 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.3] - 2025-06-16
+
+### Changed
+- Weekly change pill restyle
+
+## [1.2.3] - 2025-06-15
+
+### Changed
+- Login modal dark background is now dark blue
+
+### Fixed
+- Fixed login modal step separators in mobile viewport
+
+## [1.2.2] - 2025-06-14
+
+### Added
+- Added home page visit event
+
+### Changed
+- Email step in login modal refined, cleaned texts and now not defaulting to sign up stepper
+
+### Fixed
+- Fixed tooltip light mode
+
+## [1.2.1] - 2025-06-13
+
+### Changed
+- Changed browser alerts for MUI alerts in profile page
+- Now cookies preferences appear collapsed by default
+
+### Fixed
+- Fixed date formatting
+
+## [1.2.0] - 2025-06-13
+
+### Added
+- Added weekly updates backoffice section and functionalities
+
+### Changed
+- Changed backoffice dashboard to have two new buttons to clean cache and refresh youtube video ids
+- Now all backoffice pages have dark mode implemented
+
+## [1.1.1] - 2025-06-10
+
+### Changed
+- Reduced spacing in cookie banner for mobile
+
+## [1.1.0] - 2025-06-10
+
+### Added
+- Added cookies preference
+- Added privacy policy page
+- Added more information to TyC page
+- Added YouTube compliance info to both pages
+- Added more info to footer
+
+## [1.0.3] - 2025-06-09
+
+### Added
+- Added push notification logic for iOS.
+- Added alert dialog indicating iOS users that subscriptions will be email-only unless installing PWA.
+- Added PWA installation guide in the subscriptions page for iOS users with message of completion.
+- Added notification method filter por iOS users.
+
+### Changed
+- Refactored sw logic
+
+## [1.0.2] - 2025-06-05
+
+### Changed
+- Now we have 2 color palletes, one for each theme dark and light
+- Subscription section colors are now the same as the grid's
+- Changed existing step user message to use user first name and gender
+- Made webpage logo clickable and with a redirect to the home page in pages other than the home page
+
 ## [1.0.1] - 2025-06-04
 
 ### Changed

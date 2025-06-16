@@ -5,19 +5,23 @@
 @tailwind utilities;
 
 :root {
-  --scrollbar-thumb: #cbd5e1;
-  --scrollbar-track: #f1f5f9;
   --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
   --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
   --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  
+  /* PWA Safe Area Support */
+  --safe-area-inset-top: env(safe-area-inset-top);
+  --safe-area-inset-right: env(safe-area-inset-right);
+  --safe-area-inset-bottom: env(safe-area-inset-bottom);
+  --safe-area-inset-left: env(safe-area-inset-left);
 }
 
-[data-theme='dark'] {
-  --scrollbar-thumb: #475569;
-  --scrollbar-track: #1e293b;
-  --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
-  --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
-  --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+@media (prefers-color-scheme: dark) {
+  :root {
+    --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.3);
+    --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3);
+    --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.3), 0 4px 6px -4px rgb(0 0 0 / 0.3);
+  }
 }
 
 * {
@@ -31,38 +35,88 @@ body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   transition: background-color 0.2s ease-in-out, color 0.2s ease-in-out;
+  color: rgb(var(--foreground-rgb));
+  background: linear-gradient(
+      to bottom,
+      transparent,
+      rgb(var(--background-end-rgb))
+    )
+    rgb(var(--background-start-rgb));
 }
 
-/* Custom scrollbar styles */
-::-webkit-scrollbar {
+/* Custom scrollbar styles - Light theme */
+html[data-theme="light"] ::-webkit-scrollbar {
   width: 8px;
   height: 8px;
 }
 
-::-webkit-scrollbar-track {
-  background: var(--scrollbar-track);
-  border-radius: 4px;
+html[data-theme="light"] ::-webkit-scrollbar-corner {
+  background: #f1f5f9;
 }
 
-::-webkit-scrollbar-thumb {
-  background: var(--scrollbar-thumb);
-  border-radius: 4px;
-  border: 2px solid var(--scrollbar-track);
+html[data-theme="light"] ::-webkit-scrollbar-track {
+  background: #f1f5f9;
 }
 
-::-webkit-scrollbar-thumb:hover {
+html[data-theme="light"] ::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border: 2px solid #f1f5f9;
+}
+
+html[data-theme="light"] ::-webkit-scrollbar-thumb:hover {
   background: #94a3b8;
 }
 
-/* Firefox scrollbar styles */
-* {
-  scrollbar-width: thin;
-  scrollbar-color: var(--scrollbar-thumb) var(--scrollbar-track);
+/* Custom scrollbar styles - Dark theme */
+html[data-theme="dark"] ::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
 }
 
-/* Hide scrollbar for mobile */
+html[data-theme="dark"] ::-webkit-scrollbar-corner {
+  background: #1e293b;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-track {
+  background: #1e293b;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb {
+  background: #475569;
+  border: 2px solid #1e293b;
+}
+
+html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: #64748b;
+}
+
+/* Firefox scrollbar styles - Light theme */
+@-moz-document url-prefix() {
+  html[data-theme="light"] * {
+    scrollbar-width: thin;
+    scrollbar-color: #cbd5e1 #f1f5f9;
+  }
+}
+
+/* Firefox scrollbar styles - Dark theme */
+@-moz-document url-prefix() {
+  html[data-theme="dark"] * {
+    scrollbar-width: thin;
+    scrollbar-color: #475569 #1e293b;
+  }
+}
+
+/* Hide scrollbar for mobile - Light theme */
 @media (max-width: 640px) {
-  ::-webkit-scrollbar {
+  html[data-theme="light"] ::-webkit-scrollbar {
+    width: 4px;
+    height: 4px;
+  }
+}
+
+/* Hide scrollbar for mobile - Dark theme */
+@media (max-width: 640px) {
+  html[data-theme="dark"] ::-webkit-scrollbar {
     width: 4px;
     height: 4px;
   }
@@ -105,4 +159,19 @@ html {
 .backdrop-blur {
   backdrop-filter: blur(8px);
   -webkit-backdrop-filter: blur(8px);
+}
+
+/* PWA Status Bar Support */
+@supports (padding: max(0px)) {
+  .pwa-safe-area {
+    padding-left: env(safe-area-inset-left);
+    padding-right: env(safe-area-inset-right);
+    padding-bottom: env(safe-area-inset-bottom);
+  }
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
 }

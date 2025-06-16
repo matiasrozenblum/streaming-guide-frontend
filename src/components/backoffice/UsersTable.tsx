@@ -319,19 +319,7 @@ export function UsersTable() {
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Buscar por nombre, apellido, email o teléfono"
-          inputProps={{ style: { color: 'black' } }}
-          InputLabelProps={{ style: { color: 'black' } }}
-          sx={{
-            '& .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
-            },
-            '&:hover .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
-            },
-            '& .MuiOutlinedInput-root.Mui-focused .MuiOutlinedInput-notchedOutline': {
-              borderColor: 'black',
-            },
-          }}
+
         />
       </Box>
 

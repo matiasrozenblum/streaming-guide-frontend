@@ -1,5 +1,30 @@
+// next.config.js
+
+const withPWA = require('next-pwa')({
+  dest: 'public',
+  register: true,
+  skipWaiting: true,
+  disable: process.env.NODE_ENV === 'development',
+  // Let next-pwa generate the service worker automatically
+  runtimeCaching: [
+    {
+      urlPattern: /^https?.*/, 
+      handler: 'NetworkFirst',
+      options: {
+        cacheName: 'offlineCache',
+        expiration: {
+          maxEntries: 200,
+          maxAgeSeconds: 30 * 24 * 60 * 60, // 30 days
+        },
+      },
+    },
+  ],
+});
+
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  reactStrictMode: true,
+  // appDir is now stable in Next.js 15, no need for experimental flag
   images: {
     remotePatterns: [
       {
@@ -69,6 +94,6 @@ const nextConfig = {
       },
     ],
   },
-}
+};
 
-module.exports = nextConfig 
+module.exports = withPWA(nextConfig);

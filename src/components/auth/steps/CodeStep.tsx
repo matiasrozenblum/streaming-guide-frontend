@@ -5,10 +5,9 @@ import {
   Button,
   Alert,
   AlertTitle,
-  InputAdornment,
-  Typography
+  Typography,
+  useTheme
 } from '@mui/material';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface CodeStepProps {
@@ -20,6 +19,78 @@ interface CodeStepProps {
   error?: string;
 }
 
+// OtpInput component
+interface OtpInputProps {
+  value: string;
+  onChange: (val: string) => void;
+  length?: number;
+  disabled?: boolean;
+}
+function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputProps) {
+  const theme = useTheme();
+  const inputs = React.useRef<(HTMLInputElement | null)[]>([]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
+    const val = e.target.value.replace(/[^0-9]/g, ''); // Only numbers
+    if (!val) return;
+    const newValue = value.split('');
+    newValue[idx] = val[val.length - 1]; // Only last digit if pasted multiple
+    onChange(newValue.join(''));
+    // Move to next input
+    if (idx < length - 1 && val) {
+      inputs.current[idx + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
+    if (e.key === 'Backspace' && !value[idx] && idx > 0) {
+      const newValue = value.split('');
+      newValue[idx - 1] = '';
+      onChange(newValue.join(''));
+      inputs.current[idx - 1]?.focus();
+      e.preventDefault();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
+    const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, length);
+    if (paste.length === length) {
+      onChange(paste);
+      inputs.current[length - 1]?.focus();
+      e.preventDefault();
+    }
+  };
+
+  return (
+    <Box display="flex" gap={2} justifyContent="center" onPaste={handlePaste} mb={1}>
+      {Array.from({ length }).map((_, idx) => (
+        <TextField
+          key={idx}
+          inputRef={el => inputs.current[idx] = el}
+          value={value[idx] || ''}
+          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e, idx)}
+          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)}
+          inputProps={{
+            maxLength: 1,
+            style: {
+              textAlign: 'center',
+              fontSize: 20,
+              width: 12,
+              height: 20,
+              background: theme.palette.mode === 'dark' ? '#16213A' : '#fff',
+              color: theme.palette.mode === 'dark' ? '#fff' : '#111',
+              borderRadius: 8,
+            },
+            inputMode: 'numeric',
+            pattern: '[0-9]*',
+          }}
+          disabled={disabled}
+        />
+      ))}
+    </Box>
+  );
+}
+
 export default function CodeStep({
   email,
   initialCode = '',
@@ -28,7 +99,7 @@ export default function CodeStep({
   isLoading,
   error
 }: CodeStepProps) {
-  const [code, setCode] = useState(initialCode);
+  const [code, setCode] = useState(initialCode.padEnd(6, ''));
   const [localErr, setLocalErr] = useState('');
   const [countdown, setCountdown] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -45,12 +116,8 @@ export default function CodeStep({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code) {
-      setLocalErr('Ingresa el código de verificación');
-      return;
-    }
-    if (code.length < 6) {
-      setLocalErr('El código debe tener 6 caracteres');
+    if (!code || code.length < 6) {
+      setLocalErr('El código debe tener 6 dígitos');
       return;
     }
     setLocalErr('');
@@ -66,24 +133,9 @@ export default function CodeStep({
   return (
     <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
       <Typography variant="body2" textAlign="center">
-        Hemos enviado un código a <strong>{email}</strong>
+        Ingresá el código que recibiste en <strong>{email}</strong>
       </Typography>
-      <TextField
-        label="Código de 6 dígitos"
-        fullWidth
-        value={code}
-        onChange={e => setCode(e.target.value)}
-        disabled={isLoading}
-        inputProps={{ maxLength: 6 }}
-        InputProps={{
-          startAdornment: (
-            <InputAdornment position="start">
-              <VpnKeyIcon fontSize="small" />
-            </InputAdornment>
-          )
-        }}
-        autoFocus
-      />
+      <OtpInput value={code} onChange={setCode} length={6} disabled={isLoading} />
       {(localErr || error) && (
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
