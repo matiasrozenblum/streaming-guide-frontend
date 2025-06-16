@@ -387,9 +387,7 @@ export const ProgramBlock: React.FC<Props> = ({
   let pillLeft = 6;
   let pillLabel = overrideType === 'cancel'
     ? 'Cancelado'
-    : overrideType === 'time_change'
-      ? '¡Solo por hoy!'
-      : 'Reprogramado';
+    : '¡Hoy!';
   if (blockWidth !== null) {
     if (blockWidth < 90) {
       pillFontSize = '0.7rem';
@@ -621,9 +619,9 @@ export const ProgramBlock: React.FC<Props> = ({
                       left: 6,
                       width: 14,
                       height: 14,
-                      backgroundColor: '#ff9800',
+                      backgroundColor: 'rgba(255, 152, 0, 0.5)',
                       borderRadius: '50%',
-                      border: '2px solid #fff',
+                      border: '1px solid rgba(255, 152, 0, 1)',
                       zIndex: 5,
                       pointerEvents: 'none',
                       boxShadow: 1,
@@ -631,7 +629,7 @@ export const ProgramBlock: React.FC<Props> = ({
                       alignItems: 'center',
                       justifyContent: 'center',
                     }}
-                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
                   />
                 ) : (
                   <Box
@@ -658,7 +656,7 @@ export const ProgramBlock: React.FC<Props> = ({
                       textOverflow: 'ellipsis',
                       overflow: 'hidden',
                     }}
-                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Solo por hoy!'}
+                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
                   >
                     {pillLabel}
                   </Box>
