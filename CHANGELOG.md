@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.2.3] - 2025-06-16
+## [1.2.4] - 2025-06-16
 
 ### Changed
 - Weekly change pill restyle
