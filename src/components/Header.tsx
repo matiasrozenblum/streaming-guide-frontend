@@ -1,6 +1,7 @@
 import React from 'react';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
+import { useRouter } from 'next/navigation';
 import UserMenu from './UserMenu';
 import { ThemeToggle } from './ThemeToggle';
 import { tokens } from '@/design-system/tokens';
@@ -14,6 +15,7 @@ export default function Header() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
+  const router = useRouter();
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
@@ -41,13 +43,13 @@ export default function Header() {
       params: {},
       userData: typedSession?.user
     });
-    window.location.href = '/';
+    router.push('/');
   };
 
   const handleLogoClick = () => {
     // Only navigate if not already on home page
     if (!isHomePage) {
-      window.location.href = '/';
+      router.push('/');
     }
   };
 

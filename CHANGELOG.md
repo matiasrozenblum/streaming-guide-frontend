@@ -17,7 +17,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.2.3] - 2025-06-16
+## [1.2.5] - 2025-06-17
+
+### Changed
+- Now not reloading page on log in, log out or sign up completee.
+- Cleaned channels and programs backoffice pages with buttons and channe logos.
+- Added new program weekly override type and section
+
+
+## [1.2.4] - 2025-06-16
 
 ### Changed
 - Weekly change pill restyle

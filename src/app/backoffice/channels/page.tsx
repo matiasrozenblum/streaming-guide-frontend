@@ -217,7 +217,18 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>{channel.name}</TableCell>
                 <TableCell>
-                  {channel.handle && <a href={`https://www.youtube.com/${channel.handle}`} target="_blank" rel="noopener noreferrer">Ver canal</a>}
+                  {channel.handle && (
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      href={`https://www.youtube.com/${channel.handle}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      size="small"
+                    >
+                      Ver canal
+                    </Button>
+                  )}
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>

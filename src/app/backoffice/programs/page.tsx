@@ -213,31 +213,50 @@ export default function ProgramsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {programs.map(program => (
-              <TableRow key={program.id}>
-                <TableCell>
-                  {program.logo_url && (
-                    <Image src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
-                  )}
-                </TableCell>
-                <TableCell>{program.name}</TableCell>
-                <TableCell>{channels.find(c => c.id === program.channel_id)?.name || 'Sin canal'}</TableCell>
-                <TableCell>
-                  {program.youtube_url ? (
-                    <a href={program.youtube_url} target="_blank" rel="noopener noreferrer">Ver en YouTube</a>
-                  ) : (
-                    'Sin enlace'
-                  )}
-                </TableCell>
-                <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
-                  <IconButton onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
-                    <GroupIcon />
-                  </IconButton>
-                </TableCell>
-              </TableRow>
-            ))}
+            {programs.map(program => {
+              const channel = channels.find(c => c.id === program.channel_id);
+              return (
+                <TableRow key={program.id}>
+                  <TableCell>
+                    {program.logo_url && (
+                      <Image src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
+                    )}
+                  </TableCell>
+                  <TableCell>{program.name}</TableCell>
+                  <TableCell>
+                    <Box display="flex" alignItems="center" gap={1}>
+                      {channel?.logo_url && (
+                        <Image src={channel.logo_url} alt={channel.name} width={32} height={32} style={{ objectFit: 'contain', borderRadius: 4 }} />
+                      )}
+                      <span>{channel?.name || 'Sin canal'}</span>
+                    </Box>
+                  </TableCell>
+                  <TableCell>
+                    {program.youtube_url ? (
+                      <Button
+                        variant="contained"
+                        color="primary"
+                        href={program.youtube_url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        size="small"
+                      >
+                        Ver en YouTube
+                      </Button>
+                    ) : (
+                      'Sin enlace'
+                    )}
+                  </TableCell>
+                  <TableCell>
+                    <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
+                    <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
+                    <IconButton onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
+                      <GroupIcon />
+                    </IconButton>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
           </TableBody>
         </Table>
       </TableContainer>
