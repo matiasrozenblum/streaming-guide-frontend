@@ -31,7 +31,6 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Grid,
 } from '@mui/material';
 import {
   Add,
@@ -43,6 +42,7 @@ import {
   SwapHoriz,
   Analytics,
   Settings,
+  AddCircle,
 } from '@mui/icons-material';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -52,9 +52,9 @@ import { useTheme } from '@mui/material/styles';
 // Types
 interface WeeklyOverride {
   id: string;
-  scheduleId: number;
+  scheduleId?: number; // Optional for special programs
   weekStartDate: string;
-  overrideType: 'cancel' | 'time_change' | 'reschedule';
+  overrideType: 'cancel' | 'time_change' | 'reschedule' | 'create';
   newStartTime?: string;
   newEndTime?: string;
   newDayOfWeek?: string;
@@ -62,6 +62,12 @@ interface WeeklyOverride {
   createdBy?: string;
   expiresAt: string;
   createdAt: string;
+  specialProgram?: {
+    name: string;
+    description?: string;
+    channelId: number;
+    imageUrl?: string;
+  };
 }
 
 interface WeeklyStats {
@@ -71,6 +77,7 @@ interface WeeklyStats {
     cancel: number;
     time_change: number;
     reschedule: number;
+    create: number;
   };
 }
 
@@ -88,6 +95,7 @@ const OVERRIDE_TYPES = [
   { value: 'cancel', label: 'Cancelar', icon: Cancel, color: 'error' as const },
   { value: 'time_change', label: 'Cambio de horario', icon: AccessTime, color: 'warning' as const },
   { value: 'reschedule', label: 'Reprogramar', icon: SwapHoriz, color: 'info' as const },
+  { value: 'create', label: 'Programa especial', icon: AddCircle, color: 'success' as const },
 ];
 
 export function WeeklyOverridesTable() {
@@ -107,11 +115,17 @@ export function WeeklyOverridesTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     targetWeek: 'current' as 'current' | 'next',
-    overrideType: 'cancel' as 'cancel' | 'time_change' | 'reschedule',
+    overrideType: 'cancel' as 'cancel' | 'time_change' | 'reschedule' | 'create',
     newStartTime: '',
     newEndTime: '',
     newDayOfWeek: '',
     reason: '',
+    specialProgram: {
+      name: '',
+      description: '',
+      channelId: 0,
+      imageUrl: '',
+    },
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -189,6 +203,12 @@ export function WeeklyOverridesTable() {
       newEndTime: schedule.end_time,
       newDayOfWeek: schedule.day_of_week,
       reason: '',
+      specialProgram: {
+        name: '',
+        description: '',
+        channelId: 0,
+        imageUrl: '',
+      },
     });
     setOpenDialog(true);
   };
@@ -203,15 +223,37 @@ export function WeeklyOverridesTable() {
       newEndTime: '',
       newDayOfWeek: '',
       reason: '',
+      specialProgram: {
+        name: '',
+        description: '',
+        channelId: 0,
+        imageUrl: '',
+      },
     });
   };
 
   const handleSubmit = async () => {
-    if (!selectedSchedule) return;
+    if (!selectedSchedule && formData.overrideType !== 'create') return;
 
     try {
-      const payload = {
-        scheduleId: selectedSchedule.id,
+      interface OverridePayload {
+        targetWeek: 'current' | 'next';
+        overrideType: 'cancel' | 'time_change' | 'reschedule' | 'create';
+        newStartTime?: string;
+        newEndTime?: string;
+        newDayOfWeek?: string;
+        reason?: string;
+        createdBy?: string;
+        scheduleId?: number;
+        specialProgram?: {
+          name: string;
+          description?: string;
+          channelId: number;
+          imageUrl?: string;
+        };
+      }
+
+      const payload: OverridePayload = {
         targetWeek: formData.targetWeek,
         overrideType: formData.overrideType,
         ...(formData.overrideType !== 'cancel' && {
@@ -220,6 +262,13 @@ export function WeeklyOverridesTable() {
         }),
         ...(formData.overrideType === 'reschedule' && {
           newDayOfWeek: formData.newDayOfWeek,
+        }),
+        ...(formData.overrideType === 'create' && {
+          newDayOfWeek: formData.newDayOfWeek,
+          specialProgram: formData.specialProgram,
+        }),
+        ...(formData.overrideType !== 'create' && selectedSchedule && {
+          scheduleId: selectedSchedule.id,
         }),
         reason: formData.reason,
         createdBy: typedSession?.user?.name || 'Admin',
@@ -323,7 +372,7 @@ export function WeeklyOverridesTable() {
     return override ? override.icon : Schedule;
   };
 
-  const getOverrideColor = (type: string): "error" | "warning" | "info" => {
+  const getOverrideColor = (type: string): "error" | "warning" | "info" | "success" => {
     const override = OVERRIDE_TYPES.find(ot => ot.value === type);
     return override ? override.color : 'info';
   };
@@ -359,24 +408,28 @@ export function WeeklyOverridesTable() {
               <Analytics sx={{ mr: 1, verticalAlign: 'middle' }} />
               Estadísticas de la Semana Actual
             </Typography>
-            <Grid container spacing={2}>
-              <Grid component="div" size={3}>
+            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 2 }}>
+              <Box sx={{ minWidth: 120 }}>
                 <Typography variant="body2" color="text.secondary">Total de cambios</Typography>
                 <Typography variant="h5">{stats.totalOverrides}</Typography>
-              </Grid>
-              <Grid component="div" size={3}>
+              </Box>
+              <Box sx={{ minWidth: 120 }}>
                 <Typography variant="body2" color="text.secondary">Cancelaciones</Typography>
                 <Typography variant="h5" color="error.main">{stats.byType.cancel}</Typography>
-              </Grid>
-              <Grid component="div" size={3}>
+              </Box>
+              <Box sx={{ minWidth: 120 }}>
                 <Typography variant="body2" color="text.secondary">Cambios de horario</Typography>
                 <Typography variant="h5" color="warning.main">{stats.byType.time_change}</Typography>
-              </Grid>
-              <Grid component="div" size={3}>
+              </Box>
+              <Box sx={{ minWidth: 120 }}>
                 <Typography variant="body2" color="text.secondary">Reprogramaciones</Typography>
                 <Typography variant="h5" color="info.main">{stats.byType.reschedule}</Typography>
-              </Grid>
-            </Grid>
+              </Box>
+              <Box sx={{ minWidth: 120 }}>
+                <Typography variant="body2" color="text.secondary">Programas especiales</Typography>
+                <Typography variant="h5" color="success.main">{stats.byType.create}</Typography>
+              </Box>
+            </Box>
           </CardContent>
           <CardActions>
             <Button startIcon={<Refresh />} onClick={handleCleanup}>
@@ -404,6 +457,10 @@ export function WeeklyOverridesTable() {
             label="Crear Cambios" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
+          <Tab 
+            label="Programas Especiales" 
+            sx={{ fontWeight: 600, color: 'text.primary' }}
+          />
         </Tabs>
       </Box>
 
@@ -423,17 +480,23 @@ export function WeeklyOverridesTable() {
             </TableHead>
             <TableBody>
               {currentWeekOverrides.map((override) => {
-                const schedule = schedules.find(s => s.id === override.scheduleId);
+                const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
                 
                 return (
                   <TableRow key={override.id}>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
-                        {schedule?.program.name || 'Programa desconocido'}
+                        {override.overrideType === 'create' 
+                          ? override.specialProgram?.name || 'Programa especial'
+                          : schedule?.program.name || 'Programa desconocido'
+                        }
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {schedule?.program.channel?.name || 'Sin canal'}
+                        {override.overrideType === 'create'
+                          ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
+                          : schedule?.program.channel?.name || 'Sin canal'
+                        }
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -446,7 +509,10 @@ export function WeeklyOverridesTable() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {getDayLabel(schedule?.day_of_week || '')} {formatTime(schedule?.start_time || '')}-{formatTime(schedule?.end_time || '')}
+                        {override.overrideType === 'create'
+                          ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
+                          : `${getDayLabel(schedule?.day_of_week || '')} ${formatTime(schedule?.start_time || '')}-${formatTime(schedule?.end_time || '')}`
+                        }
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -488,17 +554,23 @@ export function WeeklyOverridesTable() {
             </TableHead>
             <TableBody>
               {nextWeekOverrides.map((override) => {
-                const schedule = schedules.find(s => s.id === override.scheduleId);
+                const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
                 
                 return (
                   <TableRow key={override.id}>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
-                        {schedule?.program.name || 'Programa desconocido'}
+                        {override.overrideType === 'create' 
+                          ? override.specialProgram?.name || 'Programa especial'
+                          : schedule?.program.name || 'Programa desconocido'
+                        }
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
-                        {schedule?.program.channel?.name || 'Sin canal'}
+                        {override.overrideType === 'create'
+                          ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
+                          : schedule?.program.channel?.name || 'Sin canal'
+                        }
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -511,7 +583,10 @@ export function WeeklyOverridesTable() {
                     </TableCell>
                     <TableCell>
                       <Typography variant="body2">
-                        {getDayLabel(schedule?.day_of_week || '')} {formatTime(schedule?.start_time || '')}-{formatTime(schedule?.end_time || '')}
+                        {override.overrideType === 'create'
+                          ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
+                          : `${getDayLabel(schedule?.day_of_week || '')} ${formatTime(schedule?.start_time || '')}-${formatTime(schedule?.end_time || '')}`
+                        }
                       </Typography>
                     </TableCell>
                     <TableCell>
@@ -644,6 +719,106 @@ export function WeeklyOverridesTable() {
         </Paper>
       )}
 
+      {/* Special Programs Tab */}
+      {currentTab === 3 && (
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
+            Crear Programa Especial
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Crea un programa especial que no existe en la base de datos. Este programa aparecerá en el horario con el indicador de &quot;cambio semanal&quot;.
+          </Typography>
+          
+          <Button
+            variant="contained"
+            startIcon={<AddCircle />}
+            onClick={() => {
+              setSelectedSchedule(null);
+              setFormData({
+                targetWeek: 'current',
+                overrideType: 'create',
+                newStartTime: '',
+                newEndTime: '',
+                newDayOfWeek: '',
+                reason: '',
+                specialProgram: {
+                  name: '',
+                  description: '',
+                  channelId: 0,
+                  imageUrl: '',
+                },
+              });
+              setOpenDialog(true);
+            }}
+            size="large"
+            sx={{ mb: 3 }}
+          >
+            Crear Programa Especial
+          </Button>
+
+          {/* Show existing special program overrides */}
+          <Typography variant="h6" gutterBottom sx={{ mt: 4, color: 'text.primary', fontWeight: 600 }}>
+            Programas Especiales Activos
+          </Typography>
+          
+          <TableContainer>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>Programa</TableCell>
+                  <TableCell>Canal</TableCell>
+                  <TableCell>Horario</TableCell>
+                  <TableCell>Semana</TableCell>
+                  <TableCell>Acciones</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {[...currentWeekOverrides, ...nextWeekOverrides]
+                  .filter(override => override.overrideType === 'create')
+                  .map((override) => {
+                    return (
+                      <TableRow key={override.id}>
+                        <TableCell>
+                          <Typography variant="body2" fontWeight="bold">
+                            {override.specialProgram?.name || 'Programa especial'}
+                          </Typography>
+                          {override.specialProgram?.description && (
+                            <Typography variant="caption" color="text.secondary">
+                              {override.specialProgram.description}
+                            </Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2">
+                            Canal ID: {override.specialProgram?.channelId || 'N/A'}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
+                            {getDayLabel(override.newDayOfWeek || '')} {formatTime(override.newStartTime || '')}-{formatTime(override.newEndTime || '')}
+                          </Typography>
+                        </TableCell>
+                        <TableCell>
+                          <Chip
+                            label={override.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'Actual' : 'Próxima'}
+                            color={override.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'primary' : 'secondary'}
+                            size="small"
+                          />
+                        </TableCell>
+                        <TableCell>
+                          <IconButton onClick={() => handleDelete(override.id)} color="error">
+                            <Delete />
+                          </IconButton>
+                        </TableCell>
+                      </TableRow>
+                    );
+                  })}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        </Paper>
+      )}
+
       {/* Create Override Dialog */}
       <Dialog 
         open={openDialog} 
@@ -693,7 +868,7 @@ export function WeeklyOverridesTable() {
                 <InputLabel>Tipo de cambio</InputLabel>
                 <Select
                   value={formData.overrideType}
-                  onChange={(e) => setFormData({ ...formData, overrideType: e.target.value as 'cancel' | 'time_change' | 'reschedule' })}
+                  onChange={(e) => setFormData({ ...formData, overrideType: e.target.value as 'cancel' | 'time_change' | 'reschedule' | 'create' })}
                   label="Tipo de cambio"
                 >
                   {OVERRIDE_TYPES.map((type) => (
@@ -714,8 +889,65 @@ export function WeeklyOverridesTable() {
                 {formData.overrideType === 'cancel' && '🚫 Cancelar: El programa no se emitirá en el horario programado'}
                 {formData.overrideType === 'time_change' && '⏰ Cambio de horario: El programa se emitirá en un horario diferente el mismo día'}
                 {formData.overrideType === 'reschedule' && '📅 Reprogramar: El programa se moverá a otro día y/u horario'}
+                {formData.overrideType === 'create' && '✨ Programa especial: Crea un programa temporal que no existe en la base de datos'}
               </Typography>
             </Box>
+
+            {/* Special program fields for create overrides */}
+            {formData.overrideType === 'create' && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
+                  Información del Programa Especial
+                </Typography>
+                
+                <TextField
+                  label="Nombre del programa"
+                  value={formData.specialProgram.name}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, name: e.target.value }
+                  })}
+                  fullWidth
+                  required
+                />
+                
+                <TextField
+                  label="Descripción (opcional)"
+                  value={formData.specialProgram.description}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, description: e.target.value }
+                  })}
+                  fullWidth
+                  multiline
+                  rows={2}
+                />
+                
+                <TextField
+                  label="ID del canal"
+                  type="number"
+                  value={formData.specialProgram.channelId}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, channelId: parseInt(e.target.value) || 0 }
+                  })}
+                  fullWidth
+                  required
+                  helperText="Ingresa el ID del canal donde se emitirá el programa"
+                />
+                
+                <TextField
+                  label="URL de imagen (opcional)"
+                  value={formData.specialProgram.imageUrl}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, imageUrl: e.target.value }
+                  })}
+                  fullWidth
+                  placeholder="https://example.com/image.jpg"
+                />
+              </Box>
+            )}
 
             {formData.overrideType !== 'cancel' && (
               <>
@@ -727,6 +959,7 @@ export function WeeklyOverridesTable() {
                     onChange={(e) => setFormData({ ...formData, newStartTime: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    required
                   />
                   <TextField
                     label="Nueva hora de fin"
@@ -735,16 +968,36 @@ export function WeeklyOverridesTable() {
                     onChange={(e) => setFormData({ ...formData, newEndTime: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    required
                   />
                 </Box>
 
                 {formData.overrideType === 'reschedule' && (
                   <FormControl fullWidth>
-                    <InputLabel>Nuevo día</InputLabel>
+                    <InputLabel>Nuevo día de la semana</InputLabel>
                     <Select
                       value={formData.newDayOfWeek}
                       onChange={(e) => setFormData({ ...formData, newDayOfWeek: e.target.value })}
-                      label="Nuevo día"
+                      label="Nuevo día de la semana"
+                      required
+                    >
+                      {DAYS_OF_WEEK.map((day) => (
+                        <MenuItem key={day.value} value={day.value}>
+                          {day.label}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                )}
+
+                {(formData.overrideType === 'create') && (
+                  <FormControl fullWidth>
+                    <InputLabel>Día de la semana</InputLabel>
+                    <Select
+                      value={formData.newDayOfWeek}
+                      onChange={(e) => setFormData({ ...formData, newDayOfWeek: e.target.value })}
+                      label="Día de la semana"
+                      required
                     >
                       {DAYS_OF_WEEK.map((day) => (
                         <MenuItem key={day.value} value={day.value}>
@@ -758,12 +1011,13 @@ export function WeeklyOverridesTable() {
             )}
 
             <TextField
-              label="Motivo (opcional)"
-              multiline
-              rows={3}
+              label="Motivo del cambio"
               value={formData.reason}
               onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
               fullWidth
+              multiline
+              rows={2}
+              placeholder="Ej: Programa especial por día festivo, cambio de horario por evento, etc."
             />
           </Box>
         </DialogContent>
