@@ -18,6 +18,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import NewsCarousel from './NewsCarousel';
 
 dayjs.extend(weekday);
 
@@ -118,83 +119,84 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         bottom: 0,
         display: 'flex',
         flexDirection: 'column',
-        overflow: 'hidden',
+        //overflow: 'hidden',
       }}
     >
-      {/* Day selector & Live button */}
-      <Box
-        display="flex"
-        gap={1}
-        py={2}
-        alignItems="center"
-        sx={{
-          /*background: mode === 'light'
-            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          backdropFilter: 'blur(8px)',*/
-        }}
-      >
-        {[
-          { label: 'Lun', value: 'monday' },
-          { label: 'Mar', value: 'tuesday' },
-          { label: 'Mié', value: 'wednesday' },
-          { label: 'Jue', value: 'thursday' },
-          { label: 'Vie', value: 'friday' },
-          { label: 'Sáb', value: 'saturday' },
-          { label: 'Dom', value: 'sunday' },
-        ].map(day => (
-          <Button
-            key={day.value}
-            variant={selectedDay === day.value ? 'contained' : 'outlined'}
-            onClick={
-              () => {
-                setSelectedDay(day.value);
-                Clarity.setTag('selected_day', day.value);
-                Clarity.event('day_change');
+      <Box sx={{ position: 'relative', overflow: 'visible' }}>
+        <NewsCarousel />
+        <Box
+          display="flex"
+          gap={1}
+          py={2}
+          alignItems="center"
+          sx={{
+            position: 'relative',
+          }}
+        >
+          {[
+            { label: 'Lun', value: 'monday' },
+            { label: 'Mar', value: 'tuesday' },
+            { label: 'Mié', value: 'wednesday' },
+            { label: 'Jue', value: 'thursday' },
+            { label: 'Vie', value: 'friday' },
+            { label: 'Sáb', value: 'saturday' },
+            { label: 'Dom', value: 'sunday' },
+          ].map(day => (
+            <Button
+              key={day.value}
+              variant={selectedDay === day.value ? 'contained' : 'outlined'}
+              onClick={
+                () => {
+                  setSelectedDay(day.value);
+                  Clarity.setTag('selected_day', day.value);
+                  Clarity.event('day_change');
+                  gaEvent({
+                    action: 'day_change',
+                    params: {
+                      day: day.value,
+                      client: 'desktop',
+                    },
+                    userData: typedSession?.user
+                  });
+                }
+              }
+              sx={{
+                minWidth: '80px',
+                height: '40px',
+                transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
+                transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
+              }}
+            >
+              {day.label}
+            </Button>
+          ))}
+          <Box flex={1} display="flex" justifyContent="center" position="relative">
+            {/* NewsCarousel removed from here */}
+          </Box>
+          {!inView && (
+            <Button
+              onClick={() => {
+                Clarity.event('live_button_click');
                 gaEvent({
-                  action: 'day_change',
+                  action: 'scroll_to_now',
                   params: {
-                    day: day.value,
                     client: 'desktop',
                   },
                   userData: typedSession?.user
                 });
-              }
-            }
-            sx={{
-              minWidth: '80px',
-              height: '40px',
-              transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
-              transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
-            }}
-          >
-            {day.label}
-          </Button>
-        ))}
-        {!inView && (
-          <Button
-            onClick={() => {
-              Clarity.event('live_button_click');
-              gaEvent({
-                action: 'scroll_to_now',
-                params: {
-                  client: 'desktop',
-                },
-                userData: typedSession?.user
-              });
-              if (selectedDay !== today) {
-                setSelectedDay(today);
-                setTimeout(() => scrollToNow(), 100);
-              } else scrollToNow();
-            }}
-            variant="outlined"
-            startIcon={<AccessTime />}
-            sx={{ ml: 'auto', height: '40px', fontWeight: 'bold', textTransform: 'none' }}
-          >
-            En vivo
-          </Button>
-        )}
+                if (selectedDay !== today) {
+                  setSelectedDay(today);
+                  setTimeout(() => scrollToNow(), 100);
+                } else scrollToNow();
+              }}
+              variant="outlined"
+              startIcon={<AccessTime />}
+              sx={{ ml: 'auto', height: '40px', fontWeight: 'bold', textTransform: 'none' }}
+            >
+              En vivo
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {/* Grid scrollable area */}
