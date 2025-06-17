@@ -393,7 +393,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                       method: 'password',
                     }
                   });
-                  onClose(); window.location.reload();
+                  onClose();
                 }
               } catch (err) {
                 setError(getErrorMessage(err));
@@ -470,7 +470,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     refreshToken: body.refresh_token,
                   });
                   if (!nxt?.error) {
-                    onClose(); window.location.reload();
+                    onClose();
                   }
                 }
               } catch (err: unknown) {
@@ -563,7 +563,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     has_gender: !!gender,
                   }
                 });
-                onClose(); window.location.reload();
+                onClose();
               } catch (err: unknown) {
                 setError(getErrorMessage(err));
                 gaEvent({

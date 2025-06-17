@@ -63,7 +63,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           variant="h6" 
           sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}
         >
-          Streaming Guide
+          La Guía del Streaming
         </Typography>
       </Toolbar>
       <List>
