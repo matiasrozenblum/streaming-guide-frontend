@@ -43,7 +43,7 @@ export default function NewsCarousel() {
         width: 400,
         height: 105,
         position: 'absolute',
-        top: -52,
+        top: -82,
         left: '67%',
         transform: 'translateX(-50%)',
         zIndex: 10,
