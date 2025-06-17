@@ -129,6 +129,7 @@ export function WeeklyOverridesTable() {
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [channels, setChannels] = useState<{ id: number; name: string }[]>([]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -192,6 +193,20 @@ export function WeeklyOverridesTable() {
   useEffect(() => {
     fetchData();
   }, [fetchData]);
+
+  useEffect(() => {
+    async function fetchChannels() {
+      try {
+        const res = await fetch('/api/channels');
+        if (!res.ok) throw new Error('Failed to fetch channels');
+        const data = await res.json();
+        setChannels(data);
+      } catch (err) {
+        console.error('Error fetching channels:', err);
+      }
+    }
+    fetchChannels();
+  }, []);
 
   // Handlers
   const handleOpenDialog = (schedule: ScheduleType) => {
@@ -923,18 +938,26 @@ export function WeeklyOverridesTable() {
                   rows={2}
                 />
                 
-                <TextField
-                  label="ID del canal"
-                  type="number"
-                  value={formData.specialProgram.channelId}
-                  onChange={(e) => setFormData({
-                    ...formData,
-                    specialProgram: { ...formData.specialProgram, channelId: parseInt(e.target.value) || 0 }
-                  })}
-                  fullWidth
-                  required
-                  helperText="Ingresa el ID del canal donde se emitirá el programa"
-                />
+                {/* Channel selection dropdown */}
+                <FormControl fullWidth required>
+                  <InputLabel id="special-program-channel-label">Canal</InputLabel>
+                  <Select
+                    labelId="special-program-channel-label"
+                    value={formData.specialProgram.channelId}
+                    label="Canal"
+                    onChange={(e) => setFormData({
+                      ...formData,
+                      specialProgram: { ...formData.specialProgram, channelId: Number(e.target.value) }
+                    })}
+                  >
+                    {channels.map((channel) => (
+                      <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
+                    ))}
+                  </Select>
+                  <Typography variant="caption" color="text.secondary">
+                    Selecciona el canal donde se emitirá el programa
+                  </Typography>
+                </FormControl>
                 
                 <TextField
                   label="URL de imagen (opcional)"
