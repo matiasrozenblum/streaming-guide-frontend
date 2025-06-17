@@ -24,7 +24,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Cleaned channels and programs backoffice pages with buttons and channe logos.
 - Added new program weekly override type and section
 
-
 ## [1.2.4] - 2025-06-16
 
 ### Changed
