@@ -117,6 +117,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           subscription_id: subscriptionId,
           new_method: notificationMethod,
           program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
+          channel_name: subscriptions.find(s => s.id === subscriptionId)?.program.channel.name,
         },
         userData: typedSession?.user
       });
@@ -131,6 +132,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           subscription_id: subscriptionId,
           attempted_method: notificationMethod,
           program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
+          channel_name: subscriptions.find(s => s.id === subscriptionId)?.program.channel.name,
         },
         userData: typedSession?.user
       });
@@ -160,6 +162,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
         params: {
           program_id: subscription?.program.id,
           program_name: subscription?.program.name,
+          channel_name: subscription?.program.channel.name,
           location: 'subscriptions_page',
           notification_method: subscription?.notificationMethod,
         },
