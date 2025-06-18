@@ -22,6 +22,7 @@ interface Program {
   subscribed?: boolean;
   isWeeklyOverride?: boolean;
   overrideType?: 'cancel' | 'time_change' | 'reschedule';
+  style_override?: string | null;
 }
 
 interface Props {
@@ -219,6 +220,7 @@ export const ScheduleRow = ({
                   subscribed={p.subscribed ?? false}
                   isWeeklyOverride={p.isWeeklyOverride ?? false}
                   overrideType={p.overrideType ?? ''}
+                  styleOverride={p.style_override}
                 />
               </React.Fragment>
             );
