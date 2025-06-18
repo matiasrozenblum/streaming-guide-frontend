@@ -57,6 +57,7 @@ export const ProgramBlock: React.FC<Props> = ({
   panelists,
   logo_url,
   color = '#2196F3',
+  channelName,
   isToday,
   is_live,
   stream_url,
@@ -126,6 +127,7 @@ export const ProgramBlock: React.FC<Props> = ({
       try {
         const clarityWindow = window as Window & { clarity: (action: string, ...args: unknown[]) => void };
         clarityWindow.clarity('set', 'program_name', name);
+        clarityWindow.clarity('set', 'channel_name', channelName);
         clarityWindow.clarity('event', isLive ? 'click_youtube_live' : 'click_youtube_deferred');
       } catch (error) {
         console.warn('Clarity tracking failed:', error);
@@ -137,6 +139,7 @@ export const ProgramBlock: React.FC<Props> = ({
       params: {
         category: 'program',
         program_name: name,
+        channel_name: channelName,
       },
       userData: typedSession?.user
     });
@@ -241,6 +244,7 @@ export const ProgramBlock: React.FC<Props> = ({
           params: {
             program_id: id,
             program_name: name,
+            channel_name: channelName,
             reason,
             endpoint: endpoint || 'empty',
             p256dh: p256dh || 'empty', 
@@ -277,6 +281,7 @@ export const ProgramBlock: React.FC<Props> = ({
         params: {
           program_id: id,
           program_name: name,
+          channel_name: channelName,
           notification_method: notificationMethod,
           has_push: !!pushSubscription,
         },
@@ -306,6 +311,7 @@ export const ProgramBlock: React.FC<Props> = ({
           action: willSubscribe ? 'subscribe' : 'unsubscribe',
           program_id: id,
           program_name: name,
+          channel_name: channelName,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
         userData: typedSession?.user
