@@ -53,6 +53,7 @@ export default function ProgramsPage() {
     channel_id: '',
     logo_url: '',
     youtube_url: '',
+    style_override: '',
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -103,6 +104,7 @@ export default function ProgramsPage() {
         channel_id: String(program.channel_id),
         logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
+        style_override: program.style_override || '',
       });
     } else {
       setEditingProgram(null);
@@ -112,6 +114,7 @@ export default function ProgramsPage() {
         channel_id: '',
         logo_url: '',
         youtube_url: '',
+        style_override: '',
       });
     }
     setOpenDialog(true);
@@ -126,6 +129,7 @@ export default function ProgramsPage() {
       channel_id: '',
       logo_url: '',
       youtube_url: '',
+      style_override: '',
     });
   };
 
@@ -141,6 +145,7 @@ export default function ProgramsPage() {
         body: JSON.stringify({
           ...formData,
           channel_id: parseInt(formData.channel_id),
+          style_override: formData.style_override || null,
         }),
       });
       const body = await res.json();
@@ -209,6 +214,7 @@ export default function ProgramsPage() {
               <TableCell>Nombre</TableCell>
               <TableCell>Canal</TableCell>
               <TableCell>YouTube</TableCell>
+              <TableCell>Estilo especial</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -247,6 +253,7 @@ export default function ProgramsPage() {
                       'Sin enlace'
                     )}
                   </TableCell>
+                  <TableCell>{program.style_override || '-'}</TableCell>
                   <TableCell>
                     <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
                     <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
@@ -275,6 +282,7 @@ export default function ProgramsPage() {
             </FormControl>
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
+            <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
           </Box>
         </DialogContent>
         <DialogActions>

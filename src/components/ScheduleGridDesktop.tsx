@@ -241,6 +241,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
                 stream_url: s.program.stream_url || undefined,
                 isWeeklyOverride: s.isWeeklyOverride,
                 overrideType: s.overrideType,
+                style_override: s.program.style_override,
               }))}
               color={getColorForChannel(idx, mode)}
               isToday={isToday}
