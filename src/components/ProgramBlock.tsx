@@ -97,17 +97,6 @@ export const ProgramBlock: React.FC<Props> = ({
   // Style override logic
   const overrideStyle = styleOverride && programStyleOverrides[styleOverride];
 
-  useEffect(() => {
-    setIsOn(subscribed);
-  }, [subscribed]);
-
-  // Detectar mobile
-  useEffect(() => {
-    if (typeof window !== 'undefined') {
-      setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
-    }
-  }, []);
-
   // Cálculo de posición y tamaño
   const [startHours, startMinutes] = start.split(':').map(Number);
   const [endHours, endMinutes] = end.split(':').map(Number);
@@ -121,6 +110,22 @@ export const ProgramBlock: React.FC<Props> = ({
   const currentDate = now.format('YYYY-MM-DD');
   const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
   const isPast = isToday && now.isAfter(parsedEndWithDate);
+
+  // Calculate background opacity as in the default style
+  let backgroundOpacity = 0.5;
+  if (isPast) backgroundOpacity = 0.3;
+  else if (isLive) backgroundOpacity = 0.7;
+
+  useEffect(() => {
+    setIsOn(subscribed);
+  }, [subscribed]);
+
+  // Detectar mobile
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setIsMobile(/Mobi|Android/i.test(navigator.userAgent));
+    }
+  }, []);
 
   // Manejo de click en YouTube
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
@@ -595,7 +600,7 @@ export const ProgramBlock: React.FC<Props> = ({
             ref={blockRef}
           >
             {/* Special content for override styles */}
-            {overrideStyle && overrideStyle.render && overrideStyle.render({ name })}
+            {overrideStyle && overrideStyle.render && overrideStyle.render({ name, backgroundOpacity })}
             {/* Default content if no override */}
             {!overrideStyle && (
               <Box
