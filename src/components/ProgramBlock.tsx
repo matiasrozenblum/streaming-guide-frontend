@@ -20,6 +20,7 @@ import { usePush } from '@/contexts/PushContext';
 import LoginModal from './auth/LoginModal';
 import IOSNotificationSetup from './IOSNotificationSetup';
 import { useTooltip } from '@/contexts/TooltipContext';
+import { programStyleOverrides } from '@/styles/programStyleOverrides';
 
 dayjs.extend(customParseFormat);
 
@@ -39,6 +40,7 @@ interface Props {
   stream_url?: string | null;
   isWeeklyOverride?: boolean;
   overrideType?: string;
+  styleOverride?: string | null;
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -57,11 +59,13 @@ export const ProgramBlock: React.FC<Props> = ({
   panelists,
   logo_url,
   color = '#2196F3',
+  channelName,
   isToday,
   is_live,
   stream_url,
   isWeeklyOverride,
   overrideType,
+  styleOverride,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -89,6 +93,9 @@ export const ProgramBlock: React.FC<Props> = ({
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
+
+  // Style override logic
+  const overrideStyle = styleOverride && programStyleOverrides[styleOverride];
 
   useEffect(() => {
     setIsOn(subscribed);
@@ -126,6 +133,7 @@ export const ProgramBlock: React.FC<Props> = ({
       try {
         const clarityWindow = window as Window & { clarity: (action: string, ...args: unknown[]) => void };
         clarityWindow.clarity('set', 'program_name', name);
+        clarityWindow.clarity('set', 'channel_name', channelName);
         clarityWindow.clarity('event', isLive ? 'click_youtube_live' : 'click_youtube_deferred');
       } catch (error) {
         console.warn('Clarity tracking failed:', error);
@@ -137,6 +145,7 @@ export const ProgramBlock: React.FC<Props> = ({
       params: {
         category: 'program',
         program_name: name,
+        channel_name: channelName,
       },
       userData: typedSession?.user
     });
@@ -241,6 +250,7 @@ export const ProgramBlock: React.FC<Props> = ({
           params: {
             program_id: id,
             program_name: name,
+            channel_name: channelName,
             reason,
             endpoint: endpoint || 'empty',
             p256dh: p256dh || 'empty', 
@@ -277,6 +287,7 @@ export const ProgramBlock: React.FC<Props> = ({
         params: {
           program_id: id,
           program_name: name,
+          channel_name: channelName,
           notification_method: notificationMethod,
           has_push: !!pushSubscription,
         },
@@ -306,6 +317,7 @@ export const ProgramBlock: React.FC<Props> = ({
           action: willSubscribe ? 'subscribe' : 'unsubscribe',
           program_id: id,
           program_name: name,
+          channel_name: channelName,
           error: error instanceof Error ? error.message : 'Unknown error',
         },
         userData: typedSession?.user
@@ -556,9 +568,10 @@ export const ProgramBlock: React.FC<Props> = ({
               left: `${offsetPx}px`,
               width: `${widthPx}px`,
               height: '100%',
+              ...(overrideStyle ? overrideStyle.boxStyle : {}),
             }}
             height="100%"
-            sx={{
+            sx={overrideStyle ? overrideStyle.sx : {
               backgroundColor: isPast
                 ? alpha(color, 0.05)
                 : isLive
@@ -581,151 +594,156 @@ export const ProgramBlock: React.FC<Props> = ({
             }}
             ref={blockRef}
           >
-            <Box
-              sx={{
-                p: tokens.spacing.sm,
-                height: '100%',
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'flex-start',
-                alignItems: 'center',
-                position: 'relative',
-              }}
-            >
-              {isLive && (
-                <Box
-                  sx={{
-                    position: 'absolute',
-                    top: tokens.spacing.xs,
-                    right: tokens.spacing.xs,
-                    backgroundColor: '#f44336',
-                    color: 'white',
-                    fontSize: '0.65rem',
-                    padding: '2px 6px',
-                    borderRadius: '4px',
-                    fontWeight: 'bold',
-                    zIndex: 5,
-                  }}
-                >
-                  LIVE
-                </Box>
-              )}
-              {isWeeklyOverride && (
-                (isMobile || duration < 120) ? (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: 6,
-                      left: 6,
-                      width: 14,
-                      height: 14,
-                      backgroundColor: 'rgba(255, 152, 0, 0.5)',
-                      borderRadius: '50%',
-                      border: '1px solid rgba(255, 152, 0, 1)',
-                      zIndex: 5,
-                      pointerEvents: 'none',
-                      boxShadow: 1,
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                    }}
-                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
-                  />
-                ) : (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: pillTop,
-                      left: pillLeft,
-                      backgroundColor: 'rgba(255, 152, 0, 0.18)',
-                      color: '#ff9800',
-                      fontWeight: 700,
-                      fontSize: pillFontSize,
-                      borderRadius: '999px',
-                      px: pillPx,
-                      py: pillPy,
-                      border: '1px solid #ff9800',
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      boxShadow: 1,
-                      zIndex: 5,
-                      pointerEvents: 'none',
-                      whiteSpace: 'nowrap',
-                      maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
-                      textOverflow: 'ellipsis',
-                      overflow: 'hidden',
-                    }}
-                    title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
-                  >
-                    {pillLabel}
-                  </Box>
-                )
-              )}
+            {/* Special content for override styles */}
+            {overrideStyle && overrideStyle.render && overrideStyle.render({ name })}
+            {/* Default content if no override */}
+            {!overrideStyle && (
               <Box
                 sx={{
-                  display: 'flex',
-                  flexDirection: 'row',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                  p: tokens.spacing.sm,
                   height: '100%',
-                  gap: 1,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'flex-start',
+                  alignItems: 'center',
+                  position: 'relative',
                 }}
               >
-                {logo_url && (
+                {isLive && (
                   <Box
-                    component="img"
-                    src={logo_url}
-                    alt={name}
                     sx={{
-                      width: '40px',
-                      height: '40px',
-                      objectFit: 'contain',
-                      opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                      position: 'absolute',
+                      top: tokens.spacing.xs,
+                      right: tokens.spacing.xs,
+                      backgroundColor: '#f44336',
+                      color: 'white',
+                      fontSize: '0.65rem',
+                      padding: '2px 6px',
+                      borderRadius: '4px',
+                      fontWeight: 'bold',
+                      zIndex: 5,
                     }}
-                  />
+                  >
+                    LIVE
+                  </Box>
+                )}
+                {isWeeklyOverride && (
+                  (isMobile || duration < 120) ? (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: 6,
+                        left: 6,
+                        width: 14,
+                        height: 14,
+                        backgroundColor: 'rgba(255, 152, 0, 0.5)',
+                        borderRadius: '50%',
+                        border: '1px solid rgba(255, 152, 0, 1)',
+                        zIndex: 5,
+                        pointerEvents: 'none',
+                        boxShadow: 1,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                      }}
+                      title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
+                    />
+                  ) : (
+                    <Box
+                      sx={{
+                        position: 'absolute',
+                        top: pillTop,
+                        left: pillLeft,
+                        backgroundColor: 'rgba(255, 152, 0, 0.18)',
+                        color: '#ff9800',
+                        fontWeight: 700,
+                        fontSize: pillFontSize,
+                        borderRadius: '999px',
+                        px: pillPx,
+                        py: pillPy,
+                        border: '1px solid #ff9800',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        boxShadow: 1,
+                        zIndex: 5,
+                        pointerEvents: 'none',
+                        whiteSpace: 'nowrap',
+                        maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
+                        textOverflow: 'ellipsis',
+                        overflow: 'hidden',
+                      }}
+                      title={pillLabel !== '¡Hoy!' ? pillLabel : '¡Hoy!'}
+                    >
+                      {pillLabel}
+                    </Box>
+                  )
                 )}
                 <Box
                   sx={{
                     display: 'flex',
-                    flexDirection: 'column',
+                    flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 0.5,
+                    justifyContent: 'center',
+                    height: '100%',
+                    gap: 1,
                   }}
                 >
-                  <Typography
-                    variant="caption"
+                  {logo_url && (
+                    <Box
+                      component="img"
+                      src={logo_url}
+                      alt={name}
+                      sx={{
+                        width: '40px',
+                        height: '40px',
+                        objectFit: 'contain',
+                        opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                      }}
+                    />
+                  )}
+                  <Box
                     sx={{
-                      fontWeight: 'bold',
-                      fontSize: '0.75rem',
-                      textAlign: 'center',
-                      color: isPast ? alpha(color, 1) : color,
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      gap: 0.5,
                     }}
                   >
-                    {name.toUpperCase()}
-                  </Typography>
-                  {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
                     <Typography
                       variant="caption"
                       sx={{
-                        fontSize: '0.65rem',
+                        fontWeight: 'bold',
+                        fontSize: '0.75rem',
                         textAlign: 'center',
-                        color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
-                        lineHeight: 1.2,
-                        maxWidth: '100%',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
-                        WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
+                        color: isPast ? alpha(color, 1) : color,
                       }}
                     >
-                      {panelists.map(p => p.name).join(', ')}
+                      {name.toUpperCase()}
                     </Typography>
-                  )}
+                    {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          fontSize: '0.65rem',
+                          textAlign: 'center',
+                          color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
+                          lineHeight: 1.2,
+                          maxWidth: '100%',
+                          overflow: 'hidden',
+                          textOverflow: 'ellipsis',
+                          display: '-webkit-box',
+                          WebkitLineClamp: 2,
+                          WebkitBoxOrient: 'vertical',
+                        }}
+                      >
+                        {panelists.map(p => p.name).join(', ')}
+                      </Typography>
+                    )}
+                  </Box>
                 </Box>
               </Box>
-            </Box>
+            )}
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
