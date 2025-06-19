@@ -17,31 +17,22 @@ async function getInitialData(): Promise<InitialData> {
     }).then(res => res.json());
 
     const today = getBuenosAiresDayOfWeek();
-
     const todayPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
       {
-        next: { revalidate: 60 }
+        next: { revalidate: 300 }
       }
     ).then(res => res.json());
 
-    const weekPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
-      {
-        next: { revalidate: 60 }
-      }
-    ).then(res => res.json());
-
-    const [holidayData, todaySchedules, weekSchedules] = await Promise.all([
+    const [holidayData, todaySchedules] = await Promise.all([
       holidayPromise,
       todayPromise,
-      weekPromise,
     ]);
 
     return {
       holiday: !!holidayData.holiday,
       todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
-      weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
+      weekSchedules: [], // Initially empty, will be fetched on the client
     };
   } catch {
     return {
