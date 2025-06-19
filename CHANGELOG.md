@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.6] - 2025-06-18
+
+### Added
+- Added channel info to GA events
+- Added style override logic for programs
+
 ## [1.2.5] - 2025-06-17
 
 ### Changed
