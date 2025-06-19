@@ -112,9 +112,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   // Calculate background opacity as in the default style
-  let backgroundOpacity = 0.5;
-  if (isPast) backgroundOpacity = 0.3;
-  else if (isLive) backgroundOpacity = 0.7;
+  let backgroundOpacity = 0.15;
+  if (isPast) backgroundOpacity = 0.05;
+  else if (isLive) backgroundOpacity = 0.5;
 
   useEffect(() => {
     setIsOn(subscribed);
