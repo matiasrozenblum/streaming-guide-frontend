@@ -38,7 +38,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const typedSession = session as SessionWithToken | null;
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
-    Array.isArray(initialData.todaySchedules) ? initialData.todaySchedules : []
+    Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
 
@@ -58,36 +58,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   );
 
   const showSkeleton = flattened.length === 0;
-
-  useEffect(() => {
-    const fetchWeekSchedules = async () => {
-      try {
-        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules');
-        const weekData = resp.data;
-
-        if (Array.isArray(weekData)) {
-          // Create a map of today's schedules for easy lookup
-          const todaySchedulesMap = new Map<number, ChannelWithSchedules>();
-          initialData.todaySchedules.forEach(c => todaySchedulesMap.set(c.channel.id, c));
-
-          // Merge week data with today's data, giving precedence to today's
-          const mergedSchedules = weekData.map(weekChannel => {
-            if (todaySchedulesMap.has(weekChannel.channel.id)) {
-              return todaySchedulesMap.get(weekChannel.channel.id)!;
-            }
-            return weekChannel;
-          });
-
-          setChannelsWithSchedules(mergedSchedules);
-        }
-      } catch {
-        // ignore, we at least have today's schedule
-      }
-    };
-
-    fetchWeekSchedules();
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
 
   useEffect(() => {
     if (!deviceId) return; // Only wait for deviceId
