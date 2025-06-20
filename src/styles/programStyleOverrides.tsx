@@ -37,7 +37,7 @@ export const programStyleOverrides: Record<string, {
           position: 'relative',
           zIndex: 1,
           background: `rgba(21,101,192,${backgroundOpacity})`,
-          border: `1px solid rgb(21,101,192)`,
+          border: `1px solid ${backgroundOpacity === 0.05 ? 'rgba(21,101,192, 0.4)' : 'rgb(21,101,192)'}`,
         }}
       >
         {/* Centered yellow band */}
@@ -64,14 +64,14 @@ export const programStyleOverrides: Record<string, {
             textAlign: 'center',
             color: '#fff',
             fontWeight: 700,
-            fontSize: '1.1rem',
+            fontSize: '0.75rem',
             fontFamily: 'inherit',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
           }}
         >
-          {name}
+          {name.toUpperCase()}
         </span>
       </div>
     ),
@@ -106,7 +106,7 @@ export const programStyleOverrides: Record<string, {
         position: 'relative',
         zIndex: 1,
         background: `rgba(255,255,255,${backgroundOpacity})`,
-        border: `1px solid rgb(255,255,255)`,
+        border: `1px solid ${backgroundOpacity === 0.05 ? 'rgba(255,255,255, 0.4)' : 'rgb(255,255,255)'}`,
       }}>
         {/* Centered red diagonal band */}
         <div style={{
@@ -129,13 +129,13 @@ export const programStyleOverrides: Record<string, {
           textAlign: 'center',
           color: '#fff',
           fontWeight: 700,
-          fontSize: '1.1rem',
+          fontSize: '0.75rem',
           fontFamily: 'inherit',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
         }}>
-          {name}
+          {name.toUpperCase()}
         </span>
       </div>
     ),
