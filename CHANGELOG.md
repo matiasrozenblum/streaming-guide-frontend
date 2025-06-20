@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.7] - 2025-06-19
+
+### Changed
+- Changed boca and river style overrides (not being used currently)
+- Optimized server side functions, now only fetching whole week server side and revalidate every 5 minutes instead of 1 minte
+
 ## [1.2.6] - 2025-06-18
 
 ### Added
