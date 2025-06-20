@@ -2,6 +2,7 @@ import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules } from '@/types/channel';
 import { getBuenosAiresDayOfWeek } from '@/utils/date';
+import { Schedule } from '@/types/schedule';
 
 interface InitialData {
   holiday: boolean;
@@ -16,31 +17,29 @@ async function getInitialData(): Promise<InitialData> {
       next: { revalidate: 3600 }
     }).then(res => res.json());
 
-    const today = getBuenosAiresDayOfWeek();
-
-    const todayPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?day=${today}&live_status=true`,
-      {
-        next: { revalidate: 60 }
-      }
-    ).then(res => res.json());
-
     const weekPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
       {
-        next: { revalidate: 60 }
+        next: { revalidate: 300 }
       }
     ).then(res => res.json());
 
-    const [holidayData, todaySchedules, weekSchedules] = await Promise.all([
+    const [holidayData, weekSchedules] = await Promise.all([
       holidayPromise,
-      todayPromise,
       weekPromise,
     ]);
 
+    const today = getBuenosAiresDayOfWeek();
+    const todaySchedules = Array.isArray(weekSchedules)
+      ? weekSchedules.map((channel: ChannelWithSchedules) => ({
+          ...channel,
+          schedules: channel.schedules.filter((schedule: Schedule) => schedule.day_of_week.toLowerCase() === today.toLowerCase()),
+        })).filter((channel: ChannelWithSchedules) => channel.schedules.length > 0)
+      : [];
+
     return {
       holiday: !!holidayData.holiday,
-      todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
+      todaySchedules,
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
     };
   } catch {
