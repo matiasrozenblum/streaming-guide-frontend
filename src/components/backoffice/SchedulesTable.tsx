@@ -76,12 +76,6 @@ interface BulkScheduleData {
   endTime: string;
 }
 
-interface BulkScheduleRequest {
-  programId: number;
-  channelId: number;
-  schedules: BulkScheduleData[];
-}
-
 export function SchedulesTable() {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -281,9 +275,9 @@ export function SchedulesTable() {
         throw new Error('Debes agregar al menos un horario');
       }
 
-      const bulkData: BulkScheduleRequest = {
-        programId: selectedProgram.id,
-        channelId: selectedProgram.channel_id,
+      const bulkData = {
+        programId: selectedProgram.id.toString(),
+        channelId: selectedProgram.channel_id.toString(),
         schedules: bulkSchedules,
       };
 
