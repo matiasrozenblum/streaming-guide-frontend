@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.2.8] - 2025-06-20
+
+### Changed
+- Optimized session polling to reduce function invocations
+
 ## [1.2.7] - 2025-06-19
 
 ### Changed
