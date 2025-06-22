@@ -527,6 +527,12 @@ export function UsersTable() {
         open={!!managingSubsForUser}
         onClose={() => setManagingSubsForUser(null)}
         user={managingSubsForUser}
+        session={typedSession}
+        onSubscriptionsUpdate={() => {
+          fetchUsers();
+          // Optional: close dialog after update
+          // setManagingSubsForUser(null);
+        }}
       />
 
       <Snackbar open={!!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
