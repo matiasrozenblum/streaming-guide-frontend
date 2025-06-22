@@ -13,7 +13,7 @@ export async function GET(request: NextRequest) {
     const { searchParams } = new URL(request.url);
     const limit = searchParams.get('limit') || '10';
     
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/statistics/top-programs?limit=${limit}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/statistics/popular-programs?limit=${limit}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -25,18 +25,18 @@ export async function GET(request: NextRequest) {
         status: response.status,
         statusText: response.statusText,
         data: errorData,
-        requestUrl: `${process.env.NEXT_PUBLIC_API_URL}/statistics/top-programs?limit=${limit}`,
+        requestUrl: `${process.env.NEXT_PUBLIC_API_URL}/statistics/popular-programs?limit=${limit}`,
         requestHeaders: {
           'Authorization': `Bearer ${token.substring(0, 10)}...`
         }
       });
-      throw new Error(`Failed to fetch top programs: ${response.status} ${response.statusText}`);
+      throw new Error(`Failed to fetch popular programs: ${response.status} ${response.statusText}`);
     }
     
     const data = await response.json();
     return NextResponse.json(data);
   } catch (error) {
-    console.error('Error fetching top programs:', error);
+    console.error('Error fetching popular programs:', error);
     return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
   }
 } 

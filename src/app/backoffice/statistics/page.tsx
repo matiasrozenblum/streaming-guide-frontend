@@ -132,7 +132,7 @@ export default function StatisticsPage() {
 
       const [demographicsRes, topProgramsRes, allProgramsRes] = await Promise.all([
         fetch('/api/statistics/demographics'),
-        fetch('/api/statistics/top-programs?limit=20'),
+        fetch('/api/statistics/popular-programs?limit=20'),
         fetch('/api/statistics/programs'),
       ]);
 
