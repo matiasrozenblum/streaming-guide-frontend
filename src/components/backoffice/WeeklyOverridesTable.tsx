@@ -31,6 +31,9 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Checkbox,
+  ListItemText,
+  OutlinedInput,
 } from '@mui/material';
 import {
   Add,
@@ -43,33 +46,17 @@ import {
   Analytics,
   Settings,
   AddCircle,
+  Group,
 } from '@mui/icons-material';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import type { Schedule as ScheduleType } from '@/types/schedule';
+import type { WeeklyOverride } from '@/types/schedule';
+import type { Program } from '@/types/program';
+import type { Panelist } from '@/types/panelist';
 import { useTheme } from '@mui/material/styles';
 
 // Types
-interface WeeklyOverride {
-  id: string;
-  scheduleId?: number; // Optional for special programs
-  weekStartDate: string;
-  overrideType: 'cancel' | 'time_change' | 'reschedule' | 'create';
-  newStartTime?: string;
-  newEndTime?: string;
-  newDayOfWeek?: string;
-  reason?: string;
-  createdBy?: string;
-  expiresAt: string;
-  createdAt: string;
-  specialProgram?: {
-    name: string;
-    description?: string;
-    channelId: number;
-    imageUrl?: string;
-  };
-}
-
 interface WeeklyStats {
   weekStart: string;
   totalOverrides: number;
@@ -108,10 +95,13 @@ export function WeeklyOverridesTable() {
   const [currentWeekOverrides, setCurrentWeekOverrides] = useState<WeeklyOverride[]>([]);
   const [nextWeekOverrides, setNextWeekOverrides] = useState<WeeklyOverride[]>([]);
   const [schedules, setSchedules] = useState<ScheduleType[]>([]);
+  const [programs, setPrograms] = useState<Program[]>([]);
+  const [panelists, setPanelists] = useState<Panelist[]>([]);
   const [stats, setStats] = useState<WeeklyStats | null>(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleType | null>(null);
+  const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     targetWeek: 'current' as 'current' | 'next',
@@ -120,6 +110,7 @@ export function WeeklyOverridesTable() {
     newEndTime: '',
     newDayOfWeek: '',
     reason: '',
+    panelistIds: [] as number[],
     specialProgram: {
       name: '',
       description: '',
@@ -139,11 +130,17 @@ export function WeeklyOverridesTable() {
       setLoading(true);
       console.log('Fetching weekly overrides data...');
       
-      const [overridesRes, schedulesRes, statsRes] = await Promise.all([
+      const [overridesRes, schedulesRes, programsRes, panelistsRes, statsRes] = await Promise.all([
         fetch('/api/weekly-overrides', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
         fetch('/api/schedules?raw=true', {
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+        }),
+        fetch('/api/programs', {
+          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+        }),
+        fetch('/api/panelists', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }),
         fetch('/api/weekly-schedule-manager/current-week-stats', {
@@ -154,6 +151,8 @@ export function WeeklyOverridesTable() {
       console.log('Response statuses:', {
         overrides: overridesRes.status,
         schedules: schedulesRes.status,
+        programs: programsRes.status,
+        panelists: panelistsRes.status,
         stats: statsRes.status
       });
 
@@ -172,6 +171,22 @@ export function WeeklyOverridesTable() {
         setSchedules(schedulesData || []);
       } else {
         console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
+      }
+
+      if (programsRes.ok) {
+        const programsData = await programsRes.json();
+        console.log('Programs data length:', programsData?.length);
+        setPrograms(programsData || []);
+      } else {
+        console.error('Failed to fetch programs:', programsRes.status, await programsRes.text());
+      }
+
+      if (panelistsRes.ok) {
+        const panelistsData = await panelistsRes.json();
+        console.log('Panelists data length:', panelistsData?.length);
+        setPanelists(panelistsData || []);
+      } else {
+        console.error('Failed to fetch panelists:', panelistsRes.status, await panelistsRes.text());
       }
 
       if (statsRes.ok) {
@@ -211,6 +226,7 @@ export function WeeklyOverridesTable() {
   // Handlers
   const handleOpenDialog = (schedule: ScheduleType) => {
     setSelectedSchedule(schedule);
+    setSelectedProgram(null);
     setFormData({
       targetWeek: 'current',
       overrideType: 'cancel',
@@ -218,6 +234,28 @@ export function WeeklyOverridesTable() {
       newEndTime: schedule.end_time,
       newDayOfWeek: schedule.day_of_week,
       reason: '',
+      panelistIds: [],
+      specialProgram: {
+        name: '',
+        description: '',
+        channelId: 0,
+        imageUrl: '',
+      },
+    });
+    setOpenDialog(true);
+  };
+
+  const handleOpenProgramDialog = (program: Program) => {
+    setSelectedProgram(program);
+    setSelectedSchedule(null);
+    setFormData({
+      targetWeek: 'current',
+      overrideType: 'cancel',
+      newStartTime: '',
+      newEndTime: '',
+      newDayOfWeek: '',
+      reason: '',
+      panelistIds: program.panelists?.map(p => p.id) || [],
       specialProgram: {
         name: '',
         description: '',
@@ -231,6 +269,7 @@ export function WeeklyOverridesTable() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setSelectedSchedule(null);
+    setSelectedProgram(null);
     setFormData({
       targetWeek: 'current',
       overrideType: 'cancel',
@@ -238,6 +277,7 @@ export function WeeklyOverridesTable() {
       newEndTime: '',
       newDayOfWeek: '',
       reason: '',
+      panelistIds: [],
       specialProgram: {
         name: '',
         description: '',
@@ -248,7 +288,7 @@ export function WeeklyOverridesTable() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedSchedule && formData.overrideType !== 'create') return;
+    if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create') return;
 
     try {
       interface OverridePayload {
@@ -260,6 +300,8 @@ export function WeeklyOverridesTable() {
         reason?: string;
         createdBy?: string;
         scheduleId?: number;
+        programId?: number;
+        panelistIds?: number[];
         specialProgram?: {
           name: string;
           description?: string;
@@ -284,6 +326,12 @@ export function WeeklyOverridesTable() {
         }),
         ...(formData.overrideType !== 'create' && selectedSchedule && {
           scheduleId: selectedSchedule.id,
+        }),
+        ...(formData.overrideType !== 'create' && selectedProgram && {
+          programId: selectedProgram.id,
+        }),
+        ...(formData.panelistIds.length > 0 && {
+          panelistIds: formData.panelistIds,
         }),
         reason: formData.reason,
         createdBy: typedSession?.user?.name || 'Admin',
@@ -473,6 +521,10 @@ export function WeeklyOverridesTable() {
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
+            label="Cambios por Programa" 
+            sx={{ fontWeight: 600, color: 'text.primary' }}
+          />
+          <Tab 
             label="Programas Especiales" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
@@ -489,6 +541,7 @@ export function WeeklyOverridesTable() {
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
                 <TableCell>Cambio</TableCell>
+                <TableCell>Panelistas</TableCell>
                 <TableCell>Motivo</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
@@ -496,6 +549,7 @@ export function WeeklyOverridesTable() {
             <TableBody>
               {currentWeekOverrides.map((override) => {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
+                const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
                 
                 return (
@@ -504,13 +558,13 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
                           ? override.specialProgram?.name || 'Programa especial'
-                          : schedule?.program.name || 'Programa desconocido'
+                          : program?.name || schedule?.program.name || 'Programa desconocido'
                         }
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {override.overrideType === 'create'
                           ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
-                          : schedule?.program.channel?.name || 'Sin canal'
+                          : program?.channel_name || schedule?.program.channel?.name || 'Sin canal'
                         }
                       </Typography>
                     </TableCell>
@@ -526,7 +580,9 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2">
                         {override.overrideType === 'create'
                           ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
-                          : `${getDayLabel(schedule?.day_of_week || '')} ${formatTime(schedule?.start_time || '')}-${formatTime(schedule?.end_time || '')}`
+                          : schedule 
+                            ? `${getDayLabel(schedule.day_of_week)} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`
+                            : 'Programa completo'
                         }
                       </Typography>
                     </TableCell>
@@ -537,6 +593,26 @@ export function WeeklyOverridesTable() {
                         <Typography>
                           {override.newDayOfWeek && getDayLabel(override.newDayOfWeek)} {formatTime(override.newStartTime || '')}-{formatTime(override.newEndTime || '')}
                         </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {override.panelistIds && override.panelistIds.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {override.panelistIds.map(panelistId => {
+                            const panelist = panelists.find(p => p.id === panelistId);
+                            return panelist ? (
+                              <Chip
+                                key={panelistId}
+                                label={panelist.name}
+                                size="small"
+                                icon={<Group />}
+                                variant="outlined"
+                              />
+                            ) : null;
+                          })}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">—</Typography>
                       )}
                     </TableCell>
                     <TableCell>{override.reason || '—'}</TableCell>
@@ -563,6 +639,7 @@ export function WeeklyOverridesTable() {
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
                 <TableCell>Cambio</TableCell>
+                <TableCell>Panelistas</TableCell>
                 <TableCell>Motivo</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
@@ -570,6 +647,7 @@ export function WeeklyOverridesTable() {
             <TableBody>
               {nextWeekOverrides.map((override) => {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
+                const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
                 
                 return (
@@ -578,13 +656,13 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
                           ? override.specialProgram?.name || 'Programa especial'
-                          : schedule?.program.name || 'Programa desconocido'
+                          : program?.name || schedule?.program.name || 'Programa desconocido'
                         }
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {override.overrideType === 'create'
                           ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
-                          : schedule?.program.channel?.name || 'Sin canal'
+                          : program?.channel_name || schedule?.program.channel?.name || 'Sin canal'
                         }
                       </Typography>
                     </TableCell>
@@ -600,7 +678,9 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2">
                         {override.overrideType === 'create'
                           ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
-                          : `${getDayLabel(schedule?.day_of_week || '')} ${formatTime(schedule?.start_time || '')}-${formatTime(schedule?.end_time || '')}`
+                          : schedule 
+                            ? `${getDayLabel(schedule.day_of_week)} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`
+                            : 'Programa completo'
                         }
                       </Typography>
                     </TableCell>
@@ -611,6 +691,26 @@ export function WeeklyOverridesTable() {
                         <Typography>
                           {override.newDayOfWeek && getDayLabel(override.newDayOfWeek)} {formatTime(override.newStartTime || '')}-{formatTime(override.newEndTime || '')}
                         </Typography>
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      {override.panelistIds && override.panelistIds.length > 0 ? (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {override.panelistIds.map(panelistId => {
+                            const panelist = panelists.find(p => p.id === panelistId);
+                            return panelist ? (
+                              <Chip
+                                key={panelistId}
+                                label={panelist.name}
+                                size="small"
+                                icon={<Group />}
+                                variant="outlined"
+                              />
+                            ) : null;
+                          })}
+                        </Box>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary">—</Typography>
                       )}
                     </TableCell>
                     <TableCell>{override.reason || '—'}</TableCell>
@@ -631,7 +731,7 @@ export function WeeklyOverridesTable() {
       {currentTab === 2 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
-            Selecciona un programa para crear un cambio semanal
+            Selecciona un horario para crear un cambio semanal
           </Typography>
           
           {/* Search Box */}
@@ -666,6 +766,7 @@ export function WeeklyOverridesTable() {
                     <TableCell sx={{ fontWeight: 600 }}>Programa</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Canal</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Horario</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Panelistas</TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
                   </TableRow>
                 </TableHead>
@@ -701,6 +802,23 @@ export function WeeklyOverridesTable() {
                           </Typography>
                         </TableCell>
                         <TableCell>
+                          {schedule.program.panelists && schedule.program.panelists.length > 0 ? (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {schedule.program.panelists.map(panelist => (
+                                <Chip
+                                  key={panelist.id}
+                                  label={panelist.name}
+                                  size="small"
+                                  icon={<Group />}
+                                  variant="outlined"
+                                />
+                              ))}
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">—</Typography>
+                          )}
+                        </TableCell>
+                        <TableCell>
                           <Button
                             variant="contained"
                             startIcon={<Add />}
@@ -734,8 +852,144 @@ export function WeeklyOverridesTable() {
         </Paper>
       )}
 
-      {/* Special Programs Tab */}
+      {/* Program-Level Overrides Tab */}
       {currentTab === 3 && (
+        <Paper sx={{ p: 3 }}>
+          <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
+            Crear cambios a nivel de programa (afecta todos los horarios del programa)
+          </Typography>
+          <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+            Selecciona un programa para crear un cambio que afecte a todos sus horarios semanales. Esto es útil para cancelar o modificar un programa completo.
+          </Typography>
+          
+          {/* Search Box */}
+          <Box sx={{ mb: 3 }}>
+            <TextField
+              label="Buscar programa o canal..."
+              variant="outlined"
+              size="small"
+              fullWidth
+              value={searchTerm}
+              onChange={(e) => setSearchTerm(e.target.value)}
+              placeholder="Escribe para filtrar programas"
+              sx={{
+                '& .MuiOutlinedInput-root': {
+                  backgroundColor: 'background.paper',
+                },
+              }}
+            />
+          </Box>
+
+          {programs.length === 0 ? (
+            <Box sx={{ textAlign: 'center', py: 4 }}>
+              <Typography variant="body1" color="text.secondary">
+                No hay programas disponibles
+              </Typography>
+            </Box>
+          ) : (
+            <TableContainer>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 600 }}>Programa</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Canal</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Horarios</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Panelistas</TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {programs
+                    .filter((program) => {
+                      const searchLower = searchTerm.toLowerCase();
+                      return (
+                        program.name.toLowerCase().includes(searchLower) ||
+                        (program.channel_name || '').toLowerCase().includes(searchLower)
+                      );
+                    })
+                    .map((program) => {
+                      const programSchedules = schedules.filter(s => s.program.id === program.id);
+                      return (
+                        <TableRow key={program.id} hover>
+                          <TableCell>
+                            <Typography variant="body2" fontWeight="bold">
+                              {program.name}
+                            </Typography>
+                            {program.description && (
+                              <Typography variant="caption" color="text.secondary">
+                                {program.description}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2">
+                              {program.channel_name || 'Sin canal'}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <Typography variant="body2" color="text.secondary">
+                              {programSchedules.length} horario{programSchedules.length !== 1 ? 's' : ''}
+                            </Typography>
+                            {programSchedules.length > 0 && (
+                              <Typography variant="caption" color="text.secondary">
+                                {programSchedules.map(s => `${getDayLabel(s.day_of_week)} ${formatTime(s.start_time)}`).join(', ')}
+                              </Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            {program.panelists && program.panelists.length > 0 ? (
+                              <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                                {program.panelists.map(panelist => (
+                                  <Chip
+                                    key={panelist.id}
+                                    label={panelist.name}
+                                    size="small"
+                                    icon={<Group />}
+                                    variant="outlined"
+                                  />
+                                ))}
+                              </Box>
+                            ) : (
+                              <Typography variant="body2" color="text.secondary">—</Typography>
+                            )}
+                          </TableCell>
+                          <TableCell>
+                            <Button
+                              variant="contained"
+                              startIcon={<Add />}
+                              onClick={() => handleOpenProgramDialog(program)}
+                              size="small"
+                            >
+                              Crear Cambio
+                            </Button>
+                          </TableCell>
+                        </TableRow>
+                      );
+                    })}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          )}
+
+          {/* Show filtered results count */}
+          {searchTerm && (
+            <Box sx={{ mt: 2, textAlign: 'center' }}>
+              <Typography variant="body2" color="text.secondary">
+                Mostrando {programs.filter((program) => {
+                  const searchLower = searchTerm.toLowerCase();
+                  return (
+                    program.name.toLowerCase().includes(searchLower) ||
+                    (program.channel_name || '').toLowerCase().includes(searchLower)
+                  );
+                }).length} de {programs.length} programas
+              </Typography>
+            </Box>
+          )}
+        </Paper>
+      )}
+
+      {/* Special Programs Tab */}
+      {currentTab === 4 && (
         <Paper sx={{ p: 3 }}>
           <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
             Crear Programa Especial
@@ -749,6 +1003,7 @@ export function WeeklyOverridesTable() {
             startIcon={<AddCircle />}
             onClick={() => {
               setSelectedSchedule(null);
+              setSelectedProgram(null);
               setFormData({
                 targetWeek: 'current',
                 overrideType: 'create',
@@ -756,6 +1011,7 @@ export function WeeklyOverridesTable() {
                 newEndTime: '',
                 newDayOfWeek: '',
                 reason: '',
+                panelistIds: [],
                 specialProgram: {
                   name: '',
                   description: '',
@@ -783,6 +1039,7 @@ export function WeeklyOverridesTable() {
                   <TableCell>Programa</TableCell>
                   <TableCell>Canal</TableCell>
                   <TableCell>Horario</TableCell>
+                  <TableCell>Panelistas</TableCell>
                   <TableCell>Semana</TableCell>
                   <TableCell>Acciones</TableCell>
                 </TableRow>
@@ -812,6 +1069,26 @@ export function WeeklyOverridesTable() {
                           <Typography variant="body2" sx={{ fontFamily: 'monospace' }}>
                             {getDayLabel(override.newDayOfWeek || '')} {formatTime(override.newStartTime || '')}-{formatTime(override.newEndTime || '')}
                           </Typography>
+                        </TableCell>
+                        <TableCell>
+                          {override.panelistIds && override.panelistIds.length > 0 ? (
+                            <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                              {override.panelistIds.map(panelistId => {
+                                const panelist = panelists.find(p => p.id === panelistId);
+                                return panelist ? (
+                                  <Chip
+                                    key={panelistId}
+                                    label={panelist.name}
+                                    size="small"
+                                    icon={<Group />}
+                                    variant="outlined"
+                                  />
+                                ) : null;
+                              })}
+                            </Box>
+                          ) : (
+                            <Typography variant="body2" color="text.secondary">—</Typography>
+                          )}
                         </TableCell>
                         <TableCell>
                           <Chip
@@ -863,6 +1140,19 @@ export function WeeklyOverridesTable() {
               </Typography>
             </Box>
           )}
+          {selectedProgram && (
+            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+              <Typography variant="body1" fontWeight="bold" color="text.primary">
+                {selectedProgram.name}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Canal: {selectedProgram.channel_name || 'Sin canal'}
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Programa completo (todos los horarios)
+              </Typography>
+            </Box>
+          )}
         </DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 3, pt: 2 }}>
@@ -907,6 +1197,44 @@ export function WeeklyOverridesTable() {
                 {formData.overrideType === 'create' && '✨ Programa especial: Crea un programa temporal que no existe en la base de datos'}
               </Typography>
             </Box>
+
+            {/* Panelist selection */}
+            {panelists.length > 0 && (
+              <FormControl fullWidth>
+                <InputLabel>Panelistas</InputLabel>
+                <Select
+                  multiple
+                  value={formData.panelistIds}
+                  onChange={(e) => setFormData({ ...formData, panelistIds: typeof e.target.value === 'string' ? [] : e.target.value })}
+                  input={<OutlinedInput label="Panelistas" />}
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {selected.map((value) => {
+                        const panelist = panelists.find(p => p.id === value);
+                        return panelist ? (
+                          <Chip
+                            key={value}
+                            label={panelist.name}
+                            size="small"
+                            icon={<Group />}
+                          />
+                        ) : null;
+                      })}
+                    </Box>
+                  )}
+                >
+                  {panelists.map((panelist) => (
+                    <MenuItem key={panelist.id} value={panelist.id}>
+                      <Checkbox checked={formData.panelistIds.indexOf(panelist.id) > -1} />
+                      <ListItemText primary={panelist.name} />
+                    </MenuItem>
+                  ))}
+                </Select>
+                <Typography variant="caption" color="text.secondary">
+                  Selecciona los panelistas que participarán en este programa (opcional)
+                </Typography>
+              </FormControl>
+            )}
 
             {/* Special program fields for create overrides */}
             {formData.overrideType === 'create' && (
