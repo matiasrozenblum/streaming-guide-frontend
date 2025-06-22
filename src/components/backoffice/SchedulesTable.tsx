@@ -23,8 +23,25 @@ import {
   Snackbar,
   Alert,
   CircularProgress,
+  Tabs,
+  Tab,
+  List,
+  ListItem,
+  ListItemText,
+  ListItemSecondaryAction,
+  Divider,
+  Checkbox,
+  FormControlLabel,
 } from '@mui/material';
-import { Edit, Delete, Add, Check, Close } from '@mui/icons-material';
+import { 
+  Edit, 
+  Delete, 
+  Add, 
+  Check, 
+  Close, 
+  AddCircle,
+  Schedule,
+} from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';
@@ -38,19 +55,25 @@ const formatTime = (time: string) => {
 };
 
 const DAYS_OF_WEEK = [
-  'monday',
-  'tuesday',
-  'wednesday',
-  'thursday',
-  'friday',
-  'saturday',
-  'sunday',
+  { value: 'monday', label: 'Lunes' },
+  { value: 'tuesday', label: 'Martes' },
+  { value: 'wednesday', label: 'Miércoles' },
+  { value: 'thursday', label: 'Jueves' },
+  { value: 'friday', label: 'Viernes' },
+  { value: 'saturday', label: 'Sábado' },
+  { value: 'sunday', label: 'Domingo' },
 ] as const;
 
-type DayOfWeek = typeof DAYS_OF_WEEK[number];
+type DayOfWeek = typeof DAYS_OF_WEEK[number]['value'];
 
 interface ProgramWithSchedules extends Program {
   schedules: ScheduleType[];
+}
+
+interface BulkScheduleData {
+  dayOfWeek: DayOfWeek;
+  startTime: string;
+  endTime: string;
 }
 
 export function SchedulesTable() {
@@ -66,8 +89,11 @@ export function SchedulesTable() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openProgramDialog, setOpenProgramDialog] = useState(false);
-  const [showAddScheduleForm, setShowAddScheduleForm] = useState(false);
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
+  const [bulkSchedules, setBulkSchedules] = useState<BulkScheduleData[]>([]);
+  const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
+  const [bulkTimeRange, setBulkTimeRange] = useState({ startTime: '', endTime: '' });
+  const [currentTab, setCurrentTab] = useState(0);
 
   const hasFetched = useRef(false);
 
@@ -188,18 +214,22 @@ export function SchedulesTable() {
   const handleOpenProgramDialog = (program: ProgramWithSchedules) => {
     setSelectedProgram(program);
     setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
+    setBulkSchedules([]);
+    setSelectedDays([]);
+    setBulkTimeRange({ startTime: '', endTime: '' });
     setOpenProgramDialog(true);
-    setShowAddScheduleForm(false);
+    setCurrentTab(0);
   };
 
   const handleCloseProgramDialog = () => {
     setOpenProgramDialog(false);
     setSelectedProgram(null);
     setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
-    setShowAddScheduleForm(false);
+    setBulkSchedules([]);
+    setSelectedDays([]);
+    setBulkTimeRange({ startTime: '', endTime: '' });
+    setCurrentTab(0);
   };
-
-  const handleShowAddScheduleForm = () => setShowAddScheduleForm(true);
 
   const handleAddProgramSchedule = async () => {
     if (!selectedProgram) return;
@@ -230,11 +260,83 @@ export function SchedulesTable() {
           : prev
       );
       setSuccess('Nuevo horario agregado correctamente');
-      setShowAddScheduleForm(false);
+      setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
     } catch (err) {
       console.error('Error adding schedule:', err);
       setError((err as Error).message || 'Error al agregar el horario');
     }
+  };
+
+  const handleBulkCreateSchedules = async () => {
+    if (!selectedProgram || !selectedProgram.channel_id) return;
+    
+    try {
+      if (bulkSchedules.length === 0) {
+        throw new Error('Debes agregar al menos un horario');
+      }
+
+      const bulkData = {
+        programId: selectedProgram.id.toString(),
+        channelId: selectedProgram.channel_id.toString(),
+        schedules: bulkSchedules,
+      };
+
+      const response = await api.post<ScheduleType[]>('/schedules/bulk', bulkData, { 
+        headers: { Authorization: `Bearer ${typedSession?.accessToken}` } 
+      });
+      
+      const createdSchedules = response.data;
+      
+      // Update local state
+      setPrograms(programs.map(pr =>
+        pr.id === selectedProgram.id
+          ? { ...pr, schedules: [...pr.schedules, ...createdSchedules] }
+          : pr
+      ));
+      
+      setSelectedProgram(prev =>
+        prev && prev.id === selectedProgram.id
+          ? { ...prev, schedules: [...prev.schedules, ...createdSchedules] }
+          : prev
+      );
+      
+      setSuccess(`${createdSchedules.length} horarios creados correctamente`);
+      setBulkSchedules([]);
+      setSelectedDays([]);
+      setBulkTimeRange({ startTime: '', endTime: '' });
+    } catch (err) {
+      console.error('Error creating bulk schedules:', err);
+      setError((err as Error).message || 'Error al crear los horarios');
+    }
+  };
+
+  const handleAddBulkSchedule = () => {
+    if (!bulkTimeRange.startTime || !bulkTimeRange.endTime || selectedDays.length === 0) {
+      setError('Debes seleccionar días y horarios');
+      return;
+    }
+
+    const newSchedules: BulkScheduleData[] = selectedDays.map(day => ({
+      dayOfWeek: day,
+      startTime: bulkTimeRange.startTime,
+      endTime: bulkTimeRange.endTime,
+    }));
+
+    setBulkSchedules(prev => [...prev, ...newSchedules]);
+    setSelectedDays([]);
+    setBulkTimeRange({ startTime: '', endTime: '' });
+  };
+
+  const handleRemoveBulkSchedule = (index: number) => {
+    setBulkSchedules(prev => prev.filter((_, i) => i !== index));
+  };
+
+  const handleDayToggle = (day: DayOfWeek) => {
+    setSelectedDays(prev => 
+      prev.includes(day) 
+        ? prev.filter(d => d !== day)
+        : [...prev, day]
+    );
   };
 
   if (loading) {
@@ -284,7 +386,7 @@ export function SchedulesTable() {
                     {program.schedules.map(schedule => (
                       <Chip
                         key={schedule.id}
-                        label={`${schedule.day_of_week} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`}
+                        label={`${DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`}
                         onClick={() => handleOpenEditDialog(schedule)}
                         onDelete={() => handleDelete(schedule.id)}
                       />
@@ -303,107 +405,126 @@ export function SchedulesTable() {
       </TableContainer>
 
       {/* Diálogo de gestión de horarios */}
-      <Dialog open={openProgramDialog} onClose={handleCloseProgramDialog} maxWidth="md" fullWidth>
+      <Dialog open={openProgramDialog} onClose={handleCloseProgramDialog} maxWidth="lg" fullWidth>
         <DialogTitle>
           {selectedProgram ? `Horarios de ${selectedProgram.name}` : 'Horarios'}
         </DialogTitle>
         <DialogContent>
           {selectedProgram && (
             <Box>
-              {/* Horarios actuales y botón Agregar */}
-              <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-                <Typography variant="h6" color="text.primary">Horarios actuales</Typography>
-                {!showAddScheduleForm && (
-                  <Button variant="outlined" startIcon={<Add />} onClick={handleShowAddScheduleForm}>
-                    Agregar Horario
-                  </Button>
-                )}
+              {/* Tabs */}
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+                <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+                  <Tab 
+                    label="Horarios Actuales" 
+                    icon={<Schedule />}
+                    iconPosition="start"
+                  />
+                  <Tab 
+                    label="Agregar Horario" 
+                    icon={<Add />}
+                    iconPosition="start"
+                  />
+                  <Tab 
+                    label="Creación Masiva" 
+                    icon={<AddCircle />}
+                    iconPosition="start"
+                  />
+                </Tabs>
               </Box>
-              <TableContainer component={Paper} sx={{ mb: 2 }}>
-                <Table size="small">
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Día</TableCell>
-                      <TableCell>Inicio</TableCell>
-                      <TableCell>Fin</TableCell>
-                      <TableCell>Acciones</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {selectedProgram.schedules.map(schedule => (
-                      <TableRow key={schedule.id}>
-                        {editingSchedule?.id === schedule.id ? (
-                          <>
-                            <TableCell>
-                              <TextField
-                                select
-                                value={formData.dayOfWeek}
-                                onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
-                                fullWidth
-                              >
-                                {DAYS_OF_WEEK.map((day: DayOfWeek) => (
-                                  <MenuItem key={day} value={day}>
-                                    {day}
-                                  </MenuItem>
-                                ))}
-                              </TextField>
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                type="time"
-                                value={formData.startTime}
-                                onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <TextField
-                                type="time"
-                                value={formData.endTime}
-                                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                                InputLabelProps={{ shrink: true }}
-                                fullWidth
-                              />
-                            </TableCell>
-                            <TableCell>
-                              <IconButton onClick={handleSubmit}>
-                                <Check />
-                              </IconButton>
-                              <IconButton onClick={handleCloseEditDialog}>
-                                <Close />
-                              </IconButton>
-                            </TableCell>
-                          </>
-                        ) : (
-                          <>
-                            <TableCell>{schedule.day_of_week}</TableCell>
-                            <TableCell>{formatTime(schedule.start_time)}</TableCell>
-                            <TableCell>{formatTime(schedule.end_time)}</TableCell>
-                            <TableCell>
-                              <IconButton onClick={() => handleOpenEditDialog(schedule)}><Edit /></IconButton>
-                              <IconButton onClick={() => handleDelete(schedule.id)}><Delete /></IconButton>
-                            </TableCell>
-                          </>
-                        )}
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
 
-              {/* Add Schedule Form */}
-              {showAddScheduleForm && (
-                <Box sx={{ mt: 3 }}>
-                  <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-                    <Typography variant="h6" color="text.primary">Agregar Nuevo Horario</Typography>
-                    <Button
-                      variant="text"
-                      onClick={() => setShowAddScheduleForm(false)}
-                    >
-                      Cancelar
-                    </Button>
+              {/* Current Schedules Tab */}
+              {currentTab === 0 && (
+                <Box>
+                  <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+                    <Typography variant="h6" color="text.primary">Horarios actuales</Typography>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button variant="outlined" startIcon={<Add />} onClick={() => setCurrentTab(1)}>
+                        Agregar Horario
+                      </Button>
+                    </Box>
                   </Box>
+                  <TableContainer component={Paper} sx={{ mb: 2 }}>
+                    <Table size="small">
+                      <TableHead>
+                        <TableRow>
+                          <TableCell>Día</TableCell>
+                          <TableCell>Inicio</TableCell>
+                          <TableCell>Fin</TableCell>
+                          <TableCell>Acciones</TableCell>
+                        </TableRow>
+                      </TableHead>
+                      <TableBody>
+                        {selectedProgram.schedules.map(schedule => (
+                          <TableRow key={schedule.id}>
+                            {editingSchedule?.id === schedule.id ? (
+                              <>
+                                <TableCell>
+                                  <TextField
+                                    select
+                                    value={formData.dayOfWeek}
+                                    onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                                    fullWidth
+                                  >
+                                    {DAYS_OF_WEEK.map((day) => (
+                                      <MenuItem key={day.value} value={day.value}>
+                                        {day.label}
+                                      </MenuItem>
+                                    ))}
+                                  </TextField>
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    type="time"
+                                    value={formData.startTime}
+                                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                    fullWidth
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <TextField
+                                    type="time"
+                                    value={formData.endTime}
+                                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                                    InputLabelProps={{ shrink: true }}
+                                    fullWidth
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  <IconButton onClick={handleSubmit}>
+                                    <Check />
+                                  </IconButton>
+                                  <IconButton onClick={handleCloseEditDialog}>
+                                    <Close />
+                                  </IconButton>
+                                </TableCell>
+                              </>
+                            ) : (
+                              <>
+                                <TableCell>{DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week}</TableCell>
+                                <TableCell>{formatTime(schedule.start_time)}</TableCell>
+                                <TableCell>{formatTime(schedule.end_time)}</TableCell>
+                                <TableCell>
+                                  <IconButton onClick={() => handleOpenEditDialog(schedule)}><Edit /></IconButton>
+                                  <IconButton onClick={() => handleDelete(schedule.id)}><Delete /></IconButton>
+                                </TableCell>
+                              </>
+                            )}
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </TableContainer>
+                </Box>
+              )}
+
+              {/* Add Single Schedule Tab */}
+              {currentTab === 1 && (
+                <Box>
+                  <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+                    Agregar Nuevo Horario
+                  </Typography>
                   <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
                     <TextField
                       select
@@ -412,9 +533,9 @@ export function SchedulesTable() {
                       onChange={(e) => setProgramFormData({ ...programFormData, dayOfWeek: e.target.value })}
                       fullWidth
                     >
-                      {DAYS_OF_WEEK.map((day: DayOfWeek) => (
-                        <MenuItem key={day} value={day}>
-                          {day}
+                      {DAYS_OF_WEEK.map((day) => (
+                        <MenuItem key={day.value} value={day.value}>
+                          {day.label}
                         </MenuItem>
                       ))}
                     </TextField>
@@ -442,6 +563,107 @@ export function SchedulesTable() {
                       Agregar
                     </Button>
                   </Box>
+                </Box>
+              )}
+
+              {/* Bulk Create Tab */}
+              {currentTab === 2 && (
+                <Box>
+                  <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
+                    Creación Masiva de Horarios
+                  </Typography>
+                  
+                  {/* Bulk Schedule Builder */}
+                  <Paper sx={{ p: 2, mb: 2 }}>
+                    <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                      Configurar horarios
+                    </Typography>
+                    
+                    {/* Day Selection */}
+                    <Box sx={{ mb: 2 }}>
+                      <Typography variant="body2" sx={{ mb: 1 }}>
+                        Seleccionar días:
+                      </Typography>
+                      <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                        {DAYS_OF_WEEK.map((day) => (
+                          <FormControlLabel
+                            key={day.value}
+                            control={
+                              <Checkbox
+                                checked={selectedDays.includes(day.value)}
+                                onChange={() => handleDayToggle(day.value)}
+                              />
+                            }
+                            label={day.label}
+                          />
+                        ))}
+                      </Box>
+                    </Box>
+
+                    {/* Time Range */}
+                    <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                      <TextField
+                        label="Hora de inicio"
+                        type="time"
+                        value={bulkTimeRange.startTime}
+                        onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, startTime: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                      />
+                      <TextField
+                        label="Hora de fin"
+                        type="time"
+                        value={bulkTimeRange.endTime}
+                        onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, endTime: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                      />
+                      <Button
+                        variant="outlined"
+                        onClick={handleAddBulkSchedule}
+                        sx={{ alignSelf: 'flex-end' }}
+                        disabled={selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
+                      >
+                        Agregar
+                      </Button>
+                    </Box>
+                  </Paper>
+
+                  {/* Bulk Schedules List */}
+                  {bulkSchedules.length > 0 && (
+                    <Paper sx={{ p: 2, mb: 2 }}>
+                      <Typography variant="subtitle1" sx={{ mb: 2 }}>
+                        Horarios a crear ({bulkSchedules.length})
+                      </Typography>
+                      <List dense>
+                        {bulkSchedules.map((schedule, index) => (
+                          <ListItem key={index}>
+                            <ListItemText
+                              primary={`${DAYS_OF_WEEK.find(d => d.value === schedule.dayOfWeek)?.label} ${formatTime(schedule.startTime)}-${formatTime(schedule.endTime)}`}
+                            />
+                            <ListItemSecondaryAction>
+                              <IconButton 
+                                edge="end" 
+                                onClick={() => handleRemoveBulkSchedule(index)}
+                                color="error"
+                              >
+                                <Delete />
+                              </IconButton>
+                            </ListItemSecondaryAction>
+                          </ListItem>
+                        ))}
+                      </List>
+                      <Divider sx={{ my: 2 }} />
+                      <Button
+                        variant="contained"
+                        onClick={handleBulkCreateSchedules}
+                        startIcon={<AddCircle />}
+                        fullWidth
+                      >
+                        Crear {bulkSchedules.length} Horarios
+                      </Button>
+                    </Paper>
+                  )}
                 </Box>
               )}
             </Box>

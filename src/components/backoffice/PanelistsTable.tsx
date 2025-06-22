@@ -278,7 +278,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                   <IconButton onClick={() => handleOpenProgramsDialog(panelist)}>
                     <Group />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(panelist.id)}>
+                  <IconButton onClick={() => handleDelete(String(panelist.id))}>
                     <Delete />
                   </IconButton>
                 </TableCell>
