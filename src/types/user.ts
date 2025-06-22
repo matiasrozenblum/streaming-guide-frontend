@@ -1,3 +1,6 @@
+import { Device } from './device';
+import { UserSubscription } from './user-subscription';
+
 export interface User {
   id: string;
   firstName: string;
@@ -9,4 +12,6 @@ export interface User {
   updatedAt: string;
   gender?: 'male' | 'female' | 'non_binary' | 'rather_not_say';
   birthDate?: string;
+  devices: Device[];
+  subscriptions: UserSubscription[];
 } 
