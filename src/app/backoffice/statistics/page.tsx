@@ -51,6 +51,7 @@ interface UserDemographics {
     age30to45: number;
     age45to60: number;
     over60: number;
+    unknown: number;
   };
   usersWithSubscriptions: number;
   usersWithoutSubscriptions: number;
@@ -81,6 +82,7 @@ interface ProgramSubscriptionStats {
     age30to45: number;
     age45to60: number;
     over60: number;
+    unknown: number;
   };
 }
 
@@ -177,6 +179,7 @@ export default function StatisticsPage() {
       age30to45: '31-45 años',
       age45to60: '46-60 años',
       over60: 'Más de 60 años',
+      unknown: 'Sin fecha de nacimiento',
     };
     return labels[ageGroup as keyof typeof labels] || ageGroup;
   };
@@ -198,6 +201,7 @@ export default function StatisticsPage() {
       age30to45: '#10b981',
       age45to60: '#3b82f6',
       over60: '#8b5cf6',
+      unknown: '#6b7280',
     };
     return colors[ageGroup as keyof typeof colors] || '#6b7280';
   };
