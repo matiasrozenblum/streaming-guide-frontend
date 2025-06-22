@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { getSession } from 'next-auth/react';
 import {
   Box,
   Typography,
@@ -37,7 +36,6 @@ import {
   ShowChart,
 } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import type { SessionWithToken } from '@/types/session';
 
 interface UserDemographics {
   totalUsers: number;
@@ -109,8 +107,7 @@ function TabPanel(props: TabPanelProps) {
 }
 
 export default function StatisticsPage() {
-  const { session, status } = useSessionContext();
-  const typedSession = session as SessionWithToken | null;
+  const { status } = useSessionContext();
   const { mode } = useThemeContext();
   
   const [tabValue, setTabValue] = useState(0);
@@ -125,26 +122,16 @@ export default function StatisticsPage() {
   const hasFetched = useRef(false);
 
   const fetchData = useCallback(async () => {
-    if (status !== 'authenticated' || typedSession?.user.role !== 'admin') return;
+    if (status !== 'authenticated') return;
 
     try {
       setLoading(true);
       setError(null);
 
-      const sess = await getSession();
-      const token = sess?.accessToken;
-      if (!token) throw new Error('No auth token');
-
       const [demographicsRes, topProgramsRes, allProgramsRes] = await Promise.all([
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/statistics/demographics`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/statistics/top-programs?limit=20`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
-        fetch(`${process.env.NEXT_PUBLIC_API_URL}/statistics/programs`, {
-          headers: { 'Authorization': `Bearer ${token}` },
-        }),
+        fetch('/api/statistics/demographics'),
+        fetch('/api/statistics/top-programs?limit=20'),
+        fetch('/api/statistics/programs'),
       ]);
 
       if (!demographicsRes.ok) throw new Error(`Error ${demographicsRes.status}`);
@@ -164,18 +151,14 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [status, typedSession]);
+  }, [status]);
 
   useEffect(() => {
-    if (
-      status === 'authenticated' &&
-      typedSession?.user.role === 'admin' &&
-      !hasFetched.current
-    ) {
+    if (status === 'authenticated' && !hasFetched.current) {
       fetchData();
       hasFetched.current = true;
     }
-  }, [status, fetchData, typedSession?.user.role]);
+  }, [status, fetchData]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
