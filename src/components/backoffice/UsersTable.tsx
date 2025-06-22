@@ -26,10 +26,11 @@ import {
   FormControl,
   InputLabel,
 } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
+import { Edit, Delete, Add, Settings } from '@mui/icons-material';
 import { User } from '@/types/user';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { ManageUserDialog } from './ManageUserDialog';
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
@@ -55,6 +56,12 @@ const genderTranslations: Record<string, string> = {
   female: 'Femenino',
   non_binary: 'No binario',
   rather_not_say: 'Prefiero no decir'
+};
+
+const notificationMethodTranslations: Record<string, string> = {
+  push: 'Push',
+  email: 'Email',
+  both: 'Ambos',
 };
 
 type Gender = 'male' | 'female' | 'non_binary' | 'rather_not_say';
@@ -91,6 +98,7 @@ export function UsersTable() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
+  const [manageUser, setManageUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -334,6 +342,8 @@ export function UsersTable() {
               <TableCell>Rol</TableCell>
               <TableCell>Género</TableCell>
               <TableCell>Fecha de nacimiento</TableCell>
+              <TableCell>Dispositivos</TableCell>
+              <TableCell>Suscripciones</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -354,11 +364,38 @@ export function UsersTable() {
                   {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : '—'}
                 </TableCell>
                 <TableCell>
+                  {user.devices && user.devices.length > 0 ? (
+                    <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
+                      {user.devices.map(device => (
+                        <li key={device.id}>
+                          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
+                            {device.deviceId.substring(0, 8)}...
+                          </Typography>
+                        </li>
+                      ))}
+                    </ul>
+                  ) : '—'}
+                </TableCell>
+                <TableCell>
+                  {user.subscriptions && user.subscriptions.length > 0 ? (
+                    <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
+                      {user.subscriptions.map(sub => (
+                        <li key={sub.id}>
+                          {sub.program.name} ({notificationMethodTranslations[sub.notificationMethod] || sub.notificationMethod})
+                        </li>
+                      ))}
+                    </ul>
+                  ) : '—'}
+                </TableCell>
+                <TableCell>
                   <IconButton onClick={() => handleOpenDialog(user)}>
                     <Edit />
                   </IconButton>
                   <IconButton onClick={() => handleDelete(user.id)}>
                     <Delete />
+                  </IconButton>
+                  <IconButton onClick={() => setManageUser(user)}>
+                    <Settings />
                   </IconButton>
                 </TableCell>
               </TableRow>
@@ -513,6 +550,17 @@ export function UsersTable() {
           </DialogActions>
         </form>
       </Dialog>
+
+      <ManageUserDialog
+        open={!!manageUser}
+        onClose={() => setManageUser(null)}
+        user={manageUser}
+        session={typedSession}
+        onDeviceDeleted={() => {
+          fetchUsers();
+          setManageUser(null);
+        }}
+      />
 
       <Snackbar open={!!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
