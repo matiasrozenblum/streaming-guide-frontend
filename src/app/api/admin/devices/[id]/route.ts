@@ -3,14 +3,14 @@ import { getToken } from 'next-auth/jwt';
 
 export async function DELETE(
   req: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   const token = await getToken({ req });
   if (!token || token.role !== 'admin') {
     return NextResponse.json({ message: 'Unauthorized' }, { status: 401 });
   }
 
-  const { id } = params;
+  const { id } = await params;
   const BACKEND_URL = process.env.NEXT_PUBLIC_BACKEND_URL;
 
   try {

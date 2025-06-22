@@ -18,7 +18,6 @@ import {
 import { Delete } from '@mui/icons-material';
 import { User } from '@/types/user';
 import { Device } from '@/types/device';
-const UAParser = require('ua-parser-js');
 import { SessionWithToken } from '@/types/session';
 
 interface ManageUserDialogProps {
@@ -68,17 +67,11 @@ export function ManageUserDialog({ open, onClose, user, session, onDeviceDeleted
   };
 
   const renderDeviceDetails = (device: Device) => {
-    const parser = new UAParser(device.userAgent || '');
-    const result = parser.getResult();
-    const browser = result.browser.name ? `${result.browser.name} ${result.browser.version}` : 'Unknown';
-    const os = result.os.name ? `${result.os.name} ${result.os.version}`: 'Unknown';
-
     const details = [
       `Device ID: ${device.deviceId.substring(0, 8)}...`,
       `Type: ${device.deviceType || 'Unknown'}`,
       `Name: ${device.deviceName || 'Unknown'}`,
-      `Browser: ${browser}`,
-      `OS: ${os}`,
+      `User Agent: ${device.userAgent || 'N/A'}`,
       `Last Seen: ${device.lastSeen ? new Date(device.lastSeen).toLocaleString() : 'Never'}`,
     ].join(' | ');
 
@@ -86,7 +79,7 @@ export function ManageUserDialog({ open, onClose, user, session, onDeviceDeleted
   };
 
   return (
-    <Dialog open={open} onClose={onClose} maxWidth="md" fullWidth>
+    <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
       <DialogTitle>Manage User: {user.firstName} {user.lastName}</DialogTitle>
       <DialogContent>
         {/* Devices Section */}
