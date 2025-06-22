@@ -1,0 +1,613 @@
+'use client';
+
+import { useState, useEffect } from 'react';
+import {
+  Box,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  Paper,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Chip,
+  CircularProgress,
+  Alert,
+  Tabs,
+  Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
+  Accordion,
+  AccordionSummary,
+  AccordionDetails,
+} from '@mui/material';
+import {
+  People,
+  TrendingUp,
+  BarChart,
+  ExpandMore,
+  PieChart,
+  ShowChart,
+} from '@mui/icons-material';
+import { useThemeContext } from '@/contexts/ThemeContext';
+import { api } from '@/services/api';
+
+interface UserDemographics {
+  totalUsers: number;
+  byGender: {
+    male: number;
+    female: number;
+    non_binary: number;
+    rather_not_say: number;
+  };
+  byAgeGroup: {
+    under18: number;
+    age18to30: number;
+    age30to45: number;
+    age45to60: number;
+    over60: number;
+  };
+  usersWithSubscriptions: number;
+  usersWithoutSubscriptions: number;
+}
+
+interface TopProgramsStats {
+  programId: number;
+  programName: string;
+  channelName: string;
+  subscriptionCount: number;
+  percentageOfTotalUsers: number;
+}
+
+interface ProgramSubscriptionStats {
+  programId: number;
+  programName: string;
+  channelName: string;
+  totalSubscriptions: number;
+  byGender: {
+    male: number;
+    female: number;
+    non_binary: number;
+    rather_not_say: number;
+  };
+  byAgeGroup: {
+    under18: number;
+    age18to30: number;
+    age30to45: number;
+    age45to60: number;
+    over60: number;
+  };
+}
+
+interface TabPanelProps {
+  children?: React.ReactNode;
+  index: number;
+  value: number;
+}
+
+function TabPanel(props: TabPanelProps) {
+  const { children, value, index, ...other } = props;
+
+  return (
+    <div
+      role="tabpanel"
+      hidden={value !== index}
+      id={`statistics-tabpanel-${index}`}
+      aria-labelledby={`statistics-tab-${index}`}
+      {...other}
+    >
+      {value === index && <Box sx={{ p: 3 }}>{children}</Box>}
+    </div>
+  );
+}
+
+export default function StatisticsPage() {
+  const { mode } = useThemeContext();
+  const [tabValue, setTabValue] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [demographics, setDemographics] = useState<UserDemographics | null>(null);
+  const [topPrograms, setTopPrograms] = useState<TopProgramsStats[]>([]);
+  const [allProgramsStats, setAllProgramsStats] = useState<ProgramSubscriptionStats[]>([]);
+  const [selectedProgram, setSelectedProgram] = useState<number | ''>('');
+
+  useEffect(() => {
+    fetchData();
+  }, []);
+
+  const fetchData = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+
+      const [demographicsRes, topProgramsRes, allProgramsRes] = await Promise.all([
+        api.get('/statistics/demographics'),
+        api.get('/statistics/top-programs?limit=20'),
+        api.get('/statistics/programs'),
+      ]);
+
+      setDemographics(demographicsRes.data);
+      setTopPrograms(topProgramsRes.data);
+      setAllProgramsStats(allProgramsRes.data);
+    } catch (err) {
+      console.error('Error fetching statistics:', err);
+      setError('Error al cargar las estadísticas');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const getGenderLabel = (gender: string) => {
+    const labels = {
+      male: 'Masculino',
+      female: 'Femenino',
+      non_binary: 'No binario',
+      rather_not_say: 'Prefiero no decir',
+    };
+    return labels[gender as keyof typeof labels] || gender;
+  };
+
+  const getAgeGroupLabel = (ageGroup: string) => {
+    const labels = {
+      under18: 'Menor de 18',
+      age18to30: '18-30 años',
+      age30to45: '31-45 años',
+      age45to60: '46-60 años',
+      over60: 'Más de 60 años',
+    };
+    return labels[ageGroup as keyof typeof labels] || ageGroup;
+  };
+
+  const getGenderColor = (gender: string) => {
+    const colors = {
+      male: '#3b82f6',
+      female: '#ec4899',
+      non_binary: '#8b5cf6',
+      rather_not_say: '#6b7280',
+    };
+    return colors[gender as keyof typeof colors] || '#6b7280';
+  };
+
+  const getAgeGroupColor = (ageGroup: string) => {
+    const colors = {
+      under18: '#ef4444',
+      age18to30: '#f59e0b',
+      age30to45: '#10b981',
+      age45to60: '#3b82f6',
+      over60: '#8b5cf6',
+    };
+    return colors[ageGroup as keyof typeof colors] || '#6b7280';
+  };
+
+  if (loading) {
+    return (
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="60vh"
+      >
+        <CircularProgress />
+      </Box>
+    );
+  }
+
+  if (error) {
+    return (
+      <Box p={3}>
+        <Alert severity="error">{error}</Alert>
+      </Box>
+    );
+  }
+
+  return (
+    <Box>
+      <Typography
+        variant="h4"
+        component="h1"
+        gutterBottom
+        sx={{
+          color: mode === 'light' ? '#111827' : '#f1f5f9',
+          mb: 3,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 2,
+        }}
+      >
+        <BarChart />
+        Estadísticas
+      </Typography>
+
+      <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
+        <Tabs
+          value={tabValue}
+          onChange={(_, newValue) => setTabValue(newValue)}
+          sx={{
+            '& .MuiTab-root': {
+              color: mode === 'light' ? '#6b7280' : '#9ca3af',
+              '&.Mui-selected': {
+                color: mode === 'light' ? '#2563eb' : '#3b82f6',
+              },
+            },
+          }}
+        >
+          <Tab label="Demografía de Usuarios" icon={<People />} />
+          <Tab label="Programas Más Populares" icon={<TrendingUp />} />
+          <Tab label="Análisis por Programa" icon={<ShowChart />} />
+        </Tabs>
+      </Box>
+
+      {/* Demografía de Usuarios */}
+      <TabPanel value={tabValue} index={0}>
+        {demographics && (
+          <Grid container spacing={3}>
+            {/* Resumen General */}
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+                  border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Resumen General
+                  </Typography>
+                  <Box display="flex" flexDirection="column" gap={2}>
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography>Total de Usuarios:</Typography>
+                      <Typography variant="h6" color="primary">
+                        {demographics.totalUsers.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography>Con Suscripciones:</Typography>
+                      <Typography variant="h6" color="success.main">
+                        {demographics.usersWithSubscriptions.toLocaleString()}
+                      </Typography>
+                    </Box>
+                    <Box display="flex" justifyContent="space-between">
+                      <Typography>Sin Suscripciones:</Typography>
+                      <Typography variant="h6" color="warning.main">
+                        {demographics.usersWithoutSubscriptions.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Por Género */}
+            <Grid item xs={12} md={6}>
+              <Card
+                sx={{
+                  backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+                  border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Distribución por Género
+                  </Typography>
+                  <Box display="flex" flexDirection="column" gap={1}>
+                    {Object.entries(demographics.byGender).map(([gender, count]) => (
+                      <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
+                        <Chip
+                          label={getGenderLabel(gender)}
+                          size="small"
+                          sx={{
+                            backgroundColor: getGenderColor(gender),
+                            color: 'white',
+                            fontWeight: 'bold',
+                          }}
+                        />
+                        <Typography variant="h6">
+                          {count.toLocaleString()}
+                        </Typography>
+                      </Box>
+                    ))}
+                  </Box>
+                </CardContent>
+              </Card>
+            </Grid>
+
+            {/* Por Grupo de Edad */}
+            <Grid item xs={12}>
+              <Card
+                sx={{
+                  backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+                  border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                }}
+              >
+                <CardContent>
+                  <Typography variant="h6" gutterBottom>
+                    Distribución por Edad
+                  </Typography>
+                  <Grid container spacing={2}>
+                    {Object.entries(demographics.byAgeGroup).map(([ageGroup, count]) => (
+                      <Grid item xs={12} sm={6} md={4} key={ageGroup}>
+                        <Box
+                          display="flex"
+                          justifyContent="space-between"
+                          alignItems="center"
+                          p={2}
+                          sx={{
+                            backgroundColor: mode === 'light' ? '#f8fafc' : '#334155',
+                            borderRadius: 1,
+                            border: `1px solid ${getAgeGroupColor(ageGroup)}20`,
+                          }}
+                        >
+                          <Chip
+                            label={getAgeGroupLabel(ageGroup)}
+                            size="small"
+                            sx={{
+                              backgroundColor: getAgeGroupColor(ageGroup),
+                              color: 'white',
+                              fontWeight: 'bold',
+                            }}
+                          />
+                          <Typography variant="h6">
+                            {count.toLocaleString()}
+                          </Typography>
+                        </Box>
+                      </Grid>
+                    ))}
+                  </Grid>
+                </CardContent>
+              </Card>
+            </Grid>
+          </Grid>
+        )}
+      </TabPanel>
+
+      {/* Programas Más Populares */}
+      <TabPanel value={tabValue} index={1}>
+        <Card
+          sx={{
+            backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+            border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+          }}
+        >
+          <CardContent>
+            <Typography variant="h6" gutterBottom>
+              Top 20 Programas por Suscripciones
+            </Typography>
+            <TableContainer component={Paper} sx={{ mt: 2 }}>
+              <Table>
+                <TableHead>
+                  <TableRow>
+                    <TableCell>Posición</TableCell>
+                    <TableCell>Programa</TableCell>
+                    <TableCell>Canal</TableCell>
+                    <TableCell align="right">Suscripciones</TableCell>
+                    <TableCell align="right">% del Total</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {topPrograms.map((program, index) => (
+                    <TableRow key={program.programId}>
+                      <TableCell>
+                        <Chip
+                          label={`#${index + 1}`}
+                          size="small"
+                          color={index < 3 ? 'primary' : 'default'}
+                          variant={index < 3 ? 'filled' : 'outlined'}
+                        />
+                      </TableCell>
+                      <TableCell>
+                        <Typography variant="subtitle2" fontWeight="bold">
+                          {program.programName}
+                        </Typography>
+                      </TableCell>
+                      <TableCell>
+                        <Chip label={program.channelName} size="small" variant="outlined" />
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="h6" color="primary">
+                          {program.subscriptionCount.toLocaleString()}
+                        </Typography>
+                      </TableCell>
+                      <TableCell align="right">
+                        <Typography variant="body2" color="text.secondary">
+                          {program.percentageOfTotalUsers.toFixed(1)}%
+                        </Typography>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                </TableBody>
+              </Table>
+            </TableContainer>
+          </CardContent>
+        </Card>
+      </TabPanel>
+
+      {/* Análisis por Programa */}
+      <TabPanel value={tabValue} index={2}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={4}>
+            <FormControl fullWidth>
+              <InputLabel>Seleccionar Programa</InputLabel>
+              <Select
+                value={selectedProgram}
+                label="Seleccionar Programa"
+                onChange={(e) => setSelectedProgram(e.target.value)}
+              >
+                <MenuItem value="">
+                  <em>Todos los programas</em>
+                </MenuItem>
+                {allProgramsStats.map((program) => (
+                  <MenuItem key={program.programId} value={program.programId}>
+                    {program.programName} ({program.channelName})
+                  </MenuItem>
+                ))}
+              </Select>
+            </FormControl>
+          </Grid>
+        </Grid>
+
+        <Box mt={3}>
+          {selectedProgram ? (
+            // Mostrar estadísticas de un programa específico
+            (() => {
+              const program = allProgramsStats.find(p => p.programId === selectedProgram);
+              if (!program) return null;
+
+              return (
+                <Card
+                  sx={{
+                    backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+                    border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                  }}
+                >
+                  <CardContent>
+                    <Typography variant="h5" gutterBottom>
+                      {program.programName}
+                    </Typography>
+                    <Typography variant="subtitle1" color="text.secondary" gutterBottom>
+                      {program.channelName} • {program.totalSubscriptions} suscripciones
+                    </Typography>
+
+                    <Grid container spacing={3} mt={2}>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6" gutterBottom>
+                          Por Género
+                        </Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          {Object.entries(program.byGender).map(([gender, count]) => (
+                            <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
+                              <Chip
+                                label={getGenderLabel(gender)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: getGenderColor(gender),
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                }}
+                              />
+                              <Typography variant="h6">
+                                {count.toLocaleString()}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6" gutterBottom>
+                          Por Edad
+                        </Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          {Object.entries(program.byAgeGroup).map(([ageGroup, count]) => (
+                            <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center">
+                              <Chip
+                                label={getAgeGroupLabel(ageGroup)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: getAgeGroupColor(ageGroup),
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                }}
+                              />
+                              <Typography variant="h6">
+                                {count.toLocaleString()}
+                              </Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </CardContent>
+                </Card>
+              );
+            })()
+          ) : (
+            // Mostrar todos los programas en acordeón
+            <Box>
+              {allProgramsStats.map((program) => (
+                <Accordion
+                  key={program.programId}
+                  sx={{
+                    backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+                    border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+                    mb: 1,
+                  }}
+                >
+                  <AccordionSummary expandIcon={<ExpandMore />}>
+                    <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
+                      <Box>
+                        <Typography variant="h6">{program.programName}</Typography>
+                        <Typography variant="body2" color="text.secondary">
+                          {program.channelName}
+                        </Typography>
+                      </Box>
+                      <Box display="flex" alignItems="center" gap={2}>
+                        <Chip
+                          label={`${program.totalSubscriptions} suscripciones`}
+                          color="primary"
+                          size="small"
+                        />
+                      </Box>
+                    </Box>
+                  </AccordionSummary>
+                  <AccordionDetails>
+                    <Grid container spacing={3}>
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6" gutterBottom>
+                          Por Género
+                        </Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          {Object.entries(program.byGender).map(([gender, count]) => (
+                            <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
+                              <Chip
+                                label={getGenderLabel(gender)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: getGenderColor(gender),
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                }}
+                              />
+                              <Typography>{count.toLocaleString()}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+
+                      <Grid item xs={12} md={6}>
+                        <Typography variant="h6" gutterBottom>
+                          Por Edad
+                        </Typography>
+                        <Box display="flex" flexDirection="column" gap={1}>
+                          {Object.entries(program.byAgeGroup).map(([ageGroup, count]) => (
+                            <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center">
+                              <Chip
+                                label={getAgeGroupLabel(ageGroup)}
+                                size="small"
+                                sx={{
+                                  backgroundColor: getAgeGroupColor(ageGroup),
+                                  color: 'white',
+                                  fontWeight: 'bold',
+                                }}
+                              />
+                              <Typography>{count.toLocaleString()}</Typography>
+                            </Box>
+                          ))}
+                        </Box>
+                      </Grid>
+                    </Grid>
+                  </AccordionDetails>
+                </Accordion>
+              ))}
+            </Box>
+          )}
+        </Box>
+      </TabPanel>
+    </Box>
+  );
+} 
