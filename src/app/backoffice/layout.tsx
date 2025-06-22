@@ -17,7 +17,8 @@ import {
   ToggleOn,
   Movie,
   Mic,
-  CalendarMonth
+  CalendarMonth,
+  BarChart
 } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
 
@@ -54,6 +55,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     { text: 'Configs',    icon: <ToggleOn />, path: '/backoffice/configs' },
     { text: 'Cambios',    icon: <TrackChanges />, path: '/backoffice/changes' },
     { text: 'Usuarios',   icon: <People />,     path: '/backoffice/users' },
+    { text: 'Estadísticas', icon: <BarChart />, path: '/backoffice/statistics' },
   ];
 
   const drawer = (
