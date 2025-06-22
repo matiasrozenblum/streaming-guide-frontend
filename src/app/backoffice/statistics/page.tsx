@@ -300,19 +300,19 @@ export default function StatisticsPage() {
                     <Box display="flex" justifyContent="space-between">
                       <Typography>Total de Usuarios:</Typography>
                       <Typography variant="h6" color="primary">
-                        {demographics.totalUsers.toLocaleString()}
+                        {(demographics.totalUsers || 0).toLocaleString()}
                       </Typography>
                     </Box>
                     <Box display="flex" justifyContent="space-between">
                       <Typography>Con Suscripciones:</Typography>
                       <Typography variant="h6" color="success.main">
-                        {demographics.usersWithSubscriptions.toLocaleString()}
+                        {(demographics.usersWithSubscriptions || 0).toLocaleString()}
                       </Typography>
                     </Box>
                     <Box display="flex" justifyContent="space-between">
                       <Typography>Sin Suscripciones:</Typography>
                       <Typography variant="h6" color="warning.main">
-                        {demographics.usersWithoutSubscriptions.toLocaleString()}
+                        {(demographics.usersWithoutSubscriptions || 0).toLocaleString()}
                       </Typography>
                     </Box>
                   </Box>
@@ -343,7 +343,7 @@ export default function StatisticsPage() {
                           }}
                         />
                         <Typography variant="h6">
-                          {count.toLocaleString()}
+                          {(count || 0).toLocaleString()}
                         </Typography>
                       </Box>
                     ))}
@@ -397,7 +397,7 @@ export default function StatisticsPage() {
                             }}
                           />
                           <Typography variant="h6">
-                            {count.toLocaleString()}
+                            {(count || 0).toLocaleString()}
                           </Typography>
                         </Box>
                       ))}
@@ -453,12 +453,12 @@ export default function StatisticsPage() {
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="h6" color="primary">
-                            {program.subscriptionCount.toLocaleString()}
+                            {(program.subscriptionCount || 0).toLocaleString()}
                           </Typography>
                         </TableCell>
                         <TableCell align="right">
                           <Typography variant="body2" color="text.secondary">
-                            {program.percentageOfTotalUsers.toFixed(1)}%
+                            {(program.percentageOfTotalUsers || 0).toFixed(1)}%
                           </Typography>
                         </TableCell>
                       </TableRow>
@@ -511,7 +511,7 @@ export default function StatisticsPage() {
                         {program.programName}
                       </Typography>
                       <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                        {program.channelName} • {program.totalSubscriptions} suscripciones
+                        {program.channelName} • {(program.totalSubscriptions || 0)} suscripciones
                       </Typography>
 
                       <Box
@@ -541,9 +541,7 @@ export default function StatisticsPage() {
                                     fontWeight: 'bold',
                                   }}
                                 />
-                                <Typography variant="h6">
-                                  {count.toLocaleString()}
-                                </Typography>
+                                <Typography>{(count || 0).toLocaleString()}</Typography>
                               </Box>
                             ))}
                           </Box>
@@ -565,9 +563,7 @@ export default function StatisticsPage() {
                                     fontWeight: 'bold',
                                   }}
                                 />
-                                <Typography variant="h6">
-                                  {count.toLocaleString()}
-                                </Typography>
+                                <Typography>{(count || 0).toLocaleString()}</Typography>
                               </Box>
                             ))}
                           </Box>
@@ -599,7 +595,7 @@ export default function StatisticsPage() {
                         </Box>
                         <Box display="flex" alignItems="center" gap={2}>
                           <Chip
-                            label={`${program.totalSubscriptions} suscripciones`}
+                            label={`${(program.totalSubscriptions || 0)} suscripciones`}
                             color="primary"
                             size="small"
                           />
@@ -633,7 +629,7 @@ export default function StatisticsPage() {
                                     fontWeight: 'bold',
                                   }}
                                 />
-                                <Typography>{count.toLocaleString()}</Typography>
+                                <Typography>{(count || 0).toLocaleString()}</Typography>
                               </Box>
                             ))}
                           </Box>
@@ -655,7 +651,7 @@ export default function StatisticsPage() {
                                     fontWeight: 'bold',
                                   }}
                                 />
-                                <Typography>{count.toLocaleString()}</Typography>
+                                <Typography>{(count || 0).toLocaleString()}</Typography>
                               </Box>
                             ))}
                           </Box>
