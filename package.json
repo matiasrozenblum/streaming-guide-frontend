@@ -18,6 +18,7 @@
     "@nestjs/common": "^11.0.12",
     "@nestjs/config": "^4.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@types/ua-parser-js": "^0.7.39",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
     "framer-motion": "^12.6.2",
@@ -32,7 +33,8 @@
     "react-draggable": "^4.4.6",
     "react-intersection-observer": "^9.16.0",
     "react-virtualized-auto-sizer": "^1.0.26",
-    "react-window": "^1.8.11"
+    "react-window": "^1.8.11",
+    "ua-parser-js": "^2.0.3"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
