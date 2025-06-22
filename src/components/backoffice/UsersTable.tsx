@@ -25,6 +25,8 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Tooltip,
+  Chip,
 } from '@mui/material';
 import { Edit, Delete, Add, Settings } from '@mui/icons-material';
 import { User } from '@/types/user';
@@ -350,44 +352,46 @@ export function UsersTable() {
           <TableBody>
             {filteredUsers.map(user => (
               <TableRow key={user.id}>
-                <TableCell>{user.firstName}</TableCell>
-                <TableCell>{user.lastName}</TableCell>
-                <TableCell>{user.email}</TableCell>
-                <TableCell>{user.phone}</TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>{user.firstName}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>{user.lastName}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>{user.email}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>{user.phone}</TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   {user.role === 'admin' ? 'Administrador' : 'Usuario'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   {user.gender ? genderTranslations[user.gender] : '—'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : '—'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   {user.devices && user.devices.length > 0 ? (
-                    <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
-                      {user.devices.map(device => (
-                        <li key={device.id}>
-                          <Typography variant="caption" sx={{ fontFamily: 'monospace' }}>
-                            {device.deviceId.substring(0, 8)}...
-                          </Typography>
-                        </li>
-                      ))}
-                    </ul>
+                     <Chip label={`${user.devices.length} dispositivo(s)`} size="small" />
                   ) : '—'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   {user.subscriptions && user.subscriptions.length > 0 ? (
-                    <ul style={{ margin: 0, padding: '0 0 0 16px' }}>
-                      {user.subscriptions.map(sub => (
-                        <li key={sub.id}>
-                          {sub.program.name} ({notificationMethodTranslations[sub.notificationMethod] || sub.notificationMethod})
-                        </li>
-                      ))}
-                    </ul>
+                    <Tooltip 
+                      title={
+                        <ul style={{ margin: 0, padding: '4px 8px 4px 16px' }}>
+                          {user.subscriptions.map(sub => (
+                            <li key={sub.id}>
+                              {sub.program.name} ({notificationMethodTranslations[sub.notificationMethod] || sub.notificationMethod})
+                            </li>
+                          ))}
+                        </ul>
+                      }
+                      arrow
+                    >
+                      <Typography variant="body2" sx={{ cursor: 'default' }}>
+                        {user.subscriptions[0].program.name}
+                        {user.subscriptions.length > 1 && ` y ${user.subscriptions.length - 1} más...`}
+                      </Typography>
+                    </Tooltip>
                   ) : '—'}
                 </TableCell>
-                <TableCell>
+                <TableCell sx={{ verticalAlign: 'top' }}>
                   <IconButton onClick={() => handleOpenDialog(user)}>
                     <Edit />
                   </IconButton>
