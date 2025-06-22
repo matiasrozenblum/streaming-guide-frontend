@@ -25,14 +25,13 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Tooltip,
-  Chip,
 } from '@mui/material';
-import { Edit, Delete, Add, Settings } from '@mui/icons-material';
+import { Edit, Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
-import { ManageUserDialog } from './ManageUserDialog';
+import { ManageDevicesDialog } from './ManageDevicesDialog';
+import { ManageSubscriptionsDialog } from './ManageSubscriptionsDialog';
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
@@ -52,19 +51,6 @@ function getErrorMessage(err: unknown): string {
   }
   return JSON.stringify(err);
 }
-
-const genderTranslations: Record<string, string> = {
-  male: 'Masculino',
-  female: 'Femenino',
-  non_binary: 'No binario',
-  rather_not_say: 'Prefiero no decir'
-};
-
-const notificationMethodTranslations: Record<string, string> = {
-  push: 'Push',
-  email: 'Email',
-  both: 'Ambos',
-};
 
 type Gender = 'male' | 'female' | 'non_binary' | 'rather_not_say';
 
@@ -100,7 +86,8 @@ export function UsersTable() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
-  const [manageUser, setManageUser] = useState<User | null>(null);
+  const [managingDevicesForUser, setManagingDevicesForUser] = useState<User | null>(null);
+  const [managingSubsForUser, setManagingSubsForUser] = useState<User | null>(null);
 
   const fetchUsers = useCallback(async () => {
     try {
@@ -314,7 +301,7 @@ export function UsersTable() {
   return (
     <Box>
       <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
-        <Typography variant="h6">Usuarios</Typography>
+        <Typography variant="h6" color="text.primary">Usuarios</Typography>
         <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
           Nuevo Usuario
         </Button>
@@ -340,10 +327,6 @@ export function UsersTable() {
               <TableCell>Nombre</TableCell>
               <TableCell>Apellido</TableCell>
               <TableCell>Email</TableCell>
-              <TableCell>Teléfono</TableCell>
-              <TableCell>Rol</TableCell>
-              <TableCell>Género</TableCell>
-              <TableCell>Fecha de nacimiento</TableCell>
               <TableCell>Dispositivos</TableCell>
               <TableCell>Suscripciones</TableCell>
               <TableCell>Acciones</TableCell>
@@ -352,55 +335,28 @@ export function UsersTable() {
           <TableBody>
             {filteredUsers.map(user => (
               <TableRow key={user.id}>
-                <TableCell sx={{ verticalAlign: 'top' }}>{user.firstName}</TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>{user.lastName}</TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>{user.email}</TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>{user.phone}</TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  {user.role === 'admin' ? 'Administrador' : 'Usuario'}
+                <TableCell>{user.firstName}</TableCell>
+                <TableCell>{user.lastName}</TableCell>
+                <TableCell>{user.email}</TableCell>
+                <TableCell>
+                  <Button size="small" onClick={() => setManagingDevicesForUser(user)}>
+                    Ver ({user.devices?.length || 0})
+                  </Button>
                 </TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  {user.gender ? genderTranslations[user.gender] : '—'}
+                <TableCell>
+                  <Button size="small" onClick={() => setManagingSubsForUser(user)}>
+                    Ver ({user.subscriptions?.length || 0})
+                  </Button>
                 </TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  {user.birthDate ? new Date(user.birthDate).toLocaleDateString() : '—'}
-                </TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  {user.devices && user.devices.length > 0 ? (
-                     <Chip label={`${user.devices.length} dispositivo(s)`} size="small" />
-                  ) : '—'}
-                </TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  {user.subscriptions && user.subscriptions.length > 0 ? (
-                    <Tooltip 
-                      title={
-                        <ul style={{ margin: 0, padding: '4px 8px 4px 16px' }}>
-                          {user.subscriptions.map(sub => (
-                            <li key={sub.id}>
-                              {sub.program.name} ({notificationMethodTranslations[sub.notificationMethod] || sub.notificationMethod})
-                            </li>
-                          ))}
-                        </ul>
-                      }
-                      arrow
-                    >
-                      <Typography variant="body2" sx={{ cursor: 'default' }}>
-                        {user.subscriptions[0].program.name}
-                        {user.subscriptions.length > 1 && ` y ${user.subscriptions.length - 1} más...`}
-                      </Typography>
-                    </Tooltip>
-                  ) : '—'}
-                </TableCell>
-                <TableCell sx={{ verticalAlign: 'top' }}>
-                  <IconButton onClick={() => handleOpenDialog(user)}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton onClick={() => handleDelete(user.id)}>
-                    <Delete />
-                  </IconButton>
-                  <IconButton onClick={() => setManageUser(user)}>
-                    <Settings />
-                  </IconButton>
+                <TableCell>
+                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                    <IconButton size="small" onClick={() => handleOpenDialog(user)}>
+                      <Edit />
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleDelete(user.id)}>
+                      <Delete />
+                    </IconButton>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -555,15 +511,22 @@ export function UsersTable() {
         </form>
       </Dialog>
 
-      <ManageUserDialog
-        open={!!manageUser}
-        onClose={() => setManageUser(null)}
-        user={manageUser}
+      <ManageDevicesDialog
+        open={!!managingDevicesForUser}
+        onClose={() => setManagingDevicesForUser(null)}
+        user={managingDevicesForUser}
         session={typedSession}
         onDeviceDeleted={() => {
           fetchUsers();
-          setManageUser(null);
+          // Keep dialog open to see changes
+          // setManagingDevicesForUser(null);
         }}
+      />
+      
+      <ManageSubscriptionsDialog
+        open={!!managingSubsForUser}
+        onClose={() => setManagingSubsForUser(null)}
+        user={managingSubsForUser}
       />
 
       <Snackbar open={!!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>

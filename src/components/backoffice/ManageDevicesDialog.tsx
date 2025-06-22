@@ -7,12 +7,10 @@ import {
   DialogActions,
   Button,
   Box,
-  Typography,
   IconButton,
   List,
   ListItem,
   ListItemText,
-  Divider,
   Alert,
 } from '@mui/material';
 import { Delete } from '@mui/icons-material';
@@ -20,7 +18,7 @@ import { User } from '@/types/user';
 import { Device } from '@/types/device';
 import { SessionWithToken } from '@/types/session';
 
-interface ManageUserDialogProps {
+interface ManageDevicesDialogProps {
   open: boolean;
   onClose: () => void;
   user: User | null;
@@ -39,7 +37,7 @@ const getErrorMessage = (error: unknown): string => {
     return 'An unknown error occurred';
 };
 
-export function ManageUserDialog({ open, onClose, user, session, onDeviceDeleted }: ManageUserDialogProps) {
+export function ManageDevicesDialog({ open, onClose, user, session, onDeviceDeleted }: ManageDevicesDialogProps) {
   if (!user) return null;
 
   const handleDeleteDevice = async (deviceId: string) => {
@@ -80,11 +78,10 @@ export function ManageUserDialog({ open, onClose, user, session, onDeviceDeleted
 
   return (
     <Dialog open={open} onClose={onClose} maxWidth="lg" fullWidth>
-      <DialogTitle>Manage User: {user.firstName} {user.lastName}</DialogTitle>
+      <DialogTitle>Dispositivos de: {user.firstName} {user.lastName}</DialogTitle>
       <DialogContent>
         {/* Devices Section */}
         <Box mt={2}>
-          <Typography variant="h6">Devices</Typography>
           {user.devices && user.devices.length > 0 ? (
             <List>
               {user.devices.map((device) => (
@@ -107,15 +104,6 @@ export function ManageUserDialog({ open, onClose, user, session, onDeviceDeleted
             <Alert severity="info" sx={{ mt: 1 }}>No devices found for this user.</Alert>
           )}
         </Box>
-
-        <Divider sx={{ my: 4 }} />
-
-        {/* Subscriptions Section (to be implemented) */}
-        <Box>
-          <Typography variant="h6">Subscriptions</Typography>
-           <Alert severity="info" sx={{ mt: 1 }}>Subscription management coming soon.</Alert>
-        </Box>
-
       </DialogContent>
       <DialogActions>
         <Button onClick={onClose}>Close</Button>
