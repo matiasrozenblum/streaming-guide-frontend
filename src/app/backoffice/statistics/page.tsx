@@ -27,6 +27,7 @@ import {
   AccordionSummary,
   AccordionDetails,
   Snackbar,
+  Button,
 } from '@mui/material';
 import {
   People,
@@ -220,7 +221,9 @@ export default function StatisticsPage() {
   const fetchSubsReport = useCallback(async () => {
     setSubsLoading(true);
     try {
-      const res = await fetch(`/api/statistics/reports/subscriptions?from=${subsFrom.format('YYYY-MM-DD')}&to=${subsTo.format('YYYY-MM-DD')}&page=${subsPage}&pageSize=${subsPageSize}`);
+      let url = `/api/statistics/reports/subscriptions?from=${subsFrom.format('YYYY-MM-DD')}&to=${subsTo.format('YYYY-MM-DD')}&page=${subsPage}&pageSize=${subsPageSize}`;
+      if (selectedProgram) url += `&programId=${selectedProgram}`;
+      const res = await fetch(url);
       const data: SubsReportResponse = await res.json();
       setSubsReport(data);
     } catch {
@@ -228,7 +231,7 @@ export default function StatisticsPage() {
     } finally {
       setSubsLoading(false);
     }
-  }, [subsFrom, subsTo, subsPage, subsPageSize]);
+  }, [subsFrom, subsTo, subsPage, subsPageSize, selectedProgram]);
 
   useEffect(() => {
     if (status === 'authenticated' && !hasFetched.current) {
@@ -797,8 +800,8 @@ export default function StatisticsPage() {
                 </TableContainer>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
                   <Typography>Página {usersPage}</Typography>
-                  <button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</button>
-                  <button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</button>
+                  <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
               </Box>
             )}
@@ -836,8 +839,8 @@ export default function StatisticsPage() {
                 </TableContainer>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
                   <Typography>Página {subsPage}</Typography>
-                  <button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</button>
-                  <button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</button>
+                  <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
                 </Box>
               </Box>
             )}
