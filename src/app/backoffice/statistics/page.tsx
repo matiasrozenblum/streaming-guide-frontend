@@ -36,6 +36,10 @@ import {
   ShowChart,
 } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
 
 interface UserDemographics {
   totalUsers: number;
@@ -108,6 +112,38 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Add interfaces for report responses
+interface UserReport {
+  id: number;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  birthDate: string | null;
+  createdAt: string;
+}
+
+interface SubscriptionReport {
+  id: string;
+  createdAt: string;
+  user: { id: number; firstName: string; lastName: string } | null;
+  program: { id: number; name: string } | null;
+  channel: { id: number; name: string } | null;
+}
+
+interface UsersReportResponse {
+  users: UserReport[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+interface SubsReportResponse {
+  subscriptions: SubscriptionReport[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export default function StatisticsPage() {
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
@@ -120,6 +156,19 @@ export default function StatisticsPage() {
   const [topPrograms, setTopPrograms] = useState<TopProgramsStats[]>([]);
   const [allProgramsStats, setAllProgramsStats] = useState<ProgramSubscriptionStats[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<number | ''>('');
+  const [reportTab, setReportTab] = useState<'users' | 'subscriptions'>('users');
+  const [usersFrom, setUsersFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [usersTo, setUsersTo] = useState<Dayjs>(dayjs());
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize] = useState(20);
+  const [usersReport, setUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
+  const [usersLoading, setUsersLoading] = useState(false);
+  const [subsFrom, setSubsFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [subsTo, setSubsTo] = useState<Dayjs>(dayjs());
+  const [subsPage, setSubsPage] = useState(1);
+  const [subsPageSize] = useState(20);
+  const [subsReport, setSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+  const [subsLoading, setSubsLoading] = useState(false);
 
   const hasFetched = useRef(false);
 
@@ -155,12 +204,41 @@ export default function StatisticsPage() {
     }
   }, [status]);
 
+  const fetchUsersReport = useCallback(async () => {
+    setUsersLoading(true);
+    try {
+      const res = await fetch(`/api/statistics/reports/users?from=${usersFrom.format('YYYY-MM-DD')}&to=${usersTo.format('YYYY-MM-DD')}&page=${usersPage}&pageSize=${usersPageSize}`);
+      const data: UsersReportResponse = await res.json();
+      setUsersReport(data);
+    } catch {
+      setError('Error al cargar usuarios nuevos');
+    } finally {
+      setUsersLoading(false);
+    }
+  }, [usersFrom, usersTo, usersPage, usersPageSize]);
+
+  const fetchSubsReport = useCallback(async () => {
+    setSubsLoading(true);
+    try {
+      const res = await fetch(`/api/statistics/reports/subscriptions?from=${subsFrom.format('YYYY-MM-DD')}&to=${subsTo.format('YYYY-MM-DD')}&page=${subsPage}&pageSize=${subsPageSize}`);
+      const data: SubsReportResponse = await res.json();
+      setSubsReport(data);
+    } catch {
+      setError('Error al cargar suscripciones nuevas');
+    } finally {
+      setSubsLoading(false);
+    }
+  }, [subsFrom, subsTo, subsPage, subsPageSize]);
+
   useEffect(() => {
     if (status === 'authenticated' && !hasFetched.current) {
       fetchData();
       hasFetched.current = true;
     }
   }, [status, fetchData]);
+
+  useEffect(() => { if (tabValue === 3) fetchUsersReport(); }, [tabValue, fetchUsersReport]);
+  useEffect(() => { if (tabValue === 3) fetchSubsReport(); }, [tabValue, fetchSubsReport]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
@@ -269,6 +347,7 @@ export default function StatisticsPage() {
             <Tab label="Demografía de Usuarios" icon={<People />} />
             <Tab label="Programas Más Populares" icon={<TrendingUp />} />
             <Tab label="Análisis por Programa" icon={<ShowChart />} />
+            <Tab label="Reportes" icon={<BarChart />} />
           </Tabs>
         </Box>
 
@@ -663,6 +742,106 @@ export default function StatisticsPage() {
               </Box>
             )}
           </Box>
+        </TabPanel>
+
+        {/* Reportes */}
+        <TabPanel value={tabValue} index={3}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
+              <Tab
+                label="Usuarios Nuevos"
+                value="users"
+                onClick={() => setReportTab('users')}
+                sx={{ fontWeight: reportTab === 'users' ? 'bold' : 'normal' }}
+              />
+              <Tab
+                label="Suscripciones Nuevas"
+                value="subscriptions"
+                onClick={() => setReportTab('subscriptions')}
+                sx={{ fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal' }}
+              />
+            </Box>
+            {reportTab === 'users' && (
+              <Box>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
+                  <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
+                </Box>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Nombre</TableCell>
+                        <TableCell>Apellido</TableCell>
+                        <TableCell>Género</TableCell>
+                        <TableCell>Fecha de Nacimiento</TableCell>
+                        <TableCell>Fecha de Registro</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {usersLoading ? (
+                        <TableRow><TableCell colSpan={6}><CircularProgress /></TableCell></TableRow>
+                      ) : usersReport.users.map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell>{user.id}</TableCell>
+                          <TableCell>{user.firstName}</TableCell>
+                          <TableCell>{user.lastName}</TableCell>
+                          <TableCell>{getGenderLabel(user.gender)}</TableCell>
+                          <TableCell>{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
+                          <TableCell>{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
+                  <Typography>Página {usersPage}</Typography>
+                  <button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</button>
+                  <button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</button>
+                </Box>
+              </Box>
+            )}
+            {reportTab === 'subscriptions' && (
+              <Box>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                  <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
+                  <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
+                </Box>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        <TableCell>ID</TableCell>
+                        <TableCell>Usuario</TableCell>
+                        <TableCell>Programa</TableCell>
+                        <TableCell>Canal</TableCell>
+                        <TableCell>Fecha de Suscripción</TableCell>
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {subsLoading ? (
+                        <TableRow><TableCell colSpan={5}><CircularProgress /></TableCell></TableRow>
+                      ) : subsReport.subscriptions.map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell>{sub.id}</TableCell>
+                          <TableCell>{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
+                          <TableCell>{sub.program ? sub.program.name : '-'}</TableCell>
+                          <TableCell>{sub.channel ? sub.channel.name : '-'}</TableCell>
+                          <TableCell>{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
+                  <Typography>Página {subsPage}</Typography>
+                  <button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</button>
+                  <button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</button>
+                </Box>
+              </Box>
+            )}
+          </LocalizationProvider>
         </TabPanel>
       </Box>
 

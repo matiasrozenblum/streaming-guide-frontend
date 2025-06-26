@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.3.0] - 2025-06-22
+
+### Added
+- Added statistics backoffice section
+- Added devices and subscriptions to users backoffice section
+
 ## [1.2.9] - 2025-06-21
 
 ### Added
