@@ -29,6 +29,11 @@ import {
   Snackbar,
   Button,
   useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   People,
@@ -42,6 +47,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
+import { saveAs } from 'file-saver';
 
 interface UserDemographics {
   totalUsers: number;
@@ -174,6 +180,9 @@ export default function StatisticsPage() {
   const [usersSortDir, setUsersSortDir] = useState<'asc' | 'desc'>('asc');
   const [subsSortBy, setSubsSortBy] = useState<keyof SubscriptionReport | null>(null);
   const [subsSortDir, setSubsSortDir] = useState<'asc' | 'desc'>('asc');
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailToSend, setEmailToSend] = useState('');
+  const [pendingEmailAction, setPendingEmailAction] = useState<{ type: 'users' | 'subscriptions', format: 'csv' | 'pdf' } | null>(null);
 
   const hasFetched = useRef(false);
 
@@ -330,6 +339,51 @@ export default function StatisticsPage() {
       return 0;
     });
   }
+
+  // Add download/email handlers
+  const handleDownload = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+    try {
+      let url = `/api/statistics/reports/${type}/download?from=${type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD')}` +
+        `&to=${type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD')}` +
+        `&format=${format}`;
+      if (type === 'subscriptions' && selectedProgram) url += `&programId=${selectedProgram}`;
+      const res = await fetch(url);
+      if (!res.ok) throw new Error('Error al descargar el reporte');
+      const blob = await res.blob();
+      saveAs(blob, `${type}_report.${format}`);
+      setSuccess('Reporte descargado correctamente');
+    } catch {
+      setError('Error al descargar el reporte');
+    }
+  };
+
+  const handleEmail = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+    setPendingEmailAction({ type, format });
+    setEmailDialogOpen(true);
+  };
+
+  const sendEmail = async () => {
+    if (!pendingEmailAction || !emailToSend) return;
+    
+    try {
+      let url = `/api/statistics/reports/${pendingEmailAction.type}/email?from=${pendingEmailAction.type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD')}` +
+        `&to=${pendingEmailAction.type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD')}` +
+        `&format=${pendingEmailAction.format}` +
+        `&toEmail=${encodeURIComponent(emailToSend)}`;
+      if (pendingEmailAction.type === 'subscriptions' && selectedProgram) url += `&programId=${selectedProgram}`;
+      const res = await fetch(url, { method: 'POST' });
+      if (!res.ok) throw new Error('Error al enviar el reporte por email');
+      setSuccess('Reporte enviado por email');
+      setEmailDialogOpen(false);
+      setEmailToSend('');
+      setPendingEmailAction(null);
+    } catch {
+      setError('Error al enviar el reporte por email');
+      setEmailDialogOpen(false);
+      setEmailToSend('');
+      setPendingEmailAction(null);
+    }
+  };
 
   if (status === 'loading') {
     return (
@@ -824,6 +878,9 @@ export default function StatisticsPage() {
                   <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
                   <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
                   <Box sx={{ flex: 1 }} />
+                  <Button onClick={() => handleDownload('users', 'csv')}>Descargar CSV</Button>
+                  <Button onClick={() => handleDownload('users', 'pdf')}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail('users', 'csv')}>Enviar por Email</Button>
                   <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
                   <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
@@ -881,6 +938,9 @@ export default function StatisticsPage() {
                   <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
                   <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
                   <Box sx={{ flex: 1 }} />
+                  <Button onClick={() => handleDownload('subscriptions', 'csv')}>Descargar CSV</Button>
+                  <Button onClick={() => handleDownload('subscriptions', 'pdf')}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail('subscriptions', 'csv')}>Enviar por Email</Button>
                   <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
                   <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
                 </Box>
@@ -948,6 +1008,30 @@ export default function StatisticsPage() {
           {error || success}
         </Alert>
       </Snackbar>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
+        <DialogTitle>Enviar Reporte por Email</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email de destino"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={emailToSend}
+            onChange={(e) => setEmailToSend(e.target.value)}
+            placeholder="ejemplo@email.com"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={sendEmail} variant="contained" disabled={!emailToSend}>
+            Enviar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 } 
