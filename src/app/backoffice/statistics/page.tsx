@@ -28,6 +28,7 @@ import {
   AccordionDetails,
   Snackbar,
   Button,
+  useTheme,
 } from '@mui/material';
 import {
   People,
@@ -146,6 +147,7 @@ interface SubsReportResponse {
 }
 
 export default function StatisticsPage() {
+  const theme = useTheme();
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
   
@@ -797,13 +799,19 @@ export default function StatisticsPage() {
                 label="Usuarios Nuevos"
                 value="users"
                 onClick={() => setReportTab('users')}
-                sx={{ fontWeight: reportTab === 'users' ? 'bold' : 'normal' }}
+                sx={{ 
+                  fontWeight: reportTab === 'users' ? 'bold' : 'normal',
+                  color: theme.palette.text.primary,
+                }}
               />
               <Tab
                 label="Suscripciones Nuevas"
                 value="subscriptions"
                 onClick={() => setReportTab('subscriptions')}
-                sx={{ fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal' }}
+                sx={{ 
+                  fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal',
+                  color: theme.palette.text.primary,
+                }}
               />
             </Box>
             {reportTab === 'users' && (
@@ -856,7 +864,7 @@ export default function StatisticsPage() {
                   </Table>
                 </TableContainer>
                 <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
-                  <Typography>Página {usersPage}</Typography>
+                  <Typography color="text.primary">Página {usersPage}</Typography>
                   <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
                   <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
