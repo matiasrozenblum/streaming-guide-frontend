@@ -794,31 +794,38 @@ export default function StatisticsPage() {
         {/* Reportes */}
         <TabPanel value={tabValue} index={3}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ mb: 2, display: 'flex', gap: 2 }}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
               <Tab
                 label="Usuarios Nuevos"
                 value="users"
                 onClick={() => setReportTab('users')}
-                sx={{ 
+                sx={{
                   fontWeight: reportTab === 'users' ? 'bold' : 'normal',
-                  color: theme.palette.text.primary,
+                  color: reportTab === 'users' ? theme.palette.primary.main : theme.palette.text.secondary,
+                  minWidth: 0,
+                  px: 2,
                 }}
               />
               <Tab
                 label="Suscripciones Nuevas"
                 value="subscriptions"
                 onClick={() => setReportTab('subscriptions')}
-                sx={{ 
+                sx={{
                   fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal',
-                  color: theme.palette.text.primary,
+                  color: reportTab === 'subscriptions' ? theme.palette.primary.main : theme.palette.text.secondary,
+                  minWidth: 0,
+                  px: 2,
                 }}
               />
             </Box>
             {reportTab === 'users' && (
               <Box>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                   <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
                   <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
+                  <Box sx={{ flex: 1 }} />
+                  <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
                 <TableContainer component={Paper}>
                   <Table>
@@ -863,18 +870,19 @@ export default function StatisticsPage() {
                     </TableBody>
                   </Table>
                 </TableContainer>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
                   <Typography color="text.primary">Página {usersPage}</Typography>
-                  <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
-                  <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
               </Box>
             )}
             {reportTab === 'subscriptions' && (
               <Box>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
                   <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
                   <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
+                  <Box sx={{ flex: 1 }} />
+                  <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
                 </Box>
                 <TableContainer component={Paper}>
                   <Table>
@@ -917,10 +925,8 @@ export default function StatisticsPage() {
                     </TableBody>
                   </Table>
                 </TableContainer>
-                <Box sx={{ display: 'flex', justifyContent: 'flex-end', mt: 2, gap: 2 }}>
-                  <Typography>Página {subsPage}</Typography>
-                  <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
-                  <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Typography color="text.primary">Página {subsPage}</Typography>
                 </Box>
               </Box>
             )}
