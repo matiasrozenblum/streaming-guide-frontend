@@ -163,13 +163,15 @@ export default function StatisticsPage() {
   const [usersPage, setUsersPage] = useState(1);
   const [usersPageSize] = useState(20);
   const [usersReport, setUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
-  const [usersLoading, setUsersLoading] = useState(false);
   const [subsFrom, setSubsFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [subsTo, setSubsTo] = useState<Dayjs>(dayjs());
   const [subsPage, setSubsPage] = useState(1);
   const [subsPageSize] = useState(20);
   const [subsReport, setSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
-  const [subsLoading, setSubsLoading] = useState(false);
+  const [usersSortBy, setUsersSortBy] = useState<keyof UserReport | null>(null);
+  const [usersSortDir, setUsersSortDir] = useState<'asc' | 'desc'>('asc');
+  const [subsSortBy, setSubsSortBy] = useState<keyof SubscriptionReport | null>(null);
+  const [subsSortDir, setSubsSortDir] = useState<'asc' | 'desc'>('asc');
 
   const hasFetched = useRef(false);
 
@@ -206,20 +208,16 @@ export default function StatisticsPage() {
   }, [status]);
 
   const fetchUsersReport = useCallback(async () => {
-    setUsersLoading(true);
     try {
       const res = await fetch(`/api/statistics/reports/users?from=${usersFrom.format('YYYY-MM-DD')}&to=${usersTo.format('YYYY-MM-DD')}&page=${usersPage}&pageSize=${usersPageSize}`);
       const data: UsersReportResponse = await res.json();
       setUsersReport(data);
     } catch {
       setError('Error al cargar usuarios nuevos');
-    } finally {
-      setUsersLoading(false);
     }
   }, [usersFrom, usersTo, usersPage, usersPageSize]);
 
   const fetchSubsReport = useCallback(async () => {
-    setSubsLoading(true);
     try {
       let url = `/api/statistics/reports/subscriptions?from=${subsFrom.format('YYYY-MM-DD')}&to=${subsTo.format('YYYY-MM-DD')}&page=${subsPage}&pageSize=${subsPageSize}`;
       if (selectedProgram) url += `&programId=${selectedProgram}`;
@@ -228,8 +226,6 @@ export default function StatisticsPage() {
       setSubsReport(data);
     } catch {
       setError('Error al cargar suscripciones nuevas');
-    } finally {
-      setSubsLoading(false);
     }
   }, [subsFrom, subsTo, subsPage, subsPageSize, selectedProgram]);
 
@@ -286,6 +282,52 @@ export default function StatisticsPage() {
     };
     return colors[ageGroup as keyof typeof colors] || '#6b7280';
   };
+
+  // Refactor sortArray to avoid 'any'
+  function isSubscriptionReport(obj: unknown): obj is SubscriptionReport {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'id' in obj &&
+      'createdAt' in obj &&
+      'user' in obj &&
+      'program' in obj &&
+      'channel' in obj
+    );
+  }
+
+  function sortArray<T>(arr: T[], sortBy: keyof T | null, dir: 'asc' | 'desc'): T[] {
+    if (!sortBy) return arr;
+    return [...arr].sort((a, b) => {
+      // For subscriptions, handle nested fields
+      if (sortBy === 'user' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aUser = a.user?.lastName || '';
+        const bUser = b.user?.lastName || '';
+        return dir === 'asc' ? aUser.localeCompare(bUser) : bUser.localeCompare(aUser);
+      }
+      if (sortBy === 'program' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aProg = a.program?.name || '';
+        const bProg = b.program?.name || '';
+        return dir === 'asc' ? aProg.localeCompare(bProg) : bProg.localeCompare(aProg);
+      }
+      if (sortBy === 'channel' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aChan = a.channel?.name || '';
+        const bChan = b.channel?.name || '';
+        return dir === 'asc' ? aChan.localeCompare(bChan) : bChan.localeCompare(aChan);
+      }
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return dir === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      return 0;
+    });
+  }
 
   if (status === 'loading') {
     return (
@@ -774,25 +816,40 @@ export default function StatisticsPage() {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Nombre</TableCell>
-                        <TableCell>Apellido</TableCell>
-                        <TableCell>Género</TableCell>
-                        <TableCell>Fecha de Nacimiento</TableCell>
-                        <TableCell>Fecha de Registro</TableCell>
+                        {['id', 'firstName', 'lastName', 'gender', 'birthDate', 'createdAt'].map((col) => (
+                          <TableCell
+                            key={col}
+                            color="text.primary"
+                            onClick={() => {
+                              if (usersSortBy === col) {
+                                setUsersSortDir(usersSortDir === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setUsersSortBy(col as keyof UserReport);
+                                setUsersSortDir('asc');
+                              }
+                            }}
+                            sx={{ cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            {col === 'id' ? 'ID' :
+                             col === 'firstName' ? 'Nombre' :
+                             col === 'lastName' ? 'Apellido' :
+                             col === 'gender' ? 'Género' :
+                             col === 'birthDate' ? 'Fecha de Nacimiento' :
+                             col === 'createdAt' ? 'Fecha de Registro' : col}
+                            {usersSortBy === col ? (usersSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {usersLoading ? (
-                        <TableRow><TableCell colSpan={6}><CircularProgress /></TableCell></TableRow>
-                      ) : usersReport.users.map((user) => (
+                      {sortArray(usersReport.users, usersSortBy, usersSortDir).map((user) => (
                         <TableRow key={user.id}>
-                          <TableCell>{user.id}</TableCell>
-                          <TableCell>{user.firstName}</TableCell>
-                          <TableCell>{user.lastName}</TableCell>
-                          <TableCell>{getGenderLabel(user.gender)}</TableCell>
-                          <TableCell>{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
-                          <TableCell>{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                          <TableCell color="text.primary">{user.id}</TableCell>
+                          <TableCell color="text.primary">{user.firstName}</TableCell>
+                          <TableCell color="text.primary">{user.lastName}</TableCell>
+                          <TableCell color="text.primary">{getGenderLabel(user.gender)}</TableCell>
+                          <TableCell color="text.primary">{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
+                          <TableCell color="text.primary">{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
@@ -815,23 +872,38 @@ export default function StatisticsPage() {
                   <Table>
                     <TableHead>
                       <TableRow>
-                        <TableCell>ID</TableCell>
-                        <TableCell>Usuario</TableCell>
-                        <TableCell>Programa</TableCell>
-                        <TableCell>Canal</TableCell>
-                        <TableCell>Fecha de Suscripción</TableCell>
+                        {['id', 'user', 'program', 'channel', 'createdAt'].map((col) => (
+                          <TableCell
+                            key={col}
+                            color="text.primary"
+                            onClick={() => {
+                              if (subsSortBy === col) {
+                                setSubsSortDir(subsSortDir === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSubsSortBy(col as keyof SubscriptionReport);
+                                setSubsSortDir('asc');
+                              }
+                            }}
+                            sx={{ cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            {col === 'id' ? 'ID' :
+                             col === 'user' ? 'Usuario' :
+                             col === 'program' ? 'Programa' :
+                             col === 'channel' ? 'Canal' :
+                             col === 'createdAt' ? 'Fecha de Suscripción' : col}
+                            {subsSortBy === col ? (subsSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                          </TableCell>
+                        ))}
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {subsLoading ? (
-                        <TableRow><TableCell colSpan={5}><CircularProgress /></TableCell></TableRow>
-                      ) : subsReport.subscriptions.map((sub) => (
+                      {sortArray(subsReport.subscriptions, subsSortBy, subsSortDir).map((sub) => (
                         <TableRow key={sub.id}>
-                          <TableCell>{sub.id}</TableCell>
-                          <TableCell>{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
-                          <TableCell>{sub.program ? sub.program.name : '-'}</TableCell>
-                          <TableCell>{sub.channel ? sub.channel.name : '-'}</TableCell>
-                          <TableCell>{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.id}</TableCell>
+                          <TableCell color="text.primary">{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.program ? sub.program.name : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.channel ? sub.channel.name : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
                         </TableRow>
                       ))}
                     </TableBody>
