@@ -340,49 +340,58 @@ export default function StatisticsPage() {
     });
   }
 
-  // Add download/email handlers
-  const handleDownload = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+  // Unified download/email handler
+  const handleReportAction = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf', action: 'download' | 'email', emailOverride?: string) => {
     try {
-      let url = `/api/statistics/reports/${type}/download?from=${type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD')}` +
-        `&to=${type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD')}` +
-        `&format=${format}`;
-      if (type === 'subscriptions' && selectedProgram) url += `&programId=${selectedProgram}`;
-      const res = await fetch(url);
-      if (!res.ok) throw new Error('Error al descargar el reporte');
-      const blob = await res.blob();
-      saveAs(blob, `${type}_report.${format}`);
-      setSuccess('Reporte descargado correctamente');
+      const from = type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD');
+      const to = type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD');
+      const channelId = undefined;
+      const programId = type === 'subscriptions' && selectedProgram ? selectedProgram : undefined;
+      const toEmail = action === 'email' ? (emailOverride || 'laguiadelstreaming@gmail.com') : undefined;
+      const body = {
+        type,
+        format,
+        from,
+        to,
+        channelId,
+        programId,
+        action,
+        toEmail,
+      };
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
+      if (action === 'download') {
+        const blob = await res.blob();
+        saveAs(blob, `${type}_report.${format}`);
+        setSuccess('Reporte descargado correctamente');
+      } else {
+        setSuccess('Reporte enviado por email');
+      }
     } catch {
-      setError('Error al descargar el reporte');
+      setError(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
     }
   };
 
-  const handleEmail = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+  // Replace old handlers
+  const handleDownload = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+    handleReportAction(type, format, 'download');
+  };
+
+  const handleEmail = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
     setPendingEmailAction({ type, format });
     setEmailDialogOpen(true);
   };
 
   const sendEmail = async () => {
-    if (!pendingEmailAction || !emailToSend) return;
-    
-    try {
-      let url = `/api/statistics/reports/${pendingEmailAction.type}/email?from=${pendingEmailAction.type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD')}` +
-        `&to=${pendingEmailAction.type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD')}` +
-        `&format=${pendingEmailAction.format}` +
-        `&toEmail=${encodeURIComponent(emailToSend)}`;
-      if (pendingEmailAction.type === 'subscriptions' && selectedProgram) url += `&programId=${selectedProgram}`;
-      const res = await fetch(url, { method: 'POST' });
-      if (!res.ok) throw new Error('Error al enviar el reporte por email');
-      setSuccess('Reporte enviado por email');
-      setEmailDialogOpen(false);
-      setEmailToSend('');
-      setPendingEmailAction(null);
-    } catch {
-      setError('Error al enviar el reporte por email');
-      setEmailDialogOpen(false);
-      setEmailToSend('');
-      setPendingEmailAction(null);
-    }
+    if (!pendingEmailAction) return;
+    await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', emailToSend);
+    setEmailDialogOpen(false);
+    setEmailToSend('');
+    setPendingEmailAction(null);
   };
 
   if (status === 'loading') {
