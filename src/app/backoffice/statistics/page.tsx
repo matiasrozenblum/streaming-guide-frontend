@@ -243,10 +243,19 @@ export default function StatisticsPage() {
           action: 'table',
         }),
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Users report API error:', errorText);
+        setError('Error al cargar usuarios nuevos');
+        setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
       const data: UsersReportResponse = await res.json();
-      setUsersReport(data);
-    } catch {
+      setUsersReport(data && data.users ? data : { users: [], total: 0, page: 1, pageSize: 20 });
+    } catch (e) {
+      console.error('Users report fetch error:', e);
       setError('Error al cargar usuarios nuevos');
+      setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
     }
   }, [usersFrom, usersTo, usersPage, usersPageSize]);
 
@@ -266,10 +275,19 @@ export default function StatisticsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(body),
       });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Subs report API error:', errorText);
+        setError('Error al cargar suscripciones nuevas');
+        setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
       const data: SubsReportResponse = await res.json();
-      setSubsReport(data);
-    } catch {
+      setSubsReport(data && data.subscriptions ? data : { subscriptions: [], total: 0, page: 1, pageSize: 20 });
+    } catch (e) {
+      console.error('Subs report fetch error:', e);
       setError('Error al cargar suscripciones nuevas');
+      setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
     }
   }, [subsFrom, subsTo, subsPage, subsPageSize, selectedProgram]);
 
@@ -956,7 +974,7 @@ export default function StatisticsPage() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {sortArray(usersReport.users, usersSortBy, usersSortDir).map((user) => (
+                      {sortArray(usersReport.users || [], usersSortBy, usersSortDir).map((user) => (
                         <TableRow key={user.id}>
                           <TableCell color="text.primary">{user.id}</TableCell>
                           <TableCell color="text.primary">{user.firstName}</TableCell>
@@ -1015,7 +1033,7 @@ export default function StatisticsPage() {
                       </TableRow>
                     </TableHead>
                     <TableBody>
-                      {sortArray(subsReport.subscriptions, subsSortBy, subsSortDir).map((sub) => (
+                      {sortArray(subsReport.subscriptions || [], subsSortBy, subsSortDir).map((sub) => (
                         <TableRow key={sub.id}>
                           <TableCell color="text.primary">{sub.id}</TableCell>
                           <TableCell color="text.primary">{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
