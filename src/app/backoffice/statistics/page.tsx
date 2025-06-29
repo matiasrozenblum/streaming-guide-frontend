@@ -152,6 +152,17 @@ interface SubsReportResponse {
   pageSize: number;
 }
 
+// Add type for report request body
+interface ReportRequestBody {
+  type: 'users' | 'subscriptions';
+  from: string;
+  to: string;
+  page: number;
+  pageSize: number;
+  action: 'table';
+  programId?: number;
+}
+
 export default function StatisticsPage() {
   const theme = useTheme();
   const { status } = useSessionContext();
@@ -220,7 +231,18 @@ export default function StatisticsPage() {
 
   const fetchUsersReport = useCallback(async () => {
     try {
-      const res = await fetch(`/api/statistics/reports/users?from=${usersFrom.format('YYYY-MM-DD')}&to=${usersTo.format('YYYY-MM-DD')}&page=${usersPage}&pageSize=${usersPageSize}`);
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'users',
+          from: usersFrom.format('YYYY-MM-DD'),
+          to: usersTo.format('YYYY-MM-DD'),
+          page: usersPage,
+          pageSize: usersPageSize,
+          action: 'table',
+        }),
+      });
       const data: UsersReportResponse = await res.json();
       setUsersReport(data);
     } catch {
@@ -230,9 +252,20 @@ export default function StatisticsPage() {
 
   const fetchSubsReport = useCallback(async () => {
     try {
-      let url = `/api/statistics/reports/subscriptions?from=${subsFrom.format('YYYY-MM-DD')}&to=${subsTo.format('YYYY-MM-DD')}&page=${subsPage}&pageSize=${subsPageSize}`;
-      if (selectedProgram) url += `&programId=${selectedProgram}`;
-      const res = await fetch(url);
+      const body: ReportRequestBody = {
+        type: 'subscriptions',
+        from: subsFrom.format('YYYY-MM-DD'),
+        to: subsTo.format('YYYY-MM-DD'),
+        page: subsPage,
+        pageSize: subsPageSize,
+        action: 'table',
+      };
+      if (selectedProgram) body.programId = selectedProgram;
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
       const data: SubsReportResponse = await res.json();
       setSubsReport(data);
     } catch {
