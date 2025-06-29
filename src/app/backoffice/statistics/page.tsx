@@ -155,6 +155,7 @@ interface SubsReportResponse {
 // Add type for report request body
 interface ReportRequestBody {
   type: 'users' | 'subscriptions';
+  format: 'csv';
   from: string;
   to: string;
   page: number;
@@ -236,6 +237,7 @@ export default function StatisticsPage() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           type: 'users',
+          format: 'csv',
           from: usersFrom.format('YYYY-MM-DD'),
           to: usersTo.format('YYYY-MM-DD'),
           page: usersPage,
@@ -263,6 +265,7 @@ export default function StatisticsPage() {
     try {
       const body: ReportRequestBody = {
         type: 'subscriptions',
+        format: 'csv',
         from: subsFrom.format('YYYY-MM-DD'),
         to: subsTo.format('YYYY-MM-DD'),
         page: subsPage,
