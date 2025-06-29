@@ -27,6 +27,13 @@ import {
   AccordionSummary,
   AccordionDetails,
   Snackbar,
+  Button,
+  useTheme,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from '@mui/material';
 import {
   People,
@@ -36,6 +43,11 @@ import {
   ShowChart,
 } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import dayjs, { Dayjs } from 'dayjs';
+import { saveAs } from 'file-saver';
 
 interface UserDemographics {
   totalUsers: number;
@@ -108,7 +120,52 @@ function TabPanel(props: TabPanelProps) {
   );
 }
 
+// Add interfaces for report responses
+interface UserReport {
+  id: number;
+  firstName: string;
+  lastName: string;
+  gender: string;
+  birthDate: string | null;
+  createdAt: string;
+}
+
+interface SubscriptionReport {
+  id: string;
+  createdAt: string;
+  user: { id: number; firstName: string; lastName: string } | null;
+  program: { id: number; name: string } | null;
+  channel: { id: number; name: string } | null;
+}
+
+interface UsersReportResponse {
+  users: UserReport[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+interface SubsReportResponse {
+  subscriptions: SubscriptionReport[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
+// Add type for report request body
+interface ReportRequestBody {
+  type: 'users' | 'subscriptions';
+  format: 'csv';
+  from: string;
+  to: string;
+  page: number;
+  pageSize: number;
+  action: 'table';
+  programId?: number;
+}
+
 export default function StatisticsPage() {
+  const theme = useTheme();
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
   
@@ -120,6 +177,24 @@ export default function StatisticsPage() {
   const [topPrograms, setTopPrograms] = useState<TopProgramsStats[]>([]);
   const [allProgramsStats, setAllProgramsStats] = useState<ProgramSubscriptionStats[]>([]);
   const [selectedProgram, setSelectedProgram] = useState<number | ''>('');
+  const [reportTab, setReportTab] = useState<'users' | 'subscriptions'>('users');
+  const [usersFrom, setUsersFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [usersTo, setUsersTo] = useState<Dayjs>(dayjs());
+  const [usersPage, setUsersPage] = useState(1);
+  const [usersPageSize] = useState(20);
+  const [usersReport, setUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
+  const [subsFrom, setSubsFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [subsTo, setSubsTo] = useState<Dayjs>(dayjs());
+  const [subsPage, setSubsPage] = useState(1);
+  const [subsPageSize] = useState(20);
+  const [subsReport, setSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+  const [usersSortBy, setUsersSortBy] = useState<keyof UserReport | null>(null);
+  const [usersSortDir, setUsersSortDir] = useState<'asc' | 'desc'>('asc');
+  const [subsSortBy, setSubsSortBy] = useState<keyof SubscriptionReport | null>(null);
+  const [subsSortDir, setSubsSortDir] = useState<'asc' | 'desc'>('asc');
+  const [emailDialogOpen, setEmailDialogOpen] = useState(false);
+  const [emailToSend, setEmailToSend] = useState('');
+  const [pendingEmailAction, setPendingEmailAction] = useState<{ type: 'users' | 'subscriptions', format: 'csv' | 'pdf' } | null>(null);
 
   const hasFetched = useRef(false);
 
@@ -155,12 +230,79 @@ export default function StatisticsPage() {
     }
   }, [status]);
 
+  const fetchUsersReport = useCallback(async () => {
+    try {
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'users',
+          format: 'csv',
+          from: usersFrom.format('YYYY-MM-DD'),
+          to: usersTo.format('YYYY-MM-DD'),
+          page: usersPage,
+          pageSize: usersPageSize,
+          action: 'table',
+        }),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Users report API error:', errorText);
+        setError('Error al cargar usuarios nuevos');
+        setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
+      const data: UsersReportResponse = await res.json();
+      setUsersReport(data && data.users ? data : { users: [], total: 0, page: 1, pageSize: 20 });
+    } catch (e) {
+      console.error('Users report fetch error:', e);
+      setError('Error al cargar usuarios nuevos');
+      setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+    }
+  }, [usersFrom, usersTo, usersPage, usersPageSize]);
+
+  const fetchSubsReport = useCallback(async () => {
+    try {
+      const body: ReportRequestBody = {
+        type: 'subscriptions',
+        format: 'csv',
+        from: subsFrom.format('YYYY-MM-DD'),
+        to: subsTo.format('YYYY-MM-DD'),
+        page: subsPage,
+        pageSize: subsPageSize,
+        action: 'table',
+      };
+      if (selectedProgram) body.programId = selectedProgram;
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error('Subs report API error:', errorText);
+        setError('Error al cargar suscripciones nuevas');
+        setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
+      const data: SubsReportResponse = await res.json();
+      setSubsReport(data && data.subscriptions ? data : { subscriptions: [], total: 0, page: 1, pageSize: 20 });
+    } catch (e) {
+      console.error('Subs report fetch error:', e);
+      setError('Error al cargar suscripciones nuevas');
+      setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+    }
+  }, [subsFrom, subsTo, subsPage, subsPageSize, selectedProgram]);
+
   useEffect(() => {
     if (status === 'authenticated' && !hasFetched.current) {
       fetchData();
       hasFetched.current = true;
     }
   }, [status, fetchData]);
+
+  useEffect(() => { if (tabValue === 3) fetchUsersReport(); }, [tabValue, fetchUsersReport]);
+  useEffect(() => { if (tabValue === 3) fetchSubsReport(); }, [tabValue, fetchSubsReport]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
@@ -204,6 +346,106 @@ export default function StatisticsPage() {
       unknown: '#6b7280',
     };
     return colors[ageGroup as keyof typeof colors] || '#6b7280';
+  };
+
+  // Refactor sortArray to avoid 'any'
+  function isSubscriptionReport(obj: unknown): obj is SubscriptionReport {
+    return (
+      typeof obj === 'object' &&
+      obj !== null &&
+      'id' in obj &&
+      'createdAt' in obj &&
+      'user' in obj &&
+      'program' in obj &&
+      'channel' in obj
+    );
+  }
+
+  function sortArray<T>(arr: T[], sortBy: keyof T | null, dir: 'asc' | 'desc'): T[] {
+    if (!sortBy) return arr;
+    return [...arr].sort((a, b) => {
+      // For subscriptions, handle nested fields
+      if (sortBy === 'user' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aUser = a.user?.lastName || '';
+        const bUser = b.user?.lastName || '';
+        return dir === 'asc' ? aUser.localeCompare(bUser) : bUser.localeCompare(aUser);
+      }
+      if (sortBy === 'program' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aProg = a.program?.name || '';
+        const bProg = b.program?.name || '';
+        return dir === 'asc' ? aProg.localeCompare(bProg) : bProg.localeCompare(aProg);
+      }
+      if (sortBy === 'channel' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
+        const aChan = a.channel?.name || '';
+        const bChan = b.channel?.name || '';
+        return dir === 'asc' ? aChan.localeCompare(bChan) : bChan.localeCompare(aChan);
+      }
+      const aVal = a[sortBy];
+      const bVal = b[sortBy];
+      if (aVal == null) return 1;
+      if (bVal == null) return -1;
+      if (typeof aVal === 'string' && typeof bVal === 'string') {
+        return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
+      }
+      if (typeof aVal === 'number' && typeof bVal === 'number') {
+        return dir === 'asc' ? aVal - bVal : bVal - aVal;
+      }
+      return 0;
+    });
+  }
+
+  // Unified download/email handler
+  const handleReportAction = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf', action: 'download' | 'email', emailOverride?: string) => {
+    try {
+      const from = type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD');
+      const to = type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD');
+      const channelId = undefined;
+      const programId = type === 'subscriptions' && selectedProgram ? selectedProgram : undefined;
+      const toEmail = action === 'email' ? (emailOverride || 'laguiadelstreaming@gmail.com') : undefined;
+      const body = {
+        type,
+        format,
+        from,
+        to,
+        channelId,
+        programId,
+        action,
+        toEmail,
+      };
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(body),
+      });
+      if (!res.ok) throw new Error(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
+      if (action === 'download') {
+        const blob = await res.blob();
+        saveAs(blob, `${type}_report.${format}`);
+        setSuccess('Reporte descargado correctamente');
+      } else {
+        setSuccess('Reporte enviado por email');
+      }
+    } catch {
+      setError(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
+    }
+  };
+
+  // Replace old handlers
+  const handleDownload = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+    handleReportAction(type, format, 'download');
+  };
+
+  const handleEmail = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
+    setPendingEmailAction({ type, format });
+    setEmailDialogOpen(true);
+  };
+
+  const sendEmail = async () => {
+    if (!pendingEmailAction) return;
+    await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', emailToSend);
+    setEmailDialogOpen(false);
+    setEmailToSend('');
+    setPendingEmailAction(null);
   };
 
   if (status === 'loading') {
@@ -269,6 +511,7 @@ export default function StatisticsPage() {
             <Tab label="Demografía de Usuarios" icon={<People />} />
             <Tab label="Programas Más Populares" icon={<TrendingUp />} />
             <Tab label="Análisis por Programa" icon={<ShowChart />} />
+            <Tab label="Reportes" icon={<BarChart />} />
           </Tabs>
         </Box>
 
@@ -664,6 +907,154 @@ export default function StatisticsPage() {
             )}
           </Box>
         </TabPanel>
+
+        {/* Reportes */}
+        <TabPanel value={tabValue} index={3}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
+              <Tab
+                label="Usuarios Nuevos"
+                value="users"
+                onClick={() => setReportTab('users')}
+                sx={{
+                  fontWeight: reportTab === 'users' ? 'bold' : 'normal',
+                  color: reportTab === 'users' ? theme.palette.primary.main : theme.palette.text.secondary,
+                  minWidth: 0,
+                  px: 2,
+                }}
+              />
+              <Tab
+                label="Suscripciones Nuevas"
+                value="subscriptions"
+                onClick={() => setReportTab('subscriptions')}
+                sx={{
+                  fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal',
+                  color: reportTab === 'subscriptions' ? theme.palette.primary.main : theme.palette.text.secondary,
+                  minWidth: 0,
+                  px: 2,
+                }}
+              />
+            </Box>
+            {reportTab === 'users' && (
+              <Box>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
+                  <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
+                  <Box sx={{ flex: 1 }} />
+                  <Button onClick={() => handleDownload('users', 'csv')}>Descargar CSV</Button>
+                  <Button onClick={() => handleDownload('users', 'pdf')}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail('users', 'csv')}>Enviar por Email</Button>
+                  <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
+                </Box>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        {['id', 'firstName', 'lastName', 'gender', 'birthDate', 'createdAt'].map((col) => (
+                          <TableCell
+                            key={col}
+                            color="text.primary"
+                            onClick={() => {
+                              if (usersSortBy === col) {
+                                setUsersSortDir(usersSortDir === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setUsersSortBy(col as keyof UserReport);
+                                setUsersSortDir('asc');
+                              }
+                            }}
+                            sx={{ cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            {col === 'id' ? 'ID' :
+                             col === 'firstName' ? 'Nombre' :
+                             col === 'lastName' ? 'Apellido' :
+                             col === 'gender' ? 'Género' :
+                             col === 'birthDate' ? 'Fecha de Nacimiento' :
+                             col === 'createdAt' ? 'Fecha de Registro' : col}
+                            {usersSortBy === col ? (usersSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sortArray(usersReport.users || [], usersSortBy, usersSortDir).map((user) => (
+                        <TableRow key={user.id}>
+                          <TableCell color="text.primary">{user.id}</TableCell>
+                          <TableCell color="text.primary">{user.firstName}</TableCell>
+                          <TableCell color="text.primary">{user.lastName}</TableCell>
+                          <TableCell color="text.primary">{getGenderLabel(user.gender)}</TableCell>
+                          <TableCell color="text.primary">{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
+                          <TableCell color="text.primary">{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Typography color="text.primary">Página {usersPage}</Typography>
+                </Box>
+              </Box>
+            )}
+            {reportTab === 'subscriptions' && (
+              <Box>
+                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
+                  <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
+                  <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
+                  <Box sx={{ flex: 1 }} />
+                  <Button onClick={() => handleDownload('subscriptions', 'csv')}>Descargar CSV</Button>
+                  <Button onClick={() => handleDownload('subscriptions', 'pdf')}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail('subscriptions', 'csv')}>Enviar por Email</Button>
+                  <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
+                  <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
+                </Box>
+                <TableContainer component={Paper}>
+                  <Table>
+                    <TableHead>
+                      <TableRow>
+                        {['id', 'user', 'program', 'channel', 'createdAt'].map((col) => (
+                          <TableCell
+                            key={col}
+                            color="text.primary"
+                            onClick={() => {
+                              if (subsSortBy === col) {
+                                setSubsSortDir(subsSortDir === 'asc' ? 'desc' : 'asc');
+                              } else {
+                                setSubsSortBy(col as keyof SubscriptionReport);
+                                setSubsSortDir('asc');
+                              }
+                            }}
+                            sx={{ cursor: 'pointer', userSelect: 'none' }}
+                          >
+                            {col === 'id' ? 'ID' :
+                             col === 'user' ? 'Usuario' :
+                             col === 'program' ? 'Programa' :
+                             col === 'channel' ? 'Canal' :
+                             col === 'createdAt' ? 'Fecha de Suscripción' : col}
+                            {subsSortBy === col ? (subsSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
+                          </TableCell>
+                        ))}
+                      </TableRow>
+                    </TableHead>
+                    <TableBody>
+                      {sortArray(subsReport.subscriptions || [], subsSortBy, subsSortDir).map((sub) => (
+                        <TableRow key={sub.id}>
+                          <TableCell color="text.primary">{sub.id}</TableCell>
+                          <TableCell color="text.primary">{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.program ? sub.program.name : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.channel ? sub.channel.name : '-'}</TableCell>
+                          <TableCell color="text.primary">{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                        </TableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </TableContainer>
+                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+                  <Typography color="text.primary">Página {subsPage}</Typography>
+                </Box>
+              </Box>
+            )}
+          </LocalizationProvider>
+        </TabPanel>
       </Box>
 
       <Snackbar
@@ -680,6 +1071,30 @@ export default function StatisticsPage() {
           {error || success}
         </Alert>
       </Snackbar>
+
+      {/* Email Dialog */}
+      <Dialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
+        <DialogTitle>Enviar Reporte por Email</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Email de destino"
+            type="email"
+            fullWidth
+            variant="outlined"
+            value={emailToSend}
+            onChange={(e) => setEmailToSend(e.target.value)}
+            placeholder="ejemplo@email.com"
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
+          <Button onClick={sendEmail} variant="contained" disabled={!emailToSend}>
+            Enviar
+          </Button>
+        </DialogActions>
+      </Dialog>
     </>
   );
 } 

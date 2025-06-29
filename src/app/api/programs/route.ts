@@ -1,48 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAccessToken } from '@/utils/auth-server';
 
-export async function GET(request: NextRequest) {
-  try {
-    const token = await requireAccessToken(request);
-    
-    if (!token) {
-      console.error('No authentication token found');
-      return NextResponse.json([], { status: 401 });
-    }
-    
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs`, {
-      headers: {
-        'Authorization': `Bearer ${token}`,
-      },
-    });
-    
-    if (!response.ok) {
-      const errorData = await response.json().catch(() => null);
-      console.error('Backend error response:', {
-        status: response.status,
-        statusText: response.statusText,
-        data: errorData,
-        requestUrl: `${process.env.NEXT_PUBLIC_API_URL}/programs`,
-        requestHeaders: {
-          'Authorization': `Bearer ${token.substring(0, 10)}...`
-        }
-      });
-      throw new Error(`Failed to fetch programs: ${response.status} ${response.statusText}`);
-    }
-    
-    const data = await response.json();
-    
-    // Ensure we're returning an array
-    if (!Array.isArray(data)) {
-      console.error('Backend did not return an array:', data);
-      return NextResponse.json([], { status: 200 });
-    }
-    
-    return NextResponse.json(data);
-  } catch (error) {
-    console.error('Error fetching programs:', error);
-    return NextResponse.json([], { status: 500 });
-  }
+export async function GET() {
+  const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/programs`;
+  const res = await fetch(backendUrl);
+  const data = await res.json();
+  return NextResponse.json(data, { status: res.status });
 }
 
 export async function POST(request: NextRequest) {
