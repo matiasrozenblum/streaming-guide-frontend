@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.3.1] - 2025-06-29
+
+### Added
+- Added reports logic
+
 ## [1.3.0] - 2025-06-22
 
 ### Added
