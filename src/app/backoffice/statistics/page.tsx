@@ -34,20 +34,15 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
-import {
-  People,
-  TrendingUp,
-  BarChart,
-  ExpandMore,
-  ShowChart,
-} from '@mui/icons-material';
+import { BarChart, ExpandMore } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
-import { saveAs } from 'file-saver';
 
 interface UserDemographics {
   totalUsers: number;
@@ -169,7 +164,17 @@ export default function StatisticsPage() {
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
   
-  const [tabValue, setTabValue] = useState(0);
+  const [mainTab, setMainTab] = useState(0);
+  const mainTabs = [
+    'Demografía de Usuarios',
+    'Demografía de Suscripciones',
+    'Demografía por Canal',
+    'Demografía por Programa',
+    'Ranking de Canales',
+    'Ranking de Programas',
+    'Reportes',
+  ];
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -194,7 +199,7 @@ export default function StatisticsPage() {
   const [subsSortDir, setSubsSortDir] = useState<'asc' | 'desc'>('asc');
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailToSend, setEmailToSend] = useState('');
-  const [pendingEmailAction, setPendingEmailAction] = useState<{ type: 'users' | 'subscriptions', format: 'csv' | 'pdf' } | null>(null);
+  const [emailReports, setEmailReports] = useState<{pdf: boolean, csvUsers: boolean, csvSubs: boolean}>({pdf: true, csvUsers: false, csvSubs: false});
 
   const hasFetched = useRef(false);
 
@@ -301,8 +306,8 @@ export default function StatisticsPage() {
     }
   }, [status, fetchData]);
 
-  useEffect(() => { if (tabValue === 3) fetchUsersReport(); }, [tabValue, fetchUsersReport]);
-  useEffect(() => { if (tabValue === 3) fetchSubsReport(); }, [tabValue, fetchSubsReport]);
+  useEffect(() => { if (mainTab === 3) fetchUsersReport(); }, [mainTab, fetchUsersReport]);
+  useEffect(() => { if (mainTab === 3) fetchSubsReport(); }, [mainTab, fetchSubsReport]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
@@ -394,66 +399,56 @@ export default function StatisticsPage() {
     });
   }
 
-  // Update handleReportAction to support 'weekly-summary' for PDF
-  const handleReportAction = async (
-    type: 'users' | 'subscriptions',
-    format: 'csv' | 'pdf',
-    action: 'download' | 'email',
-    emailOverride?: string
-  ) => {
-    try {
-      const from = type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD');
-      const to = type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD');
-      const channelId = undefined;
-      const programId = type === 'subscriptions' && selectedProgram ? selectedProgram : undefined;
-      const toEmail = action === 'email' ? (emailOverride || 'laguiadelstreaming@gmail.com') : undefined;
-      // If PDF, use type: 'weekly-summary' and format: 'pdf'
-      const reportType = format === 'pdf' ? 'weekly-summary' : type;
-      const reportFormat = format;
-      const body = {
-        type: reportType,
-        format: reportFormat,
+  // Update handleReportAction to accept multiple report types and channelId
+  const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
+    const from = usersFrom.format('YYYY-MM-DD');
+    const to = usersTo.format('YYYY-MM-DD');
+    const requests = [];
+    if (options.pdf) {
+      requests.push({
+        type: 'weekly-summary',
+        format: 'pdf',
         from,
         to,
         channelId,
-        programId,
-        action,
-        toEmail,
-      };
-      const res = await fetch('/api/statistics/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        action: 'email',
+        toEmail: email,
       });
-      if (!res.ok) throw new Error(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
-      if (action === 'download') {
-        const blob = await res.blob();
-        saveAs(blob, `${type}_report.${format}`);
-        setSuccess('Reporte descargado correctamente');
-      } else {
-        setSuccess('Reporte enviado por email');
-      }
-    } catch {
-      setError(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
     }
+    if (options.csvUsers) {
+      requests.push({
+        type: 'users',
+        format: 'csv',
+        from,
+        to,
+        action: 'email',
+        toEmail: email,
+      });
+    }
+    if (options.csvSubs) {
+      requests.push({
+        type: 'subscriptions',
+        format: 'csv',
+        from,
+        to,
+        action: 'email',
+        toEmail: email,
+      });
+    }
+    // Send all in one request (backend must support array)
+    const res = await fetch('/api/statistics/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reports: requests }),
+    });
+    if (!res.ok) setError('Error al enviar el reporte por email');
+    else setSuccess('Reporte enviado por email');
   };
 
-  // Replace old handlers
-  const handleDownload = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
-    handleReportAction(type, format, 'download');
-  };
-
-  const handleEmail = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
-    setPendingEmailAction({ type, format });
+  // Move handleEmail above its first usage
+  const handleEmail = () => {
+    setEmailReports({pdf: true, csvUsers: false, csvSubs: false});
     setEmailDialogOpen(true);
-  };
-
-  const sendEmail = async () => {
-    if (!pendingEmailAction) return;
-    await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', emailToSend);
-    setEmailDialogOpen(false);
-    setEmailToSend('');
-    setPendingEmailAction(null);
   };
 
   if (status === 'loading') {
@@ -505,8 +500,8 @@ export default function StatisticsPage() {
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
-            value={tabValue}
-            onChange={(_, newValue) => setTabValue(newValue)}
+            value={mainTab}
+            onChange={(_, newValue) => setMainTab(newValue)}
             sx={{
               '& .MuiTab-root': {
                 color: mode === 'light' ? '#6b7280' : '#9ca3af',
@@ -516,15 +511,14 @@ export default function StatisticsPage() {
               },
             }}
           >
-            <Tab label="Demografía de Usuarios" icon={<People />} />
-            <Tab label="Programas Más Populares" icon={<TrendingUp />} />
-            <Tab label="Análisis por Programa" icon={<ShowChart />} />
-            <Tab label="Reportes" icon={<BarChart />} />
+            {mainTabs.map((tab, index) => (
+              <Tab key={index} label={tab} />
+            ))}
           </Tabs>
         </Box>
 
         {/* Demografía de Usuarios */}
-        <TabPanel value={tabValue} index={0}>
+        <TabPanel value={mainTab} index={0}>
           {demographics && (
             <Box
               sx={{
@@ -661,7 +655,7 @@ export default function StatisticsPage() {
         </TabPanel>
 
         {/* Programas Más Populares */}
-        <TabPanel value={tabValue} index={1}>
+        <TabPanel value={mainTab} index={1}>
           <Card
             sx={{
               backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
@@ -722,7 +716,7 @@ export default function StatisticsPage() {
         </TabPanel>
 
         {/* Análisis por Programa */}
-        <TabPanel value={tabValue} index={2}>
+        <TabPanel value={mainTab} index={2}>
           <Box sx={{ mb: 3 }}>
             <FormControl fullWidth sx={{ maxWidth: 400 }}>
               <InputLabel>Seleccionar Programa</InputLabel>
@@ -917,7 +911,7 @@ export default function StatisticsPage() {
         </TabPanel>
 
         {/* Reportes */}
-        <TabPanel value={tabValue} index={3}>
+        <TabPanel value={mainTab} index={3}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
               <Tab
@@ -949,9 +943,9 @@ export default function StatisticsPage() {
                   <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
                   <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
                   <Box sx={{ flex: 1 }} />
-                  <Button onClick={() => handleDownload('users', 'csv')}>Descargar CSV</Button>
-                  <Button onClick={() => handleDownload('users', 'pdf')}>Descargar PDF</Button>
-                  <Button onClick={() => handleEmail('users', 'csv')}>Enviar por Email</Button>
+                  <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)}>Descargar CSV</Button>
+                  <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail()}>Enviar por Email</Button>
                   <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
                   <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
                 </Box>
@@ -1009,9 +1003,9 @@ export default function StatisticsPage() {
                   <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
                   <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
                   <Box sx={{ flex: 1 }} />
-                  <Button onClick={() => handleDownload('subscriptions', 'csv')}>Descargar CSV</Button>
-                  <Button onClick={() => handleDownload('subscriptions', 'pdf')}>Descargar PDF</Button>
-                  <Button onClick={() => handleEmail('subscriptions', 'csv')}>Enviar por Email</Button>
+                  <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)}>Descargar CSV</Button>
+                  <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)}>Descargar PDF</Button>
+                  <Button onClick={() => handleEmail()}>Enviar por Email</Button>
                   <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
                   <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
                 </Box>
@@ -1084,6 +1078,23 @@ export default function StatisticsPage() {
       <Dialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
         <DialogTitle>Enviar Reporte por Email</DialogTitle>
         <DialogContent>
+          <Box>
+            <Typography variant="subtitle2">Selecciona los reportes a enviar:</Typography>
+            <Box>
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.pdf} onChange={e => setEmailReports(r => ({...r, pdf: e.target.checked}))} />}
+                label="PDF: Reporte Demográfico y de Actividad"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.csvUsers} onChange={e => setEmailReports(r => ({...r, csvUsers: e.target.checked}))} />}
+                label="CSV: Listado de Usuarios Nuevos"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.csvSubs} onChange={e => setEmailReports(r => ({...r, csvSubs: e.target.checked}))} />}
+                label="CSV: Listado de Suscripciones Nuevas"
+              />
+            </Box>
+          </Box>
           <TextField
             autoFocus
             margin="dense"
@@ -1098,17 +1109,11 @@ export default function StatisticsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={sendEmail} variant="contained" disabled={!emailToSend}>
+          <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)} variant="contained" disabled={!emailToSend}>
             Enviar a este email
           </Button>
           <Button
-            onClick={async () => {
-              if (!pendingEmailAction) return;
-              await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', 'laguiadelstreaming@gmail.com');
-              setEmailDialogOpen(false);
-              setEmailToSend('');
-              setPendingEmailAction(null);
-            }}
+            onClick={() => handleMultiReportEmail('laguiadelstreaming@gmail.com', emailReports, undefined)}
             variant="outlined"
           >
             Enviar a laguiadelstreaming@gmail.com
