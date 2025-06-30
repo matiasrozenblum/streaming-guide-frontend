@@ -394,17 +394,25 @@ export default function StatisticsPage() {
     });
   }
 
-  // Unified download/email handler
-  const handleReportAction = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf', action: 'download' | 'email', emailOverride?: string) => {
+  // Update handleReportAction to support 'weekly-summary' for PDF
+  const handleReportAction = async (
+    type: 'users' | 'subscriptions',
+    format: 'csv' | 'pdf',
+    action: 'download' | 'email',
+    emailOverride?: string
+  ) => {
     try {
       const from = type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD');
       const to = type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD');
       const channelId = undefined;
       const programId = type === 'subscriptions' && selectedProgram ? selectedProgram : undefined;
       const toEmail = action === 'email' ? (emailOverride || 'laguiadelstreaming@gmail.com') : undefined;
+      // If PDF, use type: 'weekly-summary' and format: 'pdf'
+      const reportType = format === 'pdf' ? 'weekly-summary' : type;
+      const reportFormat = format;
       const body = {
-        type,
-        format,
+        type: reportType,
+        format: reportFormat,
         from,
         to,
         channelId,
@@ -1091,7 +1099,19 @@ export default function StatisticsPage() {
         <DialogActions>
           <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
           <Button onClick={sendEmail} variant="contained" disabled={!emailToSend}>
-            Enviar
+            Enviar a este email
+          </Button>
+          <Button
+            onClick={async () => {
+              if (!pendingEmailAction) return;
+              await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', 'laguiadelstreaming@gmail.com');
+              setEmailDialogOpen(false);
+              setEmailToSend('');
+              setPendingEmailAction(null);
+            }}
+            variant="outlined"
+          >
+            Enviar a laguiadelstreaming@gmail.com
           </Button>
         </DialogActions>
       </Dialog>
