@@ -650,7 +650,7 @@ export default function StatisticsPage() {
               <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} />
               <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} />
               <FormControl sx={{ minWidth: 240 }} variant="outlined">
-                <InputLabel id="channel-label">Canal</InputLabel>
+                <InputLabel id="channel-label" shrink>Canal</InputLabel>
                 <Select
                   labelId="channel-label"
                   value={selectedChannel ?? ''}
@@ -715,7 +715,7 @@ export default function StatisticsPage() {
               <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} />
               <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} />
               <FormControl sx={{ minWidth: 240 }} variant="outlined">
-                <InputLabel id="program-label">Programa</InputLabel>
+                <InputLabel id="program-label" shrink>Programa</InputLabel>
                 <Select
                   labelId="program-label"
                   value={selectedProgramTab ?? ''}
