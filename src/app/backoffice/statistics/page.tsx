@@ -649,9 +649,10 @@ export default function StatisticsPage() {
             <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
               <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} />
               <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }}>
-                <InputLabel>Canal</InputLabel>
+              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+                <InputLabel id="channel-label">Canal</InputLabel>
                 <Select
+                  labelId="channel-label"
                   value={selectedChannel ?? ''}
                   label="Canal"
                   onChange={e => setSelectedChannel(e.target.value ? Number(e.target.value) : null)}
@@ -713,9 +714,10 @@ export default function StatisticsPage() {
             <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
               <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} />
               <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }}>
-                <InputLabel>Programa</InputLabel>
+              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+                <InputLabel id="program-label">Programa</InputLabel>
                 <Select
+                  labelId="program-label"
                   value={selectedProgramTab ?? ''}
                   label="Programa"
                   onChange={e => setSelectedProgramTab(e.target.value ? Number(e.target.value) : null)}
@@ -784,7 +786,7 @@ export default function StatisticsPage() {
             </Box>
           </LocalizationProvider>
           {/* Users Table */}
-          <Typography variant="h6" sx={{ mt: 2, mb: 1 }}>Listado de Usuarios Nuevos</Typography>
+          <Typography color="text.primary" variant="h6" sx={{ mt: 2, mb: 1 }}>Listado de Usuarios Nuevos</Typography>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
@@ -817,7 +819,7 @@ export default function StatisticsPage() {
             <Button disabled={listUsersPage * listUsersPageSize >= listUsersReport.total} onClick={() => setListUsersPage(p => p + 1)}>Siguiente</Button>
           </Box>
           {/* Subscriptions Table */}
-          <Typography variant="h6" sx={{ mt: 4, mb: 1 }}>Listado de Suscripciones Nuevas</Typography>
+          <Typography color="text.primary" variant="h6" sx={{ mt: 4, mb: 1 }}>Listado de Suscripciones Nuevas</Typography>
           <TableContainer component={Paper}>
             <Table>
               <TableHead>
