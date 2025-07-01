@@ -186,21 +186,26 @@ export default function StatisticsPage() {
 
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-      const [demographicsRes, topChannelsSubsRes, topChannelsClicksRes, topProgramsSubsRes, topProgramsClicksRes] = await Promise.all([
-        fetch(`/api/statistics/demographics?from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}`),
+      // Fetch demographics first
+      const demographicsRes = await fetch(`/api/statistics/demographics?from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}`);
+      if (demographicsRes.ok) {
+        const demographicsData = await demographicsRes.json();
+        setDemographics(demographicsData);
+      } else {
+        setError('Error al cargar datos del resumen general');
+      }
+      // Fetch Top 5 in parallel, but don't block demographics
+      Promise.all([
         fetch(`/api/statistics/top-channels?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-programs?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
-      ]);
-      if (!demographicsRes.ok || !topChannelsSubsRes.ok || !topChannelsClicksRes.ok || !topProgramsSubsRes.ok || !topProgramsClicksRes.ok) {
-        throw new Error('Error al cargar datos del resumen general');
-      }
-      const demographicsData = await demographicsRes.json();
-      setDemographics(demographicsData);
+      ]).catch(() => {
+        // Optionally set a separate error for Top 5, or just ignore
+      });
     } catch {
       setError('Error al cargar el resumen general');
     } finally {
@@ -567,9 +572,9 @@ export default function StatisticsPage() {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Resumen General</Typography>
                   <Box display="flex" flexDirection="column" gap={2}>
-                    <Box display="flex" justifyContent="space-between"><Typography>Total de Usuarios:</Typography><Typography variant="h6" color="primary">{(demographics.totalUsers || 0).toLocaleString()}</Typography></Box>
-                    <Box display="flex" justifyContent="space-between"><Typography>Con Suscripciones:</Typography><Typography variant="h6" color="success.main">{(demographics.usersWithSubscriptions || 0).toLocaleString()}</Typography></Box>
-                    <Box display="flex" justifyContent="space-between"><Typography>Sin Suscripciones:</Typography><Typography variant="h6" color="warning.main">{(demographics.usersWithoutSubscriptions || 0).toLocaleString()}</Typography></Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Total de Usuarios:</Typography><Typography variant="h6" color="primary">{(demographics.totalUsers ?? 0).toLocaleString()}</Typography></Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Con Suscripciones:</Typography><Typography variant="h6" color="success.main">{(demographics.usersWithSubscriptions ?? 0).toLocaleString()}</Typography></Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Sin Suscripciones:</Typography><Typography variant="h6" color="warning.main">{(demographics.usersWithoutSubscriptions ?? 0).toLocaleString()}</Typography></Box>
                   </Box>
                 </CardContent>
               </Card>
@@ -578,7 +583,7 @@ export default function StatisticsPage() {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Distribución por Género</Typography>
                   <Box display="flex" flexDirection="column" gap={1}>
-                    {Object.entries(demographics.byGender).map(([gender, count]) => (
+                    {Object.entries(demographics.byGender ?? {}).map(([gender, count]) => (
                       <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
                         <Chip label={getGenderLabel(gender)} size="small" sx={{ backgroundColor: getGenderColor(gender), color: 'white', fontWeight: 'bold' }} />
                         <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
@@ -593,7 +598,7 @@ export default function StatisticsPage() {
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Distribución por Edad</Typography>
                     <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
-                      {Object.entries(demographics.byAgeGroup).map(([ageGroup, count]) => (
+                      {Object.entries(demographics.byAgeGroup ?? {}).map(([ageGroup, count]) => (
                         <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
                           <Chip label={getAgeGroupLabel(ageGroup)} size="small" sx={{ backgroundColor: getAgeGroupColor(ageGroup), color: 'white', fontWeight: 'bold' }} />
                           <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
