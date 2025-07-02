@@ -688,7 +688,7 @@ export default function StatisticsPage() {
           <Box sx={{ maxHeight: 320, overflowY: 'auto', pr: 1 }}>
             <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
               {topData.map((item, index) => {
-                const total = keys.reduce((sum, k) => sum + (item.counts[k] || 0), 0);
+                const total = keys.reduce((sum, k) => sum + (item.counts?.[k] ?? 0), 0);
                 return (
                   <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
                     <Typography variant="body2" sx={{ minWidth: 20, fontWeight: 'bold', color: mode === 'light' ? '#374151' : '#d1d5db' }}>#{index + 1}</Typography>
@@ -700,7 +700,7 @@ export default function StatisticsPage() {
                     </Box>
                     <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151', borderRadius: 1, overflow: 'hidden' }}>
                       {keys.map((k) => {
-                        const value = item.counts[k] || 0;
+                        const value = item.counts?.[k] ?? 0;
                         const width = total > 0 ? (value / total) * 100 : 0;
                         if (value === 0) return null;
                         return (
