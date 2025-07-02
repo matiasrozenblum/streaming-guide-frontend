@@ -1003,19 +1003,11 @@ export default function StatisticsPage() {
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={
-                [...topChannelsClicksByGender]
-                  .map(item => ({
-                    ...item,
-                    total: Object.values(item.counts).reduce((sum, v) => sum + Number(v), 0)
-                  }))
-                  .filter(item => item.total > 0)
-                  .sort((a, b) => b.total - a.total)
-                  .map(item => {
-                    const { id, name, channelName, counts } = item;
-                    return { id, name, channelName, counts } as StackedBarDatum;
-                  })
-              }
+              data={[...topChannelsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
               title="Top 5 Canales por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1099,19 +1091,11 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={
-                [...topProgramsClicksByGender]
-                  .map(item => ({
-                    ...item,
-                    total: Object.values(item.counts).reduce((sum, v) => sum + Number(v), 0)
-                  }))
-                  .filter(item => item.total > 0)
-                  .sort((a, b) => b.total - a.total)
-                  .map(item => {
-                    const { id, name, channelName, counts } = item;
-                    return { id, name, channelName, counts } as StackedBarDatum;
-                  })
-              }
+              data={[...topProgramsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
               title="Top 5 Programas por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
