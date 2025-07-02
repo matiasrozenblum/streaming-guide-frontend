@@ -150,6 +150,14 @@ interface ReportRequestBody {
   programId?: number;
 }
 
+// Add interfaces for stacked bar chart data
+interface StackedBarDatum {
+  id: number;
+  name: string;
+  channelName?: string;
+  counts: Record<string, number>;
+}
+
 export default function StatisticsPage() {
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
@@ -177,6 +185,18 @@ export default function StatisticsPage() {
   const [topChannelsByClicks, setTopChannelsByClicks] = useState<TopChannel[]>([]);
   const [topProgramsBySubs, setTopProgramsBySubs] = useState<TopProgram[]>([]);
   const [topProgramsByClicks, setTopProgramsByClicks] = useState<TopProgram[]>([]);
+
+  // Add state for channel tab stacked charts
+  const [topChannelsSubsByGender, setTopChannelsSubsByGender] = useState<StackedBarDatum[]>([]);
+  const [topChannelsClicksByGender, setTopChannelsClicksByGender] = useState<StackedBarDatum[]>([]);
+  const [topChannelsSubsByAge, setTopChannelsSubsByAge] = useState<StackedBarDatum[]>([]);
+  const [topChannelsClicksByAge, setTopChannelsClicksByAge] = useState<StackedBarDatum[]>([]);
+
+  // Add state for program tab stacked charts
+  const [topProgramsSubsByGender, setTopProgramsSubsByGender] = useState<StackedBarDatum[]>([]);
+  const [topProgramsClicksByGender, setTopProgramsClicksByGender] = useState<StackedBarDatum[]>([]);
+  const [topProgramsSubsByAge, setTopProgramsSubsByAge] = useState<StackedBarDatum[]>([]);
+  const [topProgramsClicksByAge, setTopProgramsClicksByAge] = useState<StackedBarDatum[]>([]);
 
   const hasFetched = useRef(false);
 
@@ -319,13 +339,19 @@ export default function StatisticsPage() {
     try {
       setLoading(true);
       setError(null);
-      const [channelsRes, topSubsRes, topClicksRes] = await Promise.all([
+      const [channelsRes, subsByGenderRes, clicksByGenderRes, subsByAgeRes, clicksByAgeRes] = await Promise.all([
         fetch('/api/channels'),
-        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=${channelGroupBy}`),
-        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=${channelGroupBy}`),
+        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
       ]);
-      if (!channelsRes.ok || !topSubsRes.ok || !topClicksRes.ok) throw new Error('Error al cargar datos de canales');
+      if (!channelsRes.ok) throw new Error('Error al cargar canales');
       setChannelsList(await channelsRes.json());
+      setTopChannelsSubsByGender(subsByGenderRes.ok ? await subsByGenderRes.json() : []);
+      setTopChannelsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
+      setTopChannelsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
+      setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
       // If a channel is selected, fetch its programs' demographics
       if (selectedChannel) {
         const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${channelGroupBy}`);
@@ -338,20 +364,26 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [channelTabFrom, channelTabTo, channelGroupBy, selectedChannel]);
+  }, [channelTabFrom, channelTabTo, channelGroupBy, selectedChannel, status]);
 
   const fetchProgramTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
     try {
       setLoading(true);
       setError(null);
-      const [programsRes, topSubsRes, topClicksRes] = await Promise.all([
+      const [programsRes, subsByGenderRes, clicksByGenderRes, subsByAgeRes, clicksByAgeRes] = await Promise.all([
         fetch('/api/programs'),
-        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=${programGroupBy}`),
-        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=${programGroupBy}`),
+        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
       ]);
-      if (!programsRes.ok || !topSubsRes.ok || !topClicksRes.ok) throw new Error('Error al cargar datos de programas');
+      if (!programsRes.ok) throw new Error('Error al cargar programas');
       setProgramsList(await programsRes.json());
+      setTopProgramsSubsByGender(subsByGenderRes.ok ? await subsByGenderRes.json() : []);
+      setTopProgramsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
+      setTopProgramsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
+      setTopProgramsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
       // If a program is selected, fetch its demographics
       if (selectedProgramTab) {
         const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedProgramTab}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
@@ -364,7 +396,7 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [programTabFrom, programTabTo, programGroupBy, selectedProgramTab]);
+  }, [programTabFrom, programTabTo, programGroupBy, selectedProgramTab, status]);
 
   const fetchListUsersReport = useCallback(async () => {
     try {
@@ -430,7 +462,7 @@ export default function StatisticsPage() {
     if (status === 'authenticated' && hasFetched.current) {
       fetchGeneralData();
     }
-  }, [generalFrom, generalTo, fetchGeneralData]);
+  }, [generalFrom, generalTo, fetchGeneralData, status]);
 
   useEffect(() => { if (mainTab === 3) fetchUsersReport(); }, [mainTab, fetchUsersReport]);
   useEffect(() => { if (mainTab === 3) fetchSubsReport(); }, [mainTab, fetchSubsReport]);
@@ -598,6 +630,121 @@ export default function StatisticsPage() {
       </Card>
     );
   };
+
+  // Stacked Horizontal Bar Chart Component
+  const GENDER_KEYS = ['male', 'female', 'non_binary', 'rather_not_say'] as const;
+  const AGE_KEYS = ['under18', 'age18to30', 'age30to45', 'age45to60', 'over60', 'unknown'] as const;
+
+  const GENDER_COLORS = {
+    male: '#3b82f6',
+    female: '#ec4899',
+    non_binary: '#8b5cf6',
+    rather_not_say: '#6b7280',
+  };
+  const AGE_COLORS = {
+    under18: '#ef4444',
+    age18to30: '#f59e0b',
+    age30to45: '#10b981',
+    age45to60: '#3b82f6',
+    over60: '#8b5cf6',
+    unknown: '#6b7280',
+  };
+
+  function StackedHorizontalBarChart({
+    data,
+    title,
+    keys,
+    colors,
+    getLabel,
+    maxBars = 5,
+    showChannel = false,
+    legend = true,
+  }: {
+    data: StackedBarDatum[];
+    title: string;
+    keys: readonly string[];
+    colors: Record<string, string>;
+    getLabel: (key: string) => string;
+    maxBars?: number;
+    showChannel?: boolean;
+    legend?: boolean;
+  }) {
+    if (!data || data.length === 0) {
+      return (
+        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>{title}</Typography>
+            <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+          </CardContent>
+        </Card>
+      );
+    }
+    // Only show top N
+    const topData = data.slice(0, maxBars);
+    return (
+      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>{title}</Typography>
+          <Box sx={{ maxHeight: 320, overflowY: 'auto', pr: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+              {topData.map((item, index) => {
+                const total = keys.reduce((sum, k) => sum + (item.counts[k] || 0), 0);
+                return (
+                  <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ minWidth: 20, fontWeight: 'bold', color: mode === 'light' ? '#374151' : '#d1d5db' }}>#{index + 1}</Typography>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'medium', color: mode === 'light' ? '#111827' : '#f9fafb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Typography>
+                      {showChannel && item.channelName && (
+                        <Typography variant="caption" sx={{ color: mode === 'light' ? '#6b7280' : '#9ca3af', fontSize: '0.75rem' }}>{item.channelName}</Typography>
+                      )}
+                    </Box>
+                    <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151', borderRadius: 1, overflow: 'hidden' }}>
+                      {keys.map((k) => {
+                        const value = item.counts[k] || 0;
+                        const width = total > 0 ? (value / total) * 100 : 0;
+                        if (value === 0) return null;
+                        return (
+                          <Box
+                            key={k}
+                            sx={{
+                              width: `${width}%`,
+                              backgroundColor: colors[k],
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: width > 10 ? 'center' : 'flex-end',
+                              position: 'relative',
+                              transition: 'width 0.3s',
+                            }}
+                          >
+                            {width > 10 && (
+                              <Typography variant="caption" sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>{value}</Typography>
+                            )}
+                          </Box>
+                        );
+                      })}
+                      {/* Show total at the end */}
+                      <Typography variant="caption" sx={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', color: mode === 'light' ? '#111827' : '#f9fafb', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(255,255,255,0.5)' }}>{total}</Typography>
+                    </Box>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+          {legend && (
+            <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+              {keys.map(k => (
+                <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 16, height: 16, backgroundColor: colors[k], borderRadius: 0.5, border: '1px solid #e5e7eb' }} />
+                  <Typography variant="caption" sx={{ color: mode === 'light' ? '#374151' : '#d1d5db' }}>{getLabel(k)}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
+    );
+  }
 
   // Update handleReportAction to accept multiple report types and channelId
   const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
@@ -849,20 +996,34 @@ export default function StatisticsPage() {
           </LocalizationProvider>
           {/* Top 5 Channels by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Canales por Suscripciones ({channelGroupBy === 'gender' ? 'por Género' : 'por Edad'})</Typography>
-                {/* Render bar chart or list for topChannelsBySubs (grouped) */}
-                {/* ... */}
-              </CardContent>
-            </Card>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Canales por Clicks en YouTube ({channelGroupBy === 'gender' ? 'por Género' : 'por Edad'})</Typography>
-                {/* Render bar chart or list for topChannelsByClicks (grouped) */}
-                {/* ... */}
-              </CardContent>
-            </Card>
+            <StackedHorizontalBarChart
+              data={topChannelsSubsByGender}
+              title="Top 5 Canales por Suscripciones (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+            />
+            <StackedHorizontalBarChart
+              data={topChannelsClicksByGender}
+              title="Top 5 Canales por Clicks en YouTube (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+            />
+            <StackedHorizontalBarChart
+              data={topChannelsSubsByAge}
+              title="Top 5 Canales por Suscripciones (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+            />
+            <StackedHorizontalBarChart
+              data={topChannelsClicksByAge}
+              title="Top 5 Canales por Clicks en YouTube (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+            />
           </Box>
           {/* If a channel is selected, show its programs' demographics */}
           {selectedChannel && (
@@ -914,20 +1075,38 @@ export default function StatisticsPage() {
           </LocalizationProvider>
           {/* Top 5 Programs by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Programas por Suscripciones ({programGroupBy === 'gender' ? 'por Género' : 'por Edad'})</Typography>
-                {/* Render bar chart or list for topProgramsBySubsTab (grouped) */}
-                {/* ... */}
-              </CardContent>
-            </Card>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Programas por Clicks en YouTube ({programGroupBy === 'gender' ? 'por Género' : 'por Edad'})</Typography>
-                {/* Render bar chart or list for topProgramsByClicksTab (grouped) */}
-                {/* ... */}
-              </CardContent>
-            </Card>
+            <StackedHorizontalBarChart
+              data={topProgramsSubsByGender}
+              title="Top 5 Programas por Suscripciones (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={topProgramsClicksByGender}
+              title="Top 5 Programas por Clicks en YouTube (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={topProgramsSubsByAge}
+              title="Top 5 Programas por Suscripciones (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={topProgramsClicksByAge}
+              title="Top 5 Programas por Clicks en YouTube (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+              showChannel={true}
+            />
           </Box>
           {/* If a program is selected, show its demographics */}
           {selectedProgramTab && (
