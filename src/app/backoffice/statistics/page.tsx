@@ -632,14 +632,15 @@ export default function StatisticsPage() {
   };
 
   // Stacked Horizontal Bar Chart Component
-  const GENDER_KEYS = ['male', 'female', 'non_binary', 'rather_not_say'] as const;
+  const GENDER_KEYS = ['male', 'female', 'non_binary', 'rather_not_say', 'unknown'] as const;
   const AGE_KEYS = ['under18', 'age18to30', 'age30to45', 'age45to60', 'over60', 'unknown'] as const;
 
   const GENDER_COLORS = {
     male: '#3b82f6',
     female: '#ec4899',
     non_binary: '#8b5cf6',
-    rather_not_say: '#6b7280',
+    rather_not_say: '#5db510',
+    unknown: '#6b7280',
   };
   const AGE_COLORS = {
     under18: '#ef4444',
