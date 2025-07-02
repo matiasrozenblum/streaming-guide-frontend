@@ -1091,7 +1091,11 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={topProgramsClicksByGender}
+              data={[...topProgramsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
               title="Top 5 Programas por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
