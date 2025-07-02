@@ -23,31 +23,22 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Accordion,
-  AccordionSummary,
-  AccordionDetails,
   Snackbar,
   Button,
-  useTheme,
   Dialog,
   DialogTitle,
   DialogContent,
   DialogActions,
   TextField,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
-import {
-  People,
-  TrendingUp,
-  BarChart,
-  ExpandMore,
-  ShowChart,
-} from '@mui/icons-material';
+import { BarChart } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
-import { saveAs } from 'file-saver';
 
 interface UserDemographics {
   totalUsers: number;
@@ -67,35 +58,6 @@ interface UserDemographics {
   };
   usersWithSubscriptions: number;
   usersWithoutSubscriptions: number;
-}
-
-interface TopProgramsStats {
-  programId: number;
-  programName: string;
-  channelName: string;
-  subscriptionCount: number;
-  percentageOfTotalUsers: number;
-}
-
-interface ProgramSubscriptionStats {
-  programId: number;
-  programName: string;
-  channelName: string;
-  totalSubscriptions: number;
-  byGender: {
-    male: number;
-    female: number;
-    non_binary: number;
-    rather_not_say: number;
-  };
-  byAgeGroup: {
-    under18: number;
-    age18to30: number;
-    age30to45: number;
-    age45to60: number;
-    over60: number;
-    unknown: number;
-  };
 }
 
 interface TabPanelProps {
@@ -138,6 +100,30 @@ interface SubscriptionReport {
   channel: { id: number; name: string } | null;
 }
 
+interface Channel {
+  id: number;
+  name: string;
+}
+
+interface Program {
+  id: number;
+  name: string;
+}
+
+// Add interfaces for top rankings data
+interface TopChannel {
+  id: number;
+  name: string;
+  count: number;
+}
+
+interface TopProgram {
+  id: number;
+  name: string;
+  channelName: string;
+  count: number;
+}
+
 interface UsersReportResponse {
   users: UserReport[];
   total: number;
@@ -164,71 +150,125 @@ interface ReportRequestBody {
   programId?: number;
 }
 
+// Add interfaces for stacked bar chart data
+interface StackedBarDatum {
+  id: number;
+  name: string;
+  channelName?: string;
+  counts: Record<string, number>;
+}
+
 export default function StatisticsPage() {
-  const theme = useTheme();
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
   
-  const [tabValue, setTabValue] = useState(0);
+  const [mainTab, setMainTab] = useState(0);
+  const mainTabs = [
+    'Resumen General',
+    'Demografía por Canal',
+    'Demografía por Programa',
+    'Listados y Reportes',
+  ];
+
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [demographics, setDemographics] = useState<UserDemographics | null>(null);
-  const [topPrograms, setTopPrograms] = useState<TopProgramsStats[]>([]);
-  const [allProgramsStats, setAllProgramsStats] = useState<ProgramSubscriptionStats[]>([]);
-  const [selectedProgram, setSelectedProgram] = useState<number | ''>('');
-  const [reportTab, setReportTab] = useState<'users' | 'subscriptions'>('users');
-  const [usersFrom, setUsersFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
-  const [usersTo, setUsersTo] = useState<Dayjs>(dayjs());
-  const [usersPage, setUsersPage] = useState(1);
   const [usersPageSize] = useState(20);
-  const [usersReport, setUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
-  const [subsFrom, setSubsFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
-  const [subsTo, setSubsTo] = useState<Dayjs>(dayjs());
-  const [subsPage, setSubsPage] = useState(1);
-  const [subsPageSize] = useState(20);
-  const [subsReport, setSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
-  const [usersSortBy, setUsersSortBy] = useState<keyof UserReport | null>(null);
-  const [usersSortDir, setUsersSortDir] = useState<'asc' | 'desc'>('asc');
-  const [subsSortBy, setSubsSortBy] = useState<keyof SubscriptionReport | null>(null);
-  const [subsSortDir, setSubsSortDir] = useState<'asc' | 'desc'>('asc');
+  const [usersPage] = useState(1);
   const [emailDialogOpen, setEmailDialogOpen] = useState(false);
   const [emailToSend, setEmailToSend] = useState('');
-  const [pendingEmailAction, setPendingEmailAction] = useState<{ type: 'users' | 'subscriptions', format: 'csv' | 'pdf' } | null>(null);
+  const [emailReports, setEmailReports] = useState<{pdf: boolean, csvUsers: boolean, csvSubs: boolean}>({pdf: true, csvUsers: false, csvSubs: false});
+
+  // Add state for top 5 rankings
+  const [topChannelsBySubs, setTopChannelsBySubs] = useState<TopChannel[]>([]);
+  const [topChannelsByClicks, setTopChannelsByClicks] = useState<TopChannel[]>([]);
+  const [topProgramsBySubs, setTopProgramsBySubs] = useState<TopProgram[]>([]);
+  const [topProgramsByClicks, setTopProgramsByClicks] = useState<TopProgram[]>([]);
+
+  // Add state for channel tab stacked charts
+  const [topChannelsSubsByGender, setTopChannelsSubsByGender] = useState<StackedBarDatum[]>([]);
+  const [topChannelsClicksByGender, setTopChannelsClicksByGender] = useState<StackedBarDatum[]>([]);
+  const [topChannelsSubsByAge, setTopChannelsSubsByAge] = useState<StackedBarDatum[]>([]);
+  const [topChannelsClicksByAge, setTopChannelsClicksByAge] = useState<StackedBarDatum[]>([]);
+
+  // Add state for program tab stacked charts
+  const [topProgramsSubsByGender, setTopProgramsSubsByGender] = useState<StackedBarDatum[]>([]);
+  const [topProgramsClicksByGender, setTopProgramsClicksByGender] = useState<StackedBarDatum[]>([]);
+  const [topProgramsSubsByAge, setTopProgramsSubsByAge] = useState<StackedBarDatum[]>([]);
+  const [topProgramsClicksByAge, setTopProgramsClicksByAge] = useState<StackedBarDatum[]>([]);
 
   const hasFetched = useRef(false);
 
-  const fetchData = useCallback(async () => {
+  const [generalFrom, setGeneralFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [generalTo, setGeneralTo] = useState<Dayjs>(dayjs());
+
+  const [channelTabFrom, setChannelTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [channelTabTo, setChannelTabTo] = useState<Dayjs>(dayjs());
+  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
+  const [channelsList, setChannelsList] = useState<Channel[]>([]);
+  const [channelGroupBy, setChannelGroupBy] = useState<'gender' | 'age'>('gender');
+
+  const [programTabFrom, setProgramTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [programTabTo, setProgramTabTo] = useState<Dayjs>(dayjs());
+  const [selectedProgramTab, setSelectedProgramTab] = useState<number | null>(null);
+  const [programsList, setProgramsList] = useState<Program[]>([]);
+  const [programGroupBy, setProgramGroupBy] = useState<'gender' | 'age'>('gender');
+
+  const [listTabFrom, setListTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
+  const [listTabTo, setListTabTo] = useState<Dayjs>(dayjs());
+  const [listUsersPage, setListUsersPage] = useState(1);
+  const [listUsersPageSize] = useState(20);
+  const [listSubsPage, setListSubsPage] = useState(1);
+  const [listSubsPageSize] = useState(20);
+  const [listUsersReport, setListUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
+  const [listSubsReport, setListSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+
+  const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
-
+    setLoading(true);
+    setError(null);
     try {
-      setLoading(true);
-      setError(null);
-
-      const [demographicsRes, topProgramsRes, allProgramsRes] = await Promise.all([
-        fetch('/api/statistics/demographics'),
-        fetch('/api/statistics/popular-programs?limit=20'),
-        fetch('/api/statistics/programs'),
+      // Fetch demographics first
+      const demographicsRes = await fetch(`/api/statistics/demographics?from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}`);
+      if (demographicsRes.ok) {
+        const demographicsData = await demographicsRes.json();
+        setDemographics(demographicsData);
+      } else {
+        setError('Error al cargar datos del resumen general');
+      }
+      
+      // Fetch Top 5 in parallel
+      const [topChannelsSubsRes, topChannelsClicksRes, topProgramsSubsRes, topProgramsClicksRes] = await Promise.all([
+        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
+        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
+        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
+        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
       ]);
-
-      if (!demographicsRes.ok) throw new Error(`Error ${demographicsRes.status}`);
-      if (!topProgramsRes.ok) throw new Error(`Error ${topProgramsRes.status}`);
-      if (!allProgramsRes.ok) throw new Error(`Error ${allProgramsRes.status}`);
-
-      const demographicsData = await demographicsRes.json();
-      const topProgramsData = await topProgramsRes.json();
-      const allProgramsData = await allProgramsRes.json();
-
-      setDemographics(demographicsData);
-      setTopPrograms(topProgramsData);
-      setAllProgramsStats(allProgramsData);
-    } catch (err) {
-      console.error('Error fetching statistics:', err);
-      setError('Error al cargar las estadísticas');
+      
+      // Process responses
+      if (topChannelsSubsRes.ok) {
+        const data = await topChannelsSubsRes.json();
+        setTopChannelsBySubs(data || []);
+      }
+      if (topChannelsClicksRes.ok) {
+        const data = await topChannelsClicksRes.json();
+        setTopChannelsByClicks(data || []);
+      }
+      if (topProgramsSubsRes.ok) {
+        const data = await topProgramsSubsRes.json();
+        setTopProgramsBySubs(data || []);
+      }
+      if (topProgramsClicksRes.ok) {
+        const data = await topProgramsClicksRes.json();
+        setTopProgramsByClicks(data || []);
+      }
+    } catch {
+      setError('Error al cargar el resumen general');
     } finally {
       setLoading(false);
     }
-  }, [status]);
+  }, [status, generalFrom, generalTo]);
 
   const fetchUsersReport = useCallback(async () => {
     try {
@@ -238,8 +278,8 @@ export default function StatisticsPage() {
         body: JSON.stringify({
           type: 'users',
           format: 'csv',
-          from: usersFrom.format('YYYY-MM-DD'),
-          to: usersTo.format('YYYY-MM-DD'),
+          from: generalFrom.format('YYYY-MM-DD'),
+          to: generalTo.format('YYYY-MM-DD'),
           page: usersPage,
           pageSize: usersPageSize,
           action: 'table',
@@ -249,30 +289,30 @@ export default function StatisticsPage() {
         const errorText = await res.text();
         console.error('Users report API error:', errorText);
         setError('Error al cargar usuarios nuevos');
-        setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+        setListUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
         return;
       }
       const data: UsersReportResponse = await res.json();
-      setUsersReport(data && data.users ? data : { users: [], total: 0, page: 1, pageSize: 20 });
+      setListUsersReport(data && data.users ? data : { users: [], total: 0, page: 1, pageSize: 20 });
     } catch (e) {
       console.error('Users report fetch error:', e);
       setError('Error al cargar usuarios nuevos');
-      setUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+      setListUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
     }
-  }, [usersFrom, usersTo, usersPage, usersPageSize]);
+  }, [generalFrom, generalTo, usersPage, usersPageSize]);
 
   const fetchSubsReport = useCallback(async () => {
     try {
       const body: ReportRequestBody = {
         type: 'subscriptions',
         format: 'csv',
-        from: subsFrom.format('YYYY-MM-DD'),
-        to: subsTo.format('YYYY-MM-DD'),
-        page: subsPage,
-        pageSize: subsPageSize,
+        from: channelTabFrom.format('YYYY-MM-DD'),
+        to: channelTabTo.format('YYYY-MM-DD'),
+        page: listSubsPage,
+        pageSize: listSubsPageSize,
         action: 'table',
       };
-      if (selectedProgram) body.programId = selectedProgram;
+      if (selectedProgramTab) body.programId = selectedProgramTab;
       const res = await fetch('/api/statistics/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -282,27 +322,154 @@ export default function StatisticsPage() {
         const errorText = await res.text();
         console.error('Subs report API error:', errorText);
         setError('Error al cargar suscripciones nuevas');
-        setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+        setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
         return;
       }
       const data: SubsReportResponse = await res.json();
-      setSubsReport(data && data.subscriptions ? data : { subscriptions: [], total: 0, page: 1, pageSize: 20 });
+      setListSubsReport(data && data.subscriptions ? data : { subscriptions: [], total: 0, page: 1, pageSize: 20 });
     } catch (e) {
       console.error('Subs report fetch error:', e);
       setError('Error al cargar suscripciones nuevas');
-      setSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+      setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
     }
-  }, [subsFrom, subsTo, subsPage, subsPageSize, selectedProgram]);
+  }, [channelTabFrom, channelTabTo, listSubsPage, listSubsPageSize, selectedProgramTab]);
+
+  const fetchChannelTabData = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    try {
+      setLoading(true);
+      setError(null);
+      const [channelsRes, subsByGenderRes, clicksByGenderRes, subsByAgeRes, clicksByAgeRes] = await Promise.all([
+        fetch('/api/channels'),
+        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-channels?metric=subscriptions&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+        fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+      ]);
+      if (!channelsRes.ok) throw new Error('Error al cargar canales');
+      setChannelsList(await channelsRes.json());
+      setTopChannelsSubsByGender(subsByGenderRes.ok ? await subsByGenderRes.json() : []);
+      setTopChannelsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
+      setTopChannelsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
+      setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
+      // If a channel is selected, fetch its programs' demographics
+      if (selectedChannel) {
+        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${channelGroupBy}`);
+        if (progsRes.ok) {
+          // Handle programs data if needed
+        }
+      }
+    } catch {
+      setError('Error al cargar datos de demografía por canal');
+    } finally {
+      setLoading(false);
+    }
+  }, [channelTabFrom, channelTabTo, channelGroupBy, selectedChannel, status]);
+
+  const fetchProgramTabData = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    try {
+      setLoading(true);
+      setError(null);
+      const [programsRes, subsByGenderRes, clicksByGenderRes, subsByAgeRes, clicksByAgeRes] = await Promise.all([
+        fetch('/api/programs'),
+        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=gender`),
+        fetch(`/api/statistics/top-programs?metric=subscriptions&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+        fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&limit=5&groupBy=age`),
+      ]);
+      if (!programsRes.ok) throw new Error('Error al cargar programas');
+      setProgramsList(await programsRes.json());
+      setTopProgramsSubsByGender(subsByGenderRes.ok ? await subsByGenderRes.json() : []);
+      setTopProgramsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
+      setTopProgramsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
+      setTopProgramsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
+      // If a program is selected, fetch its demographics
+      if (selectedProgramTab) {
+        const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedProgramTab}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
+        if (demoRes.ok) {
+          // Handle demographics data if needed
+        }
+      }
+    } catch {
+      setError('Error al cargar datos de demografía por programa');
+    } finally {
+      setLoading(false);
+    }
+  }, [programTabFrom, programTabTo, programGroupBy, selectedProgramTab, status]);
+
+  const fetchListUsersReport = useCallback(async () => {
+    try {
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'users',
+          format: 'csv',
+          from: listTabFrom.format('YYYY-MM-DD'),
+          to: listTabTo.format('YYYY-MM-DD'),
+          page: listUsersPage,
+          pageSize: listUsersPageSize,
+          action: 'table',
+        }),
+      });
+      if (!res.ok) {
+        setListUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
+      const data: UsersReportResponse = await res.json();
+      setListUsersReport(data && data.users ? data : { users: [], total: 0, page: 1, pageSize: 20 });
+    } catch {
+      setListUsersReport({ users: [], total: 0, page: 1, pageSize: 20 });
+    }
+  }, [listTabFrom, listTabTo, listUsersPage, listUsersPageSize]);
+
+  const fetchListSubsReport = useCallback(async () => {
+    try {
+      const res = await fetch('/api/statistics/reports', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          type: 'subscriptions',
+          format: 'csv',
+          from: listTabFrom.format('YYYY-MM-DD'),
+          to: listTabTo.format('YYYY-MM-DD'),
+          page: listSubsPage,
+          pageSize: listSubsPageSize,
+          action: 'table',
+        }),
+      });
+      if (!res.ok) {
+        setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+        return;
+      }
+      const data: SubsReportResponse = await res.json();
+      setListSubsReport(data && data.subscriptions ? data : { subscriptions: [], total: 0, page: 1, pageSize: 20 });
+    } catch {
+      setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+    }
+  }, [listTabFrom, listTabTo, listSubsPage, listSubsPageSize]);
 
   useEffect(() => {
     if (status === 'authenticated' && !hasFetched.current) {
-      fetchData();
+      fetchGeneralData();
       hasFetched.current = true;
     }
-  }, [status, fetchData]);
+  }, [status, fetchGeneralData]);
 
-  useEffect(() => { if (tabValue === 3) fetchUsersReport(); }, [tabValue, fetchUsersReport]);
-  useEffect(() => { if (tabValue === 3) fetchSubsReport(); }, [tabValue, fetchSubsReport]);
+  // Auto-refresh when date range changes
+  useEffect(() => {
+    if (status === 'authenticated' && hasFetched.current) {
+      fetchGeneralData();
+    }
+  }, [generalFrom, generalTo, fetchGeneralData, status]);
+
+  useEffect(() => { if (mainTab === 3) fetchUsersReport(); }, [mainTab, fetchUsersReport]);
+  useEffect(() => { if (mainTab === 3) fetchSubsReport(); }, [mainTab, fetchSubsReport]);
+  useEffect(() => { if (mainTab === 1) fetchChannelTabData(); }, [mainTab, fetchChannelTabData]);
+  useEffect(() => { if (mainTab === 2) fetchProgramTabData(); }, [mainTab, fetchProgramTabData]);
+  useEffect(() => { if (mainTab === 3) fetchListUsersReport(); }, [mainTab, fetchListUsersReport]);
+  useEffect(() => { if (mainTab === 3) fetchListSubsReport(); }, [mainTab, fetchListSubsReport]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
@@ -348,104 +515,287 @@ export default function StatisticsPage() {
     return colors[ageGroup as keyof typeof colors] || '#6b7280';
   };
 
-  // Refactor sortArray to avoid 'any'
-  function isSubscriptionReport(obj: unknown): obj is SubscriptionReport {
+  // Horizontal Bar Chart Component
+  const HorizontalBarChart = ({ 
+    data, 
+    title, 
+    maxValue, 
+    color = '#3b82f6',
+    showChannel = false 
+  }: { 
+    data: (TopChannel | TopProgram)[], 
+    title: string, 
+    maxValue: number,
+    color?: string,
+    showChannel?: boolean
+  }) => {
+    if (!data || data.length === 0) {
+      return (
+        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>{title}</Typography>
+            <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+          </CardContent>
+        </Card>
+      );
+    }
+
     return (
-      typeof obj === 'object' &&
-      obj !== null &&
-      'id' in obj &&
-      'createdAt' in obj &&
-      'user' in obj &&
-      'program' in obj &&
-      'channel' in obj
+      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>{title}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {data.map((item, index) => {
+              const percentage = maxValue > 0 ? (item.count / maxValue) * 100 : 0;
+              const isProgram = 'channelName' in item;
+              
+              return (
+                <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      minWidth: 20, 
+                      fontWeight: 'bold',
+                      color: mode === 'light' ? '#374151' : '#d1d5db'
+                    }}
+                  >
+                    #{index + 1}
+                  </Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 'medium',
+                        color: mode === 'light' ? '#111827' : '#f9fafb',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+                    {showChannel && isProgram && (
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: mode === 'light' ? '#6b7280' : '#9ca3af',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        {item.channelName}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ position: 'relative', flex: 1, maxWidth: 200 }}>
+                    <Box
+                      sx={{
+                        height: 24,
+                        backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        position: 'relative'
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: '100%',
+                          width: `${percentage}%`,
+                          backgroundColor: color,
+                          borderRadius: 1,
+                          transition: 'width 0.3s ease-in-out'
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          fontSize: '0.75rem',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {item.count.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </CardContent>
+      </Card>
+    );
+  };
+
+  // Stacked Horizontal Bar Chart Component
+  const GENDER_KEYS = ['male', 'female', 'non_binary', 'rather_not_say', 'unknown'] as const;
+  const AGE_KEYS = ['under18', 'age18to30', 'age30to45', 'age45to60', 'over60', 'unknown'] as const;
+
+  const GENDER_COLORS = {
+    male: '#3b82f6',
+    female: '#ec4899',
+    non_binary: '#8b5cf6',
+    rather_not_say: '#5db510',
+    unknown: '#6b7280',
+  };
+  const AGE_COLORS = {
+    under18: '#ef4444',
+    age18to30: '#f59e0b',
+    age30to45: '#10b981',
+    age45to60: '#3b82f6',
+    over60: '#8b5cf6',
+    unknown: '#6b7280',
+  };
+
+  function StackedHorizontalBarChart({
+    data,
+    title,
+    keys,
+    colors,
+    getLabel,
+    maxBars = 5,
+    showChannel = false,
+    legend = true,
+  }: {
+    data: StackedBarDatum[];
+    title: string;
+    keys: readonly string[];
+    colors: Record<string, string>;
+    getLabel: (key: string) => string;
+    maxBars?: number;
+    showChannel?: boolean;
+    legend?: boolean;
+  }) {
+    if (!data || data.length === 0) {
+      return (
+        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>{title}</Typography>
+            <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+          </CardContent>
+        </Card>
+      );
+    }
+    // Only show top N
+    const topData = data.slice(0, maxBars);
+    return (
+      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>{title}</Typography>
+          <Box sx={{ maxHeight: 320, overflowY: 'auto', pr: 1 }}>
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, minWidth: 0 }}>
+              {topData.map((item, index) => {
+                const total = keys.reduce((sum, k) => sum + (item.counts?.[k] ?? 0), 0);
+                return (
+                  <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
+                    <Typography variant="body2" sx={{ minWidth: 20, fontWeight: 'bold', color: mode === 'light' ? '#374151' : '#d1d5db' }}>#{index + 1}</Typography>
+                    <Box sx={{ flex: 1, minWidth: 0 }}>
+                      <Typography variant="body2" sx={{ fontWeight: 'medium', color: mode === 'light' ? '#111827' : '#f9fafb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Typography>
+                      {showChannel && item.channelName && (
+                        <Typography variant="caption" sx={{ color: mode === 'light' ? '#6b7280' : '#9ca3af', fontSize: '0.75rem' }}>{item.channelName}</Typography>
+                      )} 
+                    </Box>
+                    <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151', borderRadius: 1, overflow: 'hidden' }}>
+                      {keys.map((k) => {
+                        const value = item.counts?.[k] ?? 0;
+                        const width = total > 0 ? (value / total) * 100 : 0;
+                        if (value === 0) return null;
+                        return (
+                          <Box
+                            key={k}
+                            sx={{
+                              width: `${width}%`,
+                              backgroundColor: colors[k],
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: width > 10 ? 'center' : 'flex-end',
+                              position: 'relative',
+                              transition: 'width 0.3s',
+                            }}
+                          >
+                            {width > 10 && (
+                              <Typography variant="caption" sx={{ color: 'white', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(0,0,0,0.5)' }}>{value}</Typography>
+                            )}
+                          </Box>
+                        );
+                      })}
+                    </Box>
+                    <Typography variant="caption" sx={{ minWidth: 24, textAlign: 'right', color: mode === 'light' ? '#111827' : '#f9fafb', fontWeight: 'bold', fontSize: '0.9rem', ml: 1 }}>{total}</Typography>
+                  </Box>
+                );
+              })}
+            </Box>
+          </Box>
+          {legend && (
+            <Box sx={{ display: 'flex', gap: 2, mt: 2, flexWrap: 'wrap' }}>
+              {keys.map(k => (
+                <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Box sx={{ width: 16, height: 16, backgroundColor: colors[k], borderRadius: 0.5, border: '1px solid #e5e7eb' }} />
+                  <Typography variant="caption" sx={{ color: mode === 'light' ? '#374151' : '#d1d5db' }}>{getLabel(k)}</Typography>
+                </Box>
+              ))}
+            </Box>
+          )}
+        </CardContent>
+      </Card>
     );
   }
 
-  function sortArray<T>(arr: T[], sortBy: keyof T | null, dir: 'asc' | 'desc'): T[] {
-    if (!sortBy) return arr;
-    return [...arr].sort((a, b) => {
-      // For subscriptions, handle nested fields
-      if (sortBy === 'user' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
-        const aUser = a.user?.lastName || '';
-        const bUser = b.user?.lastName || '';
-        return dir === 'asc' ? aUser.localeCompare(bUser) : bUser.localeCompare(aUser);
-      }
-      if (sortBy === 'program' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
-        const aProg = a.program?.name || '';
-        const bProg = b.program?.name || '';
-        return dir === 'asc' ? aProg.localeCompare(bProg) : bProg.localeCompare(aProg);
-      }
-      if (sortBy === 'channel' && isSubscriptionReport(a) && isSubscriptionReport(b)) {
-        const aChan = a.channel?.name || '';
-        const bChan = b.channel?.name || '';
-        return dir === 'asc' ? aChan.localeCompare(bChan) : bChan.localeCompare(aChan);
-      }
-      const aVal = a[sortBy];
-      const bVal = b[sortBy];
-      if (aVal == null) return 1;
-      if (bVal == null) return -1;
-      if (typeof aVal === 'string' && typeof bVal === 'string') {
-        return dir === 'asc' ? aVal.localeCompare(bVal) : bVal.localeCompare(aVal);
-      }
-      if (typeof aVal === 'number' && typeof bVal === 'number') {
-        return dir === 'asc' ? aVal - bVal : bVal - aVal;
-      }
-      return 0;
-    });
-  }
-
-  // Unified download/email handler
-  const handleReportAction = async (type: 'users' | 'subscriptions', format: 'csv' | 'pdf', action: 'download' | 'email', emailOverride?: string) => {
-    try {
-      const from = type === 'users' ? usersFrom.format('YYYY-MM-DD') : subsFrom.format('YYYY-MM-DD');
-      const to = type === 'users' ? usersTo.format('YYYY-MM-DD') : subsTo.format('YYYY-MM-DD');
-      const channelId = undefined;
-      const programId = type === 'subscriptions' && selectedProgram ? selectedProgram : undefined;
-      const toEmail = action === 'email' ? (emailOverride || 'laguiadelstreaming@gmail.com') : undefined;
-      const body = {
-        type,
-        format,
+  // Update handleReportAction to accept multiple report types and channelId
+  const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
+    const from = generalFrom.format('YYYY-MM-DD');
+    const to = generalTo.format('YYYY-MM-DD');
+    const requests = [];
+    if (options.pdf) {
+      requests.push({
+        type: 'weekly-summary',
+        format: 'pdf',
         from,
         to,
         channelId,
-        programId,
-        action,
-        toEmail,
-      };
-      const res = await fetch('/api/statistics/reports', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(body),
+        action: 'email',
+        toEmail: email,
       });
-      if (!res.ok) throw new Error(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
-      if (action === 'download') {
-        const blob = await res.blob();
-        saveAs(blob, `${type}_report.${format}`);
-        setSuccess('Reporte descargado correctamente');
-      } else {
-        setSuccess('Reporte enviado por email');
-      }
-    } catch {
-      setError(action === 'download' ? 'Error al descargar el reporte' : 'Error al enviar el reporte por email');
     }
+    if (options.csvUsers) {
+      requests.push({
+        type: 'users',
+        format: 'csv',
+        from,
+        to,
+        action: 'email',
+        toEmail: email,
+      });
+    }
+    if (options.csvSubs) {
+      requests.push({
+        type: 'subscriptions',
+        format: 'csv',
+        from,
+        to,
+        action: 'email',
+        toEmail: email,
+      });
+    }
+    // Send all in one request (backend must support array)
+    const res = await fetch('/api/statistics/reports', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ reports: requests }),
+    });
+    if (!res.ok) setError('Error al enviar el reporte por email');
+    else setSuccess('Reporte enviado por email');
   };
 
-  // Replace old handlers
-  const handleDownload = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
-    handleReportAction(type, format, 'download');
-  };
-
-  const handleEmail = (type: 'users' | 'subscriptions', format: 'csv' | 'pdf') => {
-    setPendingEmailAction({ type, format });
+  // Move handleEmail above its first usage
+  const handleEmail = () => {
+    setEmailReports({pdf: true, csvUsers: false, csvSubs: false});
     setEmailDialogOpen(true);
-  };
-
-  const sendEmail = async () => {
-    if (!pendingEmailAction) return;
-    await handleReportAction(pendingEmailAction.type, pendingEmailAction.format, 'email', emailToSend);
-    setEmailDialogOpen(false);
-    setEmailToSend('');
-    setPendingEmailAction(null);
   };
 
   if (status === 'loading') {
@@ -497,8 +847,8 @@ export default function StatisticsPage() {
 
         <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 3 }}>
           <Tabs
-            value={tabValue}
-            onChange={(_, newValue) => setTabValue(newValue)}
+            value={mainTab}
+            onChange={(_, newValue) => setMainTab(newValue)}
             sx={{
               '& .MuiTab-root': {
                 color: mode === 'light' ? '#6b7280' : '#9ca3af',
@@ -508,140 +858,65 @@ export default function StatisticsPage() {
               },
             }}
           >
-            <Tab label="Demografía de Usuarios" icon={<People />} />
-            <Tab label="Programas Más Populares" icon={<TrendingUp />} />
-            <Tab label="Análisis por Programa" icon={<ShowChart />} />
-            <Tab label="Reportes" icon={<BarChart />} />
+            {mainTabs.map((tab, index) => (
+              <Tab key={index} label={tab} />
+            ))}
           </Tabs>
         </Box>
 
-        {/* Demografía de Usuarios */}
-        <TabPanel value={tabValue} index={0}>
-          {demographics && (
-            <Box
-              sx={{
-                display: 'grid',
-                gap: 3,
-                gridTemplateColumns: {
-                  xs: '1fr',
-                  md: 'repeat(2, 1fr)',
-                },
-              }}
-            >
-              {/* Resumen General */}
-              <Card
-                sx={{
-                  backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-                  border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
+        {/* Resumen General */}
+        <TabPanel value={mainTab} index={0}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+              <DatePicker label="Desde" value={generalFrom} onChange={v => setGeneralFrom(v!)} />
+              <DatePicker label="Hasta" value={generalTo} onChange={v => setGeneralTo(v!)} />
+              <Button 
+                variant="contained" 
+                onClick={fetchGeneralData}
+                disabled={loading}
+                sx={{ ml: 2 }}
               >
+                Actualizar
+              </Button>
+            </Box>
+          </LocalizationProvider>
+          {demographics && (
+            <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
+              {/* Resumen General */}
+              <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Resumen General
-                  </Typography>
+                  <Typography variant="h6" gutterBottom>Resumen General</Typography>
                   <Box display="flex" flexDirection="column" gap={2}>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Total de Usuarios:</Typography>
-                      <Typography variant="h6" color="primary">
-                        {(demographics.totalUsers || 0).toLocaleString()}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Con Suscripciones:</Typography>
-                      <Typography variant="h6" color="success.main">
-                        {(demographics.usersWithSubscriptions || 0).toLocaleString()}
-                      </Typography>
-                    </Box>
-                    <Box display="flex" justifyContent="space-between">
-                      <Typography>Sin Suscripciones:</Typography>
-                      <Typography variant="h6" color="warning.main">
-                        {(demographics.usersWithoutSubscriptions || 0).toLocaleString()}
-                      </Typography>
-                    </Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Total de Usuarios:</Typography><Typography variant="h6" color="primary">{(demographics.totalUsers ?? 0).toLocaleString()}</Typography></Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Con Suscripciones:</Typography><Typography variant="h6" color="success.main">{(demographics.usersWithSubscriptions ?? 0).toLocaleString()}</Typography></Box>
+                    <Box display="flex" justifyContent="space-between"><Typography>Sin Suscripciones:</Typography><Typography variant="h6" color="warning.main">{(demographics.usersWithoutSubscriptions ?? 0).toLocaleString()}</Typography></Box>
                   </Box>
                 </CardContent>
               </Card>
-
               {/* Por Género */}
-              <Card
-                sx={{
-                  backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-                  border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                }}
-              >
+              <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
                 <CardContent>
-                  <Typography variant="h6" gutterBottom>
-                    Distribución por Género
-                  </Typography>
+                  <Typography variant="h6" gutterBottom>Distribución por Género</Typography>
                   <Box display="flex" flexDirection="column" gap={1}>
-                    {Object.entries(demographics.byGender).map(([gender, count]) => (
+                    {Object.entries(demographics.byGender ?? {}).map(([gender, count]) => (
                       <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
-                        <Chip
-                          label={getGenderLabel(gender)}
-                          size="small"
-                          sx={{
-                            backgroundColor: getGenderColor(gender),
-                            color: 'white',
-                            fontWeight: 'bold',
-                          }}
-                        />
-                        <Typography variant="h6">
-                          {(count || 0).toLocaleString()}
-                        </Typography>
+                        <Chip label={getGenderLabel(gender)} size="small" sx={{ backgroundColor: getGenderColor(gender), color: 'white', fontWeight: 'bold' }} />
+                        <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
                       </Box>
                     ))}
                   </Box>
                 </CardContent>
               </Card>
-
-              {/* Por Grupo de Edad */}
+              {/* Por Edad */}
               <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
-                <Card
-                  sx={{
-                    backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-                    border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                  }}
-                >
+                <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
                   <CardContent>
-                    <Typography variant="h6" gutterBottom>
-                      Distribución por Edad
-                    </Typography>
-                    <Box
-                      sx={{
-                        display: 'grid',
-                        gap: 2,
-                        gridTemplateColumns: {
-                          xs: '1fr',
-                          sm: 'repeat(2, 1fr)',
-                          md: 'repeat(3, 1fr)',
-                        },
-                      }}
-                    >
-                      {Object.entries(demographics.byAgeGroup).map(([ageGroup, count]) => (
-                        <Box
-                          key={ageGroup}
-                          display="flex"
-                          justifyContent="space-between"
-                          alignItems="center"
-                          p={2}
-                          sx={{
-                            backgroundColor: mode === 'light' ? '#f8fafc' : '#334155',
-                            borderRadius: 1,
-                            border: `1px solid ${getAgeGroupColor(ageGroup)}20`,
-                          }}
-                        >
-                          <Chip
-                            label={getAgeGroupLabel(ageGroup)}
-                            size="small"
-                            sx={{
-                              backgroundColor: getAgeGroupColor(ageGroup),
-                              color: 'white',
-                              fontWeight: 'bold',
-                            }}
-                          />
-                          <Typography variant="h6">
-                            {(count || 0).toLocaleString()}
-                          </Typography>
+                    <Typography variant="h6" gutterBottom>Distribución por Edad</Typography>
+                    <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
+                      {Object.entries(demographics.byAgeGroup ?? {}).map(([ageGroup, count]) => (
+                        <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
+                          <Chip label={getAgeGroupLabel(ageGroup)} size="small" sx={{ backgroundColor: getAgeGroupColor(ageGroup), color: 'white', fontWeight: 'bold' }} />
+                          <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
                         </Box>
                       ))}
                     </Box>
@@ -650,410 +925,287 @@ export default function StatisticsPage() {
               </Box>
             </Box>
           )}
+          {/* Top 5 Channels/Programs by Subscriptions/Clicks */}
+          <Box sx={{ mt: 4, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
+            <HorizontalBarChart
+              data={topChannelsBySubs}
+              title="Top 5 Canales por Suscripciones"
+              maxValue={topChannelsBySubs.length > 0 ? Math.max(...topChannelsBySubs.map(c => c.count)) : 0}
+              color="#10b981"
+            />
+            <HorizontalBarChart
+              data={topChannelsByClicks}
+              title="Top 5 Canales por Clicks en YouTube"
+              maxValue={topChannelsByClicks.length > 0 ? Math.max(...topChannelsByClicks.map(c => c.count)) : 0}
+              color="#f59e0b"
+            />
+            <HorizontalBarChart
+              data={topProgramsBySubs}
+              title="Top 5 Programas por Suscripciones"
+              maxValue={topProgramsBySubs.length > 0 ? Math.max(...topProgramsBySubs.map(p => p.count)) : 0}
+              color="#3b82f6"
+              showChannel={true}
+            />
+            <HorizontalBarChart
+              data={topProgramsByClicks}
+              title="Top 5 Programas por Clicks en YouTube"
+              maxValue={topProgramsByClicks.length > 0 ? Math.max(...topProgramsByClicks.map(p => p.count)) : 0}
+              color="#8b5cf6"
+              showChannel={true}
+            />
+          </Box>
         </TabPanel>
 
         {/* Programas Más Populares */}
-        <TabPanel value={tabValue} index={1}>
-          <Card
-            sx={{
-              backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-              border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-            }}
-          >
-            <CardContent>
-              <Typography variant="h6" gutterBottom>
-                Top 20 Programas por Suscripciones
-              </Typography>
-              <TableContainer component={Paper} sx={{ mt: 2 }}>
-                <Table>
-                  <TableHead>
-                    <TableRow>
-                      <TableCell>Posición</TableCell>
-                      <TableCell>Programa</TableCell>
-                      <TableCell>Canal</TableCell>
-                      <TableCell align="right">Suscripciones</TableCell>
-                      <TableCell align="right">% del Total</TableCell>
-                    </TableRow>
-                  </TableHead>
-                  <TableBody>
-                    {topPrograms.map((program, index) => (
-                      <TableRow key={program.programId}>
-                        <TableCell>
-                          <Chip
-                            label={`#${index + 1}`}
-                            size="small"
-                            color={index < 3 ? 'primary' : 'default'}
-                            variant={index < 3 ? 'filled' : 'outlined'}
-                          />
-                        </TableCell>
-                        <TableCell>
-                          <Typography variant="subtitle2" fontWeight="bold">
-                            {program.programName}
-                          </Typography>
-                        </TableCell>
-                        <TableCell>
-                          <Chip label={program.channelName} size="small" variant="outlined" />
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="h6" color="primary">
-                            {(program.subscriptionCount || 0).toLocaleString()}
-                          </Typography>
-                        </TableCell>
-                        <TableCell align="right">
-                          <Typography variant="body2" color="text.secondary">
-                            {(program.percentageOfTotalUsers || 0).toFixed(1)}%
-                          </Typography>
-                        </TableCell>
-                      </TableRow>
-                    ))}
-                  </TableBody>
-                </Table>
-              </TableContainer>
-            </CardContent>
-          </Card>
+        <TabPanel value={mainTab} index={1}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} />
+              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} />
+              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+                <InputLabel id="channel-label" shrink>Canal</InputLabel>
+                <Select
+                  labelId="channel-label"
+                  value={selectedChannel ?? ''}
+                  label="Canal"
+                  onChange={e => setSelectedChannel(e.target.value ? Number(e.target.value) : null)}
+                  renderValue={val => {
+                    const ch = channelsList.find(c => c.id === val);
+                    return ch ? ch.name : 'Todos los canales';
+                  }}
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Todos los canales</em></MenuItem>
+                  {channelsList.map(ch => (
+                    <MenuItem key={ch.id} value={ch.id}>{ch.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl sx={{ minWidth: 160 }}>
+                <InputLabel>Grupo</InputLabel>
+                <Select
+                  value={channelGroupBy}
+                  label="Grupo"
+                  onChange={e => setChannelGroupBy(e.target.value as 'gender' | 'age')}
+                >
+                  <MenuItem value="gender">Por Género</MenuItem>
+                  <MenuItem value="age">Por Edad</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </LocalizationProvider>
+          {/* Top 5 Channels by Subscriptions/Clicks (grouped) */}
+          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
+            <StackedHorizontalBarChart
+              data={topChannelsSubsByGender}
+              title="Top 5 Canales por Suscripciones (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+            />
+            <StackedHorizontalBarChart
+              data={[...topChannelsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
+              title="Top 5 Canales por Clicks en YouTube (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+            />
+            <StackedHorizontalBarChart
+              data={topChannelsSubsByAge}
+              title="Top 5 Canales por Suscripciones (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+            />
+            <StackedHorizontalBarChart
+              data={[...topChannelsClicksByAge].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
+              title="Top 5 Canales por Clicks en YouTube (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+            />
+          </Box>
+          {/* If a channel is selected, show its programs' demographics */}
+          {selectedChannel && (
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h5" gutterBottom>Demografía de Programas del Canal Seleccionado</Typography>
+              {/* Render charts/tables for selectedChannelPrograms (subscriptions/clicks by gender/age) */}
+              {/* ... */}
+            </Box>
+          )}
         </TabPanel>
 
         {/* Análisis por Programa */}
-        <TabPanel value={tabValue} index={2}>
-          <Box sx={{ mb: 3 }}>
-            <FormControl fullWidth sx={{ maxWidth: 400 }}>
-              <InputLabel>Seleccionar Programa</InputLabel>
-              <Select
-                value={selectedProgram}
-                label="Seleccionar Programa"
-                onChange={(e) => setSelectedProgram(e.target.value)}
-              >
-                <MenuItem value="">
-                  <em>Todos los programas</em>
-                </MenuItem>
-                {allProgramsStats.map((program) => (
-                  <MenuItem key={program.programId} value={program.programId}>
-                    {program.programName} ({program.channelName})
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
+        <TabPanel value={mainTab} index={2}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} />
+              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} />
+              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+                <InputLabel id="program-label" shrink>Programa</InputLabel>
+                <Select
+                  labelId="program-label"
+                  value={selectedProgramTab ?? ''}
+                  label="Programa"
+                  onChange={e => setSelectedProgramTab(e.target.value ? Number(e.target.value) : null)}
+                  renderValue={val => {
+                    const prog = programsList.find(p => p.id === val);
+                    return prog ? prog.name : 'Todos los programas';
+                  }}
+                  displayEmpty
+                >
+                  <MenuItem value=""><em>Todos los programas</em></MenuItem>
+                  {programsList.map(prog => (
+                    <MenuItem key={prog.id} value={prog.id}>{prog.name}</MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              <FormControl sx={{ minWidth: 160 }}>
+                <InputLabel>Grupo</InputLabel>
+                <Select
+                  value={programGroupBy}
+                  label="Grupo"
+                  onChange={e => setProgramGroupBy(e.target.value as 'gender' | 'age')}
+                >
+                  <MenuItem value="gender">Por Género</MenuItem>
+                  <MenuItem value="age">Por Edad</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+          </LocalizationProvider>
+          {/* Top 5 Programs by Subscriptions/Clicks (grouped) */}
+          <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
+            <StackedHorizontalBarChart
+              data={topProgramsSubsByGender}
+              title="Top 5 Programas por Suscripciones (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={[...topProgramsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
+              title="Top 5 Programas por Clicks en YouTube (por Género)"
+              keys={GENDER_KEYS}
+              colors={GENDER_COLORS}
+              getLabel={getGenderLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={topProgramsSubsByAge}
+              title="Top 5 Programas por Suscripciones (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+              showChannel={true}
+            />
+            <StackedHorizontalBarChart
+              data={topProgramsClicksByAge}
+              title="Top 5 Programas por Clicks en YouTube (por Edad)"
+              keys={AGE_KEYS}
+              colors={AGE_COLORS}
+              getLabel={getAgeGroupLabel}
+              showChannel={true}
+            />
           </Box>
-
-          <Box>
-            {selectedProgram ? (
-              // Mostrar estadísticas de un programa específico
-              (() => {
-                const program = allProgramsStats.find(p => p.programId === selectedProgram);
-                if (!program) return null;
-
-                return (
-                  <Card
-                    sx={{
-                      backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-                      border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                    }}
-                  >
-                    <CardContent>
-                      <Typography variant="h5" gutterBottom>
-                        {program.programName}
-                      </Typography>
-                      <Typography variant="subtitle1" color="text.secondary" gutterBottom>
-                        {program.channelName} • {(program.totalSubscriptions || 0)} suscripciones
-                      </Typography>
-
-                      <Box
-                        sx={{
-                          display: 'grid',
-                          gap: 3,
-                          mt: 2,
-                          gridTemplateColumns: {
-                            xs: '1fr',
-                            md: 'repeat(2, 1fr)',
-                          },
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            Por Género
-                          </Typography>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            {Object.entries(program.byGender).map(([gender, count]) => (
-                              <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
-                                <Chip
-                                  label={getGenderLabel(gender)}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: getGenderColor(gender),
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                  }}
-                                />
-                                <Typography>{(count || 0).toLocaleString()}</Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            Por Edad
-                          </Typography>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            {Object.entries(program.byAgeGroup).map(([ageGroup, count]) => (
-                              <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center">
-                                <Chip
-                                  label={getAgeGroupLabel(ageGroup)}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: getAgeGroupColor(ageGroup),
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                  }}
-                                />
-                                <Typography>{(count || 0).toLocaleString()}</Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                );
-              })()
-            ) : (
-              // Mostrar todos los programas en acordeón
-              <Box>
-                {allProgramsStats.map((program) => (
-                  <Accordion
-                    key={program.programId}
-                    sx={{
-                      backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-                      border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-                      mb: 1,
-                    }}
-                  >
-                    <AccordionSummary expandIcon={<ExpandMore />}>
-                      <Box display="flex" justifyContent="space-between" alignItems="center" width="100%">
-                        <Box>
-                          <Typography variant="h6">{program.programName}</Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            {program.channelName}
-                          </Typography>
-                        </Box>
-                        <Box display="flex" alignItems="center" gap={2}>
-                          <Chip
-                            label={`${(program.totalSubscriptions || 0)} suscripciones`}
-                            color="primary"
-                            size="small"
-                          />
-                        </Box>
-                      </Box>
-                    </AccordionSummary>
-                    <AccordionDetails>
-                      <Box
-                        sx={{
-                          display: 'grid',
-                          gap: 3,
-                          gridTemplateColumns: {
-                            xs: '1fr',
-                            md: 'repeat(2, 1fr)',
-                          },
-                        }}
-                      >
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            Por Género
-                          </Typography>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            {Object.entries(program.byGender).map(([gender, count]) => (
-                              <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
-                                <Chip
-                                  label={getGenderLabel(gender)}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: getGenderColor(gender),
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                  }}
-                                />
-                                <Typography>{(count || 0).toLocaleString()}</Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-
-                        <Box>
-                          <Typography variant="h6" gutterBottom>
-                            Por Edad
-                          </Typography>
-                          <Box display="flex" flexDirection="column" gap={1}>
-                            {Object.entries(program.byAgeGroup).map(([ageGroup, count]) => (
-                              <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center">
-                                <Chip
-                                  label={getAgeGroupLabel(ageGroup)}
-                                  size="small"
-                                  sx={{
-                                    backgroundColor: getAgeGroupColor(ageGroup),
-                                    color: 'white',
-                                    fontWeight: 'bold',
-                                  }}
-                                />
-                                <Typography>{(count || 0).toLocaleString()}</Typography>
-                              </Box>
-                            ))}
-                          </Box>
-                        </Box>
-                      </Box>
-                    </AccordionDetails>
-                  </Accordion>
-                ))}
-              </Box>
-            )}
-          </Box>
+          {/* If a program is selected, show its demographics */}
+          {selectedProgramTab && (
+            <Box sx={{ mt: 4 }}>
+              <Typography variant="h5" gutterBottom>Demografía del Programa Seleccionado</Typography>
+              {/* Render charts/tables for selectedProgramDemographics (subscriptions/clicks by gender/age) */}
+              {/* ... */}
+            </Box>
+          )}
         </TabPanel>
 
         {/* Reportes */}
-        <TabPanel value={tabValue} index={3}>
+        <TabPanel value={mainTab} index={3}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ mb: 2, display: 'flex', gap: 2, alignItems: 'center' }}>
-              <Tab
-                label="Usuarios Nuevos"
-                value="users"
-                onClick={() => setReportTab('users')}
-                sx={{
-                  fontWeight: reportTab === 'users' ? 'bold' : 'normal',
-                  color: reportTab === 'users' ? theme.palette.primary.main : theme.palette.text.secondary,
-                  minWidth: 0,
-                  px: 2,
-                }}
-              />
-              <Tab
-                label="Suscripciones Nuevas"
-                value="subscriptions"
-                onClick={() => setReportTab('subscriptions')}
-                sx={{
-                  fontWeight: reportTab === 'subscriptions' ? 'bold' : 'normal',
-                  color: reportTab === 'subscriptions' ? theme.palette.primary.main : theme.palette.text.secondary,
-                  minWidth: 0,
-                  px: 2,
-                }}
-              />
+            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+              <DatePicker label="Desde" value={listTabFrom} onChange={v => setListTabFrom(v!)} />
+              <DatePicker label="Hasta" value={listTabTo} onChange={v => setListTabTo(v!)} />
+              <Box sx={{ flex: 1 }} />
+              <Button onClick={() => handleMultiReportEmail(emailToSend, { pdf: false, csvUsers: true, csvSubs: true }, undefined)}>Descargar CSVs</Button>
+              <Button onClick={() => handleMultiReportEmail(emailToSend, { pdf: true, csvUsers: false, csvSubs: false }, undefined)}>Descargar PDF</Button>
+              <Button onClick={() => handleEmail()}>Enviar por Email</Button>
             </Box>
-            {reportTab === 'users' && (
-              <Box>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                  <DatePicker label="Desde" value={usersFrom} onChange={v => setUsersFrom(v!)} />
-                  <DatePicker label="Hasta" value={usersTo} onChange={v => setUsersTo(v!)} />
-                  <Box sx={{ flex: 1 }} />
-                  <Button onClick={() => handleDownload('users', 'csv')}>Descargar CSV</Button>
-                  <Button onClick={() => handleDownload('users', 'pdf')}>Descargar PDF</Button>
-                  <Button onClick={() => handleEmail('users', 'csv')}>Enviar por Email</Button>
-                  <Button disabled={usersPage === 1} onClick={() => setUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
-                  <Button disabled={usersPage * usersPageSize >= usersReport.total} onClick={() => setUsersPage(p => p + 1)}>Siguiente</Button>
-                </Box>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        {['id', 'firstName', 'lastName', 'gender', 'birthDate', 'createdAt'].map((col) => (
-                          <TableCell
-                            key={col}
-                            color="text.primary"
-                            onClick={() => {
-                              if (usersSortBy === col) {
-                                setUsersSortDir(usersSortDir === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setUsersSortBy(col as keyof UserReport);
-                                setUsersSortDir('asc');
-                              }
-                            }}
-                            sx={{ cursor: 'pointer', userSelect: 'none' }}
-                          >
-                            {col === 'id' ? 'ID' :
-                             col === 'firstName' ? 'Nombre' :
-                             col === 'lastName' ? 'Apellido' :
-                             col === 'gender' ? 'Género' :
-                             col === 'birthDate' ? 'Fecha de Nacimiento' :
-                             col === 'createdAt' ? 'Fecha de Registro' : col}
-                            {usersSortBy === col ? (usersSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sortArray(usersReport.users || [], usersSortBy, usersSortDir).map((user) => (
-                        <TableRow key={user.id}>
-                          <TableCell color="text.primary">{user.id}</TableCell>
-                          <TableCell color="text.primary">{user.firstName}</TableCell>
-                          <TableCell color="text.primary">{user.lastName}</TableCell>
-                          <TableCell color="text.primary">{getGenderLabel(user.gender)}</TableCell>
-                          <TableCell color="text.primary">{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
-                          <TableCell color="text.primary">{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <Typography color="text.primary">Página {usersPage}</Typography>
-                </Box>
-              </Box>
-            )}
-            {reportTab === 'subscriptions' && (
-              <Box>
-                <Box sx={{ display: 'flex', gap: 2, mb: 2, alignItems: 'center' }}>
-                  <DatePicker label="Desde" value={subsFrom} onChange={v => setSubsFrom(v!)} />
-                  <DatePicker label="Hasta" value={subsTo} onChange={v => setSubsTo(v!)} />
-                  <Box sx={{ flex: 1 }} />
-                  <Button onClick={() => handleDownload('subscriptions', 'csv')}>Descargar CSV</Button>
-                  <Button onClick={() => handleDownload('subscriptions', 'pdf')}>Descargar PDF</Button>
-                  <Button onClick={() => handleEmail('subscriptions', 'csv')}>Enviar por Email</Button>
-                  <Button disabled={subsPage === 1} onClick={() => setSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
-                  <Button disabled={subsPage * subsPageSize >= subsReport.total} onClick={() => setSubsPage(p => p + 1)}>Siguiente</Button>
-                </Box>
-                <TableContainer component={Paper}>
-                  <Table>
-                    <TableHead>
-                      <TableRow>
-                        {['id', 'user', 'program', 'channel', 'createdAt'].map((col) => (
-                          <TableCell
-                            key={col}
-                            color="text.primary"
-                            onClick={() => {
-                              if (subsSortBy === col) {
-                                setSubsSortDir(subsSortDir === 'asc' ? 'desc' : 'asc');
-                              } else {
-                                setSubsSortBy(col as keyof SubscriptionReport);
-                                setSubsSortDir('asc');
-                              }
-                            }}
-                            sx={{ cursor: 'pointer', userSelect: 'none' }}
-                          >
-                            {col === 'id' ? 'ID' :
-                             col === 'user' ? 'Usuario' :
-                             col === 'program' ? 'Programa' :
-                             col === 'channel' ? 'Canal' :
-                             col === 'createdAt' ? 'Fecha de Suscripción' : col}
-                            {subsSortBy === col ? (subsSortDir === 'asc' ? ' ▲' : ' ▼') : ''}
-                          </TableCell>
-                        ))}
-                      </TableRow>
-                    </TableHead>
-                    <TableBody>
-                      {sortArray(subsReport.subscriptions || [], subsSortBy, subsSortDir).map((sub) => (
-                        <TableRow key={sub.id}>
-                          <TableCell color="text.primary">{sub.id}</TableCell>
-                          <TableCell color="text.primary">{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
-                          <TableCell color="text.primary">{sub.program ? sub.program.name : '-'}</TableCell>
-                          <TableCell color="text.primary">{sub.channel ? sub.channel.name : '-'}</TableCell>
-                          <TableCell color="text.primary">{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </TableContainer>
-                <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
-                  <Typography color="text.primary">Página {subsPage}</Typography>
-                </Box>
-              </Box>
-            )}
           </LocalizationProvider>
+          {/* Users Table */}
+          <Typography color="text.primary" variant="h6" sx={{ mt: 2, mb: 1 }}>Listado de Usuarios Nuevos</Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Nombre</TableCell>
+                  <TableCell>Apellido</TableCell>
+                  <TableCell>Género</TableCell>
+                  <TableCell>Fecha de Nacimiento</TableCell>
+                  <TableCell>Fecha de Registro</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(listUsersReport.users || []).map((user) => (
+                  <TableRow key={user.id}>
+                    <TableCell>{user.id}</TableCell>
+                    <TableCell>{user.firstName}</TableCell>
+                    <TableCell>{user.lastName}</TableCell>
+                    <TableCell>{getGenderLabel(user.gender)}</TableCell>
+                    <TableCell>{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
+                    <TableCell>{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button disabled={listUsersPage === 1} onClick={() => setListUsersPage(p => Math.max(1, p - 1))}>Anterior</Button>
+            <Typography color="text.primary" sx={{ mx: 2 }}>Página {listUsersPage}</Typography>
+            <Button disabled={listUsersPage * listUsersPageSize >= listUsersReport.total} onClick={() => setListUsersPage(p => p + 1)}>Siguiente</Button>
+          </Box>
+          {/* Subscriptions Table */}
+          <Typography color="text.primary" variant="h6" sx={{ mt: 4, mb: 1 }}>Listado de Suscripciones Nuevas</Typography>
+          <TableContainer component={Paper}>
+            <Table>
+              <TableHead>
+                <TableRow>
+                  <TableCell>ID</TableCell>
+                  <TableCell>Usuario</TableCell>
+                  <TableCell>Programa</TableCell>
+                  <TableCell>Canal</TableCell>
+                  <TableCell>Fecha de Suscripción</TableCell>
+                </TableRow>
+              </TableHead>
+              <TableBody>
+                {(listSubsReport.subscriptions || []).map((sub) => (
+                  <TableRow key={sub.id}>
+                    <TableCell>{sub.id}</TableCell>
+                    <TableCell>{sub.user ? `${sub.user.firstName} ${sub.user.lastName} (#${sub.user.id})` : '-'}</TableCell>
+                    <TableCell>{sub.program ? sub.program.name : '-'}</TableCell>
+                    <TableCell>{sub.channel ? sub.channel.name : '-'}</TableCell>
+                    <TableCell>{sub.createdAt ? dayjs(sub.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+            <Button disabled={listSubsPage === 1} onClick={() => setListSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
+            <Typography color="text.primary" sx={{ mx: 2 }}>Página {listSubsPage}</Typography>
+            <Button disabled={listSubsPage * listSubsPageSize >= listSubsReport.total} onClick={() => setListSubsPage(p => p + 1)}>Siguiente</Button>
+          </Box>
         </TabPanel>
       </Box>
 
@@ -1076,6 +1228,23 @@ export default function StatisticsPage() {
       <Dialog open={emailDialogOpen} onClose={() => setEmailDialogOpen(false)}>
         <DialogTitle>Enviar Reporte por Email</DialogTitle>
         <DialogContent>
+          <Box>
+            <Typography variant="subtitle2">Selecciona los reportes a enviar:</Typography>
+            <Box>
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.pdf} onChange={e => setEmailReports(r => ({...r, pdf: e.target.checked}))} />}
+                label="PDF: Reporte Demográfico y de Actividad"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.csvUsers} onChange={e => setEmailReports(r => ({...r, csvUsers: e.target.checked}))} />}
+                label="CSV: Listado de Usuarios Nuevos"
+              />
+              <FormControlLabel
+                control={<Checkbox checked={emailReports.csvSubs} onChange={e => setEmailReports(r => ({...r, csvSubs: e.target.checked}))} />}
+                label="CSV: Listado de Suscripciones Nuevas"
+              />
+            </Box>
+          </Box>
           <TextField
             autoFocus
             margin="dense"
@@ -1090,8 +1259,14 @@ export default function StatisticsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setEmailDialogOpen(false)}>Cancelar</Button>
-          <Button onClick={sendEmail} variant="contained" disabled={!emailToSend}>
-            Enviar
+          <Button onClick={() => handleMultiReportEmail(emailToSend, emailReports, undefined)} variant="contained" disabled={!emailToSend}>
+            Enviar a este email
+          </Button>
+          <Button
+            onClick={() => handleMultiReportEmail('laguiadelstreaming@gmail.com', emailReports, undefined)}
+            variant="outlined"
+          >
+            Enviar a laguiadelstreaming@gmail.com
           </Button>
         </DialogActions>
       </Dialog>

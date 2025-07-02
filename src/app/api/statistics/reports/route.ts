@@ -1,6 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { requireAccessToken } from '@/utils/auth-server';
 
 export async function POST(req: NextRequest) {
+  const token = await requireAccessToken(req);
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/statistics/reports`;
   const body = await req.text();
 
@@ -8,7 +13,7 @@ export async function POST(req: NextRequest) {
     method: 'POST',
     headers: {
       'Content-Type': req.headers.get('content-type') || 'application/json',
-      // Add auth headers if needed
+      'Authorization': `Bearer ${token}`,
     },
     body,
   });
