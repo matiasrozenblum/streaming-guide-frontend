@@ -723,9 +723,8 @@ export default function StatisticsPage() {
                           </Box>
                         );
                       })}
-                      {/* Show total at the end */}
-                      <Typography variant="caption" sx={{ position: 'absolute', right: 4, top: '50%', transform: 'translateY(-50%)', color: mode === 'light' ? '#111827' : '#f9fafb', fontWeight: 'bold', fontSize: '0.75rem', textShadow: '0 1px 2px rgba(255,255,255,0.5)' }}>{total}</Typography>
                     </Box>
+                    <Typography variant="caption" sx={{ minWidth: 24, textAlign: 'right', color: mode === 'light' ? '#111827' : '#f9fafb', fontWeight: 'bold', fontSize: '0.9rem', ml: 1 }}>{total}</Typography>
                   </Box>
                 );
               })}
@@ -1004,7 +1003,11 @@ export default function StatisticsPage() {
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={topChannelsClicksByGender}
+              data={[...topChannelsClicksByGender].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
               title="Top 5 Canales por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1018,7 +1021,11 @@ export default function StatisticsPage() {
               getLabel={getAgeGroupLabel}
             />
             <StackedHorizontalBarChart
-              data={topChannelsClicksByAge}
+              data={[...topChannelsClicksByAge].sort((a, b) => {
+                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
+                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
+                return totalB - totalA;
+              })}
               title="Top 5 Canales por Clicks en YouTube (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
