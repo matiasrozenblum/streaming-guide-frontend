@@ -696,7 +696,7 @@ export default function StatisticsPage() {
                       <Typography variant="body2" sx={{ fontWeight: 'medium', color: mode === 'light' ? '#111827' : '#f9fafb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Typography>
                       {showChannel && item.channelName && (
                         <Typography variant="caption" sx={{ color: mode === 'light' ? '#6b7280' : '#9ca3af', fontSize: '0.75rem' }}>{item.channelName}</Typography>
-                      )}
+                      )} 
                     </Box>
                     <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151', borderRadius: 1, overflow: 'hidden' }}>
                       {keys.map((k) => {
