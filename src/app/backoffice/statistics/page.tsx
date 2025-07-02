@@ -110,6 +110,20 @@ interface Program {
   name: string;
 }
 
+// Add interfaces for top rankings data
+interface TopChannel {
+  id: number;
+  name: string;
+  count: number;
+}
+
+interface TopProgram {
+  id: number;
+  name: string;
+  channelName: string;
+  count: number;
+}
+
 interface UsersReportResponse {
   users: UserReport[];
   total: number;
@@ -158,6 +172,12 @@ export default function StatisticsPage() {
   const [emailToSend, setEmailToSend] = useState('');
   const [emailReports, setEmailReports] = useState<{pdf: boolean, csvUsers: boolean, csvSubs: boolean}>({pdf: true, csvUsers: false, csvSubs: false});
 
+  // Add state for top 5 rankings
+  const [topChannelsBySubs, setTopChannelsBySubs] = useState<TopChannel[]>([]);
+  const [topChannelsByClicks, setTopChannelsByClicks] = useState<TopChannel[]>([]);
+  const [topProgramsBySubs, setTopProgramsBySubs] = useState<TopProgram[]>([]);
+  const [topProgramsByClicks, setTopProgramsByClicks] = useState<TopProgram[]>([]);
+
   const hasFetched = useRef(false);
 
   const [generalFrom, setGeneralFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
@@ -197,15 +217,32 @@ export default function StatisticsPage() {
       } else {
         setError('Error al cargar datos del resumen general');
       }
-      // Fetch Top 5 in parallel, but don't block demographics
-      Promise.all([
+      
+      // Fetch Top 5 in parallel
+      const [topChannelsSubsRes, topChannelsClicksRes, topProgramsSubsRes, topProgramsClicksRes] = await Promise.all([
         fetch(`/api/statistics/top-channels?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-channels?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-programs?metric=subscriptions&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
         fetch(`/api/statistics/top-programs?metric=youtube_clicks&from=${generalFrom.format('YYYY-MM-DD')}&to=${generalTo.format('YYYY-MM-DD')}&limit=5`),
-      ]).catch(() => {
-        // Optionally set a separate error for Top 5, or just ignore
-      });
+      ]);
+      
+      // Process responses
+      if (topChannelsSubsRes.ok) {
+        const data = await topChannelsSubsRes.json();
+        setTopChannelsBySubs(data || []);
+      }
+      if (topChannelsClicksRes.ok) {
+        const data = await topChannelsClicksRes.json();
+        setTopChannelsByClicks(data || []);
+      }
+      if (topProgramsSubsRes.ok) {
+        const data = await topProgramsSubsRes.json();
+        setTopProgramsBySubs(data || []);
+      }
+      if (topProgramsClicksRes.ok) {
+        const data = await topProgramsClicksRes.json();
+        setTopProgramsByClicks(data || []);
+      }
     } catch {
       setError('Error al cargar el resumen general');
     } finally {
@@ -388,6 +425,13 @@ export default function StatisticsPage() {
     }
   }, [status, fetchGeneralData]);
 
+  // Auto-refresh when date range changes
+  useEffect(() => {
+    if (status === 'authenticated' && hasFetched.current) {
+      fetchGeneralData();
+    }
+  }, [generalFrom, generalTo, fetchGeneralData]);
+
   useEffect(() => { if (mainTab === 3) fetchUsersReport(); }, [mainTab, fetchUsersReport]);
   useEffect(() => { if (mainTab === 3) fetchSubsReport(); }, [mainTab, fetchSubsReport]);
   useEffect(() => { if (mainTab === 1) fetchChannelTabData(); }, [mainTab, fetchChannelTabData]);
@@ -437,6 +481,122 @@ export default function StatisticsPage() {
       unknown: '#6b7280',
     };
     return colors[ageGroup as keyof typeof colors] || '#6b7280';
+  };
+
+  // Horizontal Bar Chart Component
+  const HorizontalBarChart = ({ 
+    data, 
+    title, 
+    maxValue, 
+    color = '#3b82f6',
+    showChannel = false 
+  }: { 
+    data: (TopChannel | TopProgram)[], 
+    title: string, 
+    maxValue: number,
+    color?: string,
+    showChannel?: boolean
+  }) => {
+    if (!data || data.length === 0) {
+      return (
+        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+          <CardContent>
+            <Typography variant="h6" gutterBottom>{title}</Typography>
+            <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
+          </CardContent>
+        </Card>
+      );
+    }
+
+    return (
+      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <CardContent>
+          <Typography variant="h6" gutterBottom>{title}</Typography>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+            {data.map((item, index) => {
+              const percentage = maxValue > 0 ? (item.count / maxValue) * 100 : 0;
+              const isProgram = 'channelName' in item;
+              
+              return (
+                <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+                  <Typography 
+                    variant="body2" 
+                    sx={{ 
+                      minWidth: 20, 
+                      fontWeight: 'bold',
+                      color: mode === 'light' ? '#374151' : '#d1d5db'
+                    }}
+                  >
+                    #{index + 1}
+                  </Typography>
+                  <Box sx={{ flex: 1, minWidth: 0 }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: 'medium',
+                        color: mode === 'light' ? '#111827' : '#f9fafb',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        whiteSpace: 'nowrap'
+                      }}
+                    >
+                      {item.name}
+                    </Typography>
+                    {showChannel && isProgram && (
+                      <Typography 
+                        variant="caption" 
+                        sx={{ 
+                          color: mode === 'light' ? '#6b7280' : '#9ca3af',
+                          fontSize: '0.75rem'
+                        }}
+                      >
+                        {item.channelName}
+                      </Typography>
+                    )}
+                  </Box>
+                  <Box sx={{ position: 'relative', flex: 1, maxWidth: 200 }}>
+                    <Box
+                      sx={{
+                        height: 24,
+                        backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151',
+                        borderRadius: 1,
+                        overflow: 'hidden',
+                        position: 'relative'
+                      }}
+                    >
+                      <Box
+                        sx={{
+                          height: '100%',
+                          width: `${percentage}%`,
+                          backgroundColor: color,
+                          borderRadius: 1,
+                          transition: 'width 0.3s ease-in-out'
+                        }}
+                      />
+                      <Typography
+                        variant="caption"
+                        sx={{
+                          position: 'absolute',
+                          top: '50%',
+                          left: '50%',
+                          transform: 'translate(-50%, -50%)',
+                          color: 'white',
+                          fontWeight: 'bold',
+                          fontSize: '0.75rem',
+                          textShadow: '0 1px 2px rgba(0,0,0,0.5)'
+                        }}
+                      >
+                        {item.count.toLocaleString()}
+                      </Typography>
+                    </Box>
+                  </Box>
+                </Box>
+              );
+            })}
+          </Box>
+        </CardContent>
+      </Card>
+    );
   };
 
   // Update handleReportAction to accept multiple report types and channelId
@@ -560,9 +720,17 @@ export default function StatisticsPage() {
         {/* Resumen General */}
         <TabPanel value={mainTab} index={0}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
               <DatePicker label="Desde" value={generalFrom} onChange={v => setGeneralFrom(v!)} />
               <DatePicker label="Hasta" value={generalTo} onChange={v => setGeneralTo(v!)} />
+              <Button 
+                variant="contained" 
+                onClick={fetchGeneralData}
+                disabled={loading}
+                sx={{ ml: 2 }}
+              >
+                Actualizar
+              </Button>
             </Box>
           </LocalizationProvider>
           {demographics && (
@@ -612,34 +780,32 @@ export default function StatisticsPage() {
           )}
           {/* Top 5 Channels/Programs by Subscriptions/Clicks */}
           <Box sx={{ mt: 4, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Canales por Suscripciones</Typography>
-                {/* Render bar chart or list for topChannels */}
-                {/* ... */}
-              </CardContent>
-            </Card>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Canales por Clicks en YouTube</Typography>
-                {/* Render bar chart or list for topChannelsClicks */}
-                {/* ... */}
-              </CardContent>
-            </Card>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Programas por Suscripciones</Typography>
-                {/* Render bar chart or list for topPrograms */}
-                {/* ... */}
-              </CardContent>
-            </Card>
-            <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
-              <CardContent>
-                <Typography variant="h6" gutterBottom>Top 5 Programas por Clicks en YouTube</Typography>
-                {/* Render bar chart or list for topProgramsClicks */}
-                {/* ... */}
-              </CardContent>
-            </Card>
+            <HorizontalBarChart
+              data={topChannelsBySubs}
+              title="Top 5 Canales por Suscripciones"
+              maxValue={topChannelsBySubs.length > 0 ? Math.max(...topChannelsBySubs.map(c => c.count)) : 0}
+              color="#10b981"
+            />
+            <HorizontalBarChart
+              data={topChannelsByClicks}
+              title="Top 5 Canales por Clicks en YouTube"
+              maxValue={topChannelsByClicks.length > 0 ? Math.max(...topChannelsByClicks.map(c => c.count)) : 0}
+              color="#f59e0b"
+            />
+            <HorizontalBarChart
+              data={topProgramsBySubs}
+              title="Top 5 Programas por Suscripciones"
+              maxValue={topProgramsBySubs.length > 0 ? Math.max(...topProgramsBySubs.map(p => p.count)) : 0}
+              color="#3b82f6"
+              showChannel={true}
+            />
+            <HorizontalBarChart
+              data={topProgramsByClicks}
+              title="Top 5 Programas por Clicks en YouTube"
+              maxValue={topProgramsByClicks.length > 0 ? Math.max(...topProgramsByClicks.map(p => p.count)) : 0}
+              color="#8b5cf6"
+              showChannel={true}
+            />
           </Box>
         </TabPanel>
 
