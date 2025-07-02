@@ -1,9 +1,17 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { requireAccessToken } from '@/utils/auth-server';
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  const token = await requireAccessToken(request);
+  if (!token) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+  }
   const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/channels`;
-  const res = await fetch(backendUrl);
+  const res = await fetch(backendUrl, {
+    headers: {
+      'Authorization': `Bearer ${token}`,
+    },
+  });
   const data = await res.json();
   return NextResponse.json(data, { status: res.status });
 }
