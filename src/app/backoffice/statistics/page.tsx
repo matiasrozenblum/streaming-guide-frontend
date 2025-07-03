@@ -158,6 +158,45 @@ interface StackedBarDatum {
   counts: Record<string, number>;
 }
 
+// Add utility to get filtered and ranked data for charts
+function getFilteredRankedData({
+  data,
+  selectedId,
+  genderFilter,
+  ageFilter,
+}: {
+  data: (TopChannel | TopProgram)[];
+  selectedId: number | null;
+  genderFilter: string[];
+  ageFilter: string[];
+}) {
+  function hasCounts(obj: unknown): obj is { counts: Record<string, number> } {
+    return Boolean(typeof obj === 'object' && obj !== null && 'counts' in obj);
+  }
+  let filtered = data;
+  if (genderFilter && genderFilter.length < 4) {
+    filtered = filtered.filter((item: TopChannel | TopProgram) => {
+      if (!hasCounts(item)) return true;
+      return genderFilter.some((g: string) => item.counts[g] > 0);
+    });
+  }
+  if (ageFilter && ageFilter.length < 6) {
+    filtered = filtered.filter((item: TopChannel | TopProgram) => {
+      if (!hasCounts(item)) return true;
+      return ageFilter.some((a: string) => item.counts[a] > 0);
+    });
+  }
+  if (selectedId) {
+    const idx = data.findIndex((item: TopChannel | TopProgram) => item.id === selectedId);
+    if (idx !== -1) {
+      const item = data[idx];
+      return [{ ...item, realOrder: idx + 1 }];
+    }
+    return [];
+  }
+  return filtered.slice(0, 5).map((item: TopChannel | TopProgram, i: number) => ({ ...item, realOrder: i + 1 }));
+}
+
 export default function StatisticsPage() {
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
@@ -761,6 +800,65 @@ export default function StatisticsPage() {
     );
   }
 
+  // Filtering for Channel Tab (flat data, if needed)
+  const filteredTopChannelsBySubs = getFilteredRankedData({
+    data: topChannelsBySubs,
+    selectedId: selectedChannel,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+  });
+  const filteredTopChannelsByClicks = getFilteredRankedData({
+    data: topChannelsByClicks,
+    selectedId: selectedChannel,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+  });
+  // Filtering for Program Tab (flat data, if needed)
+  const filteredTopProgramsBySubs = getFilteredRankedData({
+    data: topProgramsBySubs,
+    selectedId: selectedProgramTab,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+  });
+  const filteredTopProgramsByClicks = getFilteredRankedData({
+    data: topProgramsByClicks,
+    selectedId: selectedProgramTab,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+  });
+  // For grouped charts (StackedBarDatum[]), filter the grouped data arrays directly:
+  function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age') {
+    if (groupBy === 'gender') {
+      // Only keep bars with at least one selected gender count > 0
+      return data
+        .map(item => {
+          const filteredCounts: Record<string, number> = {};
+          genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
+          return { ...item, counts: filteredCounts };
+        })
+        .filter(item => genderFilter.some(g => item.counts[g] > 0));
+    } else {
+      // Only keep bars with at least one selected age count > 0
+      return data
+        .map(item => {
+          const filteredCounts: Record<string, number> = {};
+          ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
+          return { ...item, counts: filteredCounts };
+        })
+        .filter(item => ageFilter.some(a => item.counts[a] > 0));
+    }
+  }
+  // In Channel Tab:
+  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender');
+  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender');
+  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age');
+  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age');
+  // In Program Tab:
+  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender');
+  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender');
+  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age');
+  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age');
+
   // Update handleReportAction to accept multiple report types and channelId
   const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
     const from = generalFrom.format('YYYY-MM-DD');
@@ -943,28 +1041,28 @@ export default function StatisticsPage() {
           {/* Top 5 Channels/Programs by Subscriptions/Clicks */}
           <Box sx={{ mt: 4, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <HorizontalBarChart
-              data={topChannelsBySubs}
+              data={filteredTopChannelsBySubs}
               title="Top 5 Canales por Suscripciones"
-              maxValue={topChannelsBySubs.length > 0 ? Math.max(...topChannelsBySubs.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsBySubs.length > 0 ? Math.max(...filteredTopChannelsBySubs.map(c => c.count)) : 0}
               color="#10b981"
             />
             <HorizontalBarChart
-              data={topChannelsByClicks}
+              data={filteredTopChannelsByClicks}
               title="Top 5 Canales por Clicks en YouTube"
-              maxValue={topChannelsByClicks.length > 0 ? Math.max(...topChannelsByClicks.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsByClicks.length > 0 ? Math.max(...filteredTopChannelsByClicks.map(c => c.count)) : 0}
               color="#f59e0b"
             />
             <HorizontalBarChart
-              data={topProgramsBySubs}
+              data={filteredTopProgramsBySubs}
               title="Top 5 Programas por Suscripciones"
-              maxValue={topProgramsBySubs.length > 0 ? Math.max(...topProgramsBySubs.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsBySubs.length > 0 ? Math.max(...filteredTopProgramsBySubs.map(p => p.count)) : 0}
               color="#3b82f6"
               showChannel={true}
             />
             <HorizontalBarChart
-              data={topProgramsByClicks}
+              data={filteredTopProgramsByClicks}
               title="Top 5 Programas por Clicks en YouTube"
-              maxValue={topProgramsByClicks.length > 0 ? Math.max(...topProgramsByClicks.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsByClicks.length > 0 ? Math.max(...filteredTopProgramsByClicks.map(p => p.count)) : 0}
               color="#8b5cf6"
               showChannel={true}
             />
@@ -1086,36 +1184,28 @@ export default function StatisticsPage() {
           {/* Top 5 Channels by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
-              data={topChannelsSubsByGender}
+              data={filteredTopChannelsSubsByGender}
               title="Top 5 Canales por Suscripciones (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={[...topChannelsClicksByGender].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopChannelsClicksByGender}
               title="Top 5 Canales por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={topChannelsSubsByAge}
+              data={filteredTopChannelsSubsByAge}
               title="Top 5 Canales por Suscripciones (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
               getLabel={getAgeGroupLabel}
             />
             <StackedHorizontalBarChart
-              data={[...topChannelsClicksByAge].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopChannelsClicksByAge}
               title="Top 5 Canales por Clicks en YouTube (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
@@ -1245,7 +1335,7 @@ export default function StatisticsPage() {
           {/* Top 5 Programs by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
-              data={topProgramsSubsByGender}
+              data={filteredTopProgramsSubsByGender}
               title="Top 5 Programas por Suscripciones (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1253,11 +1343,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={[...topProgramsClicksByGender].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopProgramsClicksByGender}
               title="Top 5 Programas por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1265,7 +1351,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={topProgramsSubsByAge}
+              data={filteredTopProgramsSubsByAge}
               title="Top 5 Programas por Suscripciones (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
@@ -1273,7 +1359,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={topProgramsClicksByAge}
+              data={filteredTopProgramsClicksByAge}
               title="Top 5 Programas por Clicks en YouTube (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
