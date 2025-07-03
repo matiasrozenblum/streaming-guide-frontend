@@ -207,7 +207,6 @@ export default function StatisticsPage() {
   const [channelTabTo, setChannelTabTo] = useState<Dayjs>(dayjs());
   const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [channelsList, setChannelsList] = useState<Channel[]>([]);
-  const [channelGroupBy, setChannelGroupBy] = useState<'gender' | 'age'>('gender');
 
   const [programTabFrom, setProgramTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [programTabTo, setProgramTabTo] = useState<Dayjs>(dayjs());
@@ -223,6 +222,23 @@ export default function StatisticsPage() {
   const [listSubsPageSize] = useState(20);
   const [listUsersReport, setListUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
   const [listSubsReport, setListSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+
+  const GENDER_OPTIONS = [
+    { value: 'male', label: 'Masculino' },
+    { value: 'female', label: 'Femenino' },
+    { value: 'non_binary', label: 'No binario' },
+    { value: 'rather_not_say', label: 'Prefiero no decir' },
+  ];
+  const AGE_GROUP_OPTIONS = [
+    { value: 'under18', label: 'Menor de 18' },
+    { value: 'age18to30', label: '18-30 años' },
+    { value: 'age30to45', label: '31-45 años' },
+    { value: 'age45to60', label: '46-60 años' },
+    { value: 'over60', label: 'Más de 60 años' },
+    { value: 'unknown', label: 'Sin fecha de nacimiento' },
+  ];
+  const [selectedChannelGenders, setSelectedChannelGenders] = useState(GENDER_OPTIONS.map(o => o.value));
+  const [selectedChannelAges, setSelectedChannelAges] = useState(AGE_GROUP_OPTIONS.map(o => o.value));
 
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -354,7 +370,7 @@ export default function StatisticsPage() {
       setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
       // If a channel is selected, fetch its programs' demographics
       if (selectedChannel) {
-        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${channelGroupBy}`);
+        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
         if (progsRes.ok) {
           // Handle programs data if needed
         }
@@ -364,7 +380,7 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [channelTabFrom, channelTabTo, channelGroupBy, selectedChannel, status]);
+  }, [channelTabFrom, channelTabTo, programGroupBy, selectedChannel, status]);
 
   const fetchProgramTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -959,10 +975,10 @@ export default function StatisticsPage() {
         {/* Programas Más Populares */}
         <TabPanel value={mainTab} index={1}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} />
-              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 100, maxWidth: 120 } } }} />
+              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 100, maxWidth: 120 } } }} />
+              <FormControl sx={{ minWidth: 120, maxWidth: 180 }} size="small" variant="outlined">
                 <InputLabel id="channel-label" shrink>Canal</InputLabel>
                 <Select
                   labelId="channel-label"
@@ -974,6 +990,7 @@ export default function StatisticsPage() {
                     return ch ? ch.name : 'Todos los canales';
                   }}
                   displayEmpty
+                  size="small"
                 >
                   <MenuItem value=""><em>Todos los canales</em></MenuItem>
                   {channelsList.map(ch => (
@@ -981,15 +998,54 @@ export default function StatisticsPage() {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Grupo</InputLabel>
+              {/* Gender Multi-select */}
+              <FormControl sx={{ minWidth: 140, maxWidth: 200 }} size="small">
+                <InputLabel id="channel-gender-label">Género</InputLabel>
                 <Select
-                  value={channelGroupBy}
-                  label="Grupo"
-                  onChange={e => setChannelGroupBy(e.target.value as 'gender' | 'age')}
+                  labelId="channel-gender-label"
+                  multiple
+                  value={selectedChannelGenders}
+                  onChange={e => setSelectedChannelGenders(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  renderValue={selected =>
+                    selected.length === GENDER_OPTIONS.length
+                      ? 'Todos'
+                      : GENDER_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
                 >
-                  <MenuItem value="gender">Por Género</MenuItem>
-                  <MenuItem value="age">Por Edad</MenuItem>
+                  <MenuItem value="all" disabled>
+                    <em>Todos</em>
+                  </MenuItem>
+                  {GENDER_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelGenders.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {/* Age Group Multi-select */}
+              <FormControl sx={{ minWidth: 160, maxWidth: 220 }} size="small">
+                <InputLabel id="channel-age-label">Edad</InputLabel>
+                <Select
+                  labelId="channel-age-label"
+                  multiple
+                  value={selectedChannelAges}
+                  onChange={e => setSelectedChannelAges(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  renderValue={selected =>
+                    selected.length === AGE_GROUP_OPTIONS.length
+                      ? 'Todos'
+                      : AGE_GROUP_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                >
+                  <MenuItem value="all" disabled>
+                    <em>Todos</em>
+                  </MenuItem>
+                  {AGE_GROUP_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelAges.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
