@@ -976,8 +976,8 @@ export default function StatisticsPage() {
         <TabPanel value={mainTab} index={1}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
             <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 100, maxWidth: 120 } } }} />
-              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 100, maxWidth: 120 } } }} />
+              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
               <FormControl sx={{ minWidth: 120, maxWidth: 180 }} size="small" variant="outlined">
                 <InputLabel id="channel-label" shrink>Canal</InputLabel>
                 <Select
@@ -1000,19 +1000,31 @@ export default function StatisticsPage() {
               </FormControl>
               {/* Gender Multi-select */}
               <FormControl sx={{ minWidth: 140, maxWidth: 200 }} size="small">
-                <InputLabel id="channel-gender-label">Género</InputLabel>
+                <InputLabel id="channel-gender-label" shrink>Género</InputLabel>
                 <Select
                   labelId="channel-gender-label"
                   multiple
                   value={selectedChannelGenders}
-                  onChange={e => setSelectedChannelGenders(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelGenders(
+                        selectedChannelGenders.length === GENDER_OPTIONS.length ? [] : GENDER_OPTIONS.map(o => o.value)
+                      );
+                    } else {
+                      setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                    }
+                  }}
                   renderValue={selected =>
                     selected.length === GENDER_OPTIONS.length
                       ? 'Todos'
                       : GENDER_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
                   }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Género' }}
                 >
-                  <MenuItem value="all" disabled>
+                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(selectedChannelGenders.length === GENDER_OPTIONS.length ? [] : GENDER_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelGenders.length === GENDER_OPTIONS.length} indeterminate={selectedChannelGenders.length > 0 && selectedChannelGenders.length < GENDER_OPTIONS.length} size="small" />
                     <em>Todos</em>
                   </MenuItem>
                   {GENDER_OPTIONS.map(opt => (
@@ -1025,19 +1037,31 @@ export default function StatisticsPage() {
               </FormControl>
               {/* Age Group Multi-select */}
               <FormControl sx={{ minWidth: 160, maxWidth: 220 }} size="small">
-                <InputLabel id="channel-age-label">Edad</InputLabel>
+                <InputLabel id="channel-age-label" shrink>Edad</InputLabel>
                 <Select
                   labelId="channel-age-label"
                   multiple
                   value={selectedChannelAges}
-                  onChange={e => setSelectedChannelAges(typeof e.target.value === 'string' ? e.target.value.split(',') : e.target.value)}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelAges(
+                        selectedChannelAges.length === AGE_GROUP_OPTIONS.length ? [] : AGE_GROUP_OPTIONS.map(o => o.value)
+                      );
+                    } else {
+                      setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                    }
+                  }}
                   renderValue={selected =>
                     selected.length === AGE_GROUP_OPTIONS.length
                       ? 'Todos'
                       : AGE_GROUP_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
                   }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Edad' }}
                 >
-                  <MenuItem value="all" disabled>
+                  <MenuItem value="all" onClick={() => setSelectedChannelAges(selectedChannelAges.length === AGE_GROUP_OPTIONS.length ? [] : AGE_GROUP_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelAges.length === AGE_GROUP_OPTIONS.length} indeterminate={selectedChannelAges.length > 0 && selectedChannelAges.length < AGE_GROUP_OPTIONS.length} size="small" />
                     <em>Todos</em>
                   </MenuItem>
                   {AGE_GROUP_OPTIONS.map(opt => (
