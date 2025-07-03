@@ -212,7 +212,6 @@ export default function StatisticsPage() {
   const [programTabTo, setProgramTabTo] = useState<Dayjs>(dayjs());
   const [selectedProgramTab, setSelectedProgramTab] = useState<number | null>(null);
   const [programsList, setProgramsList] = useState<Program[]>([]);
-  const [programGroupBy, setProgramGroupBy] = useState<'gender' | 'age'>('gender');
 
   const [listTabFrom, setListTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [listTabTo, setListTabTo] = useState<Dayjs>(dayjs());
@@ -370,7 +369,7 @@ export default function StatisticsPage() {
       setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
       // If a channel is selected, fetch its programs' demographics
       if (selectedChannel) {
-        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
+        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=gender`);
         if (progsRes.ok) {
           // Handle programs data if needed
         }
@@ -380,7 +379,7 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [channelTabFrom, channelTabTo, programGroupBy, selectedChannel, status]);
+  }, [channelTabFrom, channelTabTo, selectedChannel, status]);
 
   const fetchProgramTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -402,7 +401,7 @@ export default function StatisticsPage() {
       setTopProgramsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
       // If a program is selected, fetch its demographics
       if (selectedProgramTab) {
-        const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedProgramTab}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
+        const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedProgramTab}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=gender`);
         if (demoRes.ok) {
           // Handle demographics data if needed
         }
@@ -412,7 +411,7 @@ export default function StatisticsPage() {
     } finally {
       setLoading(false);
     }
-  }, [programTabFrom, programTabTo, programGroupBy, selectedProgramTab, status]);
+  }, [programTabFrom, programTabTo, selectedProgramTab, status]);
 
   const fetchListUsersReport = useCallback(async () => {
     try {
@@ -978,7 +977,7 @@ export default function StatisticsPage() {
             <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
               <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
               <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
-              <FormControl sx={{ minWidth: 120, maxWidth: 180 }} size="small" variant="outlined">
+              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="channel-label" shrink>Canal</InputLabel>
                 <Select
                   labelId="channel-label"
@@ -999,7 +998,7 @@ export default function StatisticsPage() {
                 </Select>
               </FormControl>
               {/* Gender Multi-select */}
-              <FormControl sx={{ minWidth: 140, maxWidth: 200 }} size="small">
+              <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
                 <InputLabel id="channel-gender-label" shrink>Género</InputLabel>
                 <Select
                   labelId="channel-gender-label"
@@ -1009,10 +1008,15 @@ export default function StatisticsPage() {
                     const value = e.target.value;
                     if (value.includes('all')) {
                       setSelectedChannelGenders(
-                        selectedChannelGenders.length === GENDER_OPTIONS.length ? [] : GENDER_OPTIONS.map(o => o.value)
+                        selectedChannelGenders.length === GENDER_OPTIONS.length ? GENDER_OPTIONS.map(o => o.value) : GENDER_OPTIONS.map(o => o.value)
                       );
                     } else {
-                      setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                      // Prevent empty selection
+                      if (value.length === 0) {
+                        setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                      }
                     }
                   }}
                   renderValue={selected =>
@@ -1022,8 +1026,9 @@ export default function StatisticsPage() {
                   }
                   displayEmpty
                   inputProps={{ 'aria-label': 'Género' }}
+                  sx={{ minWidth: 160, maxWidth: 200 }}
                 >
-                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(selectedChannelGenders.length === GENDER_OPTIONS.length ? [] : GENDER_OPTIONS.map(o => o.value))}>
+                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value))}>
                     <Checkbox checked={selectedChannelGenders.length === GENDER_OPTIONS.length} indeterminate={selectedChannelGenders.length > 0 && selectedChannelGenders.length < GENDER_OPTIONS.length} size="small" />
                     <em>Todos</em>
                   </MenuItem>
@@ -1036,7 +1041,7 @@ export default function StatisticsPage() {
                 </Select>
               </FormControl>
               {/* Age Group Multi-select */}
-              <FormControl sx={{ minWidth: 160, maxWidth: 220 }} size="small">
+              <FormControl sx={{ minWidth: 180, maxWidth: 220 }} size="small" variant="outlined">
                 <InputLabel id="channel-age-label" shrink>Edad</InputLabel>
                 <Select
                   labelId="channel-age-label"
@@ -1045,11 +1050,14 @@ export default function StatisticsPage() {
                   onChange={e => {
                     const value = e.target.value;
                     if (value.includes('all')) {
-                      setSelectedChannelAges(
-                        selectedChannelAges.length === AGE_GROUP_OPTIONS.length ? [] : AGE_GROUP_OPTIONS.map(o => o.value)
-                      );
+                      setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
                     } else {
-                      setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                      // Prevent empty selection
+                      if (value.length === 0) {
+                        setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                      }
                     }
                   }}
                   renderValue={selected =>
@@ -1059,8 +1067,9 @@ export default function StatisticsPage() {
                   }
                   displayEmpty
                   inputProps={{ 'aria-label': 'Edad' }}
+                  sx={{ minWidth: 180, maxWidth: 220 }}
                 >
-                  <MenuItem value="all" onClick={() => setSelectedChannelAges(selectedChannelAges.length === AGE_GROUP_OPTIONS.length ? [] : AGE_GROUP_OPTIONS.map(o => o.value))}>
+                  <MenuItem value="all" onClick={() => setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value))}>
                     <Checkbox checked={selectedChannelAges.length === AGE_GROUP_OPTIONS.length} indeterminate={selectedChannelAges.length > 0 && selectedChannelAges.length < AGE_GROUP_OPTIONS.length} size="small" />
                     <em>Todos</em>
                   </MenuItem>
@@ -1126,10 +1135,10 @@ export default function StatisticsPage() {
         {/* Análisis por Programa */}
         <TabPanel value={mainTab} index={2}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} />
-              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="program-label" shrink>Programa</InputLabel>
                 <Select
                   labelId="program-label"
@@ -1141,6 +1150,7 @@ export default function StatisticsPage() {
                     return prog ? prog.name : 'Todos los programas';
                   }}
                   displayEmpty
+                  size="small"
                 >
                   <MenuItem value=""><em>Todos los programas</em></MenuItem>
                   {programsList.map(prog => (
@@ -1148,15 +1158,86 @@ export default function StatisticsPage() {
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Grupo</InputLabel>
+              {/* Gender Multi-select */}
+              <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
+                <InputLabel id="program-gender-label" shrink>Género</InputLabel>
                 <Select
-                  value={programGroupBy}
-                  label="Grupo"
-                  onChange={e => setProgramGroupBy(e.target.value as 'gender' | 'age')}
+                  labelId="program-gender-label"
+                  multiple
+                  value={selectedChannelGenders}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelGenders(
+                        selectedChannelGenders.length === GENDER_OPTIONS.length ? GENDER_OPTIONS.map(o => o.value) : GENDER_OPTIONS.map(o => o.value)
+                      );
+                    } else {
+                      if (value.length === 0) {
+                        setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === GENDER_OPTIONS.length
+                      ? 'Todos'
+                      : GENDER_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Género' }}
+                  sx={{ minWidth: 160, maxWidth: 200 }}
                 >
-                  <MenuItem value="gender">Por Género</MenuItem>
-                  <MenuItem value="age">Por Edad</MenuItem>
+                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelGenders.length === GENDER_OPTIONS.length} indeterminate={selectedChannelGenders.length > 0 && selectedChannelGenders.length < GENDER_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {GENDER_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelGenders.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {/* Age Group Multi-select */}
+              <FormControl sx={{ minWidth: 180, maxWidth: 220 }} size="small" variant="outlined">
+                <InputLabel id="program-age-label" shrink>Edad</InputLabel>
+                <Select
+                  labelId="program-age-label"
+                  multiple
+                  value={selectedChannelAges}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                    } else {
+                      if (value.length === 0) {
+                        setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === AGE_GROUP_OPTIONS.length
+                      ? 'Todos'
+                      : AGE_GROUP_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Edad' }}
+                  sx={{ minWidth: 180, maxWidth: 220 }}
+                >
+                  <MenuItem value="all" onClick={() => setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelAges.length === AGE_GROUP_OPTIONS.length} indeterminate={selectedChannelAges.length > 0 && selectedChannelAges.length < AGE_GROUP_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {AGE_GROUP_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelAges.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
