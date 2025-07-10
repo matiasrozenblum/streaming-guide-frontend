@@ -175,10 +175,21 @@ function getFilteredRankedData({
   }
   let filtered = data;
 
+  // Debug logs
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: selectedIds', selectedIds);
+    console.log('getFilteredRankedData: data', data);
+  }
+
   // Ensure type consistency: compare as numbers
   if (selectedIds.length > 0) {
     filtered = filtered.filter((item: TopChannel | TopProgram) => selectedIds.includes(Number(item.id)));
   }
+
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: filtered after id', filtered);
+  }
+
   // Filter by gender/age if needed (for grouped data)
   if (genderFilter && genderFilter.length < 4) {
     filtered = filtered.filter((item: TopChannel | TopProgram) => {
@@ -192,6 +203,11 @@ function getFilteredRankedData({
       return ageFilter.some((a: string) => item.counts[a] > 0);
     });
   }
+
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: filtered final', filtered);
+  }
+
   // Show top 5
   return filtered.slice(0, 5).map((item: TopChannel | TopProgram, i: number) => ({ ...item, realOrder: i + 1 }));
 }
@@ -199,28 +215,46 @@ function getFilteredRankedData({
 // Update the stacked bar data filtering to handle channel/program selection
 function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[]) {
   let filtered = data;
+  // Debug logs
+  if (typeof window !== 'undefined') {
+    console.log('filterStackedBarData: selectedIds', selectedIds);
+    console.log('filterStackedBarData: data', data);
+  }
   // Ensure type consistency: compare as numbers
   if (selectedIds.length > 0) {
     filtered = filtered.filter(item => selectedIds.includes(Number(item.id)));
   }
+
+  if (typeof window !== 'undefined') {
+    console.log('filterStackedBarData: filtered after id', filtered);
+  }
+
   if (groupBy === 'gender') {
     // Only keep bars with at least one selected gender count > 0
-    return filtered
+    const result = filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
         genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
         return { ...item, counts: filteredCounts };
       })
       .filter(item => genderFilter.some(g => item.counts[g] > 0));
+    if (typeof window !== 'undefined') {
+      console.log('filterStackedBarData: result (gender)', result);
+    }
+    return result;
   } else {
     // Only keep bars with at least one selected age count > 0
-    return filtered
+    const result = filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
         ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
         return { ...item, counts: filteredCounts };
       })
       .filter(item => ageFilter.some(a => item.counts[a] > 0));
+    if (typeof window !== 'undefined') {
+      console.log('filterStackedBarData: result (age)', result);
+    }
+    return result;
   }
 }
 
