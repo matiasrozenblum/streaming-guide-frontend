@@ -174,17 +174,11 @@ function getFilteredRankedData({
     return Boolean(typeof obj === 'object' && obj !== null && 'counts' in obj);
   }
   let filtered = data;
-  
-  // If a specific channel/program is selected, show only it with its real order
-  if (selectedIds.length === 1 && selectedIds[0] !== -1) { // Assuming -1 means 'all' or no selection
-    const idx = data.findIndex((item: TopChannel | TopProgram) => item.id === selectedIds[0]);
-    if (idx !== -1) {
-      const item = data[idx];
-      return [{ ...item, realOrder: idx + 1 }];
-    }
-    return [];
+
+  // If any channels/programs are selected, filter to only those
+  if (selectedIds.length > 0) {
+    filtered = filtered.filter((item: TopChannel | TopProgram) => selectedIds.includes(item.id));
   }
-  
   // Filter by gender/age if needed (for grouped data)
   if (genderFilter && genderFilter.length < 4) {
     filtered = filtered.filter((item: TopChannel | TopProgram) => {
@@ -198,22 +192,19 @@ function getFilteredRankedData({
       return ageFilter.some((a: string) => item.counts[a] > 0);
     });
   }
-  
-  // Otherwise, show top 5
+  // Show top 5
   return filtered.slice(0, 5).map((item: TopChannel | TopProgram, i: number) => ({ ...item, realOrder: i + 1 }));
 }
 
 // Update the stacked bar data filtering to handle channel/program selection
 function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[]) {
-  // If a specific channel/program is selected, show only it
-  if (selectedIds.length === 1 && selectedIds[0] !== -1) { // Assuming -1 means 'all' or no selection
-    const item = data.find(item => item.id === selectedIds[0]);
-    return item ? [item] : [];
+  let filtered = data;
+  if (selectedIds.length > 0) {
+    filtered = filtered.filter(item => selectedIds.includes(item.id));
   }
-  
   if (groupBy === 'gender') {
     // Only keep bars with at least one selected gender count > 0
-    return data
+    return filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
         genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
@@ -222,7 +213,7 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
       .filter(item => genderFilter.some(g => item.counts[g] > 0));
   } else {
     // Only keep bars with at least one selected age count > 0
-    return data
+    return filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
         ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
@@ -1081,10 +1072,10 @@ export default function StatisticsPage() {
                 <Select
                   labelId="channel-label"
                   multiple
-                  value={selectedChannels.length === 0 ? channelsList.map(c => c.id) : selectedChannels}
+                  value={selectedChannels}
                   onChange={e => {
                     const value = e.target.value as number[];
-                    // If all are selected or none, treat as 'Todos'
+                    // If all are selected or none, treat as 'Todos' (empty array means all)
                     if (value.length === 0 || value.length === channelsList.length) {
                       setSelectedChannels([]);
                     } else {
@@ -1092,7 +1083,7 @@ export default function StatisticsPage() {
                     }
                   }}
                   renderValue={selected =>
-                    selected.length === 0 || selected.length === channelsList.length
+                    selected.length === 0
                       ? 'Todos los canales'
                       : channelsList.filter(c => selected.includes(c.id)).map(c => c.name).join(', ')
                   }
@@ -1100,13 +1091,25 @@ export default function StatisticsPage() {
                   size="small"
                 >
                   <MenuItem value="all" onClick={() => setSelectedChannels([])}>
-                    <Checkbox checked={selectedChannels.length === 0 || selectedChannels.length === channelsList.length} indeterminate={selectedChannels.length > 0 && selectedChannels.length < channelsList.length} size="small" />
+                    <Checkbox checked={selectedChannels.length === 0} indeterminate={selectedChannels.length > 0 && selectedChannels.length < channelsList.length} size="small" />
                     <em>Todos los canales</em>
                   </MenuItem>
                   {channelsList.map(ch => (
-                    <MenuItem key={ch.id} value={ch.id}>
-                      <Checkbox checked={selectedChannels.includes(ch.id)} size="small" />
-                      {ch.name}
+                    <MenuItem key={ch.id} value={ch.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Checkbox checked={selectedChannels.includes(ch.id)} size="small" />
+                        {ch.name}
+                      </Box>
+                      <Button
+                        size="small"
+                        sx={{ ml: 1, minWidth: 'auto', fontSize: '0.7em' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedChannels([ch.id]);
+                        }}
+                      >
+                        solamente
+                      </Button>
                     </MenuItem>
                   ))}
                 </Select>
@@ -1250,7 +1253,7 @@ export default function StatisticsPage() {
                 <Select
                   labelId="program-label"
                   multiple
-                  value={selectedPrograms.length === 0 ? programsList.map(p => p.id) : selectedPrograms}
+                  value={selectedPrograms}
                   onChange={e => {
                     const value = e.target.value as number[];
                     if (value.length === 0 || value.length === programsList.length) {
@@ -1260,7 +1263,7 @@ export default function StatisticsPage() {
                     }
                   }}
                   renderValue={selected =>
-                    selected.length === 0 || selected.length === programsList.length
+                    selected.length === 0
                       ? 'Todos los programas'
                       : programsList.filter(p => selected.includes(p.id)).map(p => p.name).join(', ')
                   }
@@ -1268,13 +1271,25 @@ export default function StatisticsPage() {
                   size="small"
                 >
                   <MenuItem value="all" onClick={() => setSelectedPrograms([])}>
-                    <Checkbox checked={selectedPrograms.length === 0 || selectedPrograms.length === programsList.length} indeterminate={selectedPrograms.length > 0 && selectedPrograms.length < programsList.length} size="small" />
+                    <Checkbox checked={selectedPrograms.length === 0} indeterminate={selectedPrograms.length > 0 && selectedPrograms.length < programsList.length} size="small" />
                     <em>Todos los programas</em>
                   </MenuItem>
                   {programsList.map(prog => (
-                    <MenuItem key={prog.id} value={prog.id}>
-                      <Checkbox checked={selectedPrograms.includes(prog.id)} size="small" />
-                      {prog.name}
+                    <MenuItem key={prog.id} value={prog.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Checkbox checked={selectedPrograms.includes(prog.id)} size="small" />
+                        {prog.name}
+                      </Box>
+                      <Button
+                        size="small"
+                        sx={{ ml: 1, minWidth: 'auto', fontSize: '0.7em' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedPrograms([prog.id]);
+                        }}
+                      >
+                        solamente
+                      </Button>
                     </MenuItem>
                   ))}
                 </Select>
