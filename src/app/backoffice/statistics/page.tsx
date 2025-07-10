@@ -164,11 +164,17 @@ function getFilteredRankedData({
   selectedIds,
   genderFilter,
   ageFilter,
+  filterType,
+  channelsList,
+  programsList,
 }: {
-  data: (TopChannel | TopProgram)[];
+  data: (TopChannel | TopProgram | StackedBarDatum)[];
   selectedIds: number[];
   genderFilter: string[];
   ageFilter: string[];
+  filterType?: 'channel' | 'program';
+  channelsList?: Channel[];
+  programsList?: Program[];
 }) {
   function hasCounts(obj: unknown): obj is { counts: Record<string, number> } {
     return Boolean(typeof obj === 'object' && obj !== null && 'counts' in obj);
@@ -179,26 +185,40 @@ function getFilteredRankedData({
   if (typeof window !== 'undefined') {
     console.log('getFilteredRankedData: selectedIds', selectedIds);
     console.log('getFilteredRankedData: data', data);
+    console.log('getFilteredRankedData: filterType', filterType);
+    if (filterType === 'channel') {
+      console.log('getFilteredRankedData: channelsList', channelsList);
+    }
+    if (filterType === 'program') {
+      console.log('getFilteredRankedData: programsList', programsList);
+    }
   }
 
-  // Ensure type consistency: compare as numbers
+  // If data has no id, filter by name
   if (selectedIds.length > 0) {
-    filtered = filtered.filter((item: TopChannel | TopProgram) => selectedIds.includes(Number(item.id)));
+    if (filterType === 'channel' && channelsList) {
+      const selectedNames = channelsList.filter(c => selectedIds.includes(c.id)).map(c => c.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else if (filterType === 'program' && programsList) {
+      const selectedNames = programsList.filter(p => selectedIds.includes(p.id)).map(p => p.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else {
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
+    }
   }
 
   if (typeof window !== 'undefined') {
-    console.log('getFilteredRankedData: filtered after id', filtered);
+    console.log('getFilteredRankedData: filtered after id/name', filtered);
   }
 
-  // Filter by gender/age if needed (for grouped data)
   if (genderFilter && genderFilter.length < 4) {
-    filtered = filtered.filter((item: TopChannel | TopProgram) => {
+    filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => {
       if (!hasCounts(item)) return true;
       return genderFilter.some((g: string) => item.counts[g] > 0);
     });
   }
   if (ageFilter && ageFilter.length < 6) {
-    filtered = filtered.filter((item: TopChannel | TopProgram) => {
+    filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => {
       if (!hasCounts(item)) return true;
       return ageFilter.some((a: string) => item.counts[a] > 0);
     });
@@ -208,29 +228,39 @@ function getFilteredRankedData({
     console.log('getFilteredRankedData: filtered final', filtered);
   }
 
-  // Show top 5
-  return filtered.slice(0, 5).map((item: TopChannel | TopProgram, i: number) => ({ ...item, realOrder: i + 1 }));
+  return filtered.slice(0, 5).map((item: TopChannel | TopProgram | StackedBarDatum, i: number) => ({ ...item, realOrder: i + 1 }));
 }
 
 // Update the stacked bar data filtering to handle channel/program selection
-function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[]) {
+function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[], filterType?: 'channel' | 'program', channelsList?: Channel[], programsList?: Program[]) {
   let filtered = data;
   // Debug logs
   if (typeof window !== 'undefined') {
     console.log('filterStackedBarData: selectedIds', selectedIds);
     console.log('filterStackedBarData: data', data);
+    console.log('filterStackedBarData: filterType', filterType);
+    if (filterType === 'channel') {
+      console.log('filterStackedBarData: channelsList', channelsList);
+    }
+    if (filterType === 'program') {
+      console.log('filterStackedBarData: programsList', programsList);
+    }
   }
-  // Ensure type consistency: compare as numbers
   if (selectedIds.length > 0) {
-    filtered = filtered.filter(item => selectedIds.includes(Number(item.id)));
+    if (filterType === 'channel' && channelsList) {
+      const selectedNames = channelsList.filter(c => selectedIds.includes(c.id)).map(c => c.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else if (filterType === 'program' && programsList) {
+      const selectedNames = programsList.filter(p => selectedIds.includes(p.id)).map(p => p.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else {
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
+    }
   }
-
   if (typeof window !== 'undefined') {
-    console.log('filterStackedBarData: filtered after id', filtered);
+    console.log('filterStackedBarData: filtered after id/name', filtered);
   }
-
   if (groupBy === 'gender') {
-    // Only keep bars with at least one selected gender count > 0
     const result = filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
@@ -243,7 +273,6 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
     }
     return result;
   } else {
-    // Only keep bars with at least one selected age count > 0
     const result = filtered
       .map(item => {
         const filteredCounts: Record<string, number> = {};
@@ -256,6 +285,13 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
     }
     return result;
   }
+}
+
+// Place this after imports, before any component
+function hasCount(
+  obj: unknown
+): obj is (TopChannel & { count: number }) | (TopProgram & { count: number }) | ({ count: number } & Record<string, unknown>) {
+  return typeof obj === 'object' && obj !== null && 'count' in obj && typeof (obj as { count: unknown }).count === 'number';
 }
 
 export default function StatisticsPage() {
@@ -625,7 +661,7 @@ export default function StatisticsPage() {
     color = '#3b82f6',
     showChannel = false 
   }: { 
-    data: (TopChannel | TopProgram)[], 
+    data: (TopChannel | TopProgram | StackedBarDatum)[], 
     title: string, 
     maxValue: number,
     color?: string,
@@ -647,8 +683,9 @@ export default function StatisticsPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom>{title}</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {data.map((item, index) => {
-              const percentage = maxValue > 0 ? (item.count / maxValue) * 100 : 0;
+            {(data.filter(hasCount) as Array<{ count: number; id: number; name: string; channelName?: string }> ).map((item, index) => {
+              const count = item.count;
+              const percentage = maxValue > 0 ? (count / maxValue) * 100 : 0;
               const isProgram = 'channelName' in item;
               
               return (
@@ -720,7 +757,7 @@ export default function StatisticsPage() {
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                         }}
                       >
-                        {item.count.toLocaleString()}
+                        {count.toLocaleString()}
                       </Typography>
                     </Box>
                   </Box>
@@ -854,12 +891,16 @@ export default function StatisticsPage() {
     selectedIds: selectedChannels,
     genderFilter: selectedChannelGenders,
     ageFilter: selectedChannelAges,
+    filterType: 'channel',
+    channelsList,
   });
   const filteredTopChannelsByClicks = getFilteredRankedData({
     data: topChannelsByClicks,
     selectedIds: selectedChannels,
     genderFilter: selectedChannelGenders,
     ageFilter: selectedChannelAges,
+    filterType: 'channel',
+    channelsList,
   });
   // Filtering for Program Tab (flat data, if needed)
   const filteredTopProgramsBySubs = getFilteredRankedData({
@@ -867,23 +908,27 @@ export default function StatisticsPage() {
     selectedIds: selectedPrograms,
     genderFilter: selectedChannelGenders,
     ageFilter: selectedChannelAges,
+    filterType: 'program',
+    programsList,
   });
   const filteredTopProgramsByClicks = getFilteredRankedData({
     data: topProgramsByClicks,
     selectedIds: selectedPrograms,
     genderFilter: selectedChannelGenders,
     ageFilter: selectedChannelAges,
+    filterType: 'program',
+    programsList,
   });
   // For grouped charts (StackedBarDatum[]), filter the grouped data arrays directly:
-  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels);
-  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels);
-  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels);
-  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels);
+  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels, 'channel', channelsList);
   // In Program Tab:
-  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms);
-  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms);
-  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms);
-  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms);
+  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms, 'program', undefined, programsList);
 
   // Update handleReportAction to accept multiple report types and channelId
   const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
@@ -1069,26 +1114,26 @@ export default function StatisticsPage() {
             <HorizontalBarChart
               data={filteredTopChannelsBySubs}
               title="Top 5 Canales por Suscripciones"
-              maxValue={filteredTopChannelsBySubs.length > 0 ? Math.max(...filteredTopChannelsBySubs.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsBySubs.length > 0 ? Math.max(...(filteredTopChannelsBySubs.filter(hasCount) as Array<{ count: number }> ).map(c => c.count)) : 0}
               color="#10b981"
             />
             <HorizontalBarChart
               data={filteredTopChannelsByClicks}
               title="Top 5 Canales por Clicks en YouTube"
-              maxValue={filteredTopChannelsByClicks.length > 0 ? Math.max(...filteredTopChannelsByClicks.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsByClicks.length > 0 ? Math.max(...(filteredTopChannelsByClicks.filter(hasCount) as Array<{ count: number }> ).map(c => c.count)) : 0}
               color="#f59e0b"
             />
             <HorizontalBarChart
               data={filteredTopProgramsBySubs}
               title="Top 5 Programas por Suscripciones"
-              maxValue={filteredTopProgramsBySubs.length > 0 ? Math.max(...filteredTopProgramsBySubs.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsBySubs.length > 0 ? Math.max(...(filteredTopProgramsBySubs.filter(hasCount) as Array<{ count: number }> ).map(p => p.count)) : 0}
               color="#3b82f6"
               showChannel={true}
             />
             <HorizontalBarChart
               data={filteredTopProgramsByClicks}
               title="Top 5 Programas por Clicks en YouTube"
-              maxValue={filteredTopProgramsByClicks.length > 0 ? Math.max(...filteredTopProgramsByClicks.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsByClicks.length > 0 ? Math.max(...(filteredTopProgramsByClicks.filter(hasCount) as Array<{ count: number }> ).map(p => p.count)) : 0}
               color="#8b5cf6"
               showChannel={true}
             />
