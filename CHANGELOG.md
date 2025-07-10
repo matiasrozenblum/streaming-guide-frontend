@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.3.3] - 2025-07-10
+
+### Changed
+- Applied several visual refactors to statistics backoffice section, again
+
 ## [1.3.2] - 2025-07-02
 
 ### Changed
