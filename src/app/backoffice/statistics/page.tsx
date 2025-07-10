@@ -158,6 +158,142 @@ interface StackedBarDatum {
   counts: Record<string, number>;
 }
 
+// Add utility to get filtered and ranked data for charts
+function getFilteredRankedData({
+  data,
+  selectedIds,
+  genderFilter,
+  ageFilter,
+  filterType,
+  channelsList,
+  programsList,
+}: {
+  data: (TopChannel | TopProgram | StackedBarDatum)[];
+  selectedIds: number[];
+  genderFilter: string[];
+  ageFilter: string[];
+  filterType?: 'channel' | 'program';
+  channelsList?: Channel[];
+  programsList?: Program[];
+}) {
+  function hasCounts(obj: unknown): obj is { counts: Record<string, number> } {
+    return Boolean(typeof obj === 'object' && obj !== null && 'counts' in obj);
+  }
+  let filtered = data;
+
+  // Debug logs
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: selectedIds', selectedIds);
+    console.log('getFilteredRankedData: data', data);
+    console.log('getFilteredRankedData: filterType', filterType);
+    if (filterType === 'channel') {
+      console.log('getFilteredRankedData: channelsList', channelsList);
+    }
+    if (filterType === 'program') {
+      console.log('getFilteredRankedData: programsList', programsList);
+    }
+  }
+
+  // If data has no id, filter by name
+  if (selectedIds.length > 0) {
+    if (filterType === 'channel' && channelsList) {
+      const selectedNames = channelsList.filter(c => selectedIds.includes(c.id)).map(c => c.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else if (filterType === 'program' && programsList) {
+      const selectedNames = programsList.filter(p => selectedIds.includes(p.id)).map(p => p.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else {
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
+    }
+  }
+
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: filtered after id/name', filtered);
+  }
+
+  if (genderFilter && genderFilter.length < 4) {
+    filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => {
+      if (!hasCounts(item)) return true;
+      return genderFilter.some((g: string) => item.counts[g] > 0);
+    });
+  }
+  if (ageFilter && ageFilter.length < 6) {
+    filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => {
+      if (!hasCounts(item)) return true;
+      return ageFilter.some((a: string) => item.counts[a] > 0);
+    });
+  }
+
+  if (typeof window !== 'undefined') {
+    console.log('getFilteredRankedData: filtered final', filtered);
+  }
+
+  return filtered.slice(0, 5).map((item: TopChannel | TopProgram | StackedBarDatum, i: number) => ({ ...item, realOrder: i + 1 }));
+}
+
+// Update the stacked bar data filtering to handle channel/program selection
+function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[], filterType?: 'channel' | 'program', channelsList?: Channel[], programsList?: Program[]) {
+  let filtered = data;
+  // Debug logs
+  if (typeof window !== 'undefined') {
+    console.log('filterStackedBarData: selectedIds', selectedIds);
+    console.log('filterStackedBarData: data', data);
+    console.log('filterStackedBarData: filterType', filterType);
+    if (filterType === 'channel') {
+      console.log('filterStackedBarData: channelsList', channelsList);
+    }
+    if (filterType === 'program') {
+      console.log('filterStackedBarData: programsList', programsList);
+    }
+  }
+  if (selectedIds.length > 0) {
+    if (filterType === 'channel' && channelsList) {
+      const selectedNames = channelsList.filter(c => selectedIds.includes(c.id)).map(c => c.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else if (filterType === 'program' && programsList) {
+      const selectedNames = programsList.filter(p => selectedIds.includes(p.id)).map(p => p.name);
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedNames.includes(item.name));
+    } else {
+      filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
+    }
+  }
+  if (typeof window !== 'undefined') {
+    console.log('filterStackedBarData: filtered after id/name', filtered);
+  }
+  if (groupBy === 'gender') {
+    const result = filtered
+      .map(item => {
+        const filteredCounts: Record<string, number> = {};
+        genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
+        return { ...item, counts: filteredCounts };
+      })
+      .filter(item => genderFilter.some(g => item.counts[g] > 0));
+    if (typeof window !== 'undefined') {
+      console.log('filterStackedBarData: result (gender)', result);
+    }
+    return result;
+  } else {
+    const result = filtered
+      .map(item => {
+        const filteredCounts: Record<string, number> = {};
+        ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
+        return { ...item, counts: filteredCounts };
+      })
+      .filter(item => ageFilter.some(a => item.counts[a] > 0));
+    if (typeof window !== 'undefined') {
+      console.log('filterStackedBarData: result (age)', result);
+    }
+    return result;
+  }
+}
+
+// Place this after imports, before any component
+function hasCount(
+  obj: unknown
+): obj is (TopChannel & { count: number }) | (TopProgram & { count: number }) | ({ count: number } & Record<string, unknown>) {
+  return typeof obj === 'object' && obj !== null && 'count' in obj && typeof (obj as { count: unknown }).count === 'number';
+}
+
 export default function StatisticsPage() {
   const { status } = useSessionContext();
   const { mode } = useThemeContext();
@@ -205,15 +341,11 @@ export default function StatisticsPage() {
 
   const [channelTabFrom, setChannelTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [channelTabTo, setChannelTabTo] = useState<Dayjs>(dayjs());
-  const [selectedChannel, setSelectedChannel] = useState<number | null>(null);
   const [channelsList, setChannelsList] = useState<Channel[]>([]);
-  const [channelGroupBy, setChannelGroupBy] = useState<'gender' | 'age'>('gender');
 
   const [programTabFrom, setProgramTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [programTabTo, setProgramTabTo] = useState<Dayjs>(dayjs());
-  const [selectedProgramTab, setSelectedProgramTab] = useState<number | null>(null);
   const [programsList, setProgramsList] = useState<Program[]>([]);
-  const [programGroupBy, setProgramGroupBy] = useState<'gender' | 'age'>('gender');
 
   const [listTabFrom, setListTabFrom] = useState<Dayjs>(dayjs().subtract(7, 'day'));
   const [listTabTo, setListTabTo] = useState<Dayjs>(dayjs());
@@ -223,6 +355,27 @@ export default function StatisticsPage() {
   const [listSubsPageSize] = useState(20);
   const [listUsersReport, setListUsersReport] = useState<UsersReportResponse>({ users: [], total: 0, page: 1, pageSize: 20 });
   const [listSubsReport, setListSubsReport] = useState<SubsReportResponse>({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
+
+  const GENDER_OPTIONS = [
+    { value: 'male', label: 'Masculino' },
+    { value: 'female', label: 'Femenino' },
+    { value: 'non_binary', label: 'No binario' },
+    { value: 'rather_not_say', label: 'Prefiero no decir' },
+  ];
+  const AGE_GROUP_OPTIONS = [
+    { value: 'under18', label: 'Menor de 18' },
+    { value: 'age18to30', label: '18-30 años' },
+    { value: 'age30to45', label: '31-45 años' },
+    { value: 'age45to60', label: '46-60 años' },
+    { value: 'over60', label: 'Más de 60 años' },
+    { value: 'unknown', label: 'Sin fecha de nacimiento' },
+  ];
+  const [selectedChannelGenders, setSelectedChannelGenders] = useState(GENDER_OPTIONS.map(o => o.value));
+  const [selectedChannelAges, setSelectedChannelAges] = useState(AGE_GROUP_OPTIONS.map(o => o.value));
+
+  // State for multi-select
+  const [selectedChannels, setSelectedChannels] = useState<number[]>([]); // for channel tab
+  const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]); // for program tab
 
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -312,7 +465,6 @@ export default function StatisticsPage() {
         pageSize: listSubsPageSize,
         action: 'table',
       };
-      if (selectedProgramTab) body.programId = selectedProgramTab;
       const res = await fetch('/api/statistics/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -332,7 +484,7 @@ export default function StatisticsPage() {
       setError('Error al cargar suscripciones nuevas');
       setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
     }
-  }, [channelTabFrom, channelTabTo, listSubsPage, listSubsPageSize, selectedProgramTab]);
+  }, [channelTabFrom, channelTabTo, listSubsPage, listSubsPageSize]);
 
   const fetchChannelTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -352,19 +504,12 @@ export default function StatisticsPage() {
       setTopChannelsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
       setTopChannelsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
       setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
-      // If a channel is selected, fetch its programs' demographics
-      if (selectedChannel) {
-        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannel}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=${channelGroupBy}`);
-        if (progsRes.ok) {
-          // Handle programs data if needed
-        }
-      }
     } catch {
       setError('Error al cargar datos de demografía por canal');
     } finally {
       setLoading(false);
     }
-  }, [channelTabFrom, channelTabTo, channelGroupBy, selectedChannel, status]);
+  }, [channelTabFrom, channelTabTo, status]);
 
   const fetchProgramTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -384,19 +529,12 @@ export default function StatisticsPage() {
       setTopProgramsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
       setTopProgramsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
       setTopProgramsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
-      // If a program is selected, fetch its demographics
-      if (selectedProgramTab) {
-        const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedProgramTab}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=${programGroupBy}`);
-        if (demoRes.ok) {
-          // Handle demographics data if needed
-        }
-      }
     } catch {
       setError('Error al cargar datos de demografía por programa');
     } finally {
       setLoading(false);
     }
-  }, [programTabFrom, programTabTo, programGroupBy, selectedProgramTab, status]);
+  }, [programTabFrom, programTabTo, status]);
 
   const fetchListUsersReport = useCallback(async () => {
     try {
@@ -523,7 +661,7 @@ export default function StatisticsPage() {
     color = '#3b82f6',
     showChannel = false 
   }: { 
-    data: (TopChannel | TopProgram)[], 
+    data: (TopChannel | TopProgram | StackedBarDatum)[], 
     title: string, 
     maxValue: number,
     color?: string,
@@ -545,8 +683,9 @@ export default function StatisticsPage() {
         <CardContent>
           <Typography variant="h6" gutterBottom>{title}</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-            {data.map((item, index) => {
-              const percentage = maxValue > 0 ? (item.count / maxValue) * 100 : 0;
+            {(data.filter(hasCount) as Array<{ count: number; id: number; name: string; channelName?: string }> ).map((item, index) => {
+              const count = item.count;
+              const percentage = maxValue > 0 ? (count / maxValue) * 100 : 0;
               const isProgram = 'channelName' in item;
               
               return (
@@ -618,7 +757,7 @@ export default function StatisticsPage() {
                           textShadow: '0 1px 2px rgba(0,0,0,0.5)'
                         }}
                       >
-                        {item.count.toLocaleString()}
+                        {count.toLocaleString()}
                       </Typography>
                     </Box>
                   </Box>
@@ -745,6 +884,51 @@ export default function StatisticsPage() {
       </Card>
     );
   }
+
+  // Filtering for Channel Tab (flat data, if needed)
+  const filteredTopChannelsBySubs = getFilteredRankedData({
+    data: topChannelsBySubs,
+    selectedIds: selectedChannels,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+    filterType: 'channel',
+    channelsList,
+  });
+  const filteredTopChannelsByClicks = getFilteredRankedData({
+    data: topChannelsByClicks,
+    selectedIds: selectedChannels,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+    filterType: 'channel',
+    channelsList,
+  });
+  // Filtering for Program Tab (flat data, if needed)
+  const filteredTopProgramsBySubs = getFilteredRankedData({
+    data: topProgramsBySubs,
+    selectedIds: selectedPrograms,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+    filterType: 'program',
+    programsList,
+  });
+  const filteredTopProgramsByClicks = getFilteredRankedData({
+    data: topProgramsByClicks,
+    selectedIds: selectedPrograms,
+    genderFilter: selectedChannelGenders,
+    ageFilter: selectedChannelAges,
+    filterType: 'program',
+    programsList,
+  });
+  // For grouped charts (StackedBarDatum[]), filter the grouped data arrays directly:
+  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels, 'channel', channelsList);
+  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannels, 'channel', channelsList);
+  // In Program Tab:
+  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms, 'program', undefined, programsList);
+  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedPrograms, 'program', undefined, programsList);
 
   // Update handleReportAction to accept multiple report types and channelId
   const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
@@ -928,28 +1112,28 @@ export default function StatisticsPage() {
           {/* Top 5 Channels/Programs by Subscriptions/Clicks */}
           <Box sx={{ mt: 4, display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <HorizontalBarChart
-              data={topChannelsBySubs}
+              data={filteredTopChannelsBySubs}
               title="Top 5 Canales por Suscripciones"
-              maxValue={topChannelsBySubs.length > 0 ? Math.max(...topChannelsBySubs.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsBySubs.length > 0 ? Math.max(...(filteredTopChannelsBySubs.filter(hasCount) as Array<{ count: number }> ).map(c => c.count)) : 0}
               color="#10b981"
             />
             <HorizontalBarChart
-              data={topChannelsByClicks}
+              data={filteredTopChannelsByClicks}
               title="Top 5 Canales por Clicks en YouTube"
-              maxValue={topChannelsByClicks.length > 0 ? Math.max(...topChannelsByClicks.map(c => c.count)) : 0}
+              maxValue={filteredTopChannelsByClicks.length > 0 ? Math.max(...(filteredTopChannelsByClicks.filter(hasCount) as Array<{ count: number }> ).map(c => c.count)) : 0}
               color="#f59e0b"
             />
             <HorizontalBarChart
-              data={topProgramsBySubs}
+              data={filteredTopProgramsBySubs}
               title="Top 5 Programas por Suscripciones"
-              maxValue={topProgramsBySubs.length > 0 ? Math.max(...topProgramsBySubs.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsBySubs.length > 0 ? Math.max(...(filteredTopProgramsBySubs.filter(hasCount) as Array<{ count: number }> ).map(p => p.count)) : 0}
               color="#3b82f6"
               showChannel={true}
             />
             <HorizontalBarChart
-              data={topProgramsByClicks}
+              data={filteredTopProgramsByClicks}
               title="Top 5 Programas por Clicks en YouTube"
-              maxValue={topProgramsByClicks.length > 0 ? Math.max(...topProgramsByClicks.map(p => p.count)) : 0}
+              maxValue={filteredTopProgramsByClicks.length > 0 ? Math.max(...(filteredTopProgramsByClicks.filter(hasCount) as Array<{ count: number }> ).map(p => p.count)) : 0}
               color="#8b5cf6"
               showChannel={true}
             />
@@ -959,37 +1143,139 @@ export default function StatisticsPage() {
         {/* Programas Más Populares */}
         <TabPanel value={mainTab} index={1}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} />
-              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              {/* Channel Multi-select */}
+              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="channel-label" shrink>Canal</InputLabel>
                 <Select
                   labelId="channel-label"
-                  value={selectedChannel ?? ''}
-                  label="Canal"
-                  onChange={e => setSelectedChannel(e.target.value ? Number(e.target.value) : null)}
-                  renderValue={val => {
-                    const ch = channelsList.find(c => c.id === val);
-                    return ch ? ch.name : 'Todos los canales';
+                  multiple
+                  value={selectedChannels}
+                  onChange={e => {
+                    const value = e.target.value as number[];
+                    // If all are selected or none, treat as 'Todos' (empty array means all)
+                    if (value.length === 0 || value.length === channelsList.length) {
+                      setSelectedChannels([]);
+                    } else {
+                      setSelectedChannels(value);
+                    }
                   }}
+                  renderValue={selected =>
+                    selected.length === 0
+                      ? 'Todos los canales'
+                      : channelsList.filter(c => selected.includes(c.id)).map(c => c.name).join(', ')
+                  }
                   displayEmpty
+                  size="small"
                 >
-                  <MenuItem value=""><em>Todos los canales</em></MenuItem>
+                  <MenuItem value="all" onClick={() => setSelectedChannels([])}>
+                    <Checkbox checked={selectedChannels.length === 0} indeterminate={selectedChannels.length > 0 && selectedChannels.length < channelsList.length} size="small" />
+                    <em>Todos los canales</em>
+                  </MenuItem>
                   {channelsList.map(ch => (
-                    <MenuItem key={ch.id} value={ch.id}>{ch.name}</MenuItem>
+                    <MenuItem key={ch.id} value={ch.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Checkbox checked={selectedChannels.includes(ch.id)} size="small" />
+                        {ch.name}
+                      </Box>
+                      <Button
+                        size="small"
+                        sx={{ ml: 1, minWidth: 'auto', fontSize: '0.7em' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedChannels([ch.id]);
+                        }}
+                      >
+                        solamente
+                      </Button>
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Grupo</InputLabel>
+              {/* Gender Multi-select */}
+              <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
+                <InputLabel id="channel-gender-label" shrink>Género</InputLabel>
                 <Select
-                  value={channelGroupBy}
-                  label="Grupo"
-                  onChange={e => setChannelGroupBy(e.target.value as 'gender' | 'age')}
+                  labelId="channel-gender-label"
+                  multiple
+                  value={selectedChannelGenders}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelGenders(
+                        selectedChannelGenders.length === GENDER_OPTIONS.length ? GENDER_OPTIONS.map(o => o.value) : GENDER_OPTIONS.map(o => o.value)
+                      );
+                    } else {
+                      // Prevent empty selection
+                      if (value.length === 0) {
+                        setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === GENDER_OPTIONS.length
+                      ? 'Todos'
+                      : GENDER_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Género' }}
+                  sx={{ minWidth: 160, maxWidth: 200 }}
                 >
-                  <MenuItem value="gender">Por Género</MenuItem>
-                  <MenuItem value="age">Por Edad</MenuItem>
+                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelGenders.length === GENDER_OPTIONS.length} indeterminate={selectedChannelGenders.length > 0 && selectedChannelGenders.length < GENDER_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {GENDER_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelGenders.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {/* Age Group Multi-select */}
+              <FormControl sx={{ minWidth: 180, maxWidth: 220 }} size="small" variant="outlined">
+                <InputLabel id="channel-age-label" shrink>Edad</InputLabel>
+                <Select
+                  labelId="channel-age-label"
+                  multiple
+                  value={selectedChannelAges}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                    } else {
+                      // Prevent empty selection
+                      if (value.length === 0) {
+                        setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === AGE_GROUP_OPTIONS.length
+                      ? 'Todos'
+                      : AGE_GROUP_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Edad' }}
+                  sx={{ minWidth: 180, maxWidth: 220 }}
+                >
+                  <MenuItem value="all" onClick={() => setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelAges.length === AGE_GROUP_OPTIONS.length} indeterminate={selectedChannelAges.length > 0 && selectedChannelAges.length < AGE_GROUP_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {AGE_GROUP_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelAges.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -997,36 +1283,28 @@ export default function StatisticsPage() {
           {/* Top 5 Channels by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
-              data={topChannelsSubsByGender}
+              data={filteredTopChannelsSubsByGender}
               title="Top 5 Canales por Suscripciones (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={[...topChannelsClicksByGender].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopChannelsClicksByGender}
               title="Top 5 Canales por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
               getLabel={getGenderLabel}
             />
             <StackedHorizontalBarChart
-              data={topChannelsSubsByAge}
+              data={filteredTopChannelsSubsByAge}
               title="Top 5 Canales por Suscripciones (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
               getLabel={getAgeGroupLabel}
             />
             <StackedHorizontalBarChart
-              data={[...topChannelsClicksByAge].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopChannelsClicksByAge}
               title="Top 5 Canales por Clicks en YouTube (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
@@ -1034,9 +1312,9 @@ export default function StatisticsPage() {
             />
           </Box>
           {/* If a channel is selected, show its programs' demographics */}
-          {selectedChannel && (
+          {selectedChannels.length > 0 && (
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h5" gutterBottom>Demografía de Programas del Canal Seleccionado</Typography>
+              <Typography variant="h5" gutterBottom>Demografía de Programas de los Canales Seleccionados</Typography>
               {/* Render charts/tables for selectedChannelPrograms (subscriptions/clicks by gender/age) */}
               {/* ... */}
             </Box>
@@ -1046,37 +1324,136 @@ export default function StatisticsPage() {
         {/* Análisis por Programa */}
         <TabPanel value={mainTab} index={2}>
           <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} />
-              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} />
-              <FormControl sx={{ minWidth: 240 }} variant="outlined">
+            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+              {/* Program Multi-select */}
+              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="program-label" shrink>Programa</InputLabel>
                 <Select
                   labelId="program-label"
-                  value={selectedProgramTab ?? ''}
-                  label="Programa"
-                  onChange={e => setSelectedProgramTab(e.target.value ? Number(e.target.value) : null)}
-                  renderValue={val => {
-                    const prog = programsList.find(p => p.id === val);
-                    return prog ? prog.name : 'Todos los programas';
+                  multiple
+                  value={selectedPrograms}
+                  onChange={e => {
+                    const value = e.target.value as number[];
+                    if (value.length === 0 || value.length === programsList.length) {
+                      setSelectedPrograms([]);
+                    } else {
+                      setSelectedPrograms(value);
+                    }
                   }}
+                  renderValue={selected =>
+                    selected.length === 0
+                      ? 'Todos los programas'
+                      : programsList.filter(p => selected.includes(p.id)).map(p => p.name).join(', ')
+                  }
                   displayEmpty
+                  size="small"
                 >
-                  <MenuItem value=""><em>Todos los programas</em></MenuItem>
+                  <MenuItem value="all" onClick={() => setSelectedPrograms([])}>
+                    <Checkbox checked={selectedPrograms.length === 0} indeterminate={selectedPrograms.length > 0 && selectedPrograms.length < programsList.length} size="small" />
+                    <em>Todos los programas</em>
+                  </MenuItem>
                   {programsList.map(prog => (
-                    <MenuItem key={prog.id} value={prog.id}>{prog.name}</MenuItem>
+                    <MenuItem key={prog.id} value={prog.id} sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                      <Box sx={{ display: 'flex', alignItems: 'center' }}>
+                        <Checkbox checked={selectedPrograms.includes(prog.id)} size="small" />
+                        {prog.name}
+                      </Box>
+                      <Button
+                        size="small"
+                        sx={{ ml: 1, minWidth: 'auto', fontSize: '0.7em' }}
+                        onClick={e => {
+                          e.stopPropagation();
+                          setSelectedPrograms([prog.id]);
+                        }}
+                      >
+                        solamente
+                      </Button>
+                    </MenuItem>
                   ))}
                 </Select>
               </FormControl>
-              <FormControl sx={{ minWidth: 160 }}>
-                <InputLabel>Grupo</InputLabel>
+              {/* Gender Multi-select */}
+              <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
+                <InputLabel id="program-gender-label" shrink>Género</InputLabel>
                 <Select
-                  value={programGroupBy}
-                  label="Grupo"
-                  onChange={e => setProgramGroupBy(e.target.value as 'gender' | 'age')}
+                  labelId="program-gender-label"
+                  multiple
+                  value={selectedChannelGenders}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelGenders(
+                        selectedChannelGenders.length === GENDER_OPTIONS.length ? GENDER_OPTIONS.map(o => o.value) : GENDER_OPTIONS.map(o => o.value)
+                      );
+                    } else {
+                      if (value.length === 0) {
+                        setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelGenders(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === GENDER_OPTIONS.length
+                      ? 'Todos'
+                      : GENDER_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Género' }}
+                  sx={{ minWidth: 160, maxWidth: 200 }}
                 >
-                  <MenuItem value="gender">Por Género</MenuItem>
-                  <MenuItem value="age">Por Edad</MenuItem>
+                  <MenuItem value="all" onClick={() => setSelectedChannelGenders(GENDER_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelGenders.length === GENDER_OPTIONS.length} indeterminate={selectedChannelGenders.length > 0 && selectedChannelGenders.length < GENDER_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {GENDER_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelGenders.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+              {/* Age Group Multi-select */}
+              <FormControl sx={{ minWidth: 180, maxWidth: 220 }} size="small" variant="outlined">
+                <InputLabel id="program-age-label" shrink>Edad</InputLabel>
+                <Select
+                  labelId="program-age-label"
+                  multiple
+                  value={selectedChannelAges}
+                  onChange={e => {
+                    const value = e.target.value;
+                    if (value.includes('all')) {
+                      setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                    } else {
+                      if (value.length === 0) {
+                        setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value));
+                      } else {
+                        setSelectedChannelAges(typeof value === 'string' ? value.split(',') : value);
+                      }
+                    }
+                  }}
+                  renderValue={selected =>
+                    selected.length === AGE_GROUP_OPTIONS.length
+                      ? 'Todos'
+                      : AGE_GROUP_OPTIONS.filter(o => selected.includes(o.value)).map(o => o.label).join(', ')
+                  }
+                  displayEmpty
+                  inputProps={{ 'aria-label': 'Edad' }}
+                  sx={{ minWidth: 180, maxWidth: 220 }}
+                >
+                  <MenuItem value="all" onClick={() => setSelectedChannelAges(AGE_GROUP_OPTIONS.map(o => o.value))}>
+                    <Checkbox checked={selectedChannelAges.length === AGE_GROUP_OPTIONS.length} indeterminate={selectedChannelAges.length > 0 && selectedChannelAges.length < AGE_GROUP_OPTIONS.length} size="small" />
+                    <em>Todos</em>
+                  </MenuItem>
+                  {AGE_GROUP_OPTIONS.map(opt => (
+                    <MenuItem key={opt.value} value={opt.value}>
+                      <Checkbox checked={selectedChannelAges.indexOf(opt.value) > -1} size="small" />
+                      {opt.label}
+                    </MenuItem>
+                  ))}
                 </Select>
               </FormControl>
             </Box>
@@ -1084,7 +1461,7 @@ export default function StatisticsPage() {
           {/* Top 5 Programs by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
-              data={topProgramsSubsByGender}
+              data={filteredTopProgramsSubsByGender}
               title="Top 5 Programas por Suscripciones (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1092,11 +1469,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={[...topProgramsClicksByGender].sort((a, b) => {
-                const totalA = Object.values(a.counts).reduce((sum, v) => sum + Number(v), 0);
-                const totalB = Object.values(b.counts).reduce((sum, v) => sum + Number(v), 0);
-                return totalB - totalA;
-              })}
+              data={filteredTopProgramsClicksByGender}
               title="Top 5 Programas por Clicks en YouTube (por Género)"
               keys={GENDER_KEYS}
               colors={GENDER_COLORS}
@@ -1104,7 +1477,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={topProgramsSubsByAge}
+              data={filteredTopProgramsSubsByAge}
               title="Top 5 Programas por Suscripciones (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
@@ -1112,7 +1485,7 @@ export default function StatisticsPage() {
               showChannel={true}
             />
             <StackedHorizontalBarChart
-              data={topProgramsClicksByAge}
+              data={filteredTopProgramsClicksByAge}
               title="Top 5 Programas por Clicks en YouTube (por Edad)"
               keys={AGE_KEYS}
               colors={AGE_COLORS}
@@ -1121,9 +1494,9 @@ export default function StatisticsPage() {
             />
           </Box>
           {/* If a program is selected, show its demographics */}
-          {selectedProgramTab && (
+          {selectedPrograms.length > 0 && (
             <Box sx={{ mt: 4 }}>
-              <Typography variant="h5" gutterBottom>Demografía del Programa Seleccionado</Typography>
+              <Typography variant="h5" gutterBottom>Demografía de Programas Seleccionados</Typography>
               {/* Render charts/tables for selectedProgramDemographics (subscriptions/clicks by gender/age) */}
               {/* ... */}
             </Box>
