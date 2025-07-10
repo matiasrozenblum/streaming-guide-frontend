@@ -174,6 +174,18 @@ function getFilteredRankedData({
     return Boolean(typeof obj === 'object' && obj !== null && 'counts' in obj);
   }
   let filtered = data;
+  
+  // If a specific channel/program is selected, show only it with its real order
+  if (selectedId) {
+    const idx = data.findIndex((item: TopChannel | TopProgram) => item.id === selectedId);
+    if (idx !== -1) {
+      const item = data[idx];
+      return [{ ...item, realOrder: idx + 1 }];
+    }
+    return [];
+  }
+  
+  // Filter by gender/age if needed (for grouped data)
   if (genderFilter && genderFilter.length < 4) {
     filtered = filtered.filter((item: TopChannel | TopProgram) => {
       if (!hasCounts(item)) return true;
@@ -186,15 +198,38 @@ function getFilteredRankedData({
       return ageFilter.some((a: string) => item.counts[a] > 0);
     });
   }
-  if (selectedId) {
-    const idx = data.findIndex((item: TopChannel | TopProgram) => item.id === selectedId);
-    if (idx !== -1) {
-      const item = data[idx];
-      return [{ ...item, realOrder: idx + 1 }];
-    }
-    return [];
-  }
+  
+  // Otherwise, show top 5
   return filtered.slice(0, 5).map((item: TopChannel | TopProgram, i: number) => ({ ...item, realOrder: i + 1 }));
+}
+
+// Update the stacked bar data filtering to handle channel/program selection
+function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedId?: number | null) {
+  // If a specific channel/program is selected, show only it
+  if (selectedId) {
+    const item = data.find(item => item.id === selectedId);
+    return item ? [item] : [];
+  }
+  
+  if (groupBy === 'gender') {
+    // Only keep bars with at least one selected gender count > 0
+    return data
+      .map(item => {
+        const filteredCounts: Record<string, number> = {};
+        genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
+        return { ...item, counts: filteredCounts };
+      })
+      .filter(item => genderFilter.some(g => item.counts[g] > 0));
+  } else {
+    // Only keep bars with at least one selected age count > 0
+    return data
+      .map(item => {
+        const filteredCounts: Record<string, number> = {};
+        ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
+        return { ...item, counts: filteredCounts };
+      })
+      .filter(item => ageFilter.some(a => item.counts[a] > 0));
+  }
 }
 
 export default function StatisticsPage() {
@@ -827,37 +862,15 @@ export default function StatisticsPage() {
     ageFilter: selectedChannelAges,
   });
   // For grouped charts (StackedBarDatum[]), filter the grouped data arrays directly:
-  function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age') {
-    if (groupBy === 'gender') {
-      // Only keep bars with at least one selected gender count > 0
-      return data
-        .map(item => {
-          const filteredCounts: Record<string, number> = {};
-          genderFilter.forEach(g => { filteredCounts[g] = item.counts[g] || 0; });
-          return { ...item, counts: filteredCounts };
-        })
-        .filter(item => genderFilter.some(g => item.counts[g] > 0));
-    } else {
-      // Only keep bars with at least one selected age count > 0
-      return data
-        .map(item => {
-          const filteredCounts: Record<string, number> = {};
-          ageFilter.forEach(a => { filteredCounts[a] = item.counts[a] || 0; });
-          return { ...item, counts: filteredCounts };
-        })
-        .filter(item => ageFilter.some(a => item.counts[a] > 0));
-    }
-  }
-  // In Channel Tab:
-  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender');
-  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender');
-  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age');
-  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age');
+  const filteredTopChannelsSubsByGender = filterStackedBarData(topChannelsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannel);
+  const filteredTopChannelsClicksByGender = filterStackedBarData(topChannelsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedChannel);
+  const filteredTopChannelsSubsByAge = filterStackedBarData(topChannelsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannel);
+  const filteredTopChannelsClicksByAge = filterStackedBarData(topChannelsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedChannel);
   // In Program Tab:
-  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender');
-  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender');
-  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age');
-  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age');
+  const filteredTopProgramsSubsByGender = filterStackedBarData(topProgramsSubsByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedProgramTab);
+  const filteredTopProgramsClicksByGender = filterStackedBarData(topProgramsClicksByGender, selectedChannelGenders, selectedChannelAges, 'gender', selectedProgramTab);
+  const filteredTopProgramsSubsByAge = filterStackedBarData(topProgramsSubsByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedProgramTab);
+  const filteredTopProgramsClicksByAge = filterStackedBarData(topProgramsClicksByAge, selectedChannelGenders, selectedChannelAges, 'age', selectedProgramTab);
 
   // Update handleReportAction to accept multiple report types and channelId
   const handleMultiReportEmail = async (email: string, options: { pdf: boolean, csvUsers: boolean, csvSubs: boolean }, channelId?: number) => {
