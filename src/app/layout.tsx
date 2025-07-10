@@ -17,6 +17,7 @@ import {
   ConditionalHotjarLoader 
 } from '@/components/ConditionalTrackingLoader';
 import PageviewTracker from '@/components/PageviewTracker';
+import LiveStatusListener from '@/components/LiveStatusListener';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -69,6 +70,7 @@ export default function RootLayout({
                       <Footer />
                     </div>
                     <YouTubeGlobalPlayer />
+                    <LiveStatusListener />
                   </YouTubePlayerProvider>
                   
                   {/* Cookie Consent Components */}
