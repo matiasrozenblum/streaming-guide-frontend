@@ -403,7 +403,6 @@ export default function StatisticsPage() {
         pageSize: listSubsPageSize,
         action: 'table',
       };
-      if (selectedPrograms.length > 0) body.programId = selectedPrograms[0];
       const res = await fetch('/api/statistics/reports', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -423,7 +422,7 @@ export default function StatisticsPage() {
       setError('Error al cargar suscripciones nuevas');
       setListSubsReport({ subscriptions: [], total: 0, page: 1, pageSize: 20 });
     }
-  }, [channelTabFrom, channelTabTo, listSubsPage, listSubsPageSize, selectedPrograms]);
+  }, [channelTabFrom, channelTabTo, listSubsPage, listSubsPageSize]);
 
   const fetchChannelTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -443,19 +442,12 @@ export default function StatisticsPage() {
       setTopChannelsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
       setTopChannelsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
       setTopChannelsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
-      // If a channel is selected, fetch its programs' demographics
-      if (selectedChannels.length > 0) {
-        const progsRes = await fetch(`/api/statistics/channel-programs-demographics?channelId=${selectedChannels[0]}&from=${channelTabFrom.format('YYYY-MM-DD')}&to=${channelTabTo.format('YYYY-MM-DD')}&groupBy=gender`);
-        if (progsRes.ok) {
-          // Handle programs data if needed
-        }
-      }
     } catch {
       setError('Error al cargar datos de demografía por canal');
     } finally {
       setLoading(false);
     }
-  }, [channelTabFrom, channelTabTo, selectedChannels, status]);
+  }, [channelTabFrom, channelTabTo, status]);
 
   const fetchProgramTabData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -475,19 +467,12 @@ export default function StatisticsPage() {
       setTopProgramsClicksByGender(clicksByGenderRes.ok ? await clicksByGenderRes.json() : []);
       setTopProgramsSubsByAge(subsByAgeRes.ok ? await subsByAgeRes.json() : []);
       setTopProgramsClicksByAge(clicksByAgeRes.ok ? await clicksByAgeRes.json() : []);
-      // If a program is selected, fetch its demographics
-      if (selectedPrograms.length > 0) {
-        const demoRes = await fetch(`/api/statistics/program-demographics?programId=${selectedPrograms[0]}&from=${programTabFrom.format('YYYY-MM-DD')}&to=${programTabTo.format('YYYY-MM-DD')}&groupBy=gender`);
-        if (demoRes.ok) {
-          // Handle demographics data if needed
-        }
-      }
     } catch {
       setError('Error al cargar datos de demografía por programa');
     } finally {
       setLoading(false);
     }
-  }, [programTabFrom, programTabTo, selectedPrograms, status]);
+  }, [programTabFrom, programTabTo, status]);
 
   const fetchListUsersReport = useCallback(async () => {
     try {
