@@ -175,9 +175,9 @@ function getFilteredRankedData({
   }
   let filtered = data;
 
-  // If any channels/programs are selected, filter to only those
+  // Ensure type consistency: compare as numbers
   if (selectedIds.length > 0) {
-    filtered = filtered.filter((item: TopChannel | TopProgram) => selectedIds.includes(item.id));
+    filtered = filtered.filter((item: TopChannel | TopProgram) => selectedIds.includes(Number(item.id)));
   }
   // Filter by gender/age if needed (for grouped data)
   if (genderFilter && genderFilter.length < 4) {
@@ -199,8 +199,9 @@ function getFilteredRankedData({
 // Update the stacked bar data filtering to handle channel/program selection
 function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[]) {
   let filtered = data;
+  // Ensure type consistency: compare as numbers
   if (selectedIds.length > 0) {
-    filtered = filtered.filter(item => selectedIds.includes(item.id));
+    filtered = filtered.filter(item => selectedIds.includes(Number(item.id)));
   }
   if (groupBy === 'gender') {
     // Only keep bars with at least one selected gender count > 0
