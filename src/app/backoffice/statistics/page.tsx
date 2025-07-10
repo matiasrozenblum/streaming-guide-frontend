@@ -32,6 +32,7 @@ import {
   TextField,
   FormControlLabel,
   Checkbox,
+  Autocomplete,
 } from '@mui/material';
 import { BarChart } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -1088,26 +1089,17 @@ export default function StatisticsPage() {
             <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
               <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
               <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
-              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
-                <InputLabel id="channel-label" shrink>Canal</InputLabel>
-                <Select
-                  labelId="channel-label"
-                  value={selectedChannel ?? ''}
-                  label="Canal"
-                  onChange={e => setSelectedChannel(e.target.value ? Number(e.target.value) : null)}
-                  renderValue={val => {
-                    const ch = channelsList.find(c => c.id === val);
-                    return ch ? ch.name : 'Todos los canales';
-                  }}
-                  displayEmpty
-                  size="small"
-                >
-                  <MenuItem value=""><em>Todos los canales</em></MenuItem>
-                  {channelsList.map(ch => (
-                    <MenuItem key={ch.id} value={ch.id}>{ch.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                options={[{ id: null, name: 'Todos los canales' }, ...channelsList]}
+                getOptionLabel={option => option.name}
+                value={channelsList.find(c => c.id === selectedChannel) || { id: null, name: 'Todos los canales' }}
+                onChange={(_, newValue) => setSelectedChannel(newValue?.id ?? null)}
+                renderInput={params => (
+                  <TextField {...params} label="Canal" size="small" variant="outlined" />
+                )}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                sx={{ minWidth: 200, maxWidth: 240 }}
+              />
               {/* Gender Multi-select */}
               <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
                 <InputLabel id="channel-gender-label" shrink>Género</InputLabel>
@@ -1241,26 +1233,17 @@ export default function StatisticsPage() {
             <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
               <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
               <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
-              <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
-                <InputLabel id="program-label" shrink>Programa</InputLabel>
-                <Select
-                  labelId="program-label"
-                  value={selectedProgramTab ?? ''}
-                  label="Programa"
-                  onChange={e => setSelectedProgramTab(e.target.value ? Number(e.target.value) : null)}
-                  renderValue={val => {
-                    const prog = programsList.find(p => p.id === val);
-                    return prog ? prog.name : 'Todos los programas';
-                  }}
-                  displayEmpty
-                  size="small"
-                >
-                  <MenuItem value=""><em>Todos los programas</em></MenuItem>
-                  {programsList.map(prog => (
-                    <MenuItem key={prog.id} value={prog.id}>{prog.name}</MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
+              <Autocomplete
+                options={[{ id: null, name: 'Todos los programas' }, ...programsList]}
+                getOptionLabel={option => option.name}
+                value={programsList.find(p => p.id === selectedProgramTab) || { id: null, name: 'Todos los programas' }}
+                onChange={(_, newValue) => setSelectedProgramTab(newValue?.id ?? null)}
+                renderInput={params => (
+                  <TextField {...params} label="Programa" size="small" variant="outlined" />
+                )}
+                isOptionEqualToValue={(option, value) => option.id === value.id}
+                sx={{ minWidth: 200, maxWidth: 240 }}
+              />
               {/* Gender Multi-select */}
               <FormControl sx={{ minWidth: 160, maxWidth: 200 }} size="small" variant="outlined">
                 <InputLabel id="program-gender-label" shrink>Género</InputLabel>
