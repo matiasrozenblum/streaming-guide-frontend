@@ -8,6 +8,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Added Server-Sent Events (SSE) for real-time live status updates
+- Added LiveStatusListener component to handle SSE connections
+- Added smart polling that triggers immediate refreshes when programs go live
+- Added YouTube live events endpoint for real-time notifications
 
 ### Changed
 
@@ -16,6 +20,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [1.3.3] - 2025-07-10
+
+### Changed
+- Applied several visual refactors to statistics backoffice section, again
 
 ## [1.3.2] - 2025-07-02
 
