@@ -99,11 +99,19 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     const intervalId = setInterval(() => {
       updateLiveStatuses();
-    }, 60_000);
+    }, 60_000); // Keep 60 seconds for now, but we could reduce this
+
+    // Listen for live status refresh events from SSE
+    const handleLiveStatusRefresh = () => {
+      updateLiveStatuses();
+    };
+
+    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
 
     return () => {
       isMounted = false;
       clearInterval(intervalId);
+      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     };
   }, [deviceId, setLiveStatuses]);
 
