@@ -25,11 +25,12 @@ export default function LiveStatusListener() {
               detail: data
             });
             window.dispatchEvent(refreshEvent);
-          } catch (error) {
+          } catch {
+            // Silently handle JSON parse errors
           }
         };
 
-        eventSource.onerror = (error) => {
+        eventSource.onerror = () => {
           eventSource.close();
           // Reconnect after 5 seconds
           setTimeout(connectSSE, 5000);
@@ -38,7 +39,8 @@ export default function LiveStatusListener() {
         return () => {
           eventSource.close();
         };
-      } catch (error) {
+      } catch {
+        // Silently handle connection errors
       }
     };
 
