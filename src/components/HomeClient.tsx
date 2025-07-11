@@ -103,7 +103,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     // Listen for live status refresh events from SSE
     const handleLiveStatusRefresh = () => {
-      console.log('🔄 Triggering immediate live status refresh due to SSE event');
       updateLiveStatuses();
     };
 

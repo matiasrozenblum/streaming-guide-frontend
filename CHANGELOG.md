@@ -8,13 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added Server-Sent Events (SSE) for real-time live status updates
-- Added LiveStatusListener component to handle SSE connections
-- Added smart polling that triggers immediate refreshes when programs go live
-- Added YouTube live events endpoint for real-time notifications
-- Added on-demand revalidation system to update cached pages when backend data changes
-- Added SSE broadcasting and revalidation webhook calls for program, panelist, channel, and schedule changes
-- Added deduplication logic to prevent duplicate SSE events
 
 ### Changed
 
@@ -23,6 +16,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 
 ---
+
+## [1.4.0] - 2025-07-11
+
+### Added
+- Added Server-Sent Events (SSE) for real-time live status updates
+- Added LiveStatusListener component to handle SSE connections
+- Added smart polling that triggers immediate refreshes when programs go live
+- Added on-demand revalidation system to update cached pages when backend data changes
+- Added SSE broadcasting and revalidation webhook calls for program, panelist, channel, and schedule changes
 
 ## [1.3.3] - 2025-07-10
 
