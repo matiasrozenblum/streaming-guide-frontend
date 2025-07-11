@@ -21,17 +21,12 @@ export default function LiveStatusListener() {
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            
-            if (data.type === 'live_status_change') {
-              console.log('📡 Received live status change:', data);
-              
-              // Trigger a refresh of live statuses
-              // This will cause HomeClient to fetch updated data
-              const refreshEvent = new CustomEvent('liveStatusRefresh', {
-                detail: { channelId: data.channelId, videoId: data.videoId }
-              });
-              window.dispatchEvent(refreshEvent);
-            }
+            console.log('📡 SSE event received:', data.type, data);
+            // On any event, trigger a refresh
+            const refreshEvent = new CustomEvent('liveStatusRefresh', {
+              detail: data
+            });
+            window.dispatchEvent(refreshEvent);
           } catch (error) {
             console.error('Error parsing SSE message:', error);
           }
@@ -40,7 +35,6 @@ export default function LiveStatusListener() {
         eventSource.onerror = (error) => {
           console.error('SSE connection error:', error);
           eventSource.close();
-          
           // Reconnect after 5 seconds
           setTimeout(connectSSE, 5000);
         };
