@@ -2,6 +2,8 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
 import { signOut } from 'next-auth/react'
+import GoogleProvider from 'next-auth/providers/google';
+import FacebookProvider from 'next-auth/providers/facebook';
 
 interface ExtendedSession extends Session {
   accessToken: string;
@@ -54,23 +56,59 @@ export const authOptions: AuthOptions = {
         } as JWTUser;
       },
     }),
+    GoogleProvider({
+      clientId: process.env.GOOGLE_CLIENT_ID!,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      profile(profile) {
+        // Google returns name, email, picture, sometimes given_name/family_name
+        return {
+          id: profile.sub || profile.id,
+          name: profile.name || '',
+          email: profile.email || '',
+          firstName: profile.given_name || '',
+          lastName: profile.family_name || '',
+          image: profile.picture || '',
+          // gender, birthDate, phone are not provided by default
+        };
+      },
+    }),
+    FacebookProvider({
+      clientId: process.env.FACEBOOK_CLIENT_ID!,
+      clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      profile(profile) {
+        // Facebook returns id, name, email, picture, sometimes first_name/last_name
+        return {
+          id: profile.id,
+          name: profile.name || '',
+          email: profile.email || '',
+          firstName: profile.first_name || '',
+          lastName: profile.last_name || '',
+          image: profile.picture?.data?.url || '',
+          // gender, birthDate, phone are not provided by default
+        };
+      },
+    }),
   ],
   session: {
     strategy: 'jwt',
     maxAge: 14 * 24 * 60 * 60, // 14 days
   },
   callbacks: {
-    async jwt({ token, user }) {
-      // On login, persist tokens
+    async jwt({ token, user, account, profile }) {
+      // On login, persist tokens and profile info
       if (user) {
-        token.accessToken = (user as JWTUser).accessToken;
-        token.refreshToken = (user as JWTUser).refreshToken;
-        token.role = (user as JWTUser).role;
-        token.gender = (user as JWTUser).gender;
-        token.birthDate = (user as JWTUser).birthDate;
-        token.name = (user as JWTUser).name;
-        token.email = (user as JWTUser).email;
-        token.sub = (user as JWTUser).id;
+        token.accessToken = (user as any).accessToken || token.accessToken;
+        token.refreshToken = (user as any).refreshToken || token.refreshToken;
+        token.role = (user as any).role || token.role || 'user';
+        token.gender = (user as any).gender || token.gender;
+        token.birthDate = (user as any).birthDate || token.birthDate;
+        token.name = (user as any).name || token.name;
+        token.email = (user as any).email || token.email;
+        token.sub = (user as any).id || token.sub;
+        // Social providers: extract first/last name if available
+        token.firstName = (user as any).firstName || token.firstName;
+        token.lastName = (user as any).lastName || token.lastName;
+        token.image = (user as any).image || token.image;
       }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
@@ -114,6 +152,9 @@ export const authOptions: AuthOptions = {
         role: (token.role as string) || 'user',
         gender: (token.gender as string) || undefined,
         birthDate: (token.birthDate as string) || undefined,
+        firstName: (token.firstName as string) || '',
+        lastName: (token.lastName as string) || '',
+        image: (token.image as string) || '',
       };
       return session;
     },
@@ -127,3 +168,8 @@ export const authOptions: AuthOptions = {
     },
   },
 };
+
+// Required ENV variables:
+// GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+// FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET
+//

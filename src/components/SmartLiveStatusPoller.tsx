@@ -67,7 +67,6 @@ export default function SmartLiveStatusPoller({ deviceId }: { deviceId: string }
     if (nextProgram) {
       // If a program starts within 10 minutes, poll every 30 seconds
       const newInterval = 30_000;
-      console.log(`🎯 Smart polling: Program starting soon, polling every 30s`);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);
@@ -80,7 +79,6 @@ export default function SmartLiveStatusPoller({ deviceId }: { deviceId: string }
     } else {
       // Default polling every 5 minutes
       const newInterval = 300_000;
-      console.log(`🎯 Smart polling: No programs starting soon, polling every 5m`);
       
       if (intervalRef.current) {
         clearInterval(intervalRef.current);

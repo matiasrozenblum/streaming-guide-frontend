@@ -10,6 +10,8 @@ declare module 'next-auth' {
       role: string;
       gender?: string;
       birthDate?: string;
+      firstName?: string;
+      lastName?: string;
     };
     accessToken?: string;
   }
@@ -20,5 +22,8 @@ declare module 'next-auth/jwt' {
     accessToken?: string;
     gender?: string;
     birthDate?: string;
+    firstName?: string;
+    lastName?: string;
+    image?: string;
   }
 } 

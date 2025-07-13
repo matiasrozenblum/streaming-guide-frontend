@@ -10,6 +10,7 @@ import {
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import MenuItem from '@mui/material/MenuItem';
+import { useSession } from 'next-auth/react';
 
 interface ProfileStepProps {
   initialFirst?: string;
@@ -26,15 +27,18 @@ export default function ProfileStep({
   initialLast = '',
   initialBirthDate = '',
   initialGender = '',
+  error,
   onSubmit,
-  onBack,
-  error
+  onBack
 }: ProfileStepProps) {
+  const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
   const [last, setLast] = useState(initialLast);
   const [birthDate, setBirthDate] = useState(initialBirthDate);
   const [gender, setGender] = useState(initialGender);
   const [localErr, setLocalErr] = useState('');
+  // If user is from social provider, disable name fields if present
+  const isSocial = !!session?.user && (session.user.firstName || session.user.lastName || session.user.email);
   const [birthDateError, setBirthDateError] = useState('');
 
   const handle = (e: React.FormEvent) => {
@@ -89,8 +93,9 @@ export default function ProfileStep({
             <InputAdornment position="start">
               <PersonOutlineIcon fontSize="small" />
             </InputAdornment>
-          )
+          ),
         }}
+        disabled={Boolean(isSocial && first)}
       />
       <TextField
         label="Apellido"
@@ -102,8 +107,9 @@ export default function ProfileStep({
             <InputAdornment position="start">
               <PersonOutlineIcon fontSize="small" />
             </InputAdornment>
-          )
+          ),
         }}
+        disabled={Boolean(isSocial && last)}
       />
       <Box sx={{ display: 'flex', gap: 2 }}>
         <TextField

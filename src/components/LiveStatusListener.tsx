@@ -15,25 +15,22 @@ export default function LiveStatusListener() {
         eventSourceRef.current = eventSource;
 
         eventSource.onopen = () => {
-          console.log('🔗 SSE connection established for live status updates');
         };
 
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('📡 SSE event received:', data.type, data);
             // On any event, trigger a refresh
             const refreshEvent = new CustomEvent('liveStatusRefresh', {
               detail: data
             });
             window.dispatchEvent(refreshEvent);
-          } catch (error) {
-            console.error('Error parsing SSE message:', error);
+          } catch {
+            // Silently handle JSON parse errors
           }
         };
 
-        eventSource.onerror = (error) => {
-          console.error('SSE connection error:', error);
+        eventSource.onerror = () => {
           eventSource.close();
           // Reconnect after 5 seconds
           setTimeout(connectSSE, 5000);
@@ -42,8 +39,8 @@ export default function LiveStatusListener() {
         return () => {
           eventSource.close();
         };
-      } catch (error) {
-        console.error('Failed to establish SSE connection:', error);
+      } catch {
+        // Silently handle connection errors
       }
     };
 
