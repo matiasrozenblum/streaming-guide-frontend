@@ -172,9 +172,26 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user) {
-      // If user logged in via social, check for missing info
+      // If user logged in via social, upsert user in backend
       const { email, firstName, lastName, gender, birthDate } = session.user;
       if (email && (firstName || session.user.name)) {
+        (async () => {
+          try {
+            await fetch('/api/users/social-upsert', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                email,
+                firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
+                lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
+                gender: gender || '',
+                birthDate: birthDate || '',
+              }),
+            });
+          } catch {
+            // Ignore errors for now, fallback to profile step
+          }
+        })();
         setEmail(email);
         setFirstName(firstName || (session.user.name?.split(' ')[0] ?? ''));
         setLastName(lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''));
