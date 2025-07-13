@@ -32,6 +32,8 @@ interface DecodedJWT {
   [key: string]: unknown;
 }
 
+type MaybeNamedUser = { firstName?: string; lastName?: string; name?: string };
+
 export const authOptions: AuthOptions = {
   providers: [
     CredentialsProvider({
@@ -94,7 +96,7 @@ export const authOptions: AuthOptions = {
     maxAge: 14 * 24 * 60 * 60, // 14 days
   },
   callbacks: {
-    async jwt({ token, user }) {
+    async jwt({ token, user, account }) {
       // On login, persist tokens and profile info
       if (user) {
         const u = user as JWTUser;
@@ -105,11 +107,23 @@ export const authOptions: AuthOptions = {
         token.birthDate = u.birthDate || token.birthDate;
         token.name = u.name || token.name;
         token.email = u.email || token.email;
-        token.sub = u.id || token.sub;
         // Social providers: extract first/last name if available
-        token.firstName = (u as Partial<JWTUser> & { firstName?: string }).firstName || token.firstName;
-        token.lastName = (u as Partial<JWTUser> & { lastName?: string }).lastName || token.lastName;
-        token.image = (u as Partial<JWTUser> & { image?: string }).image || token.image;
+        token.firstName = (user as MaybeNamedUser)?.firstName || token.firstName || (user.name?.split(' ')[0] ?? '');
+        token.lastName = (user as MaybeNamedUser)?.lastName || token.lastName || (user.name?.split(' ').slice(1).join(' ') ?? '');
+        token.image = user.image || token.image;
+      }
+      // After social login, map session user.id to backend user ID
+      if (account?.provider && token.email) {
+        try {
+          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
+          const res = await fetch(apiUrl);
+          if (res.ok) {
+            const backendUser = await res.json();
+            if (backendUser && backendUser.id) {
+              token.sub = backendUser.id.toString();
+            }
+          }
+        } catch {}
       }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
@@ -157,6 +171,10 @@ export const authOptions: AuthOptions = {
         lastName: (token.lastName as string) || '',
         image: (token.image as string) || '',
       };
+      // Set session.user.id to backend user ID
+      if (token?.sub) {
+        session.user.id = token.sub;
+      }
       return session;
     },
   },
