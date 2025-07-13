@@ -20,6 +20,10 @@ import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
+import GoogleIcon from '@mui/icons-material/Google';
+import FacebookIcon from '@mui/icons-material/Facebook';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -134,6 +138,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
+  const { data: session, status: sessionStatus } = useSession();
+  const router = useRouter();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -163,6 +169,22 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setPhase('email');
     }
   }, [open]);
+
+  useEffect(() => {
+    if (sessionStatus === 'authenticated' && session?.user) {
+      // If user logged in via social, check for missing info
+      const { email, firstName, lastName, gender, birthDate } = session.user;
+      if (email && (firstName || session.user.name)) {
+        setEmail(email);
+        setFirstName(firstName || (session.user.name?.split(' ')[0] ?? ''));
+        setLastName(lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''));
+        setGender(gender || '');
+        setBirthDate(birthDate || '');
+        setPhase('flow');
+        setStep('profile');
+      }
+    }
+  }, [session, sessionStatus]);
 
   // Track modal open and close tooltips
   useEffect(() => {
@@ -209,6 +231,36 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       }
     });
   };
+
+  // Add a function to handle profile completion after social login
+  async function handleSocialProfileSubmit(f: string, l: string, b: string, g: string) {
+    setIsLoading(true);
+    setError('');
+    try {
+      // Try to create or update the user
+      const res = await fetch('/api/users', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          firstName: f,
+          lastName: l,
+          email,
+          gender: g,
+          birthDate: b,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.message || 'Error al completar el perfil');
+      }
+      // After successful profile completion, close modal and reload session
+      onClose();
+      router.refresh();
+    } catch (err: any) {
+      setError(err.message || 'Error al completar el perfil');
+    }
+    setIsLoading(false);
+  }
 
   return (
     <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
@@ -302,41 +354,78 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
       <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' && (
-          <EmailStep
-            initialEmail={email}
-            isLoading={isLoading}
-            error={error}
-            onSubmit={async (e) => {
-              setIsLoading(true); setError(''); setEmail(e);
-              try {
-                const res = await fetch(`/api/users/email/${e}`);
-                if (res.ok) {
-                  const userData = await res.json();
-                  setUserFirstName(userData.firstName || '');
-                  setUserGender(userData.gender || '');
-                  setCompletedSteps(prev => new Set([...prev, 'email']));
-                  setIsUserExisting(true);
-                  setStep('existing-user');
-                  setPhase('flow');
-                } else if (res.status === 404) {
-                  setCompletedSteps(prev => new Set([...prev, 'email']));
-                  setIsUserExisting(false);
-                  await fetch('/api/auth/send-code', {
-                    method:'POST',
-                    headers:{'Content-Type':'application/json'},
-                    body: JSON.stringify({ identifier: e }),
-                  });
-                  setStep('code');
-                  setPhase('flow');
-                } else {
-                  throw new Error('Error inesperado');
+          <>
+            <EmailStep
+              initialEmail={email}
+              isLoading={isLoading}
+              error={error}
+              onSubmit={async (e) => {
+                setIsLoading(true); setError(''); setEmail(e);
+                try {
+                  const res = await fetch(`/api/users/email/${e}`);
+                  if (res.ok) {
+                    const userData = await res.json();
+                    setUserFirstName(userData.firstName || '');
+                    setUserGender(userData.gender || '');
+                    setCompletedSteps(prev => new Set([...prev, 'email']));
+                    setIsUserExisting(true);
+                    setStep('existing-user');
+                    setPhase('flow');
+                  } else if (res.status === 404) {
+                    setCompletedSteps(prev => new Set([...prev, 'email']));
+                    setIsUserExisting(false);
+                    await fetch('/api/auth/send-code', {
+                      method:'POST',
+                      headers:{'Content-Type':'application/json'},
+                      body: JSON.stringify({ identifier: e }),
+                    });
+                    setStep('code');
+                    setPhase('flow');
+                  } else {
+                    throw new Error('Error inesperado');
+                  }
+                } catch (err: unknown) {
+                  setError(getErrorMessage(err));
                 }
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
-              }
-              setIsLoading(false);
-            }}
-          />
+                setIsLoading(false);
+              }}
+            />
+            {/* Social login separator */}
+            <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+              <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+              <Box sx={{ mx: 2, color: 'text.secondary', fontWeight: 600 }}>o</Box>
+              <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+            </Box>
+            {/* Social login buttons */}
+            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+              <button
+                type="button"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                onClick={async () => {
+                  setIsLoading(true);
+                  await signIn('google', { callbackUrl: window.location.href });
+                  setIsLoading(false);
+                }}
+                disabled={isLoading}
+              >
+                <GoogleIcon sx={{ color: '#4285F4' }} />
+                Conectate con Google
+              </button>
+              <button
+                type="button"
+                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                onClick={async () => {
+                  setIsLoading(true);
+                  await signIn('facebook', { callbackUrl: window.location.href });
+                  setIsLoading(false);
+                }}
+                disabled={isLoading}
+              >
+                <FacebookIcon sx={{ color: '#1877F3' }} />
+                Conectate con Meta
+              </button>
+            </Box>
+          </>
         )}
 
         {step === 'existing-user' && (
@@ -497,7 +586,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             initialGender={gender}
             error={error}
             onBack={() => setStep('code')}
-            onSubmit={(f, l, b, g) => {
+            onSubmit={session?.user ? handleSocialProfileSubmit : (f, l, b, g) => {
               setFirstName(f);
               setLastName(l);
               setBirthDate(b);
