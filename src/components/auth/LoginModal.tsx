@@ -256,8 +256,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       // After successful profile completion, close modal and reload session
       onClose();
       router.refresh();
-    } catch (err: any) {
-      setError(err.message || 'Error al completar el perfil');
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al completar el perfil');
     }
     setIsLoading(false);
   }
@@ -484,7 +484,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   });
                   onClose();
                 }
-              } catch (err) {
+              } catch (err: unknown) {
                 setError(getErrorMessage(err));
               }
               setIsLoading(false);

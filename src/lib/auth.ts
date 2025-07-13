@@ -94,21 +94,22 @@ export const authOptions: AuthOptions = {
     maxAge: 14 * 24 * 60 * 60, // 14 days
   },
   callbacks: {
-    async jwt({ token, user, account, profile }) {
+    async jwt({ token, user }) {
       // On login, persist tokens and profile info
       if (user) {
-        token.accessToken = (user as any).accessToken || token.accessToken;
-        token.refreshToken = (user as any).refreshToken || token.refreshToken;
-        token.role = (user as any).role || token.role || 'user';
-        token.gender = (user as any).gender || token.gender;
-        token.birthDate = (user as any).birthDate || token.birthDate;
-        token.name = (user as any).name || token.name;
-        token.email = (user as any).email || token.email;
-        token.sub = (user as any).id || token.sub;
+        const u = user as JWTUser;
+        token.accessToken = u.accessToken || token.accessToken;
+        token.refreshToken = u.refreshToken || token.refreshToken;
+        token.role = u.role || token.role || 'user';
+        token.gender = u.gender || token.gender;
+        token.birthDate = u.birthDate || token.birthDate;
+        token.name = u.name || token.name;
+        token.email = u.email || token.email;
+        token.sub = u.id || token.sub;
         // Social providers: extract first/last name if available
-        token.firstName = (user as any).firstName || token.firstName;
-        token.lastName = (user as any).lastName || token.lastName;
-        token.image = (user as any).image || token.image;
+        token.firstName = (u as Partial<JWTUser> & { firstName?: string }).firstName || token.firstName;
+        token.lastName = (u as Partial<JWTUser> & { lastName?: string }).lastName || token.lastName;
+        token.image = (u as Partial<JWTUser> & { image?: string }).image || token.image;
       }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
