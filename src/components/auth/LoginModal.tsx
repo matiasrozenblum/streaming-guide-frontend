@@ -24,6 +24,7 @@ import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
 import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
+import CircularProgress from '@mui/material/CircularProgress';
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
@@ -163,6 +164,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [userFirstName, setUserFirstName] = useState('');
   const [userGender, setUserGender] = useState('');
   const [phase, setPhase] = useState<'email'|'flow'>('email');
+  const [socialLoginPending, setSocialLoginPending] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -179,10 +181,9 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user) {
-      // Only run once per session
       if (window.__socialLoginHandled) return;
       window.__socialLoginHandled = true;
-      // After social login, upsert/login with backend and establish backend session
+      setSocialLoginPending(true); // Block UI/modal
       const { email, firstName, lastName, gender, birthDate } = session.user;
       if (email && (firstName || session.user.name)) {
         (async () => {
@@ -194,7 +195,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 email,
                 firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
                 lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
-                provider: 'google', // Default to 'google' for now
+                provider: 'google',
                 gender: gender || '',
                 birthDate: birthDate || '',
               }),
@@ -202,7 +203,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             if (res.ok) {
               const data = await res.json();
               if (data.profileIncomplete && data.registration_token) {
-                // Social signup: profile incomplete, show profile completion form
                 setRegistrationToken(data.registration_token);
                 setEmail(data.user.email);
                 setFirstName(data.user.firstName || '');
@@ -212,21 +212,26 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 setIsUserExisting(false);
                 setCompletedSteps(new Set(['email']));
                 setIsLoading(false);
+                setSocialLoginPending(false);
                 return;
               } else if (data.access_token && data.refresh_token) {
-                // Social login complete, establish backend session
                 await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
                   refreshToken: data.refresh_token,
                 });
+                setSocialLoginPending(false);
                 // Optionally: close modal or redirect here
               }
+            } else {
+              setSocialLoginPending(false);
             }
           } catch {
-            // Ignore errors for now
+            setSocialLoginPending(false);
           }
         })();
+      } else {
+        setSocialLoginPending(false);
       }
     }
   }, [session, sessionStatus]);
@@ -345,7 +350,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   }
 
   return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
+    <Dialog open={open} onClose={socialLoginPending ? undefined : onClose} fullWidth maxWidth="xs"
       slotProps={{
         paper: {
           sx: {
@@ -369,396 +374,405 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
             : ''
         )}
-        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      {phase === 'flow' && (
-        <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
-          <Stepper
-            nonLinear
-            alternativeLabel
-            activeStep={activeStep}
-            connector={<BlueConnector isLoading={isLoading} />}
-            sx={{
-              width: '100%',
-              minWidth: 0,
-              backgroundColor: 'transparent',
-              '.MuiStepConnector-line': {
-                minWidth: 24,
-              },
-            }}
-          >
-            {steps.map((key) => {
-              const isCompleted = completedSteps.has(key);
-              const isActive = step === key;
-              const isCurrentlyLoading = isActive && isLoading;
-              return (
-                <Step key={key} completed={isCompleted} active={isActive}>
-                  <StepLabel
-                    sx={{
-                      mt: 0,
-                      mb: 0,
-                      '.MuiStepLabel-label': {
-                        marginTop: '0px',
-                        marginBottom: '0px',
-                        lineHeight: 1.1,
-                        color: (theme) => theme.palette.text.secondary,
-                        fontWeight: 600,
-                        fontSize: 13,
-                      },
-                      '.MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed': {
-                        color: (theme) => theme.palette.primary.main,
-                        marginTop: '0px',
-                        marginBottom: '0px',
-                      },
-                      '.MuiStepLabel-label.MuiStepLabel-alternativeLabel': {
-                        marginTop: '0px !important',
-                        marginBottom: '0px !important',
-                      },
-                    }}
-                    StepIconComponent={(props) => (
-                      <CustomStepIcon 
-                        {...props} 
-                        stepKey={key}
-                        isLoading={isCurrentlyLoading}
-                        completedSteps={completedSteps}
-                      />
-                    )}
-                  >
-                    {STEP_LABELS[key]}
-                  </StepLabel>
-                </Step>
-              );
-            })}
-          </Stepper>
+      {socialLoginPending ? (
+        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
+          <CircularProgress sx={{ my: 3 }} />
+          <Box sx={{ mt: 2, color: 'text.secondary', fontWeight: 600 }}>Conectando con el backend...</Box>
         </Box>
-      )}
+      ) : (
+        <>
+          {phase === 'flow' && (
+            <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+              <Stepper
+                nonLinear
+                alternativeLabel
+                activeStep={activeStep}
+                connector={<BlueConnector isLoading={isLoading} />}
+                sx={{
+                  width: '100%',
+                  minWidth: 0,
+                  backgroundColor: 'transparent',
+                  '.MuiStepConnector-line': {
+                    minWidth: 24,
+                  },
+                }}
+              >
+                {steps.map((key) => {
+                  const isCompleted = completedSteps.has(key);
+                  const isActive = step === key;
+                  const isCurrentlyLoading = isActive && isLoading;
+                  return (
+                    <Step key={key} completed={isCompleted} active={isActive}>
+                      <StepLabel
+                        sx={{
+                          mt: 0,
+                          mb: 0,
+                          '.MuiStepLabel-label': {
+                            marginTop: '0px',
+                            marginBottom: '0px',
+                            lineHeight: 1.1,
+                            color: (theme) => theme.palette.text.secondary,
+                            fontWeight: 600,
+                            fontSize: 13,
+                          },
+                          '.MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed': {
+                            color: (theme) => theme.palette.primary.main,
+                            marginTop: '0px',
+                            marginBottom: '0px',
+                          },
+                          '.MuiStepLabel-label.MuiStepLabel-alternativeLabel': {
+                            marginTop: '0px !important',
+                            marginBottom: '0px !important',
+                          },
+                        }}
+                        StepIconComponent={(props) => (
+                          <CustomStepIcon 
+                            {...props} 
+                            stepKey={key}
+                            isLoading={isCurrentlyLoading}
+                            completedSteps={completedSteps}
+                          />
+                        )}
+                      >
+                        {STEP_LABELS[key]}
+                      </StepLabel>
+                    </Step>
+                  );
+                })}
+              </Stepper>
+            </Box>
+          )}
 
-      <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
-        {phase === 'email' && (
-          <>
-            <EmailStep
-              initialEmail={email}
-              isLoading={isLoading}
-              error={error}
-              onSubmit={async (e) => {
-                setIsLoading(true); setError(''); setEmail(e);
-                try {
-                  const res = await fetch(`/api/users/email/${e}`);
-                  if (res.ok) {
-                    const userData = await res.json();
-                    setUserFirstName(userData.firstName || '');
-                    setUserGender(userData.gender || '');
-                    setCompletedSteps(prev => new Set([...prev, 'email']));
-                    setIsUserExisting(true);
-                    setStep('existing-user');
-                    setPhase('flow');
-                  } else if (res.status === 404) {
-                    setCompletedSteps(prev => new Set([...prev, 'email']));
-                    setIsUserExisting(false);
-                    await fetch('/api/auth/send-code', {
+          <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+            {phase === 'email' && (
+              <>
+                <EmailStep
+                  initialEmail={email}
+                  isLoading={isLoading}
+                  error={error}
+                  onSubmit={async (e) => {
+                    setIsLoading(true); setError(''); setEmail(e);
+                    try {
+                      const res = await fetch(`/api/users/email/${e}`);
+                      if (res.ok) {
+                        const userData = await res.json();
+                        setUserFirstName(userData.firstName || '');
+                        setUserGender(userData.gender || '');
+                        setCompletedSteps(prev => new Set([...prev, 'email']));
+                        setIsUserExisting(true);
+                        setStep('existing-user');
+                        setPhase('flow');
+                      } else if (res.status === 404) {
+                        setCompletedSteps(prev => new Set([...prev, 'email']));
+                        setIsUserExisting(false);
+                        await fetch('/api/auth/send-code', {
+                          method:'POST',
+                          headers:{'Content-Type':'application/json'},
+                          body: JSON.stringify({ identifier: e }),
+                        });
+                        setStep('code');
+                        setPhase('flow');
+                      } else {
+                        throw new Error('Error inesperado');
+                      }
+                    } catch (err: unknown) {
+                      setError(getErrorMessage(err));
+                    }
+                    setIsLoading(false);
+                  }}
+                />
+                {/* Social login separator */}
+                <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
+                  <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+                  <Box sx={{ mx: 2, color: 'text.secondary', fontWeight: 600 }}>o</Box>
+                  <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+                </Box>
+                {/* Social login buttons */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                  <button
+                    type="button"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                    onClick={async () => {
+                      setIsLoading(true);
+                      await signIn('google', { callbackUrl: window.location.href });
+                      setIsLoading(false);
+                    }}
+                    disabled={isLoading}
+                  >
+                    <GoogleIcon sx={{ color: '#4285F4' }} />
+                    Conectate con Google
+                  </button>
+                  <button
+                    type="button"
+                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                    onClick={async () => {
+                      setIsLoading(true);
+                      await signIn('facebook', { callbackUrl: window.location.href });
+                      setIsLoading(false);
+                    }}
+                    disabled={isLoading}
+                  >
+                    <FacebookIcon sx={{ color: '#1877F3' }} />
+                    Conectate con Meta
+                  </button>
+                </Box>
+              </>
+            )}
+
+            {step === 'existing-user' && (
+              <ExistingUserStep
+                email={email}
+                firstName={userFirstName}
+                gender={userGender}
+                isLoading={isLoading}
+                error={error}
+                onBack={() => { setStep('email'); setPhase('email'); }}
+                onSubmit={async (pw) => {
+                  setIsLoading(true); setError('');
+                  try {
+                    // Call the login API route
+                    const res = await fetch('/api/auth/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ email, password: pw }),
+                    });
+                    if (!res.ok) {
+                      setError('Credenciales inválidas');
+                      gaEvent({
+                        action: 'login_error',
+                        params: {
+                          method: 'password',
+                          error: 'invalid_credentials',
+                          email_provided: !!email,
+                        }
+                      });
+                      setIsLoading(false);
+                      return;
+                    }
+                    const data = await res.json();
+                    const nxt = await signIn('credentials', {
+                      redirect: false,
+                      accessToken: data.access_token,
+                      refreshToken: data.refresh_token,
+                    });
+                    if (nxt?.error) {
+                      setError('Credenciales inválidas');
+                      gaEvent({
+                        action: 'login_error',
+                        params: {
+                          method: 'password',
+                          error: 'invalid_credentials',
+                          email_provided: !!email,
+                        }
+                      });
+                    } else {
+                      setCompletedSteps(prev => new Set([...prev, 'existing-user']));
+                      gaEvent({
+                        action: 'login_success',
+                        params: {
+                          method: 'password',
+                        }
+                      });
+                      onClose();
+                    }
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  }
+                  setIsLoading(false);
+                }}
+                onForgotPassword={() => {
+                  setForgotPassword(true);
+                  setIsLoading(true);
+                  fetch('/api/auth/send-code', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ identifier: email }),
+                  })
+                    .then(() => {
+                      setStep('code');
+                      setError('');
+                    })
+                    .catch((err) => {
+                      setError(getErrorMessage(err));
+                    })
+                    .finally(() => setIsLoading(false));
+                }}
+              />
+            )}
+
+            {step === 'code' && forgotPassword && (
+              <CodeStep
+                email={email}
+                initialCode={code}
+                isLoading={isLoading}
+                error={error}
+                onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
+                onSubmit={async (c) => {
+                  setCode(c);
+                  setStep('password');
+                }}
+              />
+            )}
+
+            {step === 'code' && !forgotPassword && (
+              <CodeStep
+                email={email}
+                initialCode={code}
+                isLoading={isLoading}
+                error={error}
+                onBack={() => { setStep('email'); setPhase('email'); }}
+                onSubmit={async (c) => {
+                  setIsLoading(true); setError(''); setCode(c);
+                  try {
+                    const res = await fetch('/api/auth/verify-code', {
                       method:'POST',
                       headers:{'Content-Type':'application/json'},
-                      body: JSON.stringify({ identifier: e }),
+                      body: JSON.stringify({ identifier: email, code: c, deviceId }),
                     });
-                    setStep('code');
-                    setPhase('flow');
-                  } else {
-                    throw new Error('Error inesperado');
+                    const body = await res.json();
+                    if (!res.ok) throw new Error(body.message || 'Error');
+                    if (body.isNew) {
+                      setCompletedSteps(prev => new Set([...prev, 'code']));
+                      trackSignupStep('email_verification');
+                      setRegistrationToken(body.registration_token);
+                      setStep('profile');
+                    } else {
+                      setCompletedSteps(prev => new Set([...prev, 'code']));
+                      gaEvent({
+                        action: 'login_success',
+                        params: {
+                          method: 'otp',
+                        }
+                      });
+                      const nxt = await signIn('credentials', {
+                        redirect: false,
+                        accessToken: body.access_token,
+                        refreshToken: body.refresh_token,
+                      });
+                      if (!nxt?.error) {
+                        onClose();
+                      }
+                    }
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                    gaEvent({
+                      action: 'login_error',
+                      params: {
+                        method: 'otp',
+                        error: err instanceof Error ? err.message : 'otp_verification_failed',
+                        email_provided: !!email,
+                      }
+                    });
                   }
-                } catch (err: unknown) {
-                  setError(getErrorMessage(err));
-                }
-                setIsLoading(false);
-              }}
-            />
-            {/* Social login separator */}
-            <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
-              <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
-              <Box sx={{ mx: 2, color: 'text.secondary', fontWeight: 600 }}>o</Box>
-              <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
-            </Box>
-            {/* Social login buttons */}
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-              <button
-                type="button"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
-                onClick={async () => {
-                  setIsLoading(true);
-                  await signIn('google', { callbackUrl: window.location.href });
                   setIsLoading(false);
                 }}
-                disabled={isLoading}
-              >
-                <GoogleIcon sx={{ color: '#4285F4' }} />
-                Conectate con Google
-              </button>
-              <button
-                type="button"
-                style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
-                onClick={async () => {
-                  setIsLoading(true);
-                  await signIn('facebook', { callbackUrl: window.location.href });
-                  setIsLoading(false);
+              />
+            )}
+
+            {step === 'profile' && registrationToken ? (
+              <ProfileStep
+                initialFirst={firstName}
+                initialLast={lastName}
+                initialBirthDate={birthDate}
+                initialGender={gender}
+                requirePassword={true}
+                isLoading={isLoading}
+                error={error}
+                onSubmit={async (f, l, b, g, pw) => {
+                  await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
                 }}
-                disabled={isLoading}
-              >
-                <FacebookIcon sx={{ color: '#1877F3' }} />
-                Conectate con Meta
-              </button>
-            </Box>
-          </>
-        )}
+                onBack={() => { setStep('email'); setPhase('email'); }}
+              />
+            ) : step === 'profile' ? (
+              <ProfileStep
+                initialFirst={firstName}
+                initialLast={lastName}
+                initialBirthDate={birthDate}
+                initialGender={gender}
+                isLoading={isLoading}
+                error={error}
+                onSubmit={async (f, l, b, g) => {
+                  await handleSocialProfileSubmit(f, l, b, g);
+                }}
+                onBack={() => { setStep('email'); setPhase('email'); }}
+              />
+            ) : null}
 
-        {step === 'existing-user' && (
-          <ExistingUserStep
-            email={email}
-            firstName={userFirstName}
-            gender={userGender}
-            isLoading={isLoading}
-            error={error}
-            onBack={() => { setStep('email'); setPhase('email'); }}
-            onSubmit={async (pw) => {
-              setIsLoading(true); setError('');
-              try {
-                // Call the login API route
-                const res = await fetch('/api/auth/login', {
-                  method: 'POST',
-                  headers: { 'Content-Type': 'application/json' },
-                  body: JSON.stringify({ email, password: pw }),
-                });
-                if (!res.ok) {
-                  setError('Credenciales inválidas');
-                  gaEvent({
-                    action: 'login_error',
-                    params: {
-                      method: 'password',
-                      error: 'invalid_credentials',
-                      email_provided: !!email,
-                    }
-                  });
-                  setIsLoading(false);
-                  return;
-                }
-                const data = await res.json();
-                const nxt = await signIn('credentials', {
-                  redirect: false,
-                  accessToken: data.access_token,
-                  refreshToken: data.refresh_token,
-                });
-                if (nxt?.error) {
-                  setError('Credenciales inválidas');
-                  gaEvent({
-                    action: 'login_error',
-                    params: {
-                      method: 'password',
-                      error: 'invalid_credentials',
-                      email_provided: !!email,
-                    }
-                  });
-                } else {
-                  setCompletedSteps(prev => new Set([...prev, 'existing-user']));
-                  gaEvent({
-                    action: 'login_success',
-                    params: {
-                      method: 'password',
-                    }
-                  });
-                  onClose();
-                }
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
-              }
-              setIsLoading(false);
-            }}
-            onForgotPassword={() => {
-              setForgotPassword(true);
-              setIsLoading(true);
-              fetch('/api/auth/send-code', {
-                method: 'POST',
-                headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ identifier: email }),
-              })
-                .then(() => {
-                  setStep('code');
-                  setError('');
-                })
-                .catch((err) => {
-                  setError(getErrorMessage(err));
-                })
-                .finally(() => setIsLoading(false));
-            }}
-          />
-        )}
+            {step === 'password' && forgotPassword && (
+              <CodeStep
+                email={email}
+                initialCode={code}
+                isLoading={isLoading}
+                error={error}
+                onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
+                onSubmit={async (c) => {
+                  setCode(c);
+                  setStep('password');
+                }}
+              />
+            )}
 
-        {step === 'code' && forgotPassword && (
-          <CodeStep
-            email={email}
-            initialCode={code}
-            isLoading={isLoading}
-            error={error}
-            onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
-            onSubmit={async (c) => {
-              setCode(c);
-              setStep('password');
-            }}
-          />
-        )}
-
-        {step === 'code' && !forgotPassword && (
-          <CodeStep
-            email={email}
-            initialCode={code}
-            isLoading={isLoading}
-            error={error}
-            onBack={() => { setStep('email'); setPhase('email'); }}
-            onSubmit={async (c) => {
-              setIsLoading(true); setError(''); setCode(c);
-              try {
-                const res = await fetch('/api/auth/verify-code', {
-                  method:'POST',
-                  headers:{'Content-Type':'application/json'},
-                  body: JSON.stringify({ identifier: email, code: c, deviceId }),
-                });
-                const body = await res.json();
-                if (!res.ok) throw new Error(body.message || 'Error');
-                if (body.isNew) {
-                  setCompletedSteps(prev => new Set([...prev, 'code']));
-                  trackSignupStep('email_verification');
-                  setRegistrationToken(body.registration_token);
-                  setStep('profile');
-                } else {
-                  setCompletedSteps(prev => new Set([...prev, 'code']));
-                  gaEvent({
-                    action: 'login_success',
-                    params: {
-                      method: 'otp',
-                    }
-                  });
-                  const nxt = await signIn('credentials', {
-                    redirect: false,
-                    accessToken: body.access_token,
-                    refreshToken: body.refresh_token,
-                  });
-                  if (!nxt?.error) {
+            {step === 'password' && !forgotPassword && (
+              <PasswordStep
+                isLoading={isLoading}
+                error={error}
+                onBack={() => setStep('profile')}
+                submitLabel="Registrarme"
+                onSubmit={async (pw) => {
+                  setIsLoading(true); setError('');
+                  try {
+                    const res = await fetch('/api/auth/register', {
+                      method:'POST',
+                      headers:{'Content-Type':'application/json'},
+                      body: JSON.stringify({
+                        registration_token: registrationToken,
+                        firstName,
+                        lastName,
+                        password: pw,
+                        deviceId,
+                        birthDate: birthDate || undefined,
+                        gender: mapGenderToBackend(gender)
+                      }),
+                    });
+                    const body = await res.json();
+                    if (!res.ok) throw new Error(body.message || 'Error registro');
+                    const nxt = await signIn('credentials', {
+                      redirect: false,
+                      accessToken: body.access_token,
+                      refreshToken: body.refresh_token,
+                    });
+                    if (nxt?.error) throw new Error('No se pudo iniciar sesión');
+                    setCompletedSteps(prev => new Set([...prev, 'password']));
+                    gaEvent({
+                      action: 'signup_success',
+                      params: {
+                        has_first_name: !!firstName,
+                        has_last_name: !!lastName,
+                        has_birth_date: !!birthDate,
+                        has_gender: !!gender,
+                      }
+                    });
                     onClose();
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                    gaEvent({
+                      action: 'signup_error',
+                      params: {
+                        step: 'final_registration',
+                        error: err instanceof Error ? err.message : 'unknown',
+                      }
+                    });
                   }
-                }
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
-                gaEvent({
-                  action: 'login_error',
-                  params: {
-                    method: 'otp',
-                    error: err instanceof Error ? err.message : 'otp_verification_failed',
-                    email_provided: !!email,
-                  }
-                });
-              }
-              setIsLoading(false);
-            }}
-          />
-        )}
-
-        {step === 'profile' && registrationToken ? (
-          <ProfileStep
-            initialFirst={firstName}
-            initialLast={lastName}
-            initialBirthDate={birthDate}
-            initialGender={gender}
-            requirePassword={true}
-            isLoading={isLoading}
-            error={error}
-            onSubmit={async (f, l, b, g, pw) => {
-              await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
-            }}
-            onBack={() => { setStep('email'); setPhase('email'); }}
-          />
-        ) : step === 'profile' ? (
-          <ProfileStep
-            initialFirst={firstName}
-            initialLast={lastName}
-            initialBirthDate={birthDate}
-            initialGender={gender}
-            isLoading={isLoading}
-            error={error}
-            onSubmit={async (f, l, b, g) => {
-              await handleSocialProfileSubmit(f, l, b, g);
-            }}
-            onBack={() => { setStep('email'); setPhase('email'); }}
-          />
-        ) : null}
-
-        {step === 'password' && forgotPassword && (
-          <CodeStep
-            email={email}
-            initialCode={code}
-            isLoading={isLoading}
-            error={error}
-            onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
-            onSubmit={async (c) => {
-              setCode(c);
-              setStep('password');
-            }}
-          />
-        )}
-
-        {step === 'password' && !forgotPassword && (
-          <PasswordStep
-            isLoading={isLoading}
-            error={error}
-            onBack={() => setStep('profile')}
-            submitLabel="Registrarme"
-            onSubmit={async (pw) => {
-              setIsLoading(true); setError('');
-              try {
-                const res = await fetch('/api/auth/register', {
-                  method:'POST',
-                  headers:{'Content-Type':'application/json'},
-                  body: JSON.stringify({
-                    registration_token: registrationToken,
-                    firstName,
-                    lastName,
-                    password: pw,
-                    deviceId,
-                    birthDate: birthDate || undefined,
-                    gender: mapGenderToBackend(gender)
-                  }),
-                });
-                const body = await res.json();
-                if (!res.ok) throw new Error(body.message || 'Error registro');
-                const nxt = await signIn('credentials', {
-                  redirect: false,
-                  accessToken: body.access_token,
-                  refreshToken: body.refresh_token,
-                });
-                if (nxt?.error) throw new Error('No se pudo iniciar sesión');
-                setCompletedSteps(prev => new Set([...prev, 'password']));
-                gaEvent({
-                  action: 'signup_success',
-                  params: {
-                    has_first_name: !!firstName,
-                    has_last_name: !!lastName,
-                    has_birth_date: !!birthDate,
-                    has_gender: !!gender,
-                  }
-                });
-                onClose();
-              } catch (err: unknown) {
-                setError(getErrorMessage(err));
-                gaEvent({
-                  action: 'signup_error',
-                  params: {
-                    step: 'final_registration',
-                    error: err instanceof Error ? err.message : 'unknown',
-                  }
-                });
-              }
-              setIsLoading(false);
-            }}
-          />
-        )}
-      </DialogContent>
+                  setIsLoading(false);
+                }}
+              />
+            )}
+          </DialogContent>
+        </>
+      )}
     </Dialog>
   );
 }
