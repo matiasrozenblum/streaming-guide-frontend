@@ -200,13 +200,27 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
               }),
             });
             if (res.ok) {
-              const { access_token, refresh_token } = await res.json();
-              // Establish backend session
-              await signIn('credentials', {
-                redirect: false,
-                accessToken: access_token,
-                refreshToken: refresh_token,
-              });
+              const data = await res.json();
+              if (data.profileIncomplete && data.registration_token) {
+                // Social signup: profile incomplete, show profile completion form
+                setRegistrationToken(data.registration_token);
+                setEmail(data.user.email);
+                setFirstName(data.user.firstName || '');
+                setLastName(data.user.lastName || '');
+                setStep('profile');
+                setPhase('flow');
+                setIsUserExisting(false);
+                setCompletedSteps(new Set(['email']));
+                setIsLoading(false);
+                return;
+              } else if (data.access_token && data.refresh_token) {
+                // Social login complete, establish backend session
+                await signIn('credentials', {
+                  redirect: false,
+                  accessToken: data.access_token,
+                  refreshToken: data.refresh_token,
+                });
+              }
             }
           } catch {
             // Ignore errors for now
@@ -270,6 +284,43 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   };
 
   // Add a function to handle profile completion after social login
+  async function handleSocialProfileCompletion(f: string, l: string, b: string, g: string, pw: string) {
+    setIsLoading(true);
+    setError('');
+    try {
+      const res = await fetch('/api/auth/complete-profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registration_token: registrationToken,
+          firstName: f,
+          lastName: l,
+          password: pw,
+          gender: g,
+          birthDate: b,
+          deviceId,
+        }),
+      });
+      if (!res.ok) {
+        const body = await res.json();
+        throw new Error(body.message || 'Error al completar el perfil');
+      }
+      const data = await res.json();
+      // After successful profile completion, establish backend session
+      await signIn('credentials', {
+        redirect: false,
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token,
+      });
+      onClose();
+      router.refresh();
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al completar el perfil');
+    }
+    setIsLoading(false);
+  }
+
+  // Fallback for non-social profile completion
   async function handleSocialProfileSubmit(f: string, l: string, b: string, g: string) {
     setIsLoading(true);
     setError('');
@@ -615,25 +666,34 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
           />
         )}
 
-        {step === 'profile' && (
+        {step === 'profile' && registrationToken ? (
           <ProfileStep
             initialFirst={firstName}
             initialLast={lastName}
             initialBirthDate={birthDate}
             initialGender={gender}
+            requirePassword={true}
+            isLoading={isLoading}
             error={error}
-            onBack={() => setStep('code')}
-            onSubmit={session?.user ? handleSocialProfileSubmit : (f, l, b, g) => {
-              setFirstName(f);
-              setLastName(l);
-              setBirthDate(b);
-              setGender(g);
-              setCompletedSteps(prev => new Set([...prev, 'profile']));
-              trackSignupStep('profile', { has_first_name: !!f, has_last_name: !!l, has_birth_date: !!b, has_gender: !!g });
-              setStep('password');
+            onSubmit={async (f, l, b, g, pw) => {
+              await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
             }}
+            onBack={() => { setStep('email'); setPhase('email'); }}
           />
-        )}
+        ) : step === 'profile' ? (
+          <ProfileStep
+            initialFirst={firstName}
+            initialLast={lastName}
+            initialBirthDate={birthDate}
+            initialGender={gender}
+            isLoading={isLoading}
+            error={error}
+            onSubmit={async (f, l, b, g) => {
+              await handleSocialProfileSubmit(f, l, b, g);
+            }}
+            onBack={() => { setStep('email'); setPhase('email'); }}
+          />
+        ) : null}
 
         {step === 'password' && forgotPassword && (
           <CodeStep

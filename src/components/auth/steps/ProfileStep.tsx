@@ -17,9 +17,11 @@ interface ProfileStepProps {
   initialLast?: string;
   initialBirthDate?: string;
   initialGender?: string;
-  onSubmit: (first: string, last: string, birthDate: string, gender: string) => void;
+  onSubmit: (first: string, last: string, birthDate: string, gender: string, password?: string) => void;
   onBack: () => void;
   error?: string;
+  requirePassword?: boolean;
+  isLoading?: boolean;
 }
 
 export default function ProfileStep({
@@ -29,7 +31,9 @@ export default function ProfileStep({
   initialGender = '',
   error,
   onSubmit,
-  onBack
+  onBack,
+  requirePassword = false,
+  isLoading = false,
 }: ProfileStepProps) {
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
@@ -40,6 +44,8 @@ export default function ProfileStep({
   // If user is from social provider, disable name fields if present
   const isSocial = !!session?.user && (session.user.firstName || session.user.lastName || session.user.email);
   const [birthDateError, setBirthDateError] = useState('');
+  const [password, setPassword] = useState('');
+  const [passwordError, setPasswordError] = useState('');
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -55,8 +61,21 @@ export default function ProfileStep({
       setLocalErr('Selecciona tu género');
       return;
     }
+    if (requirePassword && !password) {
+      setPasswordError('La contraseña es obligatoria');
+      return;
+    }
+    if (requirePassword && password.length < 6) {
+      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+      return;
+    }
     setLocalErr('');
-    onSubmit(first.trim(), last.trim(), birthDate, gender);
+    setPasswordError('');
+    if (requirePassword) {
+      onSubmit(first.trim(), last.trim(), birthDate, gender, password);
+    } else {
+      onSubmit(first.trim(), last.trim(), birthDate, gender);
+    }
   };
 
   const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -135,6 +154,18 @@ export default function ProfileStep({
           <MenuItem value="prefiero_no_decir">Prefiero no decir</MenuItem>
         </TextField>
       </Box>
+      {requirePassword && (
+        <TextField
+          label="Contraseña"
+          type="password"
+          fullWidth
+          value={password}
+          onChange={e => setPassword(e.target.value)}
+          error={!!passwordError}
+          helperText={passwordError || 'Mínimo 6 caracteres'}
+          sx={{ mt: 1 }}
+        />
+      )}
       {(localErr || error) && (
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
@@ -154,7 +185,7 @@ export default function ProfileStep({
           type="submit"
           variant="contained"
           fullWidth
-          disabled={!first || !last || !birthDate || !gender || !!birthDateError}
+          disabled={!first || !last || !birthDate || !gender || !!birthDateError || (requirePassword && (!password || password.length < 6)) || isLoading}
         >
           Continuar
         </Button>
