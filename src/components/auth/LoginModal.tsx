@@ -220,19 +220,13 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   accessToken: data.access_token,
                   refreshToken: data.refresh_token,
                 });
+                // Optionally: close modal or redirect here
               }
             }
           } catch {
             // Ignore errors for now
           }
         })();
-        setEmail(email);
-        setFirstName(firstName || (session.user.name?.split(' ')[0] ?? ''));
-        setLastName(lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''));
-        setGender(gender || '');
-        setBirthDate(birthDate || '');
-        setPhase('flow');
-        setStep('profile');
       }
     }
   }, [session, sessionStatus]);
