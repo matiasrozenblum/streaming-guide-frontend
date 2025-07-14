@@ -134,6 +134,13 @@ const mapGenderToBackend = (g: string) => {
   }
 };
 
+// Add global type for window.__socialLoginHandled
+declare global {
+  interface Window {
+    __socialLoginHandled?: boolean;
+  }
+}
+
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
   const theme = useTheme();
   const deviceId = useDeviceId();
@@ -172,24 +179,37 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
 
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user) {
-      // If user logged in via social, upsert user in backend
+      // Only run once per session
+      if (window.__socialLoginHandled) return;
+      window.__socialLoginHandled = true;
+      // After social login, upsert/login with backend and establish backend session
       const { email, firstName, lastName, gender, birthDate } = session.user;
       if (email && (firstName || session.user.name)) {
         (async () => {
           try {
-            await fetch('/api/users/social-upsert', {
+            const res = await fetch('/api/auth/social-login', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
                 email,
                 firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
                 lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
+                provider: 'google', // Default to 'google' for now
                 gender: gender || '',
                 birthDate: birthDate || '',
               }),
             });
+            if (res.ok) {
+              const { access_token, refresh_token } = await res.json();
+              // Establish backend session
+              await signIn('credentials', {
+                redirect: false,
+                accessToken: access_token,
+                refreshToken: refresh_token,
+              });
+            }
           } catch {
-            // Ignore errors for now, fallback to profile step
+            // Ignore errors for now
           }
         })();
         setEmail(email);
