@@ -22,7 +22,6 @@ import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
 import FacebookIcon from '@mui/icons-material/Facebook';
-import { useSession } from 'next-auth/react';
 import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -146,7 +145,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
-  const { data: session, status: sessionStatus } = useSession();
   const router = useRouter();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
@@ -176,65 +174,67 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setBirthDate(''); setGender('');
       setUserFirstName(''); setUserGender('');
       setPhase('email');
+      setSocialLoginPending(false);
     }
   }, [open]);
 
-  useEffect(() => {
-    if (sessionStatus === 'authenticated' && session?.user) {
-      if (window.__socialLoginHandled) return;
-      window.__socialLoginHandled = true;
-      setSocialLoginPending(true); // Block UI/modal
-      const { email, firstName, lastName, gender, birthDate } = session.user;
-      if (email && (firstName || session.user.name)) {
-        (async () => {
-          try {
-            const res = await fetch('/api/auth/social-login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email,
-                firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
-                lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
-                provider: 'google',
-                gender: gender || '',
-                birthDate: birthDate || '',
-              }),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.profileIncomplete && data.registration_token) {
-                setRegistrationToken(data.registration_token);
-                setEmail(data.user.email);
-                setFirstName(data.user.firstName || '');
-                setLastName(data.user.lastName || '');
-                setStep('profile');
-                setPhase('flow');
-                setIsUserExisting(false);
-                setCompletedSteps(new Set(['email']));
-                setIsLoading(false);
-                setSocialLoginPending(false);
-                return;
-              } else if (data.access_token && data.refresh_token) {
-                await signIn('credentials', {
-                  redirect: false,
-                  accessToken: data.access_token,
-                  refreshToken: data.refresh_token,
-                });
-                setSocialLoginPending(false);
-                // Optionally: close modal or redirect here
-              }
-            } else {
-              setSocialLoginPending(false);
-            }
-          } catch {
-            setSocialLoginPending(false);
-          }
-        })();
-      } else {
-        setSocialLoginPending(false);
-      }
-    }
-  }, [session, sessionStatus]);
+  // Remove the old useEffect for session-based social login
+  // useEffect(() => {
+  //   if (sessionStatus === 'authenticated' && session?.user) {
+  //     if (window.__socialLoginHandled) return;
+  //     window.__socialLoginHandled = true;
+  //     setSocialLoginPending(true); // Block UI/modal
+  //     const { email, firstName, lastName, gender, birthDate } = session.user;
+  //     if (email && (firstName || session.user.name)) {
+  //       (async () => {
+  //         try {
+  //           const res = await fetch('/api/auth/social-login', {
+  //             method: 'POST',
+  //             headers: { 'Content-Type': 'application/json' },
+  //             body: JSON.stringify({
+  //               email,
+  //               firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
+  //               lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
+  //               provider: 'google',
+  //               gender: gender || '',
+  //               birthDate: birthDate || '',
+  //             }),
+  //           });
+  //           if (res.ok) {
+  //             const data = await res.json();
+  //             if (data.profileIncomplete && data.registration_token) {
+  //               setRegistrationToken(data.registration_token);
+  //               setEmail(data.user.email);
+  //               setFirstName(data.user.firstName || '');
+  //               setLastName(data.user.lastName || '');
+  //               setStep('profile');
+  //               setPhase('flow');
+  //               setIsUserExisting(false);
+  //               setCompletedSteps(new Set(['email']));
+  //               setIsLoading(false);
+  //               setSocialLoginPending(false);
+  //               return;
+  //             } else if (data.access_token && data.refresh_token) {
+  //               await signIn('credentials', {
+  //                 redirect: false,
+  //                 accessToken: data.access_token,
+  //                 refreshToken: data.refresh_token,
+  //               });
+  //               setSocialLoginPending(false);
+  //               // Optionally: close modal or redirect here
+  //             }
+  //           } else {
+  //             setSocialLoginPending(false);
+  //           }
+  //         } catch {
+  //           setSocialLoginPending(false);
+  //         }
+  //       })();
+  //     } else {
+  //       setSocialLoginPending(false);
+  //     }
+  //   }
+  // }, [session, sessionStatus]);
 
   // Track modal open and close tooltips
   useEffect(() => {
@@ -348,6 +348,102 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     }
     setIsLoading(false);
   }
+
+  // Add popup-based social login handler
+  const handleSocialLogin = async (provider: 'google' | 'facebook') => {
+    setIsLoading(true);
+    setError('');
+    
+    // Open popup window
+    const popup = window.open(
+      `/api/auth/${provider}?popup=true`,
+      `${provider}_login`,
+      'width=500,height=600,scrollbars=yes,resizable=yes'
+    );
+    
+    if (!popup) {
+      setError('No se pudo abrir la ventana de login. Por favor, permite popups para este sitio.');
+      setIsLoading(false);
+      return;
+    }
+    
+    // Listen for message from popup
+    const handleMessage = async (event: MessageEvent) => {
+      if (event.origin !== window.location.origin) return;
+      
+      if (event.data.type === 'SOCIAL_LOGIN_SUCCESS') {
+        const { user } = event.data;
+        // Handle the social login result
+        try {
+          const res = await fetch('/api/auth/social-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: user.email,
+              firstName: user.firstName || user.name?.split(' ')[0] || '',
+              lastName: user.lastName || user.name?.split(' ').slice(1).join(' ') || '',
+              provider,
+              gender: user.gender || '',
+              birthDate: user.birthDate || '',
+            }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            if (data.profileIncomplete && data.registration_token) {
+              setRegistrationToken(data.registration_token);
+              setEmail(data.user.email);
+              setFirstName(data.user.firstName || '');
+              setLastName(data.user.lastName || '');
+              setStep('profile');
+              setPhase('flow');
+              setIsUserExisting(false);
+              setCompletedSteps(new Set(['email']));
+              setIsLoading(false);
+              setSocialLoginPending(false);
+            } else if (data.access_token && data.refresh_token) {
+              await signIn('credentials', {
+                redirect: false,
+                accessToken: data.access_token,
+                refreshToken: data.refresh_token,
+              });
+              setSocialLoginPending(false);
+              onClose();
+            }
+          } else {
+            setError('Error en el login social');
+            setIsLoading(false);
+            setSocialLoginPending(false);
+          }
+        } catch {
+          setError('Error en el login social');
+          setIsLoading(false);
+          setSocialLoginPending(false);
+        }
+        
+        window.removeEventListener('message', handleMessage);
+        popup.close();
+      } else if (event.data.type === 'SOCIAL_LOGIN_ERROR') {
+        setError(event.data.error || 'Error en el login social');
+        setIsLoading(false);
+        setSocialLoginPending(false);
+        window.removeEventListener('message', handleMessage);
+        popup.close();
+      }
+    };
+    
+    window.addEventListener('message', handleMessage);
+    
+    // Check if popup was closed
+    const checkClosed = setInterval(() => {
+      if (popup.closed) {
+        clearInterval(checkClosed);
+        window.removeEventListener('message', handleMessage);
+        setIsLoading(false);
+        setSocialLoginPending(false);
+      }
+    }, 1000);
+  };
 
   return (
     <Dialog open={open} onClose={socialLoginPending ? undefined : onClose} fullWidth maxWidth="xs"
@@ -495,11 +591,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   <button
                     type="button"
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
-                    onClick={async () => {
-                      setIsLoading(true);
-                      await signIn('google', { callbackUrl: window.location.href });
-                      setIsLoading(false);
-                    }}
+                    onClick={() => handleSocialLogin('google')}
                     disabled={isLoading}
                   >
                     <GoogleIcon sx={{ color: '#4285F4' }} />
@@ -508,11 +600,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   <button
                     type="button"
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
-                    onClick={async () => {
-                      setIsLoading(true);
-                      await signIn('facebook', { callbackUrl: window.location.href });
-                      setIsLoading(false);
-                    }}
+                    onClick={() => handleSocialLogin('facebook')}
                     disabled={isLoading}
                   >
                     <FacebookIcon sx={{ color: '#1877F3' }} />
