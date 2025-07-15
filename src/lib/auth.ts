@@ -190,6 +190,13 @@ export const authOptions: AuthOptions = {
               // Store the profile incomplete status for later use
               token.profileIncomplete = socialData.profileIncomplete;
               console.log('[NextAuth JWT] Profile incomplete:', token.profileIncomplete);
+              
+              // If we have backend tokens, use them instead of the social tokens
+              if (socialData.access_token && socialData.refresh_token) {
+                token.accessToken = socialData.access_token;
+                token.refreshToken = socialData.refresh_token;
+                console.log('[NextAuth JWT] Updated with backend tokens');
+              }
             } else {
               console.log('[NextAuth JWT] Social login failed:', socialLoginRes.status);
               const errorText = await socialLoginRes.text();
@@ -200,6 +207,23 @@ export const authOptions: AuthOptions = {
           }
         } catch (error) {
           console.log('[NextAuth JWT] Error in social login flow:', error);
+        }
+      } else if (token.email && !token.sub) {
+        // This might be a subsequent JWT call where account is not present
+        // Try to find the user by email to get the correct ID
+        console.log('[NextAuth JWT] No account but have email, looking up user');
+        try {
+          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
+          const res = await fetch(apiUrl);
+          if (res.ok) {
+            const backendUser = await res.json();
+            if (backendUser && backendUser.id) {
+              token.sub = backendUser.id.toString();
+              console.log('[NextAuth JWT] Found user ID on subsequent call:', token.sub);
+            }
+          }
+        } catch (error) {
+          console.log('[NextAuth JWT] Error looking up user on subsequent call:', error);
         }
       } else {
         console.log('[NextAuth JWT] Not a social login or missing email. Account provider:', account?.provider, 'Token email:', token.email);
