@@ -41,6 +41,7 @@ import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import dayjs from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
+import { signIn } from 'next-auth/react';
 
 const MotionBox = motion(Box);
 
@@ -188,6 +189,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   // Snackbar for success and error messages
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
+  const [isLoading, setIsLoading] = useState(false);
 
   // --- All handlers from original ProfilePage ---
   const saveNames = async () => {
@@ -211,27 +213,70 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
       setErrorMessage('Debes ser mayor de 18 años para registrarte');
       return;
     }
-    const id = typedSession.user.id;
-    const res = await fetch(`/api/users/${id}`,
-      {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, gender, birthDate }),
-      });
-    if (res.ok) {
-      setSuccessMessage('Datos actualizados correctamente');
-      setEditSection('none');
-      
-      // If profile was incomplete and now is complete, redirect to home
-      if (isProfileIncomplete && firstName && lastName && gender && birthDate) {
+
+    setIsLoading(true);
+    
+    try {
+      if (isProfileIncomplete) {
+        // This is a social login user completing their profile
+        // We need to call the complete-profile endpoint
+        const res = await fetch('/api/auth/complete-profile', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            firstName,
+            lastName,
+            gender,
+            birthDate,
+            email: typedSession.user.email,
+          }),
+        });
+
+        if (!res.ok) {
+          const errorData = await res.json();
+          throw new Error(errorData.message || 'Error al completar el perfil');
+        }
+
+        const data = await res.json();
+        
+        // Establish backend session with the new tokens
+        await signIn('credentials', {
+          redirect: false,
+          accessToken: data.access_token,
+          refreshToken: data.refresh_token,
+        });
+
+        setSuccessMessage('Perfil completado correctamente');
+        setEditSection('none');
+        
+        // Redirect to home after successful completion
         setTimeout(() => {
           router.push('/');
         }, 2000);
+      } else {
+        // Regular profile update
+        const id = typedSession.user.id;
+        const res = await fetch(`/api/users/${id}`,
+          {
+            method: 'PATCH',
+            credentials: 'include',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ firstName, lastName, gender, birthDate }),
+          });
+        if (res.ok) {
+          setSuccessMessage('Datos actualizados correctamente');
+          setEditSection('none');
+        } else {
+          setPersonalError('Error al actualizar');
+          setErrorMessage('Error al actualizar los datos');
+        }
       }
-    } else {
+    } catch (error) {
+      console.error('Profile update error:', error);
       setPersonalError('Error al actualizar');
-      setErrorMessage('Error al actualizar los datos');
+      setErrorMessage(error instanceof Error ? error.message : 'Error al actualizar los datos');
+    } finally {
+      setIsLoading(false);
     }
 
     // Track successful profile update
@@ -580,8 +625,9 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                               type="submit" 
                               variant="contained"
                               size="small"
+                              disabled={isLoading}
                             >
-                              Guardar
+                              {isLoading ? 'Guardando...' : 'Guardar'}
                             </Button>
                           </Box>
                         </Grid>
