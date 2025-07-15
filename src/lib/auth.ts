@@ -8,6 +8,7 @@ import FacebookProvider from 'next-auth/providers/facebook';
 interface ExtendedSession extends Session {
   accessToken: string;
   refreshToken: string;
+  profileIncomplete?: boolean;
 }
 
 interface JWTUser {
@@ -127,15 +128,51 @@ export const authOptions: AuthOptions = {
       // After social login, map session user.id to backend user ID
       if (account?.provider && token.email) {
         try {
+          // First try to find existing user by email
           const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
           const res = await fetch(apiUrl);
+          
           if (res.ok) {
+            // User exists, get their ID
             const backendUser = await res.json();
             if (backendUser && backendUser.id) {
               token.sub = backendUser.id.toString();
             }
+          } else if (res.status === 404) {
+            // User doesn't exist, create them via social login
+            console.log('[NextAuth] User not found, creating via social login');
+            
+            const socialLoginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                provider: account.provider,
+                accessToken: account.access_token,
+                user: {
+                  email: token.email,
+                  firstName: token.firstName || token.name?.split(' ')[0] || '',
+                  lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
+                },
+              }),
+            });
+            
+            if (socialLoginRes.ok) {
+              const socialData = await socialLoginRes.json();
+              console.log('[NextAuth] Social login successful:', socialData);
+              
+              if (socialData.user && socialData.user.id) {
+                token.sub = socialData.user.id.toString();
+              }
+              
+              // Store the profile incomplete status for later use
+              token.profileIncomplete = socialData.profileIncomplete;
+            } else {
+              console.log('[NextAuth] Social login failed:', socialLoginRes.status);
+            }
           }
-        } catch {}
+        } catch (error) {
+          console.log('[NextAuth] Error in social login flow:', error);
+        }
       }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
@@ -187,6 +224,12 @@ export const authOptions: AuthOptions = {
       if (token?.sub) {
         session.user.id = token.sub;
       }
+      
+      // Add profile incomplete status to session
+      if (token?.profileIncomplete) {
+        extendedSession.profileIncomplete = token.profileIncomplete as boolean;
+      }
+      
       return session;
     },
   },
