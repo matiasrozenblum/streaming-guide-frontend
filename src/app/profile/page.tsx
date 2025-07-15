@@ -6,11 +6,81 @@ import ProfileClient from '@/components/ProfileClient';
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   console.log('[ProfilePage] session:', session);
-  if (!session?.user || !session.user.id) {
-    console.log('[ProfilePage] No session or user.id, redirecting to /');
+  
+  // If no session at all, redirect to home
+  if (!session?.user) {
+    console.log('[ProfilePage] No session, redirecting to /');
     redirect('/');
   }
 
+  // If user has no ID, this is likely a new social login user
+  if (!session.user.id) {
+    console.log('[ProfilePage] User has no ID, handling as new social login');
+    
+    try {
+      // Call social login endpoint to create/update user
+      const socialLoginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          provider: 'google', // We'll need to determine this from the session
+          accessToken: session.accessToken,
+          user: {
+            email: session.user.email,
+            firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
+            lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
+          },
+        }),
+      });
+      
+      if (socialLoginRes.ok) {
+        const socialData = await socialLoginRes.json();
+        console.log('[ProfilePage] Social login response:', socialData);
+        
+        if (socialData.profileIncomplete) {
+          // Profile is incomplete, show completion form
+          const initialUser = {
+            firstName: socialData.user?.firstName || session.user.firstName || '',
+            lastName: socialData.user?.lastName || session.user.lastName || '',
+            email: session.user.email || '',
+            phone: '',
+            gender: '',
+            birthDate: '',
+          };
+          return <ProfileClient initialUser={initialUser} isProfileIncomplete={true} />;
+        } else {
+          // Profile is complete, redirect to home
+          redirect('/');
+        }
+      } else {
+        console.log('[ProfilePage] Social login failed, status:', socialLoginRes.status);
+        // Fallback to empty user with incomplete profile
+        const initialUser = {
+          firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
+          lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
+          email: session.user.email || '',
+          phone: '',
+          gender: '',
+          birthDate: '',
+        };
+        return <ProfileClient initialUser={initialUser} isProfileIncomplete={true} />;
+      }
+    } catch (err) {
+      console.log('[ProfilePage] Error in social login:', err);
+      // Fallback to empty user with incomplete profile
+      const initialUser = {
+        firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
+        lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
+        email: session.user.email || '',
+        phone: '',
+        gender: '',
+        birthDate: '',
+      };
+      return <ProfileClient initialUser={initialUser} isProfileIncomplete={true} />;
+    }
+  }
+
+  // User has ID, proceed with normal flow
   // Fetch user data from the backend API
   let initialUser = { firstName: '', lastName: '', email: '', phone: '', gender: '', birthDate: '' };
   let isProfileIncomplete = false;
