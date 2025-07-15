@@ -106,6 +106,7 @@ interface ProfileClientProps {
     gender: string;
     birthDate: string;
   };
+  isProfileIncomplete?: boolean;
 }
 
 const genderTranslations: Record<string, string> = {
@@ -115,7 +116,7 @@ const genderTranslations: Record<string, string> = {
   rather_not_say: 'Prefiero no decir'
 };
 
-export default function ProfileClient({ initialUser }: ProfileClientProps) {
+export default function ProfileClient({ initialUser, isProfileIncomplete = false }: ProfileClientProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
@@ -128,10 +129,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       action: 'profile_page_visit',
       params: {
         has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
+        is_profile_incomplete: isProfileIncomplete,
       },
       userData: typedSession?.user
     });
-  }, [initialUser.firstName, initialUser.lastName, typedSession?.user]);
+  }, [initialUser.firstName, initialUser.lastName, typedSession?.user, isProfileIncomplete]);
 
   useEffect(() => {
     // If there is no real user, redirect to home
@@ -139,6 +141,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       router.push('/');
     }
   }, [typedSession, router]);
+
+  // If profile is incomplete, show a message and prevent navigation
+  useEffect(() => {
+    if (isProfileIncomplete) {
+      setSuccessMessage('Por favor completa tu perfil para continuar');
+    }
+  }, [isProfileIncomplete]);
 
   // sección en edición
   const [editSection, setEditSection] =
@@ -213,6 +222,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     if (res.ok) {
       setSuccessMessage('Datos actualizados correctamente');
       setEditSection('none');
+      
+      // If profile was incomplete and now is complete, redirect to home
+      if (isProfileIncomplete && firstName && lastName && gender && birthDate) {
+        setTimeout(() => {
+          router.push('/');
+        }, 2000);
+      }
     } else {
       setPersonalError('Error al actualizar');
       setErrorMessage('Error al actualizar los datos');
@@ -227,6 +243,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           .filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields])
           .join(','),
         has_password_change: false,
+        was_profile_incomplete: isProfileIncomplete,
       },
       userData: typedSession?.user
     });
@@ -438,6 +455,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 onClick={() => router.push('/')}
                 variant="outlined"
                 size="large"
+                disabled={isProfileIncomplete}
+                title={isProfileIncomplete ? 'Completa tu perfil para continuar' : ''}
                 sx={{
                   borderRadius: 2,
                   textTransform: 'none',

@@ -192,6 +192,7 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: '/',
+    newUser: '/profile',
   },
   events: {
     async signOut() {

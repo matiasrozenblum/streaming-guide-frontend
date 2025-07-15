@@ -13,6 +13,8 @@ export default async function ProfilePage() {
 
   // Fetch user data from the backend API
   let initialUser = { firstName: '', lastName: '', email: '', phone: '', gender: '', birthDate: '' };
+  let isProfileIncomplete = false;
+  
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/${session.user.id}`;
     console.log('[ProfilePage] Fetching user from:', apiUrl);
@@ -32,6 +34,9 @@ export default async function ProfilePage() {
         gender: data.gender ?? '',
         birthDate: data.birthDate ? data.birthDate.slice(0, 10) : '',
       };
+      
+      // Check if profile is incomplete (missing required fields)
+      isProfileIncomplete = !data.firstName || !data.lastName || !data.gender || !data.birthDate;
     } else {
       console.log('[ProfilePage] Backend returned error, status:', res.status);
     }
@@ -40,5 +45,5 @@ export default async function ProfilePage() {
     // fallback to empty user
   }
 
-  return <ProfileClient initialUser={initialUser} />;
+  return <ProfileClient initialUser={initialUser} isProfileIncomplete={isProfileIncomplete} />;
 }
