@@ -110,8 +110,18 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
+      console.log('[NextAuth JWT] JWT callback called with:', {
+        hasToken: !!token,
+        hasUser: !!user,
+        hasAccount: !!account,
+        accountProvider: account?.provider,
+        tokenEmail: token.email,
+        tokenSub: token.sub
+      });
+      
       // On login, persist tokens and profile info
       if (user) {
+        console.log('[NextAuth JWT] User object present:', user);
         const u = user as JWTUser;
         token.accessToken = u.accessToken || token.accessToken;
         token.refreshToken = u.refreshToken || token.refreshToken;
@@ -127,22 +137,32 @@ export const authOptions: AuthOptions = {
       }
       // After social login, map session user.id to backend user ID
       if (account?.provider && token.email) {
+        console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
+        console.log('[NextAuth JWT] Token email:', token.email);
+        
         try {
           // First try to find existing user by email
           const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
+          console.log('[NextAuth JWT] Checking if user exists at:', apiUrl);
           const res = await fetch(apiUrl);
+          console.log('[NextAuth JWT] User lookup response status:', res.status);
           
           if (res.ok) {
             // User exists, get their ID
             const backendUser = await res.json();
+            console.log('[NextAuth JWT] User found:', backendUser);
             if (backendUser && backendUser.id) {
               token.sub = backendUser.id.toString();
+              console.log('[NextAuth JWT] Set token.sub to:', token.sub);
             }
           } else if (res.status === 404) {
             // User doesn't exist, create them via social login
-            console.log('[NextAuth] User not found, creating via social login');
+            console.log('[NextAuth JWT] User not found, creating via social login');
             
-            const socialLoginRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
+            const socialLoginUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`;
+            console.log('[NextAuth JWT] Calling social login at:', socialLoginUrl);
+            
+            const socialLoginRes = await fetch(socialLoginUrl, {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -156,23 +176,33 @@ export const authOptions: AuthOptions = {
               }),
             });
             
+            console.log('[NextAuth JWT] Social login response status:', socialLoginRes.status);
+            
             if (socialLoginRes.ok) {
               const socialData = await socialLoginRes.json();
-              console.log('[NextAuth] Social login successful:', socialData);
+              console.log('[NextAuth JWT] Social login successful:', socialData);
               
               if (socialData.user && socialData.user.id) {
                 token.sub = socialData.user.id.toString();
+                console.log('[NextAuth JWT] Set token.sub to:', token.sub);
               }
               
               // Store the profile incomplete status for later use
               token.profileIncomplete = socialData.profileIncomplete;
+              console.log('[NextAuth JWT] Profile incomplete:', token.profileIncomplete);
             } else {
-              console.log('[NextAuth] Social login failed:', socialLoginRes.status);
+              console.log('[NextAuth JWT] Social login failed:', socialLoginRes.status);
+              const errorText = await socialLoginRes.text();
+              console.log('[NextAuth JWT] Social login error response:', errorText);
             }
+          } else {
+            console.log('[NextAuth JWT] Unexpected response status:', res.status);
           }
         } catch (error) {
-          console.log('[NextAuth] Error in social login flow:', error);
+          console.log('[NextAuth JWT] Error in social login flow:', error);
         }
+      } else {
+        console.log('[NextAuth JWT] Not a social login or missing email. Account provider:', account?.provider, 'Token email:', token.email);
       }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
