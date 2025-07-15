@@ -493,7 +493,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 type="button"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
-                  window.location.href = '/auth/social-callback?provider=google';
+                  signIn('google', { callbackUrl: '/profile' });
                 }}
                 disabled={isLoading}
               >
@@ -504,7 +504,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 type="button"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
-                  window.location.href = '/auth/social-callback?provider=facebook';
+                  signIn('facebook', { callbackUrl: '/profile' });
                 }}
                 disabled={isLoading}
               >
