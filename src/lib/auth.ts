@@ -61,6 +61,13 @@ export const authOptions: AuthOptions = {
     GoogleProvider({
       clientId: process.env.GOOGLE_CLIENT_ID!,
       clientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          prompt: "consent",
+          access_type: "offline",
+          response_type: "code"
+        }
+      },
       profile(profile) {
         // Google returns name, email, picture, sometimes given_name/family_name
         return {
@@ -77,6 +84,11 @@ export const authOptions: AuthOptions = {
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
+      authorization: {
+        params: {
+          scope: 'email public_profile'
+        }
+      },
       profile(profile) {
         // Facebook returns id, name, email, picture, sometimes first_name/last_name
         return {
