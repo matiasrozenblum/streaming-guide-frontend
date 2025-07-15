@@ -225,6 +225,22 @@ export const authOptions: AuthOptions = {
         } catch (error) {
           console.log('[NextAuth JWT] Error looking up user on subsequent call:', error);
         }
+      } else if (token.sub && token.profileIncomplete) {
+        // Check if profile is now complete (user has gender and birthDate)
+        console.log('[NextAuth JWT] Checking if profile is now complete for user:', token.sub);
+        try {
+          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/${token.sub}`;
+          const res = await fetch(apiUrl);
+          if (res.ok) {
+            const backendUser = await res.json();
+            if (backendUser.gender && backendUser.birthDate) {
+              console.log('[NextAuth JWT] Profile is now complete, removing profileIncomplete flag');
+              token.profileIncomplete = false;
+            }
+          }
+        } catch (error) {
+          console.log('[NextAuth JWT] Error checking profile completion:', error);
+        }
       } else {
         console.log('[NextAuth JWT] Not a social login or missing email. Account provider:', account?.provider, 'Token email:', token.email);
       }

@@ -41,7 +41,6 @@ import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import dayjs from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
-import { signIn } from 'next-auth/react';
 
 const MotionBox = motion(Box);
 
@@ -219,16 +218,17 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
     try {
       if (isProfileIncomplete) {
         // This is a social login user completing their profile
-        // We need to call the complete-profile endpoint
-        const res = await fetch('/api/auth/complete-profile', {
-          method: 'POST',
+        // Since the user already exists in the backend, we just need to update their profile
+        const id = typedSession.user.id;
+        const res = await fetch(`/api/users/${id}`, {
+          method: 'PATCH',
+          credentials: 'include',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            firstName,
-            lastName,
-            gender,
-            birthDate,
-            email: typedSession.user.email,
+          body: JSON.stringify({ 
+            firstName, 
+            lastName, 
+            gender, 
+            birthDate 
           }),
         });
 
@@ -237,17 +237,11 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
           throw new Error(errorData.message || 'Error al completar el perfil');
         }
 
-        const data = await res.json();
-        
-        // Establish backend session with the new tokens
-        await signIn('credentials', {
-          redirect: false,
-          accessToken: data.access_token,
-          refreshToken: data.refresh_token,
-        });
-
         setSuccessMessage('Perfil completado correctamente');
         setEditSection('none');
+        
+        // Refresh the session to update the profile incomplete status
+        router.refresh();
         
         // Redirect to home after successful completion
         setTimeout(() => {
