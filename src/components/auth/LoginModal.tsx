@@ -515,7 +515,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
           </>
         )}
 
-        {step === 'existing-user' && (
+        {step === 'existing-user' && ( 
           <ExistingUserStep
             email={email}
             firstName={userFirstName}
