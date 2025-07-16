@@ -148,6 +148,7 @@ export const authOptions: AuthOptions = {
         shouldProcess: !!(account?.provider && token.email)
       });
       
+      // Always process social login if we have account and email, regardless of accessToken
       if (account?.provider && token.email) {
         console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
         console.log('[NextAuth JWT] Token email:', token.email);
@@ -230,12 +231,45 @@ export const authOptions: AuthOptions = {
     },
     async session({ session, token }) {
       console.log('[NextAuth Session] Session callback called with token.sub:', token.sub);
+      console.log('[NextAuth Session] Session user:', session.user);
       
-      // Map session user.id to backend user ID
+      // If we have email but no backend user ID, try to create user
+      if (session.user?.email && !session.user.id) {
+        console.log('[NextAuth Session] No user ID found, attempting to create user');
+        try {
+          const res = await fetch('/api/auth/social-login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              email: session.user.email,
+              firstName: session.user.name?.split(' ')[0] || '',
+              lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
+              provider: 'google' // We'll need to detect this properly
+            }),
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            console.log('[NextAuth Session] Social login successful:', data);
+            
+            if (data.user && data.user.id) {
+              session.user.id = data.user.id.toString();
+              console.log('[NextAuth Session] Set user ID to:', session.user.id);
+            }
+            
+            // Store profile incomplete status
+            (session as ExtendedSession).profileIncomplete = data.profileIncomplete;
+          }
+        } catch (error) {
+          console.log('[NextAuth Session] Error in social login:', error);
+        }
+      }
+      
+      // Map session user.id to backend user ID (existing logic)
       if (token.sub && token.sub.toString().length < 10) {
         // This is a backend user ID (small number)
         session.user.id = token.sub.toString();
-      } else if (token.email) {
+      } else if (token.email && !session.user.id) {
         // This might be a social provider ID, try to look up backend user
         try {
           const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${encodeURIComponent(token.email)}`);
