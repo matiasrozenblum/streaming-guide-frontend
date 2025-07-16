@@ -209,10 +209,12 @@ export const authOptions: AuthOptions = {
         } catch (error) {
           console.log('[NextAuth JWT] Error in social login flow:', error);
         }
-      } else if (token.email && !token.sub) {
+      } else if (token.email && (!token.sub || (token.sub && token.sub.toString().length > 10))) {
         // This might be a subsequent JWT call where account is not present
-        // Try to find the user by email to get the correct ID
-        console.log('[NextAuth JWT] No account but have email, looking up user');
+        // Or we have a social provider ID that's too long (Google/Facebook IDs are very long)
+        // Try to find the user by email to get the correct backend ID
+        console.log('[NextAuth JWT] No account but have email, or have social provider ID, looking up user');
+        console.log('[NextAuth JWT] Current token.sub:', token.sub);
         try {
           const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
           const res = await fetch(apiUrl);
@@ -296,8 +298,29 @@ export const authOptions: AuthOptions = {
       };
       // Set session.user.id to backend user ID
       if (token?.sub) {
-        session.user.id = token.sub;
-        console.log('[NextAuth Session] Set session.user.id to:', session.user.id);
+        // Check if we have a valid backend user ID (not a social provider ID)
+        const subStr = token.sub?.toString() || '';
+        if (subStr.length <= 10) {
+          // This looks like a valid backend user ID
+          session.user.id = token.sub as string;
+          console.log('[NextAuth Session] Set session.user.id to:', session.user.id);
+        } else {
+          // This is a social provider ID, we need to look up the backend user
+          console.log('[NextAuth Session] Detected social provider ID, looking up backend user');
+          try {
+            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email || '')}`;
+            const res = await fetch(apiUrl);
+            if (res.ok) {
+              const backendUser = await res.json();
+              if (backendUser && backendUser.id) {
+                session.user.id = backendUser.id.toString();
+                console.log('[NextAuth Session] Found backend user ID:', session.user.id);
+              }
+            }
+          } catch (error) {
+            console.log('[NextAuth Session] Error looking up backend user:', error);
+          }
+        }
       }
       
       // Add profile incomplete status to session
