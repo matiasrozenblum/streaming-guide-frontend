@@ -117,10 +117,7 @@ export const authOptions: AuthOptions = {
         accountProvider: account?.provider,
         tokenEmail: token.email,
         tokenSub: token.sub,
-        tokenSubLength: token.sub?.toString().length
       });
-      console.log('[NextAuth JWT] Full token object:', JSON.stringify(token, null, 2));
-      console.log('[NextAuth JWT] Full account object:', JSON.stringify(account, null, 2));
       
       // On login, persist tokens and profile info
       if (user) {
@@ -138,28 +135,22 @@ export const authOptions: AuthOptions = {
         token.lastName = (user as MaybeNamedUser)?.lastName || token.lastName || (user.name?.split(' ').slice(1).join(' ') ?? '');
         token.image = user.image || token.image;
       }
-      // After social login, map session user.id to backend user ID
-      if (account?.provider && token.email) {
+      
+      // After social login, create user in backend
+      if (account?.provider && token.email && !token.accessToken) {
         console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
         console.log('[NextAuth JWT] Token email:', token.email);
-        console.log('[NextAuth JWT] Current token.sub:', token.sub);
         
         try {
-          // Always call social login to create/update user
-          const socialLoginUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`;
-          console.log('[NextAuth JWT] Calling social login at:', socialLoginUrl);
-          
-          const socialLoginRes = await fetch(socialLoginUrl, {
+          // Call our social login endpoint to create user
+          const socialLoginRes = await fetch('/api/auth/social-login', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
+              email: token.email,
+              firstName: token.firstName || token.name?.split(' ')[0] || '',
+              lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
               provider: account.provider,
-              accessToken: account.access_token,
-              user: {
-                email: token.email,
-                firstName: token.firstName || token.name?.split(' ')[0] || '',
-                lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
-              },
             }),
           });
           
@@ -169,16 +160,17 @@ export const authOptions: AuthOptions = {
             const socialData = await socialLoginRes.json();
             console.log('[NextAuth JWT] Social login successful:', socialData);
             
+            // Set the backend user ID
             if (socialData.user && socialData.user.id) {
               token.sub = socialData.user.id.toString();
-              console.log('[NextAuth JWT] Set token.sub to:', token.sub);
+              console.log('[NextAuth JWT] Set token.sub to backend user ID:', token.sub);
             }
             
-            // Store the profile incomplete status for later use
+            // Store the profile incomplete status
             token.profileIncomplete = socialData.profileIncomplete;
             console.log('[NextAuth JWT] Profile incomplete:', token.profileIncomplete);
             
-            // If we have backend tokens, use them instead of the social tokens
+            // If we have backend tokens, use them
             if (socialData.access_token && socialData.refresh_token) {
               token.accessToken = socialData.access_token;
               token.refreshToken = socialData.refresh_token;
@@ -192,48 +184,8 @@ export const authOptions: AuthOptions = {
         } catch (error) {
           console.log('[NextAuth JWT] Error in social login flow:', error);
         }
-      } else if (token.email && token.sub && token.sub.toString().length > 10) {
-        // We have a social provider ID, we need to look up the backend user
-        console.log('[NextAuth JWT] Have social provider ID, looking up backend user');
-        console.log('[NextAuth JWT] Current token.sub:', token.sub);
-        try {
-          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email)}`;
-          const res = await fetch(apiUrl);
-          if (res.ok) {
-            const backendUser = await res.json();
-            if (backendUser && backendUser.id) {
-              token.sub = backendUser.id.toString();
-              console.log('[NextAuth JWT] Found user ID on subsequent call:', token.sub);
-            }
-          }
-        } catch (error) {
-          console.log('[NextAuth JWT] Error looking up user on subsequent call:', error);
-        }
-      } else if (token.sub && token.profileIncomplete) {
-        // Check if profile is now complete (user has gender and birthDate)
-        console.log('[NextAuth JWT] Checking if profile is now complete for user:', token.sub);
-        try {
-          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/${token.sub}`;
-          const res = await fetch(apiUrl);
-          if (res.ok) {
-            const backendUser = await res.json();
-            if (backendUser.gender && backendUser.birthDate) {
-              console.log('[NextAuth JWT] Profile is now complete, removing profileIncomplete flag');
-              token.profileIncomplete = false;
-            }
-          }
-        } catch (error) {
-          console.log('[NextAuth JWT] Error checking profile completion:', error);
-        }
-      } else {
-        console.log('[NextAuth JWT] Not a social login or missing email. Account provider:', account?.provider, 'Token email:', token.email);
       }
       
-      // If this is a social login and we have a profileIncomplete flag, we need to redirect to profile
-      if (token.profileIncomplete && typeof window !== 'undefined') {
-        console.log('[NextAuth JWT] Profile incomplete, redirecting to /profile');
-        window.location.href = '/profile';
-      }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
         const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
@@ -251,81 +203,53 @@ export const authOptions: AuthOptions = {
             if (res.ok) {
               const data = await res.json();
               token.accessToken = data.access_token;
-              token.refreshToken = data.refresh_token || token.refreshToken;
+              token.refreshToken = data.refresh_token;
             } else {
-              await signOut({ redirect: true, callbackUrl: '/' });
-              return { ...token, error: 'RefreshAccessTokenError' };
+              // Refresh failed, sign out
+              await signOut({ redirect: false });
             }
-          } catch {
-            await signOut({ redirect: true, callbackUrl: '/' });
-            return { ...token, error: 'RefreshAccessTokenError' };
+          } catch (error) {
+            console.error('Token refresh error:', error);
+            await signOut({ redirect: false });
           }
         }
       }
+      
       return token;
     },
     async session({ session, token }) {
       console.log('[NextAuth Session] Session callback called with token.sub:', token.sub);
-      console.log('[NextAuth Session] Token profileIncomplete:', token.profileIncomplete);
       
-      const extendedSession = session as ExtendedSession;
-      extendedSession.accessToken = token.accessToken as string;
-      extendedSession.refreshToken = token.refreshToken as string;
-      session.user = {
-        ...session.user,
-        id: (token.sub as string) || '',
-        name: (token.name as string) || '',
-        email: (token.email as string) || '',
-        role: (token.role as string) || 'user',
-        gender: (token.gender as string) || undefined,
-        birthDate: (token.birthDate as string) || undefined,
-        firstName: (token.firstName as string) || '',
-        lastName: (token.lastName as string) || '',
-        image: (token.image as string) || '',
-      };
-      // Set session.user.id to backend user ID
-      if (token?.sub) {
-        const subStr = token.sub?.toString() || '';
-        if (subStr.length <= 10) {
-          // This looks like a valid backend user ID
-          session.user.id = token.sub as string;
-          console.log('[NextAuth Session] Set session.user.id to:', session.user.id);
-        } else {
-          // This is a social provider ID, we need to look up the backend user
-          console.log('[NextAuth Session] Detected social provider ID, looking up backend user');
-          try {
-            const apiUrl = `${process.env.NEXT_PUBLIC_API_URL || ''}/users/email/${encodeURIComponent(token.email || '')}`;
-            const res = await fetch(apiUrl);
-            if (res.ok) {
-              const backendUser = await res.json();
-              if (backendUser && backendUser.id) {
-                session.user.id = backendUser.id.toString();
-                console.log('[NextAuth Session] Found backend user ID:', session.user.id);
-              }
+      // Map session user.id to backend user ID
+      if (token.sub && token.sub.toString().length < 10) {
+        // This is a backend user ID (small number)
+        session.user.id = token.sub.toString();
+      } else if (token.email) {
+        // This might be a social provider ID, try to look up backend user
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${encodeURIComponent(token.email)}`);
+          if (res.ok) {
+            const backendUser = await res.json();
+            if (backendUser && backendUser.id) {
+              session.user.id = backendUser.id.toString();
+              console.log('[NextAuth Session] Found backend user ID:', session.user.id);
             }
-          } catch (error) {
-            console.log('[NextAuth Session] Error looking up backend user:', error);
           }
+        } catch (error) {
+          console.log('[NextAuth Session] Error looking up user:', error);
         }
       }
       
-      // Add profile incomplete status to session
-      if (token?.profileIncomplete) {
-        extendedSession.profileIncomplete = token.profileIncomplete as boolean;
-        console.log('[NextAuth Session] Set profileIncomplete to:', extendedSession.profileIncomplete);
-      }
+      // Add backend tokens to session
+      (session as ExtendedSession).accessToken = token.accessToken as string;
+      (session as ExtendedSession).refreshToken = token.refreshToken as string;
+      (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
       
-      console.log('[NextAuth Session] Final session.user.id:', session.user.id);
       return session;
     },
   },
   pages: {
     signIn: '/',
-  },
-  events: {
-    async signOut() {
-      await fetch('/api/auth/logout', { method: 'POST' });
-    },
   },
 };
 
