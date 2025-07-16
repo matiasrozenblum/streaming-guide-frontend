@@ -146,6 +146,30 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   useEffect(() => {
     if (isProfileIncomplete) {
       setSuccessMessage('Por favor completa tu perfil para continuar');
+      
+      // Block navigation when profile is incomplete
+      const handleBeforeUnload = (e: BeforeUnloadEvent) => {
+        e.preventDefault();
+        e.returnValue = '';
+      };
+      
+      const handlePopState = (e: PopStateEvent) => {
+        e.preventDefault();
+        window.history.pushState(null, '', '/profile');
+        setErrorMessage('Por favor completa tu perfil antes de salir');
+      };
+      
+      // Add event listeners
+      window.addEventListener('beforeunload', handleBeforeUnload);
+      window.addEventListener('popstate', handlePopState);
+      
+      // Push current state to prevent back button
+      window.history.pushState(null, '', '/profile');
+      
+      return () => {
+        window.removeEventListener('beforeunload', handleBeforeUnload);
+        window.removeEventListener('popstate', handlePopState);
+      };
     }
   }, [isProfileIncomplete]);
 
@@ -505,6 +529,32 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                 Volver
               </Button>
             </Box>
+            {isProfileIncomplete && (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 3,
+                  mb: 3,
+                  background: (theme) => theme.palette.mode === 'light'
+                    ? 'linear-gradient(135deg, #fff3cd 0%, #ffeaa7 100%)'
+                    : 'linear-gradient(135deg, #2d3748 0%, #4a5568 100%)',
+                  border: '2px solid',
+                  borderColor: 'warning.main',
+                  borderRadius: 2,
+                }}
+              >
+                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2, mb: 2 }}>
+                  <LockOutlinedIcon color="warning" />
+                  <Typography variant="h6" color="warning.dark" sx={{ fontWeight: 600 }}>
+                    Perfil incompleto
+                  </Typography>
+                </Box>
+                <Typography variant="body1" color="text.secondary">
+                  Para continuar usando la aplicación, necesitas completar tu perfil con tu fecha de nacimiento y género.
+                </Typography>
+              </Paper>
+            )}
+            
             <Stack spacing={2}>
               <ProfileSection
                 title="Datos personales"
