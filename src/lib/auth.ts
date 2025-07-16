@@ -116,8 +116,11 @@ export const authOptions: AuthOptions = {
         hasAccount: !!account,
         accountProvider: account?.provider,
         tokenEmail: token.email,
-        tokenSub: token.sub
+        tokenSub: token.sub,
+        tokenSubLength: token.sub?.toString().length
       });
+      console.log('[NextAuth JWT] Full token object:', JSON.stringify(token, null, 2));
+      console.log('[NextAuth JWT] Full account object:', JSON.stringify(account, null, 2));
       
       // On login, persist tokens and profile info
       if (user) {
@@ -225,6 +228,12 @@ export const authOptions: AuthOptions = {
       } else {
         console.log('[NextAuth JWT] Not a social login or missing email. Account provider:', account?.provider, 'Token email:', token.email);
       }
+      
+      // If this is a social login and we have a profileIncomplete flag, we need to redirect to profile
+      if (token.profileIncomplete && typeof window !== 'undefined') {
+        console.log('[NextAuth JWT] Profile incomplete, redirecting to /profile');
+        window.location.href = '/profile';
+      }
       // Check if access token is about to expire
       if (token.accessToken && token.refreshToken) {
         const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
@@ -312,7 +321,6 @@ export const authOptions: AuthOptions = {
   },
   pages: {
     signIn: '/',
-    newUser: '/profile',
   },
   events: {
     async signOut() {
