@@ -139,6 +139,7 @@ export const authOptions: AuthOptions = {
       if (account?.provider && token.email) {
         console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
         console.log('[NextAuth JWT] Token email:', token.email);
+        console.log('[NextAuth JWT] Current token.sub:', token.sub);
         
         try {
           // First try to find existing user by email
@@ -275,6 +276,9 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log('[NextAuth Session] Session callback called with token.sub:', token.sub);
+      console.log('[NextAuth Session] Token profileIncomplete:', token.profileIncomplete);
+      
       const extendedSession = session as ExtendedSession;
       extendedSession.accessToken = token.accessToken as string;
       extendedSession.refreshToken = token.refreshToken as string;
@@ -293,13 +297,16 @@ export const authOptions: AuthOptions = {
       // Set session.user.id to backend user ID
       if (token?.sub) {
         session.user.id = token.sub;
+        console.log('[NextAuth Session] Set session.user.id to:', session.user.id);
       }
       
       // Add profile incomplete status to session
       if (token?.profileIncomplete) {
         extendedSession.profileIncomplete = token.profileIncomplete as boolean;
+        console.log('[NextAuth Session] Set profileIncomplete to:', extendedSession.profileIncomplete);
       }
       
+      console.log('[NextAuth Session] Final session.user.id:', session.user.id);
       return session;
     },
   },
