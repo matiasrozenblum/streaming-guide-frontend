@@ -10,7 +10,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 import EmailStep from './steps/EmailStep';
 import CodeStep from './steps/CodeStep';
 import ProfileStep from './steps/ProfileStep';
@@ -145,6 +145,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -249,6 +250,17 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       });
     }
   }, [open, isUserExisting, closeTooltip]);
+
+  // Monitor session changes
+  useEffect(() => {
+    console.log('[LoginModal] Session changed:', {
+      status,
+      hasSession: !!session,
+      userId: session?.user?.id,
+      userEmail: session?.user?.email,
+      userName: session?.user?.name
+    });
+  }, [session, status]);
 
   // Track step changes (for funnel analysis)
   useEffect(() => {
@@ -493,7 +505,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 type="button"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
-                  signIn('google');
+                  console.log('[LoginModal] Google login button clicked');
+                  signIn('google', { callbackUrl: '/auth/callback' });
                 }}
                 disabled={isLoading}
               >
@@ -504,7 +517,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 type="button"
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
-                  signIn('facebook');
+                  console.log('[LoginModal] Facebook login button clicked');
+                  signIn('facebook', { callbackUrl: '/auth/callback' });
                 }}
                 disabled={isLoading}
               >
