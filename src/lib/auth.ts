@@ -117,6 +117,9 @@ export const authOptions: AuthOptions = {
         accountProvider: account?.provider,
         tokenEmail: token.email,
         tokenSub: token.sub,
+        tokenKeys: Object.keys(token),
+        userKeys: user ? Object.keys(user) : null,
+        accountKeys: account ? Object.keys(account) : null,
       });
       
       // On login, persist tokens and profile info
@@ -137,7 +140,15 @@ export const authOptions: AuthOptions = {
       }
       
       // After social login, create user in backend
-      if (account?.provider && token.email && !token.accessToken) {
+      console.log('[NextAuth JWT] Checking social login conditions:', {
+        hasAccount: !!account,
+        accountProvider: account?.provider,
+        hasTokenEmail: !!token.email,
+        hasAccessToken: !!token.accessToken,
+        shouldProcess: !!(account?.provider && token.email)
+      });
+      
+      if (account?.provider && token.email) {
         console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
         console.log('[NextAuth JWT] Token email:', token.email);
         
