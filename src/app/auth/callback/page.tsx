@@ -64,8 +64,9 @@ export default function AuthCallback() {
         const data = await res.json();
         console.log('[Auth Callback] Auto-created user:', data);
         
-        // Force session refresh to get the new user ID
-        window.location.reload();
+        // Redirect to profile page instead of reloading
+        console.log('[Auth Callback] Redirecting to profile page');
+        window.location.href = '/profile';
       } else {
         console.error('[Auth Callback] Failed to create user:', res.status);
       }
