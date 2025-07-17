@@ -34,5 +34,9 @@ export default async function ProfilePage() {
     birthDate: '',
   };
   
-  return <ProfileClient initialUser={initialUser} isProfileIncomplete={isProfileIncomplete} />;
+  return <ProfileClient 
+    initialUser={initialUser} 
+    isProfileIncomplete={isProfileIncomplete} 
+    registrationToken={extendedSession.registrationToken}
+  />;
 }
