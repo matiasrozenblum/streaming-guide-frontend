@@ -42,6 +42,7 @@ import { useDeviceId } from '@/hooks/useDeviceId';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import dayjs from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
+import { SxProps, Theme } from '@mui/material/styles';
 
 const MotionBox = motion(Box);
 
@@ -61,7 +62,7 @@ const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'prim
   return 'primary';
 };
 
-const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.ReactNode; onEdit: () => void }) => (
+const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: React.ReactNode; onEdit: () => void; sx?: SxProps<Theme> }) => (
   <Paper
     elevation={0}
     sx={{
@@ -78,7 +79,8 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
         boxShadow: (theme) => theme.palette.mode === 'light'
           ? '0 8px 16px rgba(0,0,0,0.1)'
           : '0 8px 16px rgba(0,0,0,0.3)',
-      }
+      },
+      ...sx,
     }}
   >
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
@@ -219,6 +221,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   // sección en edición
   const [editSection, setEditSection] =
     useState<'none' | 'personal' | 'email' | 'phone' | 'password'>(isProfileIncomplete ? 'personal' : 'none');
+  // (Removed) const [passwordEditMode, setPasswordEditMode] = useState(isProfileIncomplete);
 
   // datos de usuario
   const [firstName, setFirstName] = useState(initialUser.firstName);
@@ -267,6 +270,11 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
       setErrorMessage('La fecha de nacimiento es obligatoria');
       return;
     }
+    if (isProfileIncomplete && !newPassword) {
+      setPersonalError('La contraseña es obligatoria');
+      setErrorMessage('La contraseña es obligatoria');
+      return;
+    }
     const birth = new Date(birthDate);
     const now = new Date();
     let age = now.getFullYear() - birth.getFullYear();
@@ -282,6 +290,8 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
     setIsLoading(true);
     try {
+      console.log('[ProfileClient] saveNames - isProfileIncomplete:', isProfileIncomplete);
+      console.log('[ProfileClient] saveNames - registrationToken:', registrationToken);
       if (isProfileIncomplete && registrationToken) {
         // Complete the profile for social login user
         const res = await fetch('/api/auth/complete-profile', {
@@ -293,7 +303,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
             lastName,
             gender: mapGenderToBackend(gender),
             birthDate,
-            password: '', // Social users don't need password initially
+            password: newPassword,
             deviceId,
           }),
         });
@@ -496,6 +506,11 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   };
 
   if (status !== 'authenticated') return null;
+
+  // Add orange border to personal data section if missing required fields
+  const personalSectionError = isProfileIncomplete && (!birthDate || !gender || !firstName || !lastName);
+  // Add orange border to password section if missing password
+  const passwordSectionError = isProfileIncomplete && !newPassword;
 
   // --- Full UI from original ProfilePage ---
   return (
@@ -714,6 +729,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                   )
                 }
                 onEdit={() => setEditSection('personal')}
+                sx={{ border: personalSectionError ? '2px solid orange' : undefined }}
               />
               <ProfileSection
                 title="Correo electrónico"
@@ -808,6 +824,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                   <Typography variant="body1">••••••••</Typography>
                 }
                 onEdit={() => setEditSection('password')}
+                sx={{ border: passwordSectionError ? '2px solid orange' : undefined }}
               />
               
               <ProfileSection
