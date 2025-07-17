@@ -506,7 +506,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
                   console.log('[LoginModal] Google login button clicked');
-                  signIn('google', { callbackUrl: '/auth/callback' });
+                  signIn('google', { callbackUrl: '/profile' });
                 }}
                 disabled={isLoading}
               >
@@ -518,7 +518,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                 onClick={() => {
                   console.log('[LoginModal] Facebook login button clicked');
-                  signIn('facebook', { callbackUrl: '/auth/callback' });
+                  signIn('facebook', { callbackUrl: '/profile' });
                 }}
                 disabled={isLoading}
               >

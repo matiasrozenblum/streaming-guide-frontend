@@ -265,6 +265,17 @@ export const authOptions: AuthOptions = {
         }
       }
       
+      // Always ensure we have backend tokens if available
+      if (token.accessToken && token.refreshToken) {
+        (session as ExtendedSession).accessToken = token.accessToken as string;
+        (session as ExtendedSession).refreshToken = token.refreshToken as string;
+      }
+      
+      // Always ensure profile incomplete status is passed through
+      if (token.profileIncomplete !== undefined) {
+        (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
+      }
+      
       // Map session user.id to backend user ID (existing logic)
       if (token.sub && token.sub.toString().length < 10) {
         // This is a backend user ID (small number)

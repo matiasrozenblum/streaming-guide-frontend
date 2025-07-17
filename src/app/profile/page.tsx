@@ -10,6 +10,9 @@ interface ExtendedSession {
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
   console.log('[ProfilePage] session:', session);
+  console.log('[ProfilePage] session.user:', session?.user);
+  console.log('[ProfilePage] session.user.id:', session?.user?.id);
+  console.log('[ProfilePage] session.profileIncomplete:', (session as ExtendedSession)?.profileIncomplete);
   
   // If no session at all, redirect to home
   if (!session?.user) {
@@ -24,7 +27,35 @@ export default async function ProfilePage() {
 
   // If user has no ID, this is likely a new social login user
   if (!session.user.id) {
-    console.log('[ProfilePage] User has no ID, showing empty profile form');
+    console.log('[ProfilePage] User has no ID, attempting to create user');
+    
+    // Try to create the user
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: session.user.email,
+          firstName: session.user.name?.split(' ')[0] || '',
+          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
+          provider: 'google'
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[ProfilePage] User created successfully:', data);
+        
+        // Redirect to refresh the session with the new user ID
+        redirect('/profile');
+      } else {
+        console.log('[ProfilePage] Failed to create user:', res.status);
+      }
+    } catch (error) {
+      console.log('[ProfilePage] Error creating user:', error);
+    }
+    
+    // Fallback to showing empty profile form
     const initialUser = {
       firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
       lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
