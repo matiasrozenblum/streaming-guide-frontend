@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Typography, Container, Paper } from '@mui/material';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import ProfileStep from './auth/steps/ProfileStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 
@@ -68,7 +68,15 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       const data = await res.json();
       console.log('[ProfileCompletionForm] Success response:', data);
       
-      // After successful profile completion, establish backend session
+      // Sign out completely to clear the old session
+      console.log('[ProfileCompletionForm] Signing out to clear old session...');
+      await signOut({ redirect: false });
+      
+      // Wait a moment for sign out to complete
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Sign in with the new backend credentials
+      console.log('[ProfileCompletionForm] Signing in with new credentials...');
       const signInResult = await signIn('credentials', {
         redirect: false,
         accessToken: data.access_token,
