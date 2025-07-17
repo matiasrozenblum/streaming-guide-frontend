@@ -8,6 +8,37 @@ export default function AuthCallback() {
   const searchParams = useSearchParams();
   const { data: session, status } = useSession();
   
+  const createUserFromSession = async () => {
+    if (!session?.user?.email) return;
+    
+    console.log('[Auth Callback] Creating user from session data');
+    try {
+      const res = await fetch('/api/auth/social-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          email: session.user.email,
+          firstName: session.user.name?.split(' ')[0] || '',
+          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
+          provider: 'google'
+        }),
+      });
+      
+      if (res.ok) {
+        const data = await res.json();
+        console.log('[Auth Callback] Auto-created user:', data);
+        
+        // Redirect to profile page instead of reloading
+        console.log('[Auth Callback] Redirecting to profile page');
+        window.location.href = '/profile';
+      } else {
+        console.error('[Auth Callback] Failed to create user:', res.status);
+      }
+    } catch (error) {
+      console.error('[Auth Callback] Error creating user:', error);
+    }
+  };
+  
   useEffect(() => {
     console.log('[Auth Callback] Page loaded');
     console.log('[Auth Callback] Search params:', Object.fromEntries(searchParams.entries()));
@@ -42,38 +73,7 @@ export default function AuthCallback() {
     
     // This page will be called after OAuth redirect
     // We can see what data NextAuth provides
-  }, [searchParams, session, status]);
-  
-  const createUserFromSession = async () => {
-    if (!session?.user?.email) return;
-    
-    console.log('[Auth Callback] Creating user from session data');
-    try {
-      const res = await fetch('/api/auth/social-login', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: session.user.email,
-          firstName: session.user.name?.split(' ')[0] || '',
-          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-          provider: 'google'
-        }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        console.log('[Auth Callback] Auto-created user:', data);
-        
-        // Redirect to profile page instead of reloading
-        console.log('[Auth Callback] Redirecting to profile page');
-        window.location.href = '/profile';
-      } else {
-        console.error('[Auth Callback] Failed to create user:', res.status);
-      }
-    } catch (error) {
-      console.error('[Auth Callback] Error creating user:', error);
-    }
-  };
+  }, [searchParams, session, status, createUserFromSession]);
   
   const testSocialLogin = async () => {
     console.log('[Auth Callback] Testing social login manually');
