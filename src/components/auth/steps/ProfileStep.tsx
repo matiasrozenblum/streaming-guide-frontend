@@ -22,6 +22,7 @@ interface ProfileStepProps {
   error?: string;
   requirePassword?: boolean;
   isLoading?: boolean;
+  showBackButton?: boolean;
 }
 
 export default function ProfileStep({
@@ -34,6 +35,7 @@ export default function ProfileStep({
   onBack,
   requirePassword = false,
   isLoading = false,
+  showBackButton = true,
 }: ProfileStepProps) {
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
@@ -173,14 +175,16 @@ export default function ProfileStep({
         </Alert>
       )}
       <Box sx={{ display: 'flex', gap: 1 }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          onClick={onBack}
-        >
-          Volver
-        </Button>
+        {showBackButton && (
+          <Button
+            variant="outlined"
+            startIcon={<ArrowBackIosNewIcon fontSize="small" />}
+            fullWidth
+            onClick={onBack}
+          >
+            Volver
+          </Button>
+        )}
         <Button
           type="submit"
           variant="contained"
