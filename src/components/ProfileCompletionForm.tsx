@@ -2,8 +2,7 @@
 
 import React, { useState } from 'react';
 import { Box, Typography, Container, Paper } from '@mui/material';
-import { signIn } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
+import { signIn, useSession } from 'next-auth/react';
 import ProfileStep from './auth/steps/ProfileStep';
 import { useDeviceId } from '@/hooks/useDeviceId';
 
@@ -19,53 +18,87 @@ interface ProfileCompletionFormProps {
   };
 }
 
+const mapGenderToBackend = (g: string) => {
+  switch (g) {
+    case 'masculino': return 'male';
+    case 'femenino': return 'female';
+    case 'no_binario': return 'non_binary';
+    case 'prefiero_no_decir': return 'rather_not_say';
+    default: return 'rather_not_say';
+  }
+};
+
 export default function ProfileCompletionForm({ registrationToken, initialUser }: ProfileCompletionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState('');
-  const router = useRouter();
   const deviceId = useDeviceId();
+  const { data: session, status } = useSession();
 
   const handleProfileCompletion = async (firstName: string, lastName: string, birthDate: string, gender: string, password?: string) => {
     setIsLoading(true);
     setError('');
     
+    const requestBody = {
+      registration_token: registrationToken,
+      firstName,
+      lastName,
+      password: password || '',
+      gender: mapGenderToBackend(gender),
+      birthDate,
+      deviceId,
+    };
+    
+    console.log('[ProfileCompletionForm] Sending request:', requestBody);
+    
     try {
       const res = await fetch('/api/auth/complete-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          registration_token: registrationToken,
-          firstName,
-          lastName,
-          password: password || '',
-          gender,
-          birthDate,
-          deviceId,
-        }),
+        body: JSON.stringify(requestBody),
       });
+      
+      console.log('[ProfileCompletionForm] Response status:', res.status);
       
       if (!res.ok) {
         const body = await res.json();
+        console.log('[ProfileCompletionForm] Error response:', body);
         throw new Error(body.message || 'Error al completar el perfil');
       }
       
       const data = await res.json();
+      console.log('[ProfileCompletionForm] Success response:', data);
       
       // After successful profile completion, establish backend session
-      await signIn('credentials', {
+      const signInResult = await signIn('credentials', {
         redirect: false,
         accessToken: data.access_token,
         refreshToken: data.refresh_token,
       });
       
-      // Redirect to home page
-      router.push('/');
+      console.log('[ProfileCompletionForm] SignIn result:', signInResult);
+      
+      if (signInResult?.error) {
+        throw new Error('Error al establecer la sesión: ' + signInResult.error);
+      }
+      
+      // Wait a moment for the session to update
+      console.log('[ProfileCompletionForm] Waiting for session update...');
+      await new Promise(resolve => setTimeout(resolve, 100));
+      
+      // Force a page refresh to ensure session is updated
+      console.log('[ProfileCompletionForm] Redirecting to home...');
+      window.location.href = '/';
     } catch (err: unknown) {
+      console.log('[ProfileCompletionForm] Error:', err);
       setError(err instanceof Error ? err.message : 'Error al completar el perfil');
     } finally {
       setIsLoading(false);
     }
   };
+
+  // Log current session state
+  console.log('[ProfileCompletionForm] Current session:', session);
+  console.log('[ProfileCompletionForm] Session status:', status);
 
   return (
     <Container maxWidth="sm" sx={{ py: 4 }}>
@@ -89,9 +122,9 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
           error={error}
           onSubmit={handleProfileCompletion}
           onBack={() => {
-            // Prevent going back - user must complete profile
-            setError('Debes completar tu perfil para continuar');
+            // No going back - user must complete profile
           }}
+          showBackButton={false}
         />
       </Paper>
     </Container>
