@@ -511,7 +511,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                     onClick={async () => {
                       setIsLoading(true);
-                      await signIn('google', { callbackUrl: window.location.href });
+                      await signIn('google', { callbackUrl: '/profile' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
@@ -524,7 +524,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
                     onClick={async () => {
                       setIsLoading(true);
-                      await signIn('facebook', { callbackUrl: window.location.href });
+                      await signIn('facebook', { callbackUrl: '/profile' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
