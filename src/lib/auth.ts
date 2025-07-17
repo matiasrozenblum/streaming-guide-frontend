@@ -139,58 +139,34 @@ export const authOptions: AuthOptions = {
               provider: account.provider,
             }),
           });
+
           if (res.ok) {
             const data = await res.json();
-            if (data.profileIncomplete && data.registration_token) {
-              // Profile incomplete: store registration token and flag
-              token.registrationToken = data.registration_token;
+            console.log('[NextAuth JWT] Social login response:', data);
+
+            // Always set the backend user ID
+            token.sub = data.user.id.toString();
+
+            if (data.profileIncomplete) {
+              // Profile incomplete: set flag and redirect to profile
               token.profileIncomplete = true;
-              token.sub = data.user.id.toString();
-            } else if (data.access_token && data.refresh_token) {
-              // Profile complete: store backend tokens and user ID
+              token.registrationToken = data.registration_token;
+            } else {
+              // Profile complete: set backend tokens
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
-              token.sub = data.user.id.toString();
               token.profileIncomplete = false;
             }
-          } else {
-            // If backend call fails, do not set tokens
-            token.profileIncomplete = true;
           }
-        } catch {
-          // If backend call fails, do not set tokens
-          token.profileIncomplete = true;
+        } catch (error) {
+          console.error('[NextAuth JWT] Social login error:', error);
         }
       }
 
-      // Refresh backend token if about to expire
-      if (token.accessToken && token.refreshToken) {
-        const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
-        const exp = decoded.exp ? decoded.exp * 1000 : 0;
-        const now = Date.now();
-        if (exp - now < 5 * 60 * 1000) { // less than 5 min left
-          try {
-            const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/refresh`, {
-              method: 'POST',
-              headers: {
-                'Content-Type': 'application/json',
-                'Authorization': `Bearer ${token.refreshToken}`,
-              },
-            });
-            if (res.ok) {
-              const data = await res.json();
-              token.accessToken = data.access_token;
-              token.refreshToken = data.refresh_token;
-            }
-          } catch {
-            // Ignore refresh errors here
-          }
-        }
-      }
       return token;
     },
     async session({ session, token }) {
-      // Always set backend user ID if available
+      // Set backend user ID
       if (token.sub) {
         session.user.id = token.sub.toString();
       }
@@ -200,34 +176,22 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
       }
 
-      // If we have profileIncomplete flag but also have backend tokens, the profile was completed
-      if (token.profileIncomplete && token.accessToken && token.refreshToken) {
-        console.log('[NextAuth Session] Profile was completed, updating session');
-        (session as ExtendedSession).accessToken = token.accessToken as string;
-        (session as ExtendedSession).refreshToken = token.refreshToken as string;
-        (session as ExtendedSession).profileIncomplete = false;
-        return session;
-      }
-
-      // Pass through registrationToken and profileIncomplete
-      if (token.profileIncomplete) {
-        (session as ExtendedSession).profileIncomplete = true;
-        (session as ExtendedSession).registrationToken = token.registrationToken as string;
-        // Do not set backend tokens yet
-        return session;
-      }
-
-      // If profile is complete, set backend tokens and user info
+      // Set backend tokens and profile status
       if (token.accessToken && token.refreshToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
         (session as ExtendedSession).profileIncomplete = false;
+      } else if (token.profileIncomplete) {
+        (session as ExtendedSession).profileIncomplete = true;
+        (session as ExtendedSession).registrationToken = token.registrationToken as string;
       }
+
       return session;
     },
   },
   pages: {
-    signIn: '/',
+    signIn: '/sign-in',
+    newUser: '/profile'
   },
 };
 

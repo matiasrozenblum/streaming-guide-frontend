@@ -38,6 +38,7 @@ import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
+import { useDeviceId } from '@/hooks/useDeviceId';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import dayjs from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
@@ -107,6 +108,7 @@ interface ProfileClientProps {
     birthDate: string;
   };
   isProfileIncomplete?: boolean;
+  registrationToken?: string;
 }
 
 const genderTranslations: Record<string, string> = {
@@ -116,12 +118,23 @@ const genderTranslations: Record<string, string> = {
   rather_not_say: 'Prefiero no decir'
 };
 
-export default function ProfileClient({ initialUser, isProfileIncomplete = false }: ProfileClientProps) {
+const mapGenderToBackend = (g: string) => {
+  switch (g) {
+    case 'masculino': return 'male';
+    case 'femenino': return 'female';
+    case 'no_binario': return 'non_binary';
+    case 'prefiero_no_decir': return 'rather_not_say';
+    default: return 'rather_not_say';
+  }
+};
+
+export default function ProfileClient({ initialUser, isProfileIncomplete = false, registrationToken }: ProfileClientProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
   const { consent, openPreferences } = useCookieConsent();
+  const deviceId = useDeviceId();
 
   // Track profile page visit
   useEffect(() => {
@@ -173,9 +186,39 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
     }
   }, [isProfileIncomplete]);
 
+  // Fetch user data when component mounts and profile is complete
+  useEffect(() => {
+    if (!isProfileIncomplete && typedSession?.user?.id && typedSession.accessToken) {
+      const fetchUserData = async () => {
+        try {
+          const res = await fetch(`/api/users/${typedSession.user.id}`, {
+            headers: {
+              Authorization: `Bearer ${typedSession.accessToken}`,
+              'Content-Type': 'application/json'
+            },
+          });
+          
+          if (res.ok) {
+            const data = await res.json();
+            setFirstName(data.firstName || '');
+            setLastName(data.lastName || '');
+            setEmail(data.email || '');
+            setPhone(data.phone || '');
+            setGender(data.gender || '');
+            setBirthDate(data.birthDate ? data.birthDate.slice(0, 10) : '');
+          }
+        } catch (error) {
+          console.error('Error fetching user data:', error);
+        }
+      };
+      
+      fetchUserData();
+    }
+  }, [isProfileIncomplete, typedSession]);
+
   // sección en edición
   const [editSection, setEditSection] =
-    useState<'none' | 'personal' | 'email' | 'phone' | 'password'>('none');
+    useState<'none' | 'personal' | 'email' | 'phone' | 'password'>(isProfileIncomplete ? 'personal' : 'none');
 
   // datos de usuario
   const [firstName, setFirstName] = useState(initialUser.firstName);
@@ -238,39 +281,30 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
     }
 
     setIsLoading(true);
-    
     try {
-      if (isProfileIncomplete) {
-        // This is a social login user completing their profile
-        // Since the user already exists in the backend, we just need to update their profile
-        const id = typedSession.user.id;
-        const res = await fetch(`/api/users/${id}`, {
-          method: 'PATCH',
-          credentials: 'include',
+      if (isProfileIncomplete && registrationToken) {
+        // Complete the profile for social login user
+        const res = await fetch('/api/auth/complete-profile', {
+          method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ 
-            firstName, 
-            lastName, 
-            gender, 
-            birthDate 
+          body: JSON.stringify({
+            registration_token: registrationToken,
+            firstName,
+            lastName,
+            gender: mapGenderToBackend(gender),
+            birthDate,
+            password: '', // Social users don't need password initially
+            deviceId,
           }),
         });
-
         if (!res.ok) {
           const errorData = await res.json();
           throw new Error(errorData.message || 'Error al completar el perfil');
         }
-
         setSuccessMessage('Perfil completado correctamente');
         setEditSection('none');
-        
         // Refresh the session to update the profile incomplete status
-        router.refresh();
-        
-        // Redirect to home after successful completion
-        setTimeout(() => {
-          router.push('/');
-        }, 2000);
+        window.location.reload();
       } else {
         // Regular profile update
         const id = typedSession.user.id;
