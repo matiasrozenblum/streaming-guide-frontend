@@ -195,6 +195,11 @@ export const authOptions: AuthOptions = {
         session.user.id = token.sub.toString();
       }
 
+      // Set role from token
+      if (token.role) {
+        session.user.role = token.role as string;
+      }
+
       // If we have profileIncomplete flag but also have backend tokens, the profile was completed
       if (token.profileIncomplete && token.accessToken && token.refreshToken) {
         console.log('[NextAuth Session] Profile was completed, updating session');
