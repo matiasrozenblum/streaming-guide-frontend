@@ -1,7 +1,6 @@
 import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
-import { signOut } from 'next-auth/react'
 import GoogleProvider from 'next-auth/providers/google';
 import FacebookProvider from 'next-auth/providers/facebook';
 
@@ -9,6 +8,7 @@ interface ExtendedSession extends Session {
   accessToken: string;
   refreshToken: string;
   profileIncomplete?: boolean;
+  registrationToken?: string;
 }
 
 interface JWTUser {
@@ -110,21 +110,8 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, account }) {
-      console.log('[NextAuth JWT] JWT callback called with:', {
-        hasToken: !!token,
-        hasUser: !!user,
-        hasAccount: !!account,
-        accountProvider: account?.provider,
-        tokenEmail: token.email,
-        tokenSub: token.sub,
-        tokenKeys: Object.keys(token),
-        userKeys: user ? Object.keys(user) : null,
-        accountKeys: account ? Object.keys(account) : null,
-      });
-      
       // On login, persist tokens and profile info
       if (user) {
-        console.log('[NextAuth JWT] User object present:', user);
         const u = user as JWTUser;
         token.accessToken = u.accessToken || token.accessToken;
         token.refreshToken = u.refreshToken || token.refreshToken;
@@ -133,29 +120,16 @@ export const authOptions: AuthOptions = {
         token.birthDate = u.birthDate || token.birthDate;
         token.name = u.name || token.name;
         token.email = u.email || token.email;
-        // Social providers: extract first/last name if available
         token.firstName = (user as MaybeNamedUser)?.firstName || token.firstName || (user.name?.split(' ')[0] ?? '');
         token.lastName = (user as MaybeNamedUser)?.lastName || token.lastName || (user.name?.split(' ').slice(1).join(' ') ?? '');
         token.image = user.image || token.image;
       }
-      
-      // After social login, create user in backend
-      console.log('[NextAuth JWT] Checking social login conditions:', {
-        hasAccount: !!account,
-        accountProvider: account?.provider,
-        hasTokenEmail: !!token.email,
-        hasAccessToken: !!token.accessToken,
-        shouldProcess: !!(account?.provider && token.email)
-      });
-      
-      // Always process social login if we have account and email, regardless of accessToken
+
+      // Handle social login: call backend /auth/social-login immediately after OAuth
       if (account?.provider && token.email) {
-        console.log('[NextAuth JWT] Processing social login for provider:', account.provider);
-        console.log('[NextAuth JWT] Token email:', token.email);
-        
         try {
-          // Call our social login endpoint to create user
-          const socialLoginRes = await fetch('/api/auth/social-login', {
+          const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`;
+          const res = await fetch(apiUrl, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -165,40 +139,31 @@ export const authOptions: AuthOptions = {
               provider: account.provider,
             }),
           });
-          
-          console.log('[NextAuth JWT] Social login response status:', socialLoginRes.status);
-          
-          if (socialLoginRes.ok) {
-            const socialData = await socialLoginRes.json();
-            console.log('[NextAuth JWT] Social login successful:', socialData);
-            
-            // Set the backend user ID
-            if (socialData.user && socialData.user.id) {
-              token.sub = socialData.user.id.toString();
-              console.log('[NextAuth JWT] Set token.sub to backend user ID:', token.sub);
-            }
-            
-            // Store the profile incomplete status
-            token.profileIncomplete = socialData.profileIncomplete;
-            console.log('[NextAuth JWT] Profile incomplete:', token.profileIncomplete);
-            
-            // If we have backend tokens, use them
-            if (socialData.access_token && socialData.refresh_token) {
-              token.accessToken = socialData.access_token;
-              token.refreshToken = socialData.refresh_token;
-              console.log('[NextAuth JWT] Updated with backend tokens');
+          if (res.ok) {
+            const data = await res.json();
+            if (data.profileIncomplete && data.registration_token) {
+              // Profile incomplete: store registration token and flag
+              token.registrationToken = data.registration_token;
+              token.profileIncomplete = true;
+              token.sub = data.user.id.toString();
+            } else if (data.access_token && data.refresh_token) {
+              // Profile complete: store backend tokens and user ID
+              token.accessToken = data.access_token;
+              token.refreshToken = data.refresh_token;
+              token.sub = data.user.id.toString();
+              token.profileIncomplete = false;
             }
           } else {
-            console.log('[NextAuth JWT] Social login failed:', socialLoginRes.status);
-            const errorText = await socialLoginRes.text();
-            console.log('[NextAuth JWT] Social login error response:', errorText);
+            // If backend call fails, do not set tokens
+            token.profileIncomplete = true;
           }
-        } catch (error) {
-          console.log('[NextAuth JWT] Error in social login flow:', error);
+        } catch {
+          // If backend call fails, do not set tokens
+          token.profileIncomplete = true;
         }
       }
-      
-      // Check if access token is about to expire
+
+      // Refresh backend token if about to expire
       if (token.accessToken && token.refreshToken) {
         const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
         const exp = decoded.exp ? decoded.exp * 1000 : 0;
@@ -216,91 +181,32 @@ export const authOptions: AuthOptions = {
               const data = await res.json();
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
-            } else {
-              // Refresh failed, sign out
-              await signOut({ redirect: false });
             }
-          } catch (error) {
-            console.error('Token refresh error:', error);
-            await signOut({ redirect: false });
+          } catch {
+            // Ignore refresh errors here
           }
         }
       }
-      
       return token;
     },
     async session({ session, token }) {
-      console.log('[NextAuth Session] Session callback called with token.sub:', token.sub);
-      console.log('[NextAuth Session] Session user:', session.user);
-      
-      // If we have email but no backend user ID, try to create user
-      if (session.user?.email && !session.user.id) {
-        console.log('[NextAuth Session] No user ID found, attempting to create user');
-        try {
-          const res = await fetch('/api/auth/social-login', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              email: session.user.email,
-              firstName: session.user.name?.split(' ')[0] || '',
-              lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-              provider: 'google' // We'll need to detect this properly
-            }),
-          });
-          
-          if (res.ok) {
-            const data = await res.json();
-            console.log('[NextAuth Session] Social login successful:', data);
-            
-            if (data.user && data.user.id) {
-              session.user.id = data.user.id.toString();
-              console.log('[NextAuth Session] Set user ID to:', session.user.id);
-            }
-            
-            // Store profile incomplete status
-            (session as ExtendedSession).profileIncomplete = data.profileIncomplete;
-          }
-        } catch (error) {
-          console.log('[NextAuth Session] Error in social login:', error);
-        }
+      // Always set backend user ID if available
+      if (token.sub) {
+        session.user.id = token.sub.toString();
       }
-      
-      // Always ensure we have backend tokens if available
+      // Pass through registrationToken and profileIncomplete
+      if (token.profileIncomplete) {
+        (session as ExtendedSession).profileIncomplete = true;
+        (session as ExtendedSession).registrationToken = token.registrationToken as string;
+        // Do not set backend tokens yet
+        return session;
+      }
+      // If profile is complete, set backend tokens and user info
       if (token.accessToken && token.refreshToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
+        (session as ExtendedSession).profileIncomplete = false;
       }
-      
-      // Always ensure profile incomplete status is passed through
-      if (token.profileIncomplete !== undefined) {
-        (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
-      }
-      
-      // Map session user.id to backend user ID (existing logic)
-      if (token.sub && token.sub.toString().length < 10) {
-        // This is a backend user ID (small number)
-        session.user.id = token.sub.toString();
-      } else if (token.email && !session.user.id) {
-        // This might be a social provider ID, try to look up backend user
-        try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/email/${encodeURIComponent(token.email)}`);
-          if (res.ok) {
-            const backendUser = await res.json();
-            if (backendUser && backendUser.id) {
-              session.user.id = backendUser.id.toString();
-              console.log('[NextAuth Session] Found backend user ID:', session.user.id);
-            }
-          }
-        } catch (error) {
-          console.log('[NextAuth Session] Error looking up user:', error);
-        }
-      }
-      
-      // Add backend tokens to session
-      (session as ExtendedSession).accessToken = token.accessToken as string;
-      (session as ExtendedSession).refreshToken = token.refreshToken as string;
-      (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
-      
       return session;
     },
   },

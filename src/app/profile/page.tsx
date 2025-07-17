@@ -2,9 +2,12 @@ import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
 import ProfileClient from '@/components/ProfileClient';
+import ProfileCompletionForm from '@/components/ProfileCompletionForm';
 
 interface ExtendedSession {
   profileIncomplete?: boolean;
+  registrationToken?: string;
+  accessToken?: string;
 }
 
 export default async function ProfilePage() {
@@ -25,57 +28,45 @@ export default async function ProfilePage() {
   const isProfileIncomplete = extendedSession.profileIncomplete === true;
   console.log('[ProfilePage] Profile incomplete from session:', isProfileIncomplete);
 
-  // If user has no ID, this is likely a new social login user
-  if (!session.user.id) {
-    console.log('[ProfilePage] User has no ID, attempting to create user');
+  // If profile is incomplete, show the profile completion form
+  if (isProfileIncomplete) {
+    console.log('[ProfilePage] Showing profile completion form');
     
-    // Try to create the user
-    try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          email: session.user.email,
-          firstName: session.user.name?.split(' ')[0] || '',
-          lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-          provider: 'google'
-        }),
-      });
-      
-      if (res.ok) {
-        const data = await res.json();
-        console.log('[ProfilePage] User created successfully:', data);
-        
-        // Redirect to refresh the session with the new user ID
-        redirect('/profile');
-      } else {
-        console.log('[ProfilePage] Failed to create user:', res.status);
-      }
-    } catch (error) {
-      console.log('[ProfilePage] Error creating user:', error);
+    if (!extendedSession.registrationToken) {
+      console.log('[ProfilePage] No registration token available, redirecting to home');
+      redirect('/');
     }
     
-    // Fallback to showing empty profile form
-    const initialUser = {
-      firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
-      lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
-      email: session.user.email || '',
-      phone: '',
-      gender: '',
-      birthDate: '',
-    };
-    return <ProfileClient initialUser={initialUser} isProfileIncomplete={true} />;
+    return (
+      <ProfileCompletionForm 
+        registrationToken={extendedSession.registrationToken}
+        initialUser={{
+          firstName: session.user.firstName || session.user.name?.split(' ')[0] || '',
+          lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
+          email: session.user.email || '',
+          phone: '',
+          gender: '',
+          birthDate: '',
+        }}
+      />
+    );
   }
 
-  // User has ID, proceed with normal flow
+  // User has complete profile, proceed with normal flow
   // Fetch user data from the backend API
   let initialUser = { firstName: '', lastName: '', email: '', phone: '', gender: '', birthDate: '' };
   
   try {
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/users/${session.user.id}`;
     console.log('[ProfilePage] Fetching user from:', apiUrl);
+    
+    if (!extendedSession.accessToken) {
+      console.log('[ProfilePage] No access token available)');
+      return <ProfileClient initialUser={initialUser} isProfileIncomplete={false} />;
+    }
+    
     const res = await fetch(apiUrl, {
-      headers: { Authorization: `Bearer ${session.accessToken}` },
+      headers: { Authorization: `Bearer ${extendedSession.accessToken}` },
       cache: 'no-store',
     });
     console.log('[ProfilePage] Fetch response status:', res.status);
@@ -99,5 +90,5 @@ export default async function ProfilePage() {
     // fallback to empty user
   }
 
-  return <ProfileClient initialUser={initialUser} isProfileIncomplete={isProfileIncomplete} />;
+  return <ProfileClient initialUser={initialUser} isProfileIncomplete={false} />;
 }
