@@ -194,6 +194,16 @@ export const authOptions: AuthOptions = {
       if (token.sub) {
         session.user.id = token.sub.toString();
       }
+
+      // If we have profileIncomplete flag but also have backend tokens, the profile was completed
+      if (token.profileIncomplete && token.accessToken && token.refreshToken) {
+        console.log('[NextAuth Session] Profile was completed, updating session');
+        (session as ExtendedSession).accessToken = token.accessToken as string;
+        (session as ExtendedSession).refreshToken = token.refreshToken as string;
+        (session as ExtendedSession).profileIncomplete = false;
+        return session;
+      }
+
       // Pass through registrationToken and profileIncomplete
       if (token.profileIncomplete) {
         (session as ExtendedSession).profileIncomplete = true;
@@ -201,6 +211,7 @@ export const authOptions: AuthOptions = {
         // Do not set backend tokens yet
         return session;
       }
+
       // If profile is complete, set backend tokens and user info
       if (token.accessToken && token.refreshToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
