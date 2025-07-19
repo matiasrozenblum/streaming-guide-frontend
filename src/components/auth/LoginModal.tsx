@@ -164,6 +164,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [userGender, setUserGender] = useState('');
   const [phase, setPhase] = useState<'email'|'flow'>('email');
   const [socialLoginPending, setSocialLoginPending] = useState(false);
+  const [lastSocialProvider, setLastSocialProvider] = useState<'google' | 'meta' | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -176,6 +177,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setUserFirstName(''); setUserGender('');
       setPhase('email');
       setSocialLoginPending(false);
+      setLastSocialProvider(null);
     }
   }, [open]);
 
@@ -203,6 +205,17 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             if (res.ok) {
               const data = await res.json();
               if (data.profileIncomplete && data.registration_token) {
+                // Track social signup requiring profile completion
+                gaEvent({
+                  action: 'social_signup_profile_incomplete',
+                  params: {
+                    provider: lastSocialProvider || 'unknown',
+                    method: 'social_signup',
+                    user_type: 'new',
+                    has_first_name: !!data.user.firstName,
+                    has_last_name: !!data.user.lastName,
+                  }
+                });
                 setRegistrationToken(data.registration_token);
                 setEmail(data.user.email);
                 setFirstName(data.user.firstName || '');
@@ -215,6 +228,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 setSocialLoginPending(false);
                 return;
               } else if (data.access_token && data.refresh_token) {
+                // Track successful social login (existing user)
+                gaEvent({
+                  action: 'social_login_success',
+                  params: {
+                    provider: lastSocialProvider || 'unknown',
+                    method: 'social_login',
+                    user_type: 'existing',
+                  }
+                });
                 await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
@@ -234,7 +256,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         setSocialLoginPending(false);
       }
     }
-  }, [session, sessionStatus]);
+  }, [session, sessionStatus, lastSocialProvider]);
 
   // Track modal open and close tooltips
   useEffect(() => {
@@ -330,35 +352,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     setIsLoading(false);
   }
 
-  // Fallback for non-social profile completion
-  async function handleSocialProfileSubmit(f: string, l: string, b: string, g: string) {
-    setIsLoading(true);
-    setError('');
-    try {
-      // Try to create or update the user
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: f,
-          lastName: l,
-          email,
-          gender: g,
-          birthDate: b,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.message || 'Error al completar el perfil');
-      }
-      // After successful profile completion, close modal and reload session
-      onClose();
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al completar el perfil');
-    }
-    setIsLoading(false);
-  }
+
 
   // Remove popup-based social login handler
   // const handleSocialLogin = async (provider: 'google' | 'facebook') => { ... };
@@ -511,6 +505,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
+                      setLastSocialProvider('google');
+                      // Track social login attempt
+                      gaEvent({
+                        action: 'social_login_attempt',
+                        params: {
+                          provider: 'google',
+                          method: 'social_signup',
+                        }
+                      });
                       await signIn('google', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}
@@ -545,6 +548,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
+                      setLastSocialProvider('meta');
+                      // Track social login attempt
+                      gaEvent({
+                        action: 'social_login_attempt',
+                        params: {
+                          provider: 'meta',
+                          method: 'social_signup',
+                        }
+                      });
                       await signIn('facebook', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}
@@ -739,19 +751,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 error={error}
                 onSubmit={async (f, l, b, g, pw) => {
                   await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
-                }}
-                onBack={() => { setStep('email'); setPhase('email'); }}
-              />
-            ) : step === 'profile' ? (
-              <ProfileStep
-                initialFirst={firstName}
-                initialLast={lastName}
-                initialBirthDate={birthDate}
-                initialGender={gender}
-                isLoading={isLoading}
-                error={error}
-                onSubmit={async (f, l, b, g) => {
-                  await handleSocialProfileSubmit(f, l, b, g);
                 }}
                 onBack={() => { setStep('email'); setPhase('email'); }}
               />
