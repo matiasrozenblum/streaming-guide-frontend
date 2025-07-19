@@ -73,6 +73,10 @@ export default function AuthCallback() {
       if (!session.user.id && session.user.email) {
         console.log('[Auth Callback] No user ID found, attempting to create user automatically');
         createUserFromSession();
+      } else if (session.user.id && session.user.id.toString().length <= 10) {
+        // This is an existing user with a backend ID, just stay on home page
+        console.log('[Auth Callback] Existing user with backend ID, staying on home page');
+        window.location.href = '/';
       }
     }
     
