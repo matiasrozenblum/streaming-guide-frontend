@@ -178,6 +178,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setPhase('email');
       setSocialLoginPending(false);
       setLastSocialProvider(null);
+      // Clean up sessionStorage
+      sessionStorage.removeItem('lastSocialProvider');
     }
   }, [open]);
 
@@ -205,11 +207,18 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             if (res.ok) {
               const data = await res.json();
               if (data.profileIncomplete && data.registration_token) {
+                // Get provider from sessionStorage or state
+                const provider = sessionStorage.getItem('lastSocialProvider') || lastSocialProvider || 'unknown';
+                console.log('[LoginModal] Social signup profile incomplete - Provider:', {
+                  sessionStorage: sessionStorage.getItem('lastSocialProvider'),
+                  state: lastSocialProvider,
+                  final: provider
+                });
                 // Track social signup requiring profile completion
                 gaEvent({
                   action: 'social_signup_profile_incomplete',
                   params: {
-                    provider: lastSocialProvider || 'unknown',
+                    provider: provider,
                     method: 'social_signup',
                     user_type: 'new',
                     has_first_name: !!data.user.firstName,
@@ -228,11 +237,18 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 setSocialLoginPending(false);
                 return;
               } else if (data.access_token && data.refresh_token) {
+                // Get provider from sessionStorage or state
+                const provider = sessionStorage.getItem('lastSocialProvider') || lastSocialProvider || 'unknown';
+                console.log('[LoginModal] Social login success - Provider:', {
+                  sessionStorage: sessionStorage.getItem('lastSocialProvider'),
+                  state: lastSocialProvider,
+                  final: provider
+                });
                 // Track successful social login (existing user)
                 gaEvent({
                   action: 'social_login_success',
                   params: {
-                    provider: lastSocialProvider || 'unknown',
+                    provider: provider,
                     method: 'social_login',
                     user_type: 'existing',
                   }
@@ -506,6 +522,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     onClick={async () => {
                       setIsLoading(true);
                       setLastSocialProvider('google');
+                      // Store provider in sessionStorage for persistence across redirects
+                      sessionStorage.setItem('lastSocialProvider', 'google');
                       // Track social login attempt
                       gaEvent({
                         action: 'social_login_attempt',
@@ -549,6 +567,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     onClick={async () => {
                       setIsLoading(true);
                       setLastSocialProvider('meta');
+                      // Store provider in sessionStorage for persistence across redirects
+                      sessionStorage.setItem('lastSocialProvider', 'meta');
                       // Track social login attempt
                       gaEvent({
                         action: 'social_login_attempt',
