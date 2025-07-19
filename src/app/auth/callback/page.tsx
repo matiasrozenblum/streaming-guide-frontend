@@ -3,7 +3,6 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
-import { event as gaEvent } from '@/lib/gtag';
 
 export default function AuthCallback() {
   const searchParams = useSearchParams();
@@ -36,18 +35,7 @@ export default function AuthCallback() {
         const data = await res.json();
         console.log('[Auth Callback] Auto-created user:', data);
         
-        // Track social login success
-        const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
-        console.log('[Auth Callback] Tracking social login success with provider:', provider);
-        
-        gaEvent({
-          action: 'social_login_success',
-          params: {
-            provider: provider,
-            method: 'social_signup',
-            user_type: data.profileIncomplete ? 'new' : 'existing',
-          }
-        });
+        // Note: Social login tracking is now handled in LoginModal when session becomes authenticated
         
         // Always redirect to profile-completion, let the page handle the logic
         console.log('[Auth Callback] Redirecting to profile-completion');
