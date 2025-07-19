@@ -62,7 +62,7 @@ const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'prim
   return 'primary';
 };
 
-const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: React.ReactNode; onEdit: () => void; sx?: SxProps<Theme> }) => (
+const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: React.ReactNode; onEdit?: () => void; sx?: SxProps<Theme> }) => (
   <Paper
     elevation={0}
     sx={{
@@ -85,16 +85,18 @@ const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: Re
   >
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</Typography>
-      <IconButton
-        onClick={onEdit}
-        size="small"
-        sx={{
-          color: 'primary.main',
-          '&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
-        }}
-      >
-        <EditIcon fontSize="small" />
-      </IconButton>
+      {onEdit && (
+        <IconButton
+          onClick={onEdit}
+          size="small"
+          sx={{
+            color: 'primary.main',
+            '&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
+          }}
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      )}
     </Box>
     {value}
   </Paper>
@@ -261,18 +263,13 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   const [isLoading, setIsLoading] = useState(false);
 
   // --- All handlers from original ProfilePage ---
-  const saveNames = async () => {
+  const savePersonalData = async () => {
     if (!typedSession) return;
     setPersonalError('');
     // Validate birthDate (must be 18+)
     if (!birthDate) {
       setPersonalError('La fecha de nacimiento es obligatoria');
       setErrorMessage('La fecha de nacimiento es obligatoria');
-      return;
-    }
-    if (isProfileIncomplete && !newPassword) {
-      setPersonalError('La contraseña es obligatoria');
-      setErrorMessage('La contraseña es obligatoria');
       return;
     }
     const birth = new Date(birthDate);
@@ -290,10 +287,10 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
     setIsLoading(true);
     try {
-      console.log('[ProfileClient] saveNames - isProfileIncomplete:', isProfileIncomplete);
-      console.log('[ProfileClient] saveNames - registrationToken:', registrationToken);
+      console.log('[ProfileClient] savePersonalData - isProfileIncomplete:', isProfileIncomplete);
+      console.log('[ProfileClient] savePersonalData - registrationToken:', registrationToken);
       if (isProfileIncomplete && registrationToken) {
-        // Complete the profile for social login user
+        // Complete the profile for social login user (personal data only)
         const res = await fetch('/api/auth/complete-profile', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -303,7 +300,6 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
             lastName,
             gender: mapGenderToBackend(gender),
             birthDate,
-            password: newPassword,
             deviceId,
           }),
         });
@@ -311,7 +307,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
           const errorData = await res.json();
           throw new Error(errorData.message || 'Error al completar el perfil');
         }
-        setSuccessMessage('Perfil completado correctamente');
+        setSuccessMessage('Datos personales completados correctamente');
         setEditSection('none');
         // Refresh the session to update the profile incomplete status
         window.location.reload();
@@ -355,6 +351,51 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
       userData: typedSession?.user
     });
   };
+
+  const savePassword = async () => {
+    if (!typedSession || !registrationToken) return;
+    
+    if (!newPassword) {
+      setErrorMessage('La contraseña es obligatoria');
+      return;
+    }
+    
+    if (newPassword !== confirmPassword) {
+      setErrorMessage('Las contraseñas no coinciden');
+      return;
+    }
+
+    setIsLoading(true);
+    try {
+      console.log('[ProfileClient] savePassword - setting password for social user');
+      // Set password for social login user (bypass email verification)
+      const res = await fetch('/api/auth/set-password', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          registration_token: registrationToken,
+          password: newPassword,
+          deviceId,
+        }),
+      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.message || 'Error al establecer la contraseña');
+      }
+      setSuccessMessage('Contraseña establecida correctamente');
+      setNewPassword('');
+      setConfirmPassword('');
+      setEditSection('none');
+    } catch (error) {
+      console.error('Password set error:', error);
+      setErrorMessage(error instanceof Error ? error.message : 'Error al establecer la contraseña');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Keep the old saveNames function for backward compatibility but redirect to savePersonalData
+  const saveNames = savePersonalData;
 
   const sendCode = async (field: 'email' | 'phone' | 'password') => {
     try {
@@ -509,8 +550,8 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
   // Add orange border to personal data section if missing required fields
   const personalSectionError = isProfileIncomplete && (!birthDate || !gender || !firstName || !lastName);
-  // Add orange border to password section if missing password
-  const passwordSectionError = isProfileIncomplete && !newPassword;
+  // Password is optional, so no orange border needed
+  const passwordSectionError = false;
 
   // --- Full UI from original ProfilePage ---
   return (
@@ -819,11 +860,106 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                 onEdit={() => setEditSection('phone')}
               />
               <ProfileSection
-                title="Contraseña"
+                title={isProfileIncomplete ? "Contraseña (opcional)" : "Contraseña"}
                 value={
-                  <Typography variant="body1">••••••••</Typography>
+                  isProfileIncomplete ? (
+                    <Box>
+                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                        Establece una contraseña para mayor seguridad (opcional)
+                      </Typography>
+                      <Stack spacing={2}>
+                        <TextField
+                          label="Nueva contraseña"
+                          type={showPassword ? 'text' : 'password'}
+                          value={newPassword}
+                          onChange={(e) => setNewPassword(e.target.value)}
+                          fullWidth
+                          InputProps={{
+                            startAdornment: (
+                              <InputAdornment position="start">
+                                <LockOutlinedIcon fontSize="small" />
+                              </InputAdornment>
+                            ),
+                            endAdornment: (
+                              <InputAdornment position="end">
+                                <IconButton
+                                  onClick={() => setShowPassword(!showPassword)}
+                                  edge="end"
+                                >
+                                  {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                </IconButton>
+                              </InputAdornment>
+                            ),
+                          }}
+                        />
+                        {newPassword && (
+                          <>
+                            <Box>
+                              <LinearProgress
+                                variant="determinate"
+                                value={(getPasswordStrength(newPassword) / 4) * 100}
+                                color={getPasswordStrengthColor(newPassword)}
+                                sx={{ height: 4, borderRadius: 2 }}
+                              />
+                              <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                                Fuerza: {getPasswordStrength(newPassword) === 1 ? 'Débil' : 
+                                         getPasswordStrength(newPassword) === 2 ? 'Media' : 
+                                         getPasswordStrength(newPassword) === 3 ? 'Buena' : 'Excelente'}
+                              </Typography>
+                            </Box>
+                            <TextField
+                              label="Confirmar contraseña"
+                              type={showConfirmPassword ? 'text' : 'password'}
+                              value={confirmPassword}
+                              onChange={(e) => setConfirmPassword(e.target.value)}
+                              fullWidth
+                              InputProps={{
+                                startAdornment: (
+                                  <InputAdornment position="start">
+                                    <LockOutlinedIcon fontSize="small" />
+                                  </InputAdornment>
+                                ),
+                                endAdornment: (
+                                  <InputAdornment position="end">
+                                    <IconButton
+                                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                                      edge="end"
+                                    >
+                                      {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                                    </IconButton>
+                                  </InputAdornment>
+                                ),
+                              }}
+                            />
+                            <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end' }}>
+                              <Button 
+                                onClick={() => {
+                                  setNewPassword('');
+                                  setConfirmPassword('');
+                                }}
+                                variant="outlined"
+                                size="small"
+                              >
+                                Cancelar
+                              </Button>
+                              <Button 
+                                onClick={savePassword}
+                                variant="contained"
+                                size="small"
+                                disabled={isLoading || !newPassword || !confirmPassword}
+                              >
+                                {isLoading ? 'Guardando...' : 'Establecer contraseña'}
+                              </Button>
+                            </Box>
+                          </>
+                        )}
+                      </Stack>
+                    </Box>
+                  ) : (
+                    <Typography variant="body1">••••••••</Typography>
+                  )
                 }
-                onEdit={() => setEditSection('password')}
+                onEdit={isProfileIncomplete ? undefined : () => setEditSection('password')}
                 sx={{ border: passwordSectionError ? '2px solid orange' : undefined }}
               />
               
