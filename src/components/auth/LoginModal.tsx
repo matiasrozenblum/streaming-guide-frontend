@@ -511,7 +511,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
-                      await signIn('google', { callbackUrl: '/profile' });
+                      await signIn('google', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
@@ -527,7 +527,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                       fontWeight: 600,
                       borderColor: 'text.primary',
                       color: 'text.primary',
-                      backgroundColor: 'background.paper',
+                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
                       '&:hover': {
                         borderColor: 'primary.main',
                         backgroundColor: 'action.hover',
@@ -545,7 +545,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
-                      await signIn('facebook', { callbackUrl: '/profile' });
+                      await signIn('facebook', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
@@ -561,7 +561,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                       fontWeight: 600,
                       borderColor: 'text.primary',
                       color: 'text.primary',
-                      backgroundColor: 'background.paper',
+                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
                       '&:hover': {
                         borderColor: 'primary.main',
                         backgroundColor: 'action.hover',
