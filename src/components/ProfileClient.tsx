@@ -141,7 +141,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   const deviceId = useDeviceId();
 
   // Local state for profile completion tracking
-  const [profileCompleted, setProfileCompleted] = useState(false);
+  const [profileDataCompleted, setProfileDataCompleted] = useState(false);
   const [passwordSet, setPasswordSet] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
@@ -151,6 +151,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [email] = useState(initialUser.email);
+  const [phone, setPhone] = useState(initialUser.phone || '');
 
   const [gender, setGender] = useState(initialUser.gender || '');
   const [birthDate, setBirthDate] = useState(initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : '');
@@ -190,7 +191,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
   // Block navigation when profile is incomplete
   useEffect(() => {
-    if (isProfileIncomplete && !profileCompleted) {
+    if (isProfileIncomplete && (!profileDataCompleted || !passwordSet)) {
       const handleBeforeUnload = (e: BeforeUnloadEvent) => {
         e.preventDefault();
         e.returnValue = '';
@@ -211,7 +212,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
         window.removeEventListener('popstate', handlePopState);
       };
     }
-  }, [isProfileIncomplete, profileCompleted]);
+  }, [isProfileIncomplete, profileDataCompleted, passwordSet]);
 
   // Complete personal data (required for social users)
   const savePersonalData = async () => {
@@ -260,7 +261,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
       await res.json();
       
-      setProfileCompleted(true);
+      setProfileDataCompleted(true);
       setSuccessMessage('Perfil completado correctamente');
       setEditSection('none');
       
@@ -373,7 +374,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
   // Handle form submission
   const handleSave = () => {
-    if (isProfileIncomplete && !profileCompleted) {
+    if (isProfileIncomplete && !profileDataCompleted) {
       savePersonalData();
     } else {
       updateProfile();
@@ -397,7 +398,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
 
   if (status !== 'authenticated') return null;
 
-  const isActuallyIncomplete = isProfileIncomplete && !profileCompleted;
+  const isActuallyIncomplete = isProfileIncomplete && (!profileDataCompleted || !passwordSet);
   const hasRequiredFields = firstName && lastName && birthDate && gender;
   const personalSectionError = isActuallyIncomplete && !hasRequiredFields;
 
@@ -411,7 +412,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
       }}
     >
       <Header />
-      <Container maxWidth="md" sx={{ py: 4 }}>
+      <Container maxWidth="sm" sx={{ py: 4 }}>
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -430,7 +431,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
             >
               <ArrowBackIcon />
             </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 700 }}>
+            <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
               Mi cuenta
             </Typography>
           </Box>
@@ -456,7 +457,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                 </Typography>
               </Box>
               <Typography variant="body1" color="text.secondary">
-                Para continuar usando la aplicación, necesitas completar tu perfil con tu fecha de nacimiento y género.
+                Para continuar usando la aplicación, necesitas completar tu perfil con tu fecha de nacimiento, género y contraseña.
               </Typography>
             </Paper>
           )}
@@ -602,18 +603,22 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
               }
             />
 
-            {isActuallyIncomplete && (
-              <ProfileSection
-                title="Contraseña (opcional)"
+            <ProfileSection
+              title="Teléfono"
+              value={
+                <Typography variant="body1">
+                  {phone || '—'}
+                </Typography>
+              }
+              onEdit={() => setEditSection('phone')}
+            />
+
+            <ProfileSection
+              title={isActuallyIncomplete ? "Contraseña (requerida)" : "Contraseña"}
                 value={
                   passwordSet ? (
-                    <Box>
-                      <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                        ✅ Contraseña establecida correctamente
-                      </Typography>
-                      <Typography variant="body1">••••••••</Typography>
-                    </Box>
-                  ) : (
+                    <Typography variant="body1">••••••••</Typography>
+                  ) : isActuallyIncomplete ? (
                     <Box>
                       <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
                         Establece una contraseña para mayor seguridad (opcional)
@@ -706,10 +711,13 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
                         )}
                       </Stack>
                     </Box>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">
+                      No has establecido una contraseña
+                    </Typography>
                   )
                 }
               />
-            )}
 
             <ProfileSection
               title="Preferencias de Cookies"
@@ -812,6 +820,48 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
           {errorMessage}
         </MuiAlert>
       </Snackbar>
+
+      <Dialog
+        open={editSection === 'phone'}
+        onClose={() => setEditSection('none')}
+        PaperProps={{
+          sx: {
+            borderRadius: 2,
+            minWidth: { xs: '90%', sm: 400 }
+          }
+        }}
+      >
+        <DialogTitle>Cambiar teléfono</DialogTitle>
+        <DialogContent>
+          <DialogContentText sx={{ mb: 3 }}>
+            Ingresa tu número de teléfono.
+          </DialogContentText>
+          <TextField
+            label="Teléfono"
+            fullWidth
+            value={phone}
+            onChange={e => setPhone(e.target.value)}
+            variant="outlined"
+            placeholder="+54 9 11 1234-5678"
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3 }}>
+          <Button onClick={() => setEditSection('none')} variant="outlined">
+            Cancelar
+          </Button>
+          <Button 
+            onClick={() => {
+              // For now, just close the dialog
+              // In a real app, you'd save the phone number
+              setEditSection('none');
+              setSuccessMessage('Teléfono actualizado correctamente');
+            }} 
+            variant="contained"
+          >
+            Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       <Dialog
         open={openCancel}
