@@ -164,6 +164,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [userGender, setUserGender] = useState('');
   const [phase, setPhase] = useState<'email'|'flow'>('email');
   const [socialLoginPending, setSocialLoginPending] = useState(false);
+  const [lastSocialProvider, setLastSocialProvider] = useState<'google' | 'meta' | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -176,6 +177,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setUserFirstName(''); setUserGender('');
       setPhase('email');
       setSocialLoginPending(false);
+      setLastSocialProvider(null);
     }
   }, [open]);
 
@@ -203,6 +205,17 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             if (res.ok) {
               const data = await res.json();
               if (data.profileIncomplete && data.registration_token) {
+                // Track social signup requiring profile completion
+                gaEvent({
+                  action: 'social_signup_profile_incomplete',
+                  params: {
+                    provider: lastSocialProvider || 'unknown',
+                    method: 'social_signup',
+                    user_type: 'new',
+                    has_first_name: !!data.user.firstName,
+                    has_last_name: !!data.user.lastName,
+                  }
+                });
                 setRegistrationToken(data.registration_token);
                 setEmail(data.user.email);
                 setFirstName(data.user.firstName || '');
@@ -215,6 +228,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 setSocialLoginPending(false);
                 return;
               } else if (data.access_token && data.refresh_token) {
+                // Track successful social login (existing user)
+                gaEvent({
+                  action: 'social_login_success',
+                  params: {
+                    provider: lastSocialProvider || 'unknown',
+                    method: 'social_login',
+                    user_type: 'existing',
+                  }
+                });
                 await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
@@ -234,7 +256,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         setSocialLoginPending(false);
       }
     }
-  }, [session, sessionStatus]);
+  }, [session, sessionStatus, lastSocialProvider]);
 
   // Track modal open and close tooltips
   useEffect(() => {
@@ -483,6 +505,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
+                      setLastSocialProvider('google');
+                      // Track social login attempt
+                      gaEvent({
+                        action: 'social_login_attempt',
+                        params: {
+                          provider: 'google',
+                          method: 'social_signup',
+                        }
+                      });
                       await signIn('google', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}
@@ -517,6 +548,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     fullWidth
                     onClick={async () => {
                       setIsLoading(true);
+                      setLastSocialProvider('meta');
+                      // Track social login attempt
+                      gaEvent({
+                        action: 'social_login_attempt',
+                        params: {
+                          provider: 'meta',
+                          method: 'social_signup',
+                        }
+                      });
                       await signIn('facebook', { callbackUrl: '/profile-completion' });
                       setIsLoading(false);
                     }}

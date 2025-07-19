@@ -59,6 +59,8 @@ const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'prim
   return 'primary';
 };
 
+
+
 export default function ProfileCompletionForm({ registrationToken, initialUser }: ProfileCompletionFormProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as { user?: { id?: string; gender?: string; birthDate?: string; role?: string } };
@@ -168,6 +170,9 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         params: {
           fields_completed: 'firstName,lastName,gender,birthDate,password',
           was_social_signup: true,
+          gender: gender,
+          birth_date: birthDate, // Send raw birth date for age calculation
+          has_strong_password: getPasswordStrength(password) >= 3,
         },
         userData: typedSession?.user || undefined
       });
@@ -180,6 +185,16 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     } catch (error) {
       console.error('Profile completion error:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Error al completar el perfil');
+      
+      // Track profile completion error
+      gaEvent({
+        action: 'profile_completion_error',
+        params: {
+          error_type: error instanceof Error ? error.message : 'unknown_error',
+          fields_provided: `${!!firstName},${!!lastName},${!!gender},${!!birthDate},${!!password}`,
+        },
+        userData: typedSession?.user || undefined
+      });
     } finally {
       setIsLoading(false);
     }
