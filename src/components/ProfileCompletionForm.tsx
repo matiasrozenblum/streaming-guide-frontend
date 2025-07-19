@@ -197,25 +197,36 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       }}
     >
       <Header />
-      <Container maxWidth="xs" sx={{ py: 4 }}>
-        <motion.div
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
-            <IconButton
-              onClick={() => {
-                setErrorMessage('Por favor completa tu perfil antes de salir');
-              }}
-              sx={{ mr: 2 }}
-            >
-              <ArrowBackIcon />
-            </IconButton>
-            <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
-              Complete su perfil
-            </Typography>
-          </Box>
+      <Container 
+        maxWidth="md" 
+        sx={{ 
+          mt: 4, 
+          mb: 6,
+          px: { xs: 2, sm: 3 },
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center'
+        }}
+      >
+        <Box sx={{ width: '100%', maxWidth: 600 }}>
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+          >
+            <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
+              <IconButton
+                onClick={() => {
+                  setErrorMessage('Por favor completa tu perfil antes de salir');
+                }}
+                sx={{ mr: 2 }}
+              >
+                <ArrowBackIcon />
+              </IconButton>
+              <Typography variant="h4" sx={{ fontWeight: 700, color: 'primary.main' }}>
+                Complete su perfil
+              </Typography>
+            </Box>
 
           <Paper
             elevation={0}
@@ -393,6 +404,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
             </Box>
           </Paper>
         </motion.div>
+        </Box>
       </Container>
 
       <Snackbar

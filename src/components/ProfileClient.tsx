@@ -288,6 +288,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
             method: 'PATCH',
             headers: { 'Content-Type': 'application/json' },
+            credentials: 'include',
             body: JSON.stringify({ password: newPassword }),
           });
 
@@ -326,6 +327,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
           method: 'PATCH',
           headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
           body: JSON.stringify({ email: newEmail }),
         });
 
