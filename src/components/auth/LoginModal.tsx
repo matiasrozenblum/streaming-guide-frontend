@@ -330,35 +330,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     setIsLoading(false);
   }
 
-  // Fallback for non-social profile completion
-  async function handleSocialProfileSubmit(f: string, l: string, b: string, g: string) {
-    setIsLoading(true);
-    setError('');
-    try {
-      // Try to create or update the user
-      const res = await fetch('/api/users', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          firstName: f,
-          lastName: l,
-          email,
-          gender: g,
-          birthDate: b,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.message || 'Error al completar el perfil');
-      }
-      // After successful profile completion, close modal and reload session
-      onClose();
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al completar el perfil');
-    }
-    setIsLoading(false);
-  }
+
 
   // Remove popup-based social login handler
   // const handleSocialLogin = async (provider: 'google' | 'facebook') => { ... };
@@ -739,19 +711,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 error={error}
                 onSubmit={async (f, l, b, g, pw) => {
                   await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
-                }}
-                onBack={() => { setStep('email'); setPhase('email'); }}
-              />
-            ) : step === 'profile' ? (
-              <ProfileStep
-                initialFirst={firstName}
-                initialLast={lastName}
-                initialBirthDate={birthDate}
-                initialGender={gender}
-                isLoading={isLoading}
-                error={error}
-                onSubmit={async (f, l, b, g) => {
-                  await handleSocialProfileSubmit(f, l, b, g);
                 }}
                 onBack={() => { setStep('email'); setPhase('email'); }}
               />

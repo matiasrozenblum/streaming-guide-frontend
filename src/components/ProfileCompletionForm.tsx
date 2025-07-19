@@ -132,7 +132,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
 
     setIsLoading(true);
     try {
-      const res = await fetch('/api/auth/complete-profile-all', {
+      const res = await fetch('/api/auth/complete-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
