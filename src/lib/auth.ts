@@ -145,6 +145,8 @@ export const authOptions: AuthOptions = {
             const data = await res.json();
             console.log('[NextAuth JWT] Social login response:', data);
 
+
+
             // Always set the backend user ID
             token.sub = data.user.id.toString();
 

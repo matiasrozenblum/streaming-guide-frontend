@@ -185,6 +185,20 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     if (sessionStatus === 'authenticated' && session?.user) {
       if (window.__socialLoginHandled) return;
       window.__socialLoginHandled = true;
+      
+      // Track social login success when session becomes authenticated
+      const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
+      console.log('[LoginModal] Session authenticated, tracking social login success with provider:', provider);
+      
+      gaEvent({
+        action: 'social_login_success',
+        params: {
+          provider: provider,
+          method: 'social_signup',
+          user_type: session.user.id ? 'existing' : 'new',
+        }
+      });
+      
       setSocialLoginPending(true); // Block UI/modal
       const { email, firstName, lastName, gender, birthDate } = session.user;
       if (email && (firstName || session.user.name)) {
@@ -205,8 +219,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             if (res.ok) {
               const data = await res.json();
               if (data.profileIncomplete && data.registration_token) {
-                // Note: Social login tracking is now handled in /auth/callback page
-                // to ensure correct provider detection across redirects
                 setRegistrationToken(data.registration_token);
                 setEmail(data.user.email);
                 setFirstName(data.user.firstName || '');
@@ -219,8 +231,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 setSocialLoginPending(false);
                 return;
               } else if (data.access_token && data.refresh_token) {
-                // Note: Social login tracking is now handled in /auth/callback page
-                // to ensure correct provider detection across redirects
                 await signIn('credentials', {
                   redirect: false,
                   accessToken: data.access_token,
