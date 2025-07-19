@@ -143,7 +143,6 @@ export const authOptions: AuthOptions = {
 
           if (res.ok) {
             const data = await res.json();
-            console.log('[NextAuth JWT] Social login response:', data);
 
 
 

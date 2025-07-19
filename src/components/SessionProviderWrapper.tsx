@@ -28,7 +28,6 @@ function SessionRedirectHandler({ children }: Props) {
       (session as ExtendedSession)?.profileIncomplete && 
       pathname !== '/profile-completion'
     ) {
-      console.log('[SessionRedirectHandler] Redirecting incomplete session to /profile-completion');
       router.replace('/profile-completion');
     }
   }, [session, status, pathname, router]);

@@ -11,11 +11,9 @@ interface ExtendedSession {
 
 export default async function ProfileCompletionPage() {
   const session = await getServerSession(authOptions);
-  console.log('[ProfileCompletionPage] session:', session);
   
   // If no session at all, redirect to home
   if (!session?.user) {
-    console.log('[ProfileCompletionPage] No session, redirecting to /');
     redirect('/');
   }
 
@@ -24,12 +22,8 @@ export default async function ProfileCompletionPage() {
   const isProfileIncomplete = extendedSession.profileIncomplete === true;
   const registrationToken = extendedSession.registrationToken;
   
-  console.log('[ProfileCompletionPage] Profile incomplete from session:', isProfileIncomplete);
-  console.log('[ProfileCompletionPage] Registration token:', !!registrationToken);
-
   // If profile is complete, redirect to home page
   if (!isProfileIncomplete || !registrationToken) {
-    console.log('[ProfileCompletionPage] Profile complete or no token, redirecting to /');
     redirect('/');
   }
 

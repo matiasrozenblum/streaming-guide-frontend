@@ -181,18 +181,7 @@ function getFilteredRankedData({
   }
   let filtered = data;
 
-  // Debug logs
-  if (typeof window !== 'undefined') {
-    console.log('getFilteredRankedData: selectedIds', selectedIds);
-    console.log('getFilteredRankedData: data', data);
-    console.log('getFilteredRankedData: filterType', filterType);
-    if (filterType === 'channel') {
-      console.log('getFilteredRankedData: channelsList', channelsList);
-    }
-    if (filterType === 'program') {
-      console.log('getFilteredRankedData: programsList', programsList);
-    }
-  }
+
 
   // If data has no id, filter by name
   if (selectedIds.length > 0) {
@@ -205,10 +194,6 @@ function getFilteredRankedData({
     } else {
       filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
     }
-  }
-
-  if (typeof window !== 'undefined') {
-    console.log('getFilteredRankedData: filtered after id/name', filtered);
   }
 
   if (genderFilter && genderFilter.length < 4) {
@@ -224,28 +209,13 @@ function getFilteredRankedData({
     });
   }
 
-  if (typeof window !== 'undefined') {
-    console.log('getFilteredRankedData: filtered final', filtered);
-  }
-
   return filtered.slice(0, 5).map((item: TopChannel | TopProgram | StackedBarDatum, i: number) => ({ ...item, realOrder: i + 1 }));
 }
 
 // Update the stacked bar data filtering to handle channel/program selection
 function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], ageFilter: string[], groupBy: 'gender' | 'age', selectedIds: number[], filterType?: 'channel' | 'program', channelsList?: Channel[], programsList?: Program[]) {
   let filtered = data;
-  // Debug logs
-  if (typeof window !== 'undefined') {
-    console.log('filterStackedBarData: selectedIds', selectedIds);
-    console.log('filterStackedBarData: data', data);
-    console.log('filterStackedBarData: filterType', filterType);
-    if (filterType === 'channel') {
-      console.log('filterStackedBarData: channelsList', channelsList);
-    }
-    if (filterType === 'program') {
-      console.log('filterStackedBarData: programsList', programsList);
-    }
-  }
+
   if (selectedIds.length > 0) {
     if (filterType === 'channel' && channelsList) {
       const selectedNames = channelsList.filter(c => selectedIds.includes(c.id)).map(c => c.name);
@@ -257,9 +227,7 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
       filtered = filtered.filter((item: TopChannel | TopProgram | StackedBarDatum) => selectedIds.includes(Number(item.id)));
     }
   }
-  if (typeof window !== 'undefined') {
-    console.log('filterStackedBarData: filtered after id/name', filtered);
-  }
+
   if (groupBy === 'gender') {
     const result = filtered
       .map(item => {
@@ -268,9 +236,7 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
         return { ...item, counts: filteredCounts };
       })
       .filter(item => genderFilter.some(g => item.counts[g] > 0));
-    if (typeof window !== 'undefined') {
-      console.log('filterStackedBarData: result (gender)', result);
-    }
+
     return result;
   } else {
     const result = filtered
@@ -280,9 +246,7 @@ function filterStackedBarData(data: StackedBarDatum[], genderFilter: string[], a
         return { ...item, counts: filteredCounts };
       })
       .filter(item => ageFilter.some(a => item.counts[a] > 0));
-    if (typeof window !== 'undefined') {
-      console.log('filterStackedBarData: result (age)', result);
-    }
+
     return result;
   }
 }
