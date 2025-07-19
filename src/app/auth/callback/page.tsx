@@ -28,14 +28,9 @@ export default function AuthCallback() {
         const data = await res.json();
         console.log('[Auth Callback] Auto-created user:', data);
         
-        // Check if profile is incomplete and redirect accordingly
-        if (data.profileIncomplete) {
-          console.log('[Auth Callback] Profile incomplete, redirecting to profile-completion');
-          window.location.href = '/profile-completion';
-        } else {
-          console.log('[Auth Callback] Profile complete, redirecting to profile');
-          window.location.href = '/profile';
-        }
+        // Always redirect to profile-completion, let the page handle the logic
+        console.log('[Auth Callback] Redirecting to profile-completion');
+        window.location.href = '/profile-completion';
       } else {
         console.error('[Auth Callback] Failed to create user:', res.status);
       }
@@ -74,9 +69,9 @@ export default function AuthCallback() {
         console.log('[Auth Callback] No user ID found, attempting to create user automatically');
         createUserFromSession();
       } else if (session.user.id && session.user.id.toString().length <= 10) {
-        // This is an existing user with a backend ID, just stay on home page
-        console.log('[Auth Callback] Existing user with backend ID, staying on home page');
-        window.location.href = '/';
+        // This is an existing user with a backend ID, redirect to profile-completion
+        console.log('[Auth Callback] Existing user with backend ID, redirecting to profile-completion');
+        window.location.href = '/profile-completion';
       }
     }
     
