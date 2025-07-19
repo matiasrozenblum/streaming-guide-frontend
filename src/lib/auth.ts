@@ -36,6 +36,7 @@ interface DecodedJWT {
 type MaybeNamedUser = { firstName?: string; lastName?: string; name?: string };
 
 export const authOptions: AuthOptions = {
+  secret: process.env.NEXTAUTH_SECRET,
   providers: [
     CredentialsProvider({
       id: 'credentials',

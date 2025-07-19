@@ -3,6 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
+import { signIn } from 'next-auth/react';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { motion } from 'framer-motion';
@@ -56,17 +57,6 @@ const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'prim
   if (strength <= 1) return 'error';
   if (strength <= 2) return 'warning';
   return 'primary';
-};
-
-const mapGenderToBackend = (g: string) => {
-  console.log('mapGenderToBackend', g);
-  switch (g.toLowerCase()) {
-    case 'masculino': return 'male';
-    case 'femenino': return 'female';
-    case 'no binario': return 'non_binary';
-    case 'prefiero no decir': return 'rather_not_say';
-    default: return 'rather_not_say';
-  }
 };
 
 export default function ProfileCompletionForm({ registrationToken, initialUser }: ProfileCompletionFormProps) {
@@ -149,7 +139,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
           registration_token: registrationToken,
           firstName,
           lastName,
-          gender: mapGenderToBackend(gender),
+          gender,
           birthDate,
           password,
           deviceId,
@@ -161,7 +151,14 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         throw new Error(errorData.message || 'Error al completar el perfil');
       }
 
-      await res.json();
+      const data = await res.json();
+      
+      // Update the session with the new tokens
+      await signIn('credentials', { 
+        redirect: false, 
+        accessToken: data.access_token,
+        refreshToken: data.refresh_token 
+      });
       
       setSuccessMessage('Perfil completado correctamente');
       
