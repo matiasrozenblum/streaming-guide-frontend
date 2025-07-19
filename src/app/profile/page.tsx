@@ -11,22 +11,18 @@ interface ExtendedSession {
 
 export default async function ProfilePage() {
   const session = await getServerSession(authOptions);
-  console.log('[ProfilePage] session:', session);
   
   // If no session at all, redirect to home
   if (!session?.user) {
-    console.log('[ProfilePage] No session, redirecting to /');
     redirect('/');
   }
 
   // Check if profile is incomplete from session
   const extendedSession = session as ExtendedSession;
   const isProfileIncomplete = extendedSession.profileIncomplete === true;
-  console.log('[ProfilePage] Profile incomplete from session:', isProfileIncomplete);
 
   // If profile is incomplete, redirect to completion page
   if (isProfileIncomplete) {
-    console.log('[ProfilePage] Profile incomplete, redirecting to /profile-completion');
     redirect('/profile-completion');
   }
 

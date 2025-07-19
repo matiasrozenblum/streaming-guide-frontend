@@ -2,7 +2,6 @@
 // Dedicated service worker for push notifications
 
 self.addEventListener('push', (event) => {
-  console.log('Push notification received:', event);
   
   event.waitUntil((async () => {
     let payload;
@@ -31,14 +30,12 @@ self.addEventListener('push', (event) => {
       ...payload.options,
     };
 
-    console.log('Showing notification:', { title, options });
     await self.registration.showNotification(title, options);
   })());
 });
 
 // Handle notification clicks
 self.addEventListener('notificationclick', (event) => {
-  console.log('Notification clicked:', event.notification);
   
   event.notification.close();
   
@@ -65,5 +62,3 @@ self.addEventListener('install', (event) => {
 self.addEventListener('activate', (event) => {
   event.waitUntil(self.clients.claim());
 });
-
-console.log('Push service worker loaded'); 

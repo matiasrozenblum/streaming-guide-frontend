@@ -188,7 +188,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       
       // Track social login success when session becomes authenticated
       const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
-      console.log('[LoginModal] Session authenticated, tracking social login success with provider:', provider);
       
       gaEvent({
         action: 'social_login_success',
@@ -264,17 +263,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       });
     }
   }, [open, isUserExisting, closeTooltip]);
-
-  // Monitor session changes
-  useEffect(() => {
-    console.log('[LoginModal] Session changed:', {
-      status: sessionStatus,
-      hasSession: !!session,
-      userId: session?.user?.id,
-      userEmail: session?.user?.email,
-      userName: session?.user?.name
-    });
-  }, [session, sessionStatus]);
 
   // Track step changes (for funnel analysis)
   useEffect(() => {

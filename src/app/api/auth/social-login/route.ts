@@ -5,8 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { email, firstName, lastName, provider } = await request.json();
     
-    console.log('[Social Login] Creating user with:', { email, firstName, lastName, provider });
-    
     // Call backend to create user
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/social-login`, {
       method: 'POST',
@@ -28,8 +26,6 @@ export async function POST(request: NextRequest) {
       console.error('[Social Login] Backend error:', data);
       return NextResponse.json(data, { status: res.status });
     }
-    
-    console.log('[Social Login] Backend response:', data);
     
     // Return the backend response (should include user ID and tokens)
     return NextResponse.json(data);
