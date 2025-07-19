@@ -28,9 +28,14 @@ export default function AuthCallback() {
         const data = await res.json();
         console.log('[Auth Callback] Auto-created user:', data);
         
-        // Redirect to profile page instead of reloading
-        console.log('[Auth Callback] Redirecting to profile page');
-        window.location.href = '/profile';
+        // Check if profile is incomplete and redirect accordingly
+        if (data.profileIncomplete) {
+          console.log('[Auth Callback] Profile incomplete, redirecting to profile-completion');
+          window.location.href = '/profile-completion';
+        } else {
+          console.log('[Auth Callback] Profile complete, redirecting to profile');
+          window.location.href = '/profile';
+        }
       } else {
         console.error('[Auth Callback] Failed to create user:', res.status);
       }

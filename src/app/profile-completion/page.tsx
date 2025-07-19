@@ -1,7 +1,7 @@
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import { redirect } from 'next/navigation';
-import ProfileClient from '@/components/ProfileClient';
+import ProfileCompletionForm from '@/components/ProfileCompletionForm';
 
 interface ExtendedSession {
   profileIncomplete?: boolean;
@@ -9,25 +9,28 @@ interface ExtendedSession {
   accessToken?: string;
 }
 
-export default async function ProfilePage() {
+export default async function ProfileCompletionPage() {
   const session = await getServerSession(authOptions);
-  console.log('[ProfilePage] session:', session);
+  console.log('[ProfileCompletionPage] session:', session);
   
   // If no session at all, redirect to home
   if (!session?.user) {
-    console.log('[ProfilePage] No session, redirecting to /');
+    console.log('[ProfileCompletionPage] No session, redirecting to /');
     redirect('/');
   }
 
   // Check if profile is incomplete from session
   const extendedSession = session as ExtendedSession;
   const isProfileIncomplete = extendedSession.profileIncomplete === true;
-  console.log('[ProfilePage] Profile incomplete from session:', isProfileIncomplete);
+  const registrationToken = extendedSession.registrationToken;
+  
+  console.log('[ProfileCompletionPage] Profile incomplete from session:', isProfileIncomplete);
+  console.log('[ProfileCompletionPage] Registration token:', !!registrationToken);
 
-  // If profile is incomplete, redirect to completion page
-  if (isProfileIncomplete) {
-    console.log('[ProfilePage] Profile incomplete, redirecting to /profile-completion');
-    redirect('/profile-completion');
+  // If profile is complete, redirect to regular profile page
+  if (!isProfileIncomplete || !registrationToken) {
+    console.log('[ProfileCompletionPage] Profile complete or no token, redirecting to /profile');
+    redirect('/profile');
   }
 
   const initialUser = {
@@ -39,6 +42,8 @@ export default async function ProfilePage() {
     birthDate: session.user.birthDate || '',
   };
   
-  // Show the regular profile page for complete users
-  return <ProfileClient initialUser={initialUser} />;
-}
+  return <ProfileCompletionForm 
+    initialUser={initialUser} 
+    registrationToken={registrationToken}
+  />;
+} 
