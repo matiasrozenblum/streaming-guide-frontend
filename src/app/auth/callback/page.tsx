@@ -3,6 +3,7 @@
 import { useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { useSession } from 'next-auth/react';
+import { event as gaEvent } from '@/lib/gtag';
 
 export default function AuthCallback() {
   const searchParams = useSearchParams();
@@ -11,7 +12,14 @@ export default function AuthCallback() {
   const createUserFromSession = async () => {
     if (!session?.user?.email) return;
     
-    console.log('[Auth Callback] Creating user from session data');
+    // Get the provider from sessionStorage (set by LoginModal)
+    const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
+    console.log('[Auth Callback] Creating user from session data with provider:', {
+      sessionStorage: sessionStorage.getItem('lastSocialProvider'),
+      fallback: 'google',
+      final: provider
+    });
+    
     try {
       const res = await fetch('/api/auth/social-login', {
         method: 'POST',
@@ -20,13 +28,26 @@ export default function AuthCallback() {
           email: session.user.email,
           firstName: session.user.name?.split(' ')[0] || '',
           lastName: session.user.name?.split(' ').slice(1).join(' ') || '',
-          provider: 'google'
+          provider: provider
         }),
       });
       
       if (res.ok) {
         const data = await res.json();
         console.log('[Auth Callback] Auto-created user:', data);
+        
+        // Track social login success
+        const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
+        console.log('[Auth Callback] Tracking social login success with provider:', provider);
+        
+        gaEvent({
+          action: 'social_login_success',
+          params: {
+            provider: provider,
+            method: 'social_signup',
+            user_type: data.profileIncomplete ? 'new' : 'existing',
+          }
+        });
         
         // Always redirect to profile-completion, let the page handle the logic
         console.log('[Auth Callback] Redirecting to profile-completion');
