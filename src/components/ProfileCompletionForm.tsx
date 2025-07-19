@@ -172,9 +172,9 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         userData: typedSession?.user || undefined
       });
 
-      // Redirect to profile page after a short delay
+      // Redirect to home page after a short delay
       setTimeout(() => {
-        router.push('/profile');
+        router.push('/');
       }, 2000);
 
     } catch (error) {
@@ -256,7 +256,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
               <Grid container spacing={2}>
                 <Grid component="div" size={6}>
                   <TextField
-                    label="Nombre*"
+                    label="Nombre"
                     fullWidth
                     value={firstName}
                     onChange={e => setFirstName(e.target.value)}
@@ -267,7 +267,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                 </Grid>
                 <Grid component="div" size={6}>
                   <TextField
-                    label="Apellido*"
+                    label="Apellido"
                     fullWidth
                     value={lastName}
                     onChange={e => setLastName(e.target.value)}
@@ -278,7 +278,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                 </Grid>
                 <Grid component="div" size={6}>
                   <TextField
-                    label="Fecha de nacimiento*"
+                    label="Fecha de nacimiento"
                     type="date"
                     fullWidth
                     value={birthDate}
@@ -291,7 +291,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                 </Grid>
                 <Grid component="div" size={6}>
                   <TextField
-                    label="Género*"
+                    label="Género"
                     select
                     fullWidth
                     value={gender}
@@ -314,7 +314,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
 
               <Stack spacing={2}>
                 <TextField
-                  label="Nueva contraseña*"
+                  label="Nueva contraseña"
                   type={showPassword ? 'text' : 'password'}
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
@@ -356,7 +356,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                 )}
                 
                 <TextField
-                  label="Confirmar contraseña*"
+                  label="Confirmar contraseña"
                   type={showConfirmPassword ? 'text' : 'password'}
                   value={confirmPassword}
                   onChange={(e) => setConfirmPassword(e.target.value)}

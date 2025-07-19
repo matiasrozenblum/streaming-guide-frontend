@@ -27,10 +27,10 @@ export default async function ProfileCompletionPage() {
   console.log('[ProfileCompletionPage] Profile incomplete from session:', isProfileIncomplete);
   console.log('[ProfileCompletionPage] Registration token:', !!registrationToken);
 
-  // If profile is complete, redirect to regular profile page
+  // If profile is complete, redirect to home page
   if (!isProfileIncomplete || !registrationToken) {
-    console.log('[ProfileCompletionPage] Profile complete or no token, redirecting to /profile');
-    redirect('/profile');
+    console.log('[ProfileCompletionPage] Profile complete or no token, redirecting to /');
+    redirect('/');
   }
 
   const initialUser = {

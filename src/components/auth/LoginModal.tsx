@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent,
-  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps
+  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps, Button
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
@@ -506,32 +506,74 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 </Box>
                 {/* Social login buttons */}
                 <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
-                  <button
-                    type="button"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                  <Button
+                    variant="outlined"
+                    fullWidth
                     onClick={async () => {
                       setIsLoading(true);
                       await signIn('google', { callbackUrl: '/profile' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      py: 1.5,
+                      borderRadius: 1.5,
+                      textTransform: 'none',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      borderColor: 'text.primary',
+                      color: 'text.primary',
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'action.hover',
+                      },
+                      '&:disabled': {
+                        opacity: 0.6,
+                      }
+                    }}
                   >
                     <GoogleIcon sx={{ color: '#4285F4' }} />
                     Conectate con Google
-                  </button>
-                  <button
-                    type="button"
-                    style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 8, background: '#fff', color: '#222', borderRadius: 6, border: '1px solid #e0e0e0', padding: '10px 0', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    fullWidth
                     onClick={async () => {
                       setIsLoading(true);
                       await signIn('facebook', { callbackUrl: '/profile' });
                       setIsLoading(false);
                     }}
                     disabled={isLoading}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      py: 1.5,
+                      borderRadius: 1.5,
+                      textTransform: 'none',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      borderColor: 'text.primary',
+                      color: 'text.primary',
+                      backgroundColor: 'background.paper',
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'action.hover',
+                      },
+                      '&:disabled': {
+                        opacity: 0.6,
+                      }
+                    }}
                   >
                     <FacebookIcon sx={{ color: '#1877F3' }} />
                     Conectate con Meta
-                  </button>
+                  </Button>
                 </Box>
               </>
             )}
