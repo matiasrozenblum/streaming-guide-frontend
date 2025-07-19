@@ -176,6 +176,20 @@ export const authOptions: AuthOptions = {
         session.user.role = token.role as string;
       }
 
+      // Set user profile data from token
+      if (token.gender) {
+        session.user.gender = token.gender as string;
+      }
+      if (token.birthDate) {
+        session.user.birthDate = token.birthDate as string;
+      }
+      if (token.firstName) {
+        session.user.firstName = token.firstName as string;
+      }
+      if (token.lastName) {
+        session.user.lastName = token.lastName as string;
+      }
+
       // Set backend tokens and profile status
       if (token.accessToken && token.refreshToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;

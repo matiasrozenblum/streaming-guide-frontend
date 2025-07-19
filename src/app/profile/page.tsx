@@ -30,8 +30,8 @@ export default async function ProfilePage() {
     lastName: session.user.lastName || session.user.name?.split(' ').slice(1).join(' ') || '',
     email: session.user.email || '',
     phone: '',
-    gender: '',
-    birthDate: '',
+    gender: session.user.gender || '',
+    birthDate: session.user.birthDate || '',
   };
   
   return <ProfileClient 

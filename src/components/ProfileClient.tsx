@@ -66,8 +66,8 @@ const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: Re
   <Paper
     elevation={0}
     sx={{
-      p: 2.5,
-      mb: 2,
+      p: 1.5,
+      mb: 1.5,
       background: (theme) => theme.palette.mode === 'light'
         ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
         : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
@@ -75,16 +75,16 @@ const ProfileSection = ({ title, value, onEdit, sx }: { title: string; value: Re
       borderRadius: 2,
       transition: 'all 0.2s ease-in-out',
       '&:hover': {
-        transform: 'translateY(-2px)',
+        transform: 'translateY(-1px)',
         boxShadow: (theme) => theme.palette.mode === 'light'
-          ? '0 8px 16px rgba(0,0,0,0.1)'
-          : '0 8px 16px rgba(0,0,0,0.3)',
+          ? '0 4px 8px rgba(0,0,0,0.1)'
+          : '0 4px 8px rgba(0,0,0,0.3)',
       },
       ...sx,
     }}
   >
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-      <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</Typography>
+    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1 }}>
+      <Typography variant="h6" sx={{ fontSize: '1rem', fontWeight: 600 }}>{title}</Typography>
       {onEdit && (
         <IconButton
           onClick={onEdit}
@@ -412,7 +412,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
       }}
     >
       <Header />
-      <Container maxWidth="sm" sx={{ py: 4 }}>
+      <Container maxWidth="xs" sx={{ py: 4 }}>
         <MotionBox
           initial={{ opacity: 0, y: 20 }}
           animate={{ opacity: 1, y: 0 }}
@@ -462,7 +462,7 @@ export default function ProfileClient({ initialUser, isProfileIncomplete = false
             </Paper>
           )}
 
-          <Stack spacing={2}>
+          <Stack spacing={1.5}>
             <ProfileSection
               title="Datos personales"
               value={
