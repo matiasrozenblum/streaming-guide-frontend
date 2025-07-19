@@ -26,10 +26,10 @@ function SessionRedirectHandler({ children }: Props) {
     if (
       status === 'authenticated' && 
       (session as ExtendedSession)?.profileIncomplete && 
-      pathname !== '/profile'
+      pathname !== '/profile-completion'
     ) {
-      console.log('[SessionRedirectHandler] Redirecting incomplete session to /profile');
-      router.replace('/profile');
+      console.log('[SessionRedirectHandler] Redirecting incomplete session to /profile-completion');
+      router.replace('/profile-completion');
     }
   }, [session, status, pathname, router]);
 
