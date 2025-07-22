@@ -12,6 +12,7 @@ export interface User {
   updatedAt: string;
   gender?: 'male' | 'female' | 'non_binary' | 'rather_not_say';
   birthDate?: string;
+  origin?: 'traditional' | 'google' | 'facebook';
   devices: Device[];
   subscriptions: UserSubscription[];
 } 
