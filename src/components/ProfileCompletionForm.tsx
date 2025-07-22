@@ -94,14 +94,11 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     if (registrationToken) {
       try {
         // Decode the JWT token to extract origin
-        console.log('🔍 [ProfileCompletionForm] Decoding token:', registrationToken.substring(0, 50) + '...');
         const payload = JSON.parse(atob(registrationToken.split('.')[1]));
-        console.log('🔍 [ProfileCompletionForm] Token payload:', payload);
         const origin = payload.origin || 'traditional';
-        console.log('🔍 [ProfileCompletionForm] Extracted origin:', origin);
         setUserOrigin(origin);
-      } catch (error) {
-        console.warn('Could not decode registration token, assuming traditional user', error);
+      } catch {
+        console.warn('Could not decode registration token, assuming traditional user');
         setUserOrigin('traditional');
       }
     }
@@ -123,15 +120,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     }
   }, [userOrigin, initialUser.email, initialUser.firstName, initialUser.lastName]);
 
-  // Debug session data
-  useEffect(() => {
-    console.log('🔍 [ProfileCompletionForm] Session debug:', {
-      session: typedSession,
-      initialUser,
-      userOrigin,
-      isSocialUser
-    });
-  }, [typedSession, initialUser, userOrigin, isSocialUser]);
+
 
   // Track profile completion form visit
   useEffect(() => {
@@ -179,14 +168,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       return;
     }
 
-    // Debug logging
-    console.log('🔍 [ProfileCompletionForm] Validation debug:', {
-      userOrigin,
-      isSocialUser,
-      hasPassword: !!password,
-      hasConfirmPassword: !!confirmPassword,
-      passwordMatch: password === confirmPassword
-    });
+
 
     // Only require password for traditional users
     // Temporary fix: If user has Gmail and names, treat as social user
