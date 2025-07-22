@@ -68,6 +68,10 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const { mode } = useThemeContext();
   const deviceId = useDeviceId();
 
+  // Extract user origin from registration token
+  const [userOrigin, setUserOrigin] = useState<'traditional' | 'google' | 'facebook' | null>(null);
+  const isSocialUser = userOrigin && userOrigin !== 'traditional';
+
   // Form state
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
@@ -83,6 +87,20 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
+  // Extract user origin from registration token
+  useEffect(() => {
+    if (registrationToken) {
+      try {
+        // Decode the JWT token to extract origin
+        const payload = JSON.parse(atob(registrationToken.split('.')[1]));
+        setUserOrigin(payload.origin || 'traditional');
+      } catch {
+        console.warn('Could not decode registration token, assuming traditional user');
+        setUserOrigin('traditional');
+      }
+    }
+  }, [registrationToken]);
+
   // Track profile completion form visit
   useEffect(() => {
     gaEvent({
@@ -90,10 +108,11 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       params: {
         has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
         registration_token_provided: !!registrationToken,
+                    user_origin: userOrigin ?? 'unknown',
       },
       userData: typedSession?.user || undefined
     });
-  }, [initialUser.firstName, initialUser.lastName, registrationToken, typedSession?.user]);
+  }, [initialUser.firstName, initialUser.lastName, registrationToken, userOrigin, typedSession?.user]);
 
   // Block navigation when profile is incomplete
   useEffect(() => {
@@ -122,30 +141,44 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const completeProfile = async () => {
     if (!registrationToken) return;
     
-    if (!firstName || !lastName || !birthDate || !gender || !password) {
+    // Validate required fields
+    if (!firstName || !lastName || !birthDate || !gender) {
       setErrorMessage('Todos los campos son obligatorios');
       return;
     }
 
-    if (password !== confirmPassword) {
-      setErrorMessage('Las contraseñas no coinciden');
-      return;
+    // Only require password for traditional users
+    if (!isSocialUser && (!password || password !== confirmPassword)) {
+      if (!password) {
+        setErrorMessage('Todos los campos son obligatorios');
+        return;
+      }
+      if (password !== confirmPassword) {
+        setErrorMessage('Las contraseñas no coinciden');
+        return;
+      }
     }
 
     setIsLoading(true);
     try {
+      const requestBody: Record<string, unknown> = {
+        registration_token: registrationToken,
+        firstName,
+        lastName,
+        gender,
+        birthDate,
+        deviceId,
+      };
+
+      // Only include password if provided (for traditional users)
+      if (password) {
+        requestBody.password = password;
+      }
+
       const res = await fetch('/api/auth/complete-profile', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          registration_token: registrationToken,
-          firstName,
-          lastName,
-          gender,
-          birthDate,
-          password,
-          deviceId,
-        }),
+        body: JSON.stringify(requestBody),
       });
 
       if (!res.ok) {
@@ -168,11 +201,12 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       gaEvent({
         action: 'profile_completed_all',
         params: {
-          fields_completed: 'firstName,lastName,gender,birthDate,password',
-          was_social_signup: true,
+          fields_completed: isSocialUser ? 'firstName,lastName,gender,birthDate' : 'firstName,lastName,gender,birthDate,password',
+          was_social_signup: Boolean(isSocialUser),
+                      user_origin: userOrigin ? String(userOrigin) : 'unknown',
           gender: gender,
           birth_date: birthDate, // Send raw birth date for age calculation
-          has_strong_password: getPasswordStrength(password) >= 3,
+          has_strong_password: password ? getPasswordStrength(password) >= 3 : false,
         },
         userData: typedSession?.user || undefined
       });
@@ -323,79 +357,93 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                 </Grid>
               </Grid>
 
-              <Typography variant="h6" sx={{ mt: 4, mb: 3, fontWeight: 600 }}>
-                Contraseña
-              </Typography>
+              {/* Only show password section for traditional users */}
+              {!isSocialUser && (
+                <>
+                  <Typography variant="h6" sx={{ mt: 4, mb: 3, fontWeight: 600 }}>
+                    Contraseña
+                  </Typography>
 
-              <Stack spacing={2}>
-                <TextField
-                  label="Nueva contraseña"
-                  type={showPassword ? 'text' : 'password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlinedIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowPassword(!showPassword)}
-                          edge="end"
-                        >
-                          {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-                
-                {password && (
-                  <Box>
-                    <LinearProgress
-                      variant="determinate"
-                      value={(getPasswordStrength(password) / 4) * 100}
-                      color={getPasswordStrengthColor(password)}
-                      sx={{ height: 4, borderRadius: 2 }}
+                  <Stack spacing={2}>
+                    <TextField
+                      label="Nueva contraseña"
+                      type={showPassword ? 'text' : 'password'}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      fullWidth
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockOutlinedIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowPassword(!showPassword)}
+                              edge="end"
+                            >
+                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
                     />
-                    <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                      Fuerza: {getPasswordStrength(password) === 1 ? 'Débil' : 
-                               getPasswordStrength(password) === 2 ? 'Media' : 
-                               getPasswordStrength(password) === 3 ? 'Buena' : 'Excelente'}
-                    </Typography>
-                  </Box>
-                )}
-                
-                <TextField
-                  label="Confirmar contraseña"
-                  type={showConfirmPassword ? 'text' : 'password'}
-                  value={confirmPassword}
-                  onChange={(e) => setConfirmPassword(e.target.value)}
-                  fullWidth
-                  required
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <LockOutlinedIcon fontSize="small" />
-                      </InputAdornment>
-                    ),
-                    endAdornment: (
-                      <InputAdornment position="end">
-                        <IconButton
-                          onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                          edge="end"
-                        >
-                          {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                        </IconButton>
-                      </InputAdornment>
-                    ),
-                  }}
-                />
-              </Stack>
+                    
+                    {password && (
+                      <Box>
+                        <LinearProgress
+                          variant="determinate"
+                          value={(getPasswordStrength(password) / 4) * 100}
+                          color={getPasswordStrengthColor(password)}
+                          sx={{ height: 4, borderRadius: 2 }}
+                        />
+                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
+                          Fuerza: {getPasswordStrength(password) === 1 ? 'Débil' : 
+                                   getPasswordStrength(password) === 2 ? 'Media' : 
+                                   getPasswordStrength(password) === 3 ? 'Buena' : 'Excelente'}
+                        </Typography>
+                      </Box>
+                    )}
+                    
+                    <TextField
+                      label="Confirmar contraseña"
+                      type={showConfirmPassword ? 'text' : 'password'}
+                      value={confirmPassword}
+                      onChange={(e) => setConfirmPassword(e.target.value)}
+                      fullWidth
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockOutlinedIcon fontSize="small" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                              edge="end"
+                            >
+                              {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                      }}
+                    />
+                  </Stack>
+                </>
+              )}
+
+              {/* Show info message for social users */}
+              {isSocialUser && (
+                <Box sx={{ mt: 4, p: 2, bgcolor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
+                  <Typography variant="body2">
+                    Como te registraste con {userOrigin === 'google' ? 'Google' : 'Meta'}, no necesitas crear una contraseña.
+                  </Typography>
+                </Box>
+              )}
 
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
                 <Button 
