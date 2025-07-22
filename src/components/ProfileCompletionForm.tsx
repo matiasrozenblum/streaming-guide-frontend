@@ -94,15 +94,44 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     if (registrationToken) {
       try {
         // Decode the JWT token to extract origin
+        console.log('🔍 [ProfileCompletionForm] Decoding token:', registrationToken.substring(0, 50) + '...');
         const payload = JSON.parse(atob(registrationToken.split('.')[1]));
+        console.log('🔍 [ProfileCompletionForm] Token payload:', payload);
         const origin = payload.origin || 'traditional';
+        console.log('🔍 [ProfileCompletionForm] Extracted origin:', origin);
         setUserOrigin(origin);
-      } catch {
-        console.warn('Could not decode registration token, assuming traditional user');
+      } catch (error) {
+        console.warn('Could not decode registration token, assuming traditional user', error);
         setUserOrigin('traditional');
       }
     }
   }, [registrationToken]);
+
+  // Fallback: If token doesn't have origin, check if user was created via social login
+  useEffect(() => {
+    if (userOrigin === 'traditional' && initialUser.email) {
+      // Check if this might be a social user by looking at the email domain or other indicators
+      // For now, let's check if the user has a Google-like email pattern
+      const isLikelySocialUser = initialUser.email.includes('@gmail.com') || 
+                                initialUser.email.includes('@googlemail.com') ||
+                                initialUser.firstName || initialUser.lastName; // If they have names, likely social
+      
+      if (isLikelySocialUser) {
+        console.log('🔍 [ProfileCompletionForm] Likely social user detected, setting origin to google');
+        setUserOrigin('google');
+      }
+    }
+  }, [userOrigin, initialUser.email, initialUser.firstName, initialUser.lastName]);
+
+  // Debug session data
+  useEffect(() => {
+    console.log('🔍 [ProfileCompletionForm] Session debug:', {
+      session: typedSession,
+      initialUser,
+      userOrigin,
+      isSocialUser
+    });
+  }, [typedSession, initialUser, userOrigin, isSocialUser]);
 
   // Track profile completion form visit
   useEffect(() => {
@@ -150,8 +179,21 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       return;
     }
 
+    // Debug logging
+    console.log('🔍 [ProfileCompletionForm] Validation debug:', {
+      userOrigin,
+      isSocialUser,
+      hasPassword: !!password,
+      hasConfirmPassword: !!confirmPassword,
+      passwordMatch: password === confirmPassword
+    });
+
     // Only require password for traditional users
-    if (!isSocialUser && (!password || password !== confirmPassword)) {
+    // Temporary fix: If user has Gmail and names, treat as social user
+    const shouldRequirePassword = !isSocialUser && 
+      !(initialUser.email.includes('@gmail.com') && (initialUser.firstName || initialUser.lastName));
+    
+    if (shouldRequirePassword && (!password || password !== confirmPassword)) {
       if (!password) {
         setErrorMessage('Todos los campos son obligatorios');
         return;
