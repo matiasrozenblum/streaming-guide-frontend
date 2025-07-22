@@ -453,8 +453,18 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         setUserGender(userData.gender || '');
                         setCompletedSteps(prev => new Set([...prev, 'email']));
                         setIsUserExisting(true);
-                        setStep('existing-user');
-                        setPhase('flow');
+                        
+                        // Check if user registered via social login
+                        if (userData.origin && userData.origin !== 'traditional') {
+                          // Show social login prompt
+                          setError(`Este email está registrado con ${userData.origin === 'google' ? 'Google' : 'Meta'}. Por favor, usa el botón de ${userData.origin === 'google' ? 'Google' : 'Meta'} para iniciar sesión.`);
+                          setStep('email'); // Stay on email step
+                          setPhase('email');
+                        } else {
+                          // Regular email user, proceed to password step
+                          setStep('existing-user');
+                          setPhase('flow');
+                        }
                       } else if (res.status === 404) {
                         setCompletedSteps(prev => new Set([...prev, 'email']));
                         setIsUserExisting(false);
