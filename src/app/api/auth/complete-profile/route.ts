@@ -13,8 +13,8 @@ export async function POST(request: NextRequest) {
       deviceId 
     } = body;
 
-    // Validate required fields
-    if (!registration_token || !firstName || !lastName || !gender || !birthDate || !password) {
+    // Validate required fields (password is optional for social users)
+    if (!registration_token || !firstName || !lastName || !gender || !birthDate) {
       return NextResponse.json(
         { message: 'Todos los campos son obligatorios' },
         { status: 400 }
@@ -23,21 +23,29 @@ export async function POST(request: NextRequest) {
 
     // Call backend endpoint
     const apiUrl = `${process.env.NEXT_PUBLIC_API_URL}/auth/complete-profile`;
+    
+    // Build request body (only include password if provided)
+    const requestBody: Record<string, unknown> = {
+      registration_token,
+      firstName,
+      lastName,
+      gender,
+      birthDate,
+      deviceId,
+    };
+    
+    // Only include password if provided (for traditional users)
+    if (password) {
+      requestBody.password = password;
+    }
+    
     const res = await fetch(apiUrl, {
       method: 'POST',
       headers: { 
         'Content-Type': 'application/json',
         'User-Agent': request.headers.get('user-agent') || 'Unknown'
       },
-      body: JSON.stringify({
-        registration_token,
-        firstName,
-        lastName,
-        gender,
-        birthDate,
-        password,
-        deviceId,
-      }),
+      body: JSON.stringify(requestBody),
     });
 
     if (!res.ok) {
