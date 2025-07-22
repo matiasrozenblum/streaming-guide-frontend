@@ -456,10 +456,23 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         
                         // Check if user registered via social login
                         if (userData.origin && userData.origin !== 'traditional') {
-                          // Show social login prompt
-                          setError(`Este email está registrado con ${userData.origin === 'google' ? 'Google' : 'Meta'}. Por favor, usa el botón de ${userData.origin === 'google' ? 'Google' : 'Meta'} para iniciar sesión.`);
-                          setStep('email'); // Stay on email step
-                          setPhase('email');
+                          // Automatically trigger social login for the detected provider
+                          const provider = userData.origin === 'google' ? 'google' : 'facebook';
+                          setIsLoading(true);
+                          // Store provider in sessionStorage for persistence across redirects
+                          sessionStorage.setItem('lastSocialProvider', provider);
+                          // Track social login attempt
+                          gaEvent({
+                            action: 'social_login_attempt',
+                            params: {
+                              provider: provider,
+                              method: 'auto_redirect',
+                            }
+                          });
+                          // Automatically trigger the social login
+                          await signIn(provider, { callbackUrl: '/profile-completion' });
+                          setIsLoading(false);
+                          return; // Exit early to prevent further processing
                         } else {
                           // Regular email user, proceed to password step
                           setStep('existing-user');
