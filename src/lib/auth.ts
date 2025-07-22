@@ -137,7 +137,7 @@ export const authOptions: AuthOptions = {
               email: token.email,
               firstName: token.firstName || token.name?.split(' ')[0] || '',
               lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
-              provider: account.provider,
+              origin: account.provider === 'google' ? 'google' : account.provider === 'facebook' ? 'facebook' : 'traditional',
             }),
           });
 

@@ -71,6 +71,8 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   // Extract user origin from registration token
   const [userOrigin, setUserOrigin] = useState<'traditional' | 'google' | 'facebook' | null>(null);
   const isSocialUser = userOrigin && userOrigin !== 'traditional';
+  
+
 
   // Form state
   const [firstName, setFirstName] = useState(initialUser.firstName);
@@ -93,7 +95,8 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       try {
         // Decode the JWT token to extract origin
         const payload = JSON.parse(atob(registrationToken.split('.')[1]));
-        setUserOrigin(payload.origin || 'traditional');
+        const origin = payload.origin || 'traditional';
+        setUserOrigin(origin);
       } catch {
         console.warn('Could not decode registration token, assuming traditional user');
         setUserOrigin('traditional');
