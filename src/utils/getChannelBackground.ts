@@ -26,6 +26,8 @@ export const getChannelBackground = (channelName: string): string => {
         return '#76e8ab'; // water green
       case 'neura':
         return '#091491'; // blue
+      case 'azz':
+        return '#02335e'; // azz blue
       default:
         return '#f1f5f9'; // fallback gray
     }
