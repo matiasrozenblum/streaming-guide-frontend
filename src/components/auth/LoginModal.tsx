@@ -21,7 +21,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
-import FacebookIcon from '@mui/icons-material/Facebook';
+// import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
 import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -549,6 +549,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     <GoogleIcon sx={{ color: '#4285F4' }} />
                     Conectate con Google
                   </Button>
+                  {/* Facebook login temporarily disabled - requires app review
                   <Button
                     variant="outlined"
                     fullWidth
@@ -593,6 +594,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     <FacebookIcon sx={{ color: '#1877F3' }} />
                     Conectate con Meta
                   </Button>
+                  */}
                 </Box>
               </>
             )}

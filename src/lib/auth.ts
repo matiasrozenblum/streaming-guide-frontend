@@ -2,7 +2,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
 import GoogleProvider from 'next-auth/providers/google';
-import FacebookProvider from 'next-auth/providers/facebook';
+// import FacebookProvider from 'next-auth/providers/facebook'; // Temporarily disabled - requires app review
 
 interface ExtendedSession extends Session {
   accessToken: string;
@@ -83,6 +83,8 @@ export const authOptions: AuthOptions = {
         };
       },
     }),
+    // FacebookProvider temporarily disabled - requires app review
+    /*
     FacebookProvider({
       clientId: process.env.FACEBOOK_CLIENT_ID!,
       clientSecret: process.env.FACEBOOK_CLIENT_SECRET!,
@@ -104,6 +106,7 @@ export const authOptions: AuthOptions = {
         };
       },
     }),
+    */
   ],
   session: {
     strategy: 'jwt',
