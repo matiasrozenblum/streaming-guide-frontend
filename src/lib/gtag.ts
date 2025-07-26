@@ -49,6 +49,7 @@ export const pageview = (url: string) => {
     user_id: user?.id,
     user_gender: user?.gender,
     user_age: age,
+    user_age_group: getAgeGroup(user?.birthDate),
     user_role: user?.role,
   };
 
@@ -64,6 +65,29 @@ export const pageview = (url: string) => {
 
 type GtagEventParams = {
   [key: string]: string | number | boolean | undefined;
+};
+
+/**
+ * Calculate age group from birth date
+ */
+const getAgeGroup = (birthDate: string | Date | undefined): string => {
+  if (!birthDate) return 'unknown';
+  
+  const birth = new Date(birthDate);
+  const today = new Date();
+  let age = today.getFullYear() - birth.getFullYear();
+  const monthDiff = today.getMonth() - birth.getMonth();
+  if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
+    age--;
+  }
+  
+  if (age < 18) return 'under_18';
+  if (age < 25) return '18_24';
+  if (age < 35) return '25_34';
+  if (age < 45) return '35_44';
+  if (age < 55) return '45_54';
+  if (age < 65) return '55_64';
+  return '65_plus';
 };
 
 type NextData = {
@@ -127,6 +151,7 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     user_id: user?.id,
     user_gender: user?.gender,
     user_age: age,
+    user_age_group: getAgeGroup(user?.birthDate),
     user_role: user?.role,
   };
 

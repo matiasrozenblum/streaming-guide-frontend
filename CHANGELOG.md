@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.5.0] - 2025-07-26
+
+### Added
+- Added social sign up and login with google integration
+- Added tracking for social sign up and login
+- Added azz channel background color
+
 ## [1.4.0] - 2025-07-11
 
 ### Added
