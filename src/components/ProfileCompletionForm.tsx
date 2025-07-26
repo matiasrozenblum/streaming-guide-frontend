@@ -114,7 +114,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                                 initialUser.firstName || initialUser.lastName; // If they have names, likely social
       
       if (isLikelySocialUser) {
-        console.log('🔍 [ProfileCompletionForm] Likely social user detected, setting origin to google');
         setUserOrigin('google');
       }
     }

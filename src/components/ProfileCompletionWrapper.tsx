@@ -31,7 +31,6 @@ export default function ProfileCompletionWrapper() {
     }
 
     if (status === 'unauthenticated' || !session?.user) {
-      console.log('[ProfileCompletionWrapper] No session, redirecting to /');
       router.replace('/');
       return;
     }
@@ -40,18 +39,7 @@ export default function ProfileCompletionWrapper() {
     const isProfileIncomplete = extendedSession.profileIncomplete === true;
     const registrationToken = extendedSession.registrationToken;
 
-    console.log('[ProfileCompletionWrapper] Session status:', {
-      status,
-      hasSession: !!session,
-      hasUser: !!session?.user,
-      userId: session?.user?.id,
-      profileIncomplete: isProfileIncomplete,
-      hasRegistrationToken: !!registrationToken,
-      shouldRedirect: !isProfileIncomplete || !registrationToken
-    });
-
     if (!isProfileIncomplete || !registrationToken) {
-      console.log('[ProfileCompletionWrapper] Profile complete or no token, redirecting to /');
       router.replace('/');
       return;
     }
