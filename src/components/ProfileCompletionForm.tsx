@@ -23,6 +23,11 @@ import {
   Snackbar,
   Alert as MuiAlert,
 } from '@mui/material';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -78,7 +83,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [gender, setGender] = useState(initialUser.gender || '');
-  const [birthDate, setBirthDate] = useState(initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : '');
+  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialUser.birthDate ? dayjs(initialUser.birthDate) : dayjs());
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -192,7 +197,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         firstName,
         lastName,
         gender,
-        birthDate,
+        birthDate: birthDate ? birthDate.format('YYYY-MM-DD') : '',
         deviceId,
       };
 
@@ -231,7 +236,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
           was_social_signup: Boolean(isSocialUser),
                       user_origin: userOrigin ? String(userOrigin) : 'unknown',
           gender: gender,
-          birth_date: birthDate, // Send raw birth date for age calculation
+          birth_date: birthDate ? birthDate.format('YYYY-MM-DD') : '', // Send raw birth date for age calculation
           has_strong_password: password ? getPasswordStrength(password) >= 3 : false,
         },
         userData: typedSession?.user || undefined
@@ -352,17 +357,26 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                   />
                 </Grid>
                 <Grid component="div" size={6}>
-                  <TextField
-                    label="Fecha de nacimiento"
-                    type="date"
-                    fullWidth
-                    value={birthDate}
-                    onChange={e => setBirthDate(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    InputLabelProps={{ shrink: true }}
-                    required
-                  />
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                    <DatePicker
+                      label="Fecha de nacimiento"
+                      value={birthDate}
+                      onChange={(value) => setBirthDate(value)}
+                      format="DD/MM/YYYY"
+                      slotProps={{
+                        textField: {
+                          fullWidth: true,
+                          variant: 'outlined',
+                          size: 'small',
+                          required: true,
+                          placeholder: dayjs().format('DD/MM/YYYY'),
+                          InputLabelProps: {
+                            shrink: true,
+                          },
+                        },
+                      }}
+                    />
+                  </LocalizationProvider>
                 </Grid>
                 <Grid component="div" size={6}>
                   <TextField

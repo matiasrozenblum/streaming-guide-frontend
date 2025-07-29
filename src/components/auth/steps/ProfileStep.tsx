@@ -11,16 +11,20 @@ import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 import MenuItem from '@mui/material/MenuItem';
 import { useSession } from 'next-auth/react';
+import { DatePicker } from '@mui/x-date-pickers/DatePicker';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 
 interface ProfileStepProps {
   initialFirst?: string;
   initialLast?: string;
   initialBirthDate?: string;
   initialGender?: string;
-  onSubmit: (first: string, last: string, birthDate: string, gender: string, password?: string) => void;
+  onSubmit: (first: string, last: string, birthDate: string, gender: string) => void;
   onBack: () => void;
   error?: string;
-  requirePassword?: boolean;
   isLoading?: boolean;
   showBackButton?: boolean;
 }
@@ -33,21 +37,18 @@ export default function ProfileStep({
   error,
   onSubmit,
   onBack,
-  requirePassword = false,
   isLoading = false,
   showBackButton = true,
 }: ProfileStepProps) {
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
   const [last, setLast] = useState(initialLast);
-  const [birthDate, setBirthDate] = useState(initialBirthDate);
+  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialBirthDate ? dayjs(initialBirthDate) : dayjs());
   const [gender, setGender] = useState(initialGender);
   const [localErr, setLocalErr] = useState('');
   // If user is from social provider, disable name fields if present
   const isSocial = !!session?.user && (session.user.firstName || session.user.lastName || session.user.email);
   const [birthDateError, setBirthDateError] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -63,31 +64,22 @@ export default function ProfileStep({
       setLocalErr('Selecciona tu género');
       return;
     }
-    if (requirePassword && !password) {
-      setPasswordError('La contraseña es obligatoria');
-      return;
-    }
-    if (requirePassword && password.length < 6) {
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
+    if (!birthDate) {
+      setLocalErr('Ingresa tu fecha de nacimiento');
       return;
     }
     setLocalErr('');
-    setPasswordError('');
-    if (requirePassword) {
-      onSubmit(first.trim(), last.trim(), birthDate, gender, password);
-    } else {
-      onSubmit(first.trim(), last.trim(), birthDate, gender);
-    }
+    const birthDateString = birthDate ? birthDate.format('YYYY-MM-DD') : '';
+    onSubmit(first.trim(), last.trim(), birthDateString, gender);
   };
 
-  const handleBirthDateChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const value = e.target.value;
+  const handleBirthDateChange = (value: Dayjs | null) => {
     setBirthDate(value);
     if (!value) {
       setBirthDateError('La fecha de nacimiento es obligatoria');
       return;
     }
-    const birth = new Date(value);
+    const birth = value.toDate();
     const now = new Date();
     let age = now.getFullYear() - birth.getFullYear();
     const m = now.getMonth() - birth.getMonth();
@@ -132,42 +124,39 @@ export default function ProfileStep({
         }}
         disabled={Boolean(isSocial && last)}
       />
-      <Box sx={{ display: 'flex', gap: 2 }}>
-        <TextField
-          label="Fecha de nacimiento"
-          type="date"
-          fullWidth
-          InputLabelProps={{ shrink: true }}
-          value={birthDate}
-          onChange={handleBirthDateChange}
-          error={!!birthDateError}
-          helperText={birthDateError}
-        />
-        <TextField
-          label="Género"
-          select
-          fullWidth
-          value={gender}
-          onChange={e => setGender(e.target.value)}
-        >
-          <MenuItem value="masculino">Masculino</MenuItem>
-          <MenuItem value="femenino">Femenino</MenuItem>
-          <MenuItem value="no_binario">No binario</MenuItem>
-          <MenuItem value="prefiero_no_decir">Prefiero no decir</MenuItem>
-        </TextField>
-      </Box>
-      {requirePassword && (
-        <TextField
-          label="Contraseña"
-          type="password"
-          fullWidth
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          error={!!passwordError}
-          helperText={passwordError || 'Mínimo 6 caracteres'}
-          sx={{ mt: 1 }}
-        />
-      )}
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+        <Box sx={{ display: 'flex', gap: 2 }}>
+          <DatePicker
+            label="Fecha de nacimiento"
+            value={birthDate}
+            onChange={handleBirthDateChange}
+            format="DD/MM/YYYY"
+            slotProps={{
+              textField: {
+                fullWidth: true,
+                error: !!birthDateError,
+                helperText: birthDateError,
+                placeholder: dayjs().format('DD/MM/YYYY'),
+                InputLabelProps: {
+                  shrink: true,
+                },
+              },
+            }}
+          />
+          <TextField
+            label="Género"
+            select
+            fullWidth
+            value={gender}
+            onChange={e => setGender(e.target.value)}
+          >
+            <MenuItem value="masculino">Masculino</MenuItem>
+            <MenuItem value="femenino">Femenino</MenuItem>
+            <MenuItem value="no_binario">No binario</MenuItem>
+            <MenuItem value="prefiero_no_decir">Prefiero no decir</MenuItem>
+          </TextField>
+        </Box>
+      </LocalizationProvider>
       {(localErr || error) && (
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
@@ -189,7 +178,7 @@ export default function ProfileStep({
           type="submit"
           variant="contained"
           fullWidth
-          disabled={!first || !last || !birthDate || !gender || !!birthDateError || (requirePassword && (!password || password.length < 6)) || isLoading}
+          disabled={!first || !last || !birthDate || !gender || !!birthDateError || isLoading}
         >
           Continuar
         </Button>
