@@ -151,6 +151,10 @@ export default function ProfileStep({
                 fullWidth: true,
                 error: !!birthDateError,
                 helperText: birthDateError,
+                placeholder: "DD/MM/AAAA",
+                InputLabelProps: {
+                  shrink: true,
+                },
               },
             }}
           />
