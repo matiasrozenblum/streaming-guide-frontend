@@ -17,9 +17,6 @@ import {
   Grid,
   MenuItem,
   IconButton,
-  InputAdornment,
-  LinearProgress,
-  Stack,
   Snackbar,
   Alert as MuiAlert,
 } from '@mui/material';
@@ -29,9 +26,6 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/es';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import Header from './Header';
 import { event as gaEvent } from '@/lib/gtag';
 
@@ -47,25 +41,6 @@ interface ProfileCompletionFormProps {
   };
 }
 
-const getPasswordStrength = (password: string): number => {
-  let strength = 0;
-  if (password.length >= 8) strength++;
-  if (/[a-z]/.test(password)) strength++;
-  if (/[A-Z]/.test(password)) strength++;
-  if (/[0-9]/.test(password)) strength++;
-  if (/[^A-Za-z0-9]/.test(password)) strength++;
-  return Math.min(strength, 4);
-};
-
-const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'primary' => {
-  const strength = getPasswordStrength(password);
-  if (strength <= 1) return 'error';
-  if (strength <= 2) return 'warning';
-  return 'primary';
-};
-
-
-
 export default function ProfileCompletionForm({ registrationToken, initialUser }: ProfileCompletionFormProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as { user?: { id?: string; gender?: string; birthDate?: string; role?: string } };
@@ -73,58 +48,16 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const { mode } = useThemeContext();
   const deviceId = useDeviceId();
 
-  // Extract user origin from registration token
-  const [userOrigin, setUserOrigin] = useState<'traditional' | 'google' | 'facebook' | null>(null);
-  const isSocialUser = userOrigin && userOrigin !== 'traditional';
-  
-
-
   // Form state
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [gender, setGender] = useState(initialUser.gender || '');
   const [birthDate, setBirthDate] = useState<Dayjs | null>(initialUser.birthDate ? dayjs(initialUser.birthDate) : dayjs());
-  const [password, setPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   // UI state
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Extract user origin from registration token
-  useEffect(() => {
-    if (registrationToken) {
-      try {
-        // Decode the JWT token to extract origin
-        const payload = JSON.parse(atob(registrationToken.split('.')[1]));
-        const origin = payload.origin || 'traditional';
-        setUserOrigin(origin);
-      } catch {
-        console.warn('Could not decode registration token, assuming traditional user');
-        setUserOrigin('traditional');
-      }
-    }
-  }, [registrationToken]);
-
-  // Fallback: If token doesn't have origin, check if user was created via social login
-  useEffect(() => {
-    if (userOrigin === 'traditional' && initialUser.email) {
-      // Check if this might be a social user by looking at the email domain or other indicators
-      // For now, let's check if the user has a Google-like email pattern
-      const isLikelySocialUser = initialUser.email.includes('@gmail.com') || 
-                                initialUser.email.includes('@googlemail.com') ||
-                                initialUser.firstName || initialUser.lastName; // If they have names, likely social
-      
-      if (isLikelySocialUser) {
-        setUserOrigin('google');
-      }
-    }
-  }, [userOrigin, initialUser.email, initialUser.firstName, initialUser.lastName]);
-
-
 
   // Track profile completion form visit
   useEffect(() => {
@@ -133,11 +66,10 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       params: {
         has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
         registration_token_provided: !!registrationToken,
-                    user_origin: userOrigin ?? 'unknown',
       },
       userData: typedSession?.user || undefined
     });
-  }, [initialUser.firstName, initialUser.lastName, registrationToken, userOrigin, typedSession?.user]);
+  }, [initialUser.firstName, initialUser.lastName, registrationToken, typedSession?.user]);
 
   // Block navigation when profile is incomplete
   useEffect(() => {
@@ -172,27 +104,9 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       return;
     }
 
-
-
-    // Only require password for traditional users
-    // Temporary fix: If user has Gmail and names, treat as social user
-    const shouldRequirePassword = !isSocialUser && 
-      !(initialUser.email.includes('@gmail.com') && (initialUser.firstName || initialUser.lastName));
-    
-    if (shouldRequirePassword && (!password || password !== confirmPassword)) {
-      if (!password) {
-        setErrorMessage('Todos los campos son obligatorios');
-        return;
-      }
-      if (password !== confirmPassword) {
-        setErrorMessage('Las contraseñas no coinciden');
-        return;
-      }
-    }
-
     setIsLoading(true);
     try {
-      const requestBody: Record<string, unknown> = {
+      const requestBody = {
         registration_token: registrationToken,
         firstName,
         lastName,
@@ -200,11 +114,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         birthDate: birthDate ? birthDate.format('YYYY-MM-DD') : '',
         deviceId,
       };
-
-      // Only include password if provided (for traditional users)
-      if (password) {
-        requestBody.password = password;
-      }
 
       const res = await fetch('/api/auth/complete-profile', {
         method: 'POST',
@@ -232,12 +141,10 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       gaEvent({
         action: 'profile_completed_all',
         params: {
-          fields_completed: isSocialUser ? 'firstName,lastName,gender,birthDate' : 'firstName,lastName,gender,birthDate,password',
-          was_social_signup: Boolean(isSocialUser),
-                      user_origin: userOrigin ? String(userOrigin) : 'unknown',
+          fields_completed: 'firstName,lastName,gender,birthDate',
+          was_social_signup: true,
           gender: gender,
-          birth_date: birthDate ? birthDate.format('YYYY-MM-DD') : '', // Send raw birth date for age calculation
-          has_strong_password: password ? getPasswordStrength(password) >= 3 : false,
+          birth_date: birthDate ? birthDate.format('YYYY-MM-DD') : '',
         },
         userData: typedSession?.user || undefined
       });
@@ -256,7 +163,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
         action: 'profile_completion_error',
         params: {
           error_type: error instanceof Error ? error.message : 'unknown_error',
-          fields_provided: `${!!firstName},${!!lastName},${!!gender},${!!birthDate},${!!password}`,
+          fields_provided: `${!!firstName},${!!lastName},${!!gender},${!!birthDate}`,
         },
         userData: typedSession?.user || undefined
       });
@@ -396,94 +303,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                   </TextField>
                 </Grid>
               </Grid>
-
-              {/* Only show password section for traditional users */}
-              {!isSocialUser && (
-                <>
-                  <Typography variant="h6" sx={{ mt: 4, mb: 3, fontWeight: 600 }}>
-                    Contraseña
-                  </Typography>
-
-                  <Stack spacing={2}>
-                    <TextField
-                      label="Nueva contraseña"
-                      type={showPassword ? 'text' : 'password'}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      fullWidth
-                      required
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LockOutlinedIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowPassword(!showPassword)}
-                              edge="end"
-                            >
-                              {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                    
-                    {password && (
-                      <Box>
-                        <LinearProgress
-                          variant="determinate"
-                          value={(getPasswordStrength(password) / 4) * 100}
-                          color={getPasswordStrengthColor(password)}
-                          sx={{ height: 4, borderRadius: 2 }}
-                        />
-                        <Typography variant="caption" sx={{ mt: 0.5, display: 'block' }}>
-                          Fuerza: {getPasswordStrength(password) === 1 ? 'Débil' : 
-                                   getPasswordStrength(password) === 2 ? 'Media' : 
-                                   getPasswordStrength(password) === 3 ? 'Buena' : 'Excelente'}
-                        </Typography>
-                      </Box>
-                    )}
-                    
-                    <TextField
-                      label="Confirmar contraseña"
-                      type={showConfirmPassword ? 'text' : 'password'}
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      fullWidth
-                      required
-                      InputProps={{
-                        startAdornment: (
-                          <InputAdornment position="start">
-                            <LockOutlinedIcon fontSize="small" />
-                          </InputAdornment>
-                        ),
-                        endAdornment: (
-                          <InputAdornment position="end">
-                            <IconButton
-                              onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                              edge="end"
-                            >
-                              {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
-                            </IconButton>
-                          </InputAdornment>
-                        ),
-                      }}
-                    />
-                  </Stack>
-                </>
-              )}
-
-              {/* Show info message for social users */}
-              {isSocialUser && (
-                <Box sx={{ mt: 4, p: 2, bgcolor: 'info.light', borderRadius: 1, color: 'info.contrastText' }}>
-                  <Typography variant="body2">
-                    Como te registraste con {userOrigin === 'google' ? 'Google' : 'Meta'}, no necesitas crear una contraseña.
-                  </Typography>
-                </Box>
-              )}
 
               <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
                 <Button 
