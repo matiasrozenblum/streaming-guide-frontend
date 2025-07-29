@@ -83,7 +83,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [gender, setGender] = useState(initialUser.gender || '');
-  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialUser.birthDate ? dayjs(initialUser.birthDate) : null);
+  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialUser.birthDate ? dayjs(initialUser.birthDate) : dayjs());
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
@@ -371,7 +371,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                           required: true,
                           placeholder: dayjs().format('DD/MM/YYYY'),
                           InputLabelProps: {
-                            shrink: birthDate !== null,
+                            shrink: true,
                           },
                         },
                       }}
