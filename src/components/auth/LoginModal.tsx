@@ -22,7 +22,6 @@ import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
 // import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
-import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 
 // Helper para extraer mensaje de Error
