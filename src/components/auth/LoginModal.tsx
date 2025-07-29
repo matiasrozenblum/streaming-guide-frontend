@@ -145,7 +145,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
-  const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
@@ -723,7 +722,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 requirePassword={true}
                 isLoading={isLoading}
                 error={error}
-                onSubmit={async (f, l, b, g, pw) => {
+                onSubmit={async (f, l, b, g) => {
                   setFirstName(f);
                   setLastName(l);
                   setBirthDate(b);
