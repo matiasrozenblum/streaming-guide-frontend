@@ -160,6 +160,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [userFirstName, setUserFirstName] = useState('');
   const [userGender, setUserGender] = useState('');
   const [phase, setPhase] = useState<'email'|'flow'>('email');
+  const [socialLoginPending, setSocialLoginPending] = useState(false);
 
   useEffect(() => {
     if (!open) {
@@ -171,6 +172,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setBirthDate(''); setGender('');
       setUserFirstName(''); setUserGender('');
       setPhase('email');
+      setSocialLoginPending(false);
     }
   }, [open]);
 
@@ -288,10 +290,10 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
             : ''
         )}
-        <IconButton onClick={onClose}><CloseIcon /></IconButton>
+        <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      {isLoading ? (
+      {socialLoginPending ? (
         <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
           <CircularProgress sx={{ my: 3 }} />
           <Box sx={{ mt: 2, color: 'text.secondary', fontWeight: 600 }}>Conectando con el backend...</Box>
@@ -382,7 +384,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         if (userData.origin && userData.origin !== 'traditional') {
                           // Automatically trigger social login for the detected provider
                           const provider = userData.origin === 'google' ? 'google' : 'facebook';
-                          setIsLoading(true);
+                          setSocialLoginPending(true);
                           // Store provider in sessionStorage for tracking
                           sessionStorage.setItem('lastSocialProvider', provider);
                           // Track social login attempt
@@ -395,7 +397,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                           });
                           // Automatically trigger the social login
                           await signIn(provider, { callbackUrl: '/profile-completion' });
-                          setIsLoading(false);
+                          setSocialLoginPending(false);
                           return; // Exit early to prevent further processing
                         } else {
                           // Regular email user, proceed to password step
@@ -433,7 +435,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     variant="outlined"
                     fullWidth
                     onClick={async () => {
-                      setIsLoading(true);
+                      setSocialLoginPending(true);
                       // Store provider in sessionStorage for tracking
                       sessionStorage.setItem('lastSocialProvider', 'google');
                       gaEvent({
@@ -444,9 +446,9 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         }
                       });
                       await signIn('google', { callbackUrl: '/profile-completion' });
-                      setIsLoading(false);
+                      setSocialLoginPending(false);
                     }}
-                    disabled={isLoading}
+                    disabled={socialLoginPending}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
