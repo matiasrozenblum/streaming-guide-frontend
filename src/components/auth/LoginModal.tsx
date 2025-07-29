@@ -22,7 +22,6 @@ import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
 // import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
-import { useRouter } from 'next/navigation';
 import CircularProgress from '@mui/material/CircularProgress';
 
 // Helper para extraer mensaje de Error
@@ -145,7 +144,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
-  const router = useRouter();
   const { data: session, status: sessionStatus } = useSession();
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
@@ -297,42 +295,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
     });
   };
 
-  // Add a function to handle profile completion after social login
-  async function handleSocialProfileCompletion(f: string, l: string, b: string, g: string, pw: string) {
-    setIsLoading(true);
-    setError('');
-    try {
-      const res = await fetch('/api/auth/complete-profile', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          registration_token: registrationToken,
-          firstName: f,
-          lastName: l,
-          password: pw,
-          gender: g,
-          birthDate: b,
-          deviceId,
-        }),
-      });
-      if (!res.ok) {
-        const body = await res.json();
-        throw new Error(body.message || 'Error al completar el perfil');
-      }
-      const data = await res.json();
-      // After successful profile completion, establish backend session
-      await signIn('credentials', {
-        redirect: false,
-        accessToken: data.access_token,
-        refreshToken: data.refresh_token,
-      });
-      onClose();
-      router.refresh();
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Error al completar el perfil');
-    }
-    setIsLoading(false);
-  }
+
 
 
 
@@ -755,11 +718,15 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 initialLast={lastName}
                 initialBirthDate={birthDate}
                 initialGender={gender}
-                requirePassword={true}
                 isLoading={isLoading}
                 error={error}
-                onSubmit={async (f, l, b, g, pw) => {
-                  await handleSocialProfileCompletion(f, l, b, g, pw ?? '');
+                onSubmit={async (f, l, b, g) => {
+                  setFirstName(f);
+                  setLastName(l);
+                  setBirthDate(b);
+                  setGender(g);
+                  setCompletedSteps(prev => new Set([...prev, 'profile']));
+                  setStep('password');
                 }}
                 onBack={() => { setStep('email'); setPhase('email'); }}
               />

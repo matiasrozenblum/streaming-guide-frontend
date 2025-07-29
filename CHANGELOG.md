@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.5.1] - 2025-07-29
+
+### Changed
+- Changed panelist select in weekly change to use the same as the regular program dialog
+- Replaced stock date picker from login modal and profile completion form fur MUI date picker as in the statistics backoffice section
+- Fixed normal sign up by removing password from profile step and not calling complete-profile
+
 ## [1.5.0] - 2025-07-26
 
 ### Added
