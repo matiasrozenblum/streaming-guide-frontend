@@ -31,9 +31,7 @@ import {
   FormControl,
   InputLabel,
   Select,
-  Checkbox,
-  ListItemText,
-  OutlinedInput,
+  Autocomplete,
 } from '@mui/material';
 import {
   Add,
@@ -103,6 +101,7 @@ export function WeeklyOverridesTable() {
   const [selectedSchedule, setSelectedSchedule] = useState<ScheduleType | null>(null);
   const [selectedProgram, setSelectedProgram] = useState<Program | null>(null);
   const [searchTerm, setSearchTerm] = useState('');
+  const [panelistSearchTerm, setPanelistSearchTerm] = useState('');
   const [formData, setFormData] = useState({
     targetWeek: 'current' as 'current' | 'next',
     overrideType: 'cancel' as 'cancel' | 'time_change' | 'reschedule' | 'create',
@@ -270,6 +269,7 @@ export function WeeklyOverridesTable() {
     setOpenDialog(false);
     setSelectedSchedule(null);
     setSelectedProgram(null);
+    setPanelistSearchTerm('');
     setFormData({
       targetWeek: 'current',
       overrideType: 'cancel',
@@ -1200,40 +1200,99 @@ export function WeeklyOverridesTable() {
 
             {/* Panelist selection */}
             {panelists.length > 0 && (
-              <FormControl fullWidth>
-                <InputLabel>Panelistas</InputLabel>
-                <Select
-                  multiple
-                  value={formData.panelistIds}
-                  onChange={(e) => setFormData({ ...formData, panelistIds: typeof e.target.value === 'string' ? [] : e.target.value })}
-                  input={<OutlinedInput label="Panelistas" />}
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {selected.map((value) => {
-                        const panelist = panelists.find(p => p.id === value);
-                        return panelist ? (
-                          <Chip
-                            key={value}
-                            label={panelist.name}
-                            size="small"
-                            icon={<Group />}
-                          />
-                        ) : null;
-                      })}
-                    </Box>
-                  )}
-                >
-                  {panelists.map((panelist) => (
-                    <MenuItem key={panelist.id} value={panelist.id}>
-                      <Checkbox checked={formData.panelistIds.indexOf(panelist.id) > -1} />
-                      <ListItemText primary={panelist.name} />
-                    </MenuItem>
-                  ))}
-                </Select>
-                <Typography variant="caption" color="text.secondary">
-                  Selecciona los panelistas que participarán en este programa (opcional)
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Panelistas
                 </Typography>
-              </FormControl>
+                <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                  <Autocomplete
+                    options={panelists.filter(panelist => !formData.panelistIds.includes(panelist.id))}
+                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                    inputValue={panelistSearchTerm}
+                    onInputChange={(_, newValue) => setPanelistSearchTerm(newValue)}
+                    onChange={(_, newValue) => {
+                      if (newValue && typeof newValue !== 'string') {
+                        setFormData({ ...formData, panelistIds: [...formData.panelistIds, newValue.id] });
+                        setPanelistSearchTerm('');
+                      }
+                    }}
+                    sx={{ flex: 1 }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Buscar o crear panelista"
+                        fullWidth
+                        sx={{ minWidth: 300 }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} key={typeof option === 'string' ? option : option.id}>
+                        {typeof option === 'string' ? option : option.name}
+                      </li>
+                    )}
+                    freeSolo
+                    disableClearable
+                  />
+                  {panelistSearchTerm && (
+                    <Button
+                      variant="contained"
+                      onClick={async () => {
+                        if (panelistSearchTerm.trim()) {
+                          try {
+                            // Create new panelist
+                            const createResponse = await fetch('/api/panelists', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${typedSession?.accessToken}`,
+                              },
+                              body: JSON.stringify({ name: panelistSearchTerm.trim() }),
+                            });
+
+                            if (!createResponse.ok) throw new Error('Failed to create panelist');
+
+                            const newPanelist = await createResponse.json();
+                            
+                            // Update state
+                            setPanelists([...panelists, newPanelist]);
+                            setFormData({ ...formData, panelistIds: [...formData.panelistIds, newPanelist.id] });
+                            setPanelistSearchTerm('');
+                          } catch (error) {
+                            console.error('Error creating panelist:', error);
+                            setError('Error al crear el panelista');
+                          }
+                        }
+                      }}
+                      disabled={!panelistSearchTerm.trim()}
+                      sx={{ minWidth: 120 }}
+                    >
+                      Crear y Agregar
+                    </Button>
+                  )}
+                </Box>
+                
+                {/* Selected Panelists */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Panelistas Seleccionados
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {formData.panelistIds.map((panelistId) => {
+                      const panelist = panelists.find(p => p.id === panelistId);
+                      return panelist ? (
+                        <Chip
+                          key={panelistId}
+                          label={panelist.name}
+                          onDelete={() => setFormData({ 
+                            ...formData, 
+                            panelistIds: formData.panelistIds.filter(id => id !== panelistId) 
+                          })}
+                        />
+                      ) : null;
+                    })}
+                  </Box>
+                </Box>
+              </Box>
             )}
 
             {/* Special program fields for create overrides */}
