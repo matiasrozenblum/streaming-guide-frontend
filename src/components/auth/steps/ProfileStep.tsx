@@ -45,7 +45,7 @@ export default function ProfileStep({
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
   const [last, setLast] = useState(initialLast);
-  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialBirthDate ? dayjs(initialBirthDate) : null);
+  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialBirthDate ? dayjs(initialBirthDate) : dayjs());
   const [gender, setGender] = useState(initialGender);
   const [localErr, setLocalErr] = useState('');
   // If user is from social provider, disable name fields if present
@@ -155,7 +155,7 @@ export default function ProfileStep({
                 helperText: birthDateError,
                 placeholder: dayjs().format('DD/MM/YYYY'),
                 InputLabelProps: {
-                  shrink: birthDate !== null,
+                  shrink: true,
                 },
               },
             }}
