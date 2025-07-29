@@ -718,7 +718,6 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                 initialLast={lastName}
                 initialBirthDate={birthDate}
                 initialGender={gender}
-                requirePassword={true}
                 isLoading={isLoading}
                 error={error}
                 onSubmit={async (f, l, b, g) => {
