@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.5.1] - 2025-07-28
+## [1.5.1] - 2025-07-29
 
 ### Changed
 - Changed panelist select in weekly change to use the same as the regular program dialog
