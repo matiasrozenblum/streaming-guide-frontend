@@ -15,6 +15,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 
 interface ProfileStepProps {
   initialFirst?: string;
@@ -140,18 +141,22 @@ export default function ProfileStep({
         }}
         disabled={Boolean(isSocial && last)}
       />
-      <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
         <Box sx={{ display: 'flex', gap: 2 }}>
           <DatePicker
             label="Fecha de nacimiento"
             value={birthDate}
             onChange={handleBirthDateChange}
+            format="DD/MM/YYYY"
             slotProps={{
               textField: {
                 fullWidth: true,
                 error: !!birthDateError,
                 helperText: birthDateError,
-                placeholder: "DD/MM/AAAA",
+                placeholder: dayjs().format('DD/MM/YYYY'),
+                InputLabelProps: {
+                  shrink: birthDate !== null,
+                },
               },
             }}
           />

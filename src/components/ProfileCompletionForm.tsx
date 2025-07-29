@@ -27,6 +27,7 @@ import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -356,18 +357,22 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                   />
                 </Grid>
                 <Grid component="div" size={6}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
                     <DatePicker
                       label="Fecha de nacimiento"
                       value={birthDate}
                       onChange={(value) => setBirthDate(value)}
+                      format="DD/MM/YYYY"
                       slotProps={{
                         textField: {
                           fullWidth: true,
                           variant: 'outlined',
                           size: 'small',
                           required: true,
-                          placeholder: "DD/MM/AAAA",
+                          placeholder: dayjs().format('DD/MM/YYYY'),
+                          InputLabelProps: {
+                            shrink: birthDate !== null,
+                          },
                         },
                       }}
                     />
