@@ -368,9 +368,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                           size: 'small',
                           required: true,
                           placeholder: "DD/MM/AAAA",
-                          InputLabelProps: {
-                            shrink: true,
-                          },
                         },
                       }}
                     />
