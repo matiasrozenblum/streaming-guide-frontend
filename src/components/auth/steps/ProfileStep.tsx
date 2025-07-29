@@ -22,10 +22,9 @@ interface ProfileStepProps {
   initialLast?: string;
   initialBirthDate?: string;
   initialGender?: string;
-  onSubmit: (first: string, last: string, birthDate: string, gender: string, password?: string) => void;
+  onSubmit: (first: string, last: string, birthDate: string, gender: string) => void;
   onBack: () => void;
   error?: string;
-  requirePassword?: boolean;
   isLoading?: boolean;
   showBackButton?: boolean;
 }
@@ -38,7 +37,6 @@ export default function ProfileStep({
   error,
   onSubmit,
   onBack,
-  requirePassword = false,
   isLoading = false,
   showBackButton = true,
 }: ProfileStepProps) {
@@ -51,8 +49,6 @@ export default function ProfileStep({
   // If user is from social provider, disable name fields if present
   const isSocial = !!session?.user && (session.user.firstName || session.user.lastName || session.user.email);
   const [birthDateError, setBirthDateError] = useState('');
-  const [password, setPassword] = useState('');
-  const [passwordError, setPasswordError] = useState('');
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
@@ -72,22 +68,9 @@ export default function ProfileStep({
       setLocalErr('Ingresa tu fecha de nacimiento');
       return;
     }
-    if (requirePassword && !password) {
-      setPasswordError('La contraseña es obligatoria');
-      return;
-    }
-    if (requirePassword && password.length < 6) {
-      setPasswordError('La contraseña debe tener al menos 6 caracteres');
-      return;
-    }
     setLocalErr('');
-    setPasswordError('');
     const birthDateString = birthDate ? birthDate.format('YYYY-MM-DD') : '';
-    if (requirePassword) {
-      onSubmit(first.trim(), last.trim(), birthDateString, gender, password);
-    } else {
-      onSubmit(first.trim(), last.trim(), birthDateString, gender);
-    }
+    onSubmit(first.trim(), last.trim(), birthDateString, gender);
   };
 
   const handleBirthDateChange = (value: Dayjs | null) => {
@@ -174,18 +157,6 @@ export default function ProfileStep({
           </TextField>
         </Box>
       </LocalizationProvider>
-      {requirePassword && (
-        <TextField
-          label="Contraseña"
-          type="password"
-          fullWidth
-          value={password}
-          onChange={e => setPassword(e.target.value)}
-          error={!!passwordError}
-          helperText={passwordError || 'Mínimo 6 caracteres'}
-          sx={{ mt: 1 }}
-        />
-      )}
       {(localErr || error) && (
         <Alert severity="error">
           <AlertTitle>Error</AlertTitle>
@@ -207,7 +178,7 @@ export default function ProfileStep({
           type="submit"
           variant="contained"
           fullWidth
-          disabled={!first || !last || !birthDate || !gender || !!birthDateError || (requirePassword && (!password || password.length < 6)) || isLoading}
+          disabled={!first || !last || !birthDate || !gender || !!birthDateError || isLoading}
         >
           Continuar
         </Button>
