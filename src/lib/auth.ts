@@ -146,13 +146,6 @@ export const authOptions: AuthOptions = {
 
           if (res.ok) {
             const data = await res.json();
-            console.log('[NextAuth JWT] Social login response:', {
-              userId: data.user.id,
-              profileIncomplete: data.profileIncomplete,
-              hasRegistrationToken: !!data.registration_token,
-              hasAccessToken: !!data.access_token,
-              hasRefreshToken: !!data.refresh_token
-            });
 
             // Always set the backend user ID
             token.sub = data.user.id.toString();
@@ -161,13 +154,11 @@ export const authOptions: AuthOptions = {
               // Profile incomplete: set flag and redirect to profile
               token.profileIncomplete = true;
               token.registrationToken = data.registration_token;
-              console.log('[NextAuth JWT] Set profile incomplete flag and registration token');
             } else {
               // Profile complete: set backend tokens
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
               token.profileIncomplete = false;
-              console.log('[NextAuth JWT] Set profile complete with backend tokens');
             }
           }
         } catch (error) {
@@ -207,19 +198,10 @@ export const authOptions: AuthOptions = {
         (session as ExtendedSession).accessToken = token.accessToken as string;
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
         (session as ExtendedSession).profileIncomplete = false;
-        console.log('[NextAuth Session] Set profile complete with backend tokens');
       } else if (token.profileIncomplete) {
         (session as ExtendedSession).profileIncomplete = true;
         (session as ExtendedSession).registrationToken = token.registrationToken as string;
-        console.log('[NextAuth Session] Set profile incomplete with registration token');
       }
-
-      console.log('[NextAuth Session] Final session data:', {
-        userId: session.user.id,
-        profileIncomplete: (session as ExtendedSession).profileIncomplete,
-        hasRegistrationToken: !!(session as ExtendedSession).registrationToken,
-        hasAccessToken: !!(session as ExtendedSession).accessToken
-      });
 
       return session;
     },
