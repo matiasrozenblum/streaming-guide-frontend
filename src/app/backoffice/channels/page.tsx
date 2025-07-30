@@ -29,6 +29,8 @@ import {
   Delete as DeleteIcon,
   ArrowUpward,
   ArrowDownward,
+  Visibility as VisibilityIcon,
+  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
@@ -134,6 +136,25 @@ export default function ChannelsPage() {
     }
   };
 
+  const handleToggleVisibility = async (channel: Channel) => {
+    try {
+      const res = await fetch(`/api/channels/${channel.id}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ is_visible: !channel.is_visible }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || 'Error al actualizar la visibilidad del canal');
+      }
+      await fetchChannels();
+      setSuccess(`Canal ${channel.is_visible ? 'ocultado' : 'mostrado'} correctamente`);
+    } catch (err: unknown) {
+      console.error('Error toggling channel visibility:', err);
+      setError(err instanceof Error ? err.message : 'Error al actualizar la visibilidad del canal');
+    }
+  };
+
   const handleDelete = async (id: number) => {
     if (!confirm('¿Estás seguro que deseas eliminar este canal?')) return;
     try {
@@ -232,6 +253,13 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                  <IconButton 
+                    onClick={() => handleToggleVisibility(channel)}
+                    color={channel.is_visible ? 'primary' : 'default'}
+                    title={channel.is_visible ? 'Ocultar canal' : 'Mostrar canal'}
+                  >
+                    {channel.is_visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
+                  </IconButton>
                   <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
                 </TableCell>
               </TableRow>
