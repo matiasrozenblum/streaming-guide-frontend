@@ -293,12 +293,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      {socialLoginPending ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-          <CircularProgress sx={{ my: 3 }} />
-          <Box sx={{ mt: 2, color: 'text.secondary', fontWeight: 600 }}>Conectando con el backend...</Box>
-        </Box>
-      ) : (
+      {(
         <>
           {phase === 'flow' && (
             <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
@@ -471,8 +466,12 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                       }
                     }}
                   >
-                    <GoogleIcon sx={{ color: '#4285F4' }} />
-                    Conectate con Google
+                    {socialLoginPending ? (
+                      <CircularProgress size={20} sx={{ color: 'text.primary' }} />
+                    ) : (
+                      <GoogleIcon sx={{ color: '#4285F4' }} />
+                    )}
+                    {socialLoginPending ? 'Conectando...' : 'Conectate con Google'}
                   </Button>
                   {/* Facebook login temporarily disabled - requires app review
                   <Button
