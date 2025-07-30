@@ -185,20 +185,9 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         // Clear the sessionStorage
         sessionStorage.removeItem('lastSocialProvider');
         
-        // Check if user was redirected to profile completion (new user) or directly logged in (existing user)
-        const isNewUser = window.location.pathname === '/profile-completion';
-        
-        // Track appropriate event based on user type
-        if (isNewUser) {
-          gaEvent({
-            action: 'social_signup_success',
-            params: {
-              provider: socialProvider,
-              method: 'social_signup',
-              user_type: 'new',
-            }
-          });
-        } else {
+        // For existing users, track login success immediately
+        // For new users, we'll track signup success when they reach profile completion
+        if (window.location.pathname !== '/profile-completion') {
           gaEvent({
             action: 'social_login_success',
             params: {

@@ -59,8 +59,9 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const [successMessage, setSuccessMessage] = useState<string | null>(null);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  // Track profile completion form visit
+  // Track profile completion form visit and social signup success
   useEffect(() => {
+    // Track profile completion form visit
     gaEvent({
       action: 'profile_completion_form_visit',
       params: {
@@ -69,6 +70,22 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       },
       userData: typedSession?.user || undefined
     });
+
+    // Track social signup success for new users
+    const socialProvider = sessionStorage.getItem('lastSocialProvider');
+    if (socialProvider) {
+      gaEvent({
+        action: 'social_signup_success',
+        params: {
+          provider: socialProvider,
+          method: 'social_signup',
+          user_type: 'new',
+        },
+        userData: typedSession?.user || undefined
+      });
+      // Clear the sessionStorage after tracking
+      sessionStorage.removeItem('lastSocialProvider');
+    }
   }, [initialUser.firstName, initialUser.lastName, registrationToken, typedSession?.user]);
 
   // Block navigation when profile is incomplete
