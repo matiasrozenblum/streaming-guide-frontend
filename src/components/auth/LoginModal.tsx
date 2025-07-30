@@ -135,9 +135,7 @@ const mapGenderToBackend = (g: string) => {
 
 // Add global type for window.__socialLoginHandled
 declare global {
-  interface Window {
-    __socialLoginHandled?: boolean;
-  }
+
 }
 
 export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
@@ -145,6 +143,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
   const { data: session, status: sessionStatus } = useSession();
+
   const [step, setStep] = useState<StepKey>('email');
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
@@ -174,77 +173,30 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       setUserFirstName(''); setUserGender('');
       setPhase('email');
       setSocialLoginPending(false);
-      // Clean up sessionStorage
-      sessionStorage.removeItem('lastSocialProvider');
     }
   }, [open]);
 
+  // Track social login success when session becomes authenticated
   useEffect(() => {
     if (sessionStatus === 'authenticated' && session?.user) {
-      if (window.__socialLoginHandled) return;
-      window.__socialLoginHandled = true;
-      
-      // Track social login success when session becomes authenticated
-      const provider = sessionStorage.getItem('lastSocialProvider') || 'google';
-      
-      gaEvent({
-        action: 'social_login_success',
-        params: {
-          provider: provider,
-          method: 'social_signup',
-          user_type: session.user.id ? 'existing' : 'new',
-        }
-      });
-      
-      setSocialLoginPending(true); // Block UI/modal
-      const { email, firstName, lastName, gender, birthDate } = session.user;
-      if (email && (firstName || session.user.name)) {
-        (async () => {
-          try {
-            const res = await fetch('/api/auth/social-login', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                email,
-                firstName: firstName || (session.user.name?.split(' ')[0] ?? ''),
-                lastName: lastName || (session.user.name?.split(' ').slice(1).join(' ') ?? ''),
-                provider: 'google',
-                gender: gender || '',
-                birthDate: birthDate || '',
-              }),
-            });
-            if (res.ok) {
-              const data = await res.json();
-              if (data.profileIncomplete && data.registration_token) {
-                setRegistrationToken(data.registration_token);
-                setEmail(data.user.email);
-                setFirstName(data.user.firstName || '');
-                setLastName(data.user.lastName || '');
-                setStep('profile');
-                setPhase('flow');
-                setIsUserExisting(false);
-                setCompletedSteps(new Set(['email']));
-                setIsLoading(false);
-                setSocialLoginPending(false);
-                return;
-              } else if (data.access_token && data.refresh_token) {
-                await signIn('credentials', {
-                  redirect: false,
-                  accessToken: data.access_token,
-                  refreshToken: data.refresh_token,
-                });
-                setSocialLoginPending(false);
-                // Optionally: close modal or redirect here
-              }
-            } else {
-              setSocialLoginPending(false);
+      // Check if this was a social login by looking at sessionStorage
+      const socialProvider = sessionStorage.getItem('lastSocialProvider');
+      if (socialProvider) {
+        // Clear the sessionStorage
+        sessionStorage.removeItem('lastSocialProvider');
+        
+        // For existing users, track login success immediately
+        // For new users, we'll track signup success when they reach profile completion
+        if (window.location.pathname !== '/profile-completion') {
+          gaEvent({
+            action: 'social_login_success',
+            params: {
+              provider: socialProvider,
+              method: 'social_login',
+              user_type: 'existing',
             }
-          } catch {
-            setSocialLoginPending(false);
-          }
-        })();
-      } else {
-        setSocialLoginPending(false);
+          });
+        }
       }
     }
   }, [session, sessionStatus]);
@@ -303,7 +255,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   // const handleSocialLogin = async (provider: 'google' | 'facebook') => { ... };
 
   return (
-    <Dialog open={open} onClose={socialLoginPending ? undefined : onClose} fullWidth maxWidth="xs"
+    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
       slotProps={{
         paper: {
           sx: {
@@ -330,12 +282,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
-      {socialLoginPending ? (
-        <Box sx={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 200 }}>
-          <CircularProgress sx={{ my: 3 }} />
-          <Box sx={{ mt: 2, color: 'text.secondary', fontWeight: 600 }}>Conectando con el backend...</Box>
-        </Box>
-      ) : (
+      {(
         <>
           {phase === 'flow' && (
             <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
@@ -421,8 +368,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         if (userData.origin && userData.origin !== 'traditional') {
                           // Automatically trigger social login for the detected provider
                           const provider = userData.origin === 'google' ? 'google' : 'facebook';
-                          setIsLoading(true);
-                          // Store provider in sessionStorage for persistence across redirects
+                          setSocialLoginPending(true);
+                          // Store provider in sessionStorage for tracking
                           sessionStorage.setItem('lastSocialProvider', provider);
                           // Track social login attempt
                           gaEvent({
@@ -434,7 +381,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                           });
                           // Automatically trigger the social login
                           await signIn(provider, { callbackUrl: '/profile-completion' });
-                          setIsLoading(false);
+                          setSocialLoginPending(false);
                           return; // Exit early to prevent further processing
                         } else {
                           // Regular email user, proceed to password step
@@ -472,10 +419,9 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     variant="outlined"
                     fullWidth
                     onClick={async () => {
-                      setIsLoading(true);
-                      // Store provider in sessionStorage for persistence across redirects
+                      setSocialLoginPending(true);
+                      // Store provider in sessionStorage for tracking
                       sessionStorage.setItem('lastSocialProvider', 'google');
-                      // Track social login attempt
                       gaEvent({
                         action: 'social_login_attempt',
                         params: {
@@ -484,9 +430,9 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         }
                       });
                       await signIn('google', { callbackUrl: '/profile-completion' });
-                      setIsLoading(false);
+                      setSocialLoginPending(false);
                     }}
-                    disabled={isLoading}
+                    disabled={socialLoginPending}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -509,8 +455,12 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                       }
                     }}
                   >
-                    <GoogleIcon sx={{ color: '#4285F4' }} />
-                    Conectate con Google
+                    {socialLoginPending ? (
+                      <CircularProgress size={20} sx={{ color: 'text.primary' }} />
+                    ) : (
+                      <GoogleIcon sx={{ color: '#4285F4' }} />
+                    )}
+                    {socialLoginPending ? 'Conectando...' : 'Conectate con Google'}
                   </Button>
                   {/* Facebook login temporarily disabled - requires app review
                   <Button
