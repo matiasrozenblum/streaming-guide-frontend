@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.5.2] - 2025-07-29
+
+### Removed
+- Code cleanup in LoginModal component
+
+### Fixed
+- Fixed tracking for regular sign up, social sign up and social login
+
 ## [1.5.1] - 2025-07-29
 
 ### Changed
