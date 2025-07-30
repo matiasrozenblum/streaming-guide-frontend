@@ -22,6 +22,7 @@ import {
   CircularProgress,
   Alert,
   Snackbar,
+  Switch,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -29,8 +30,6 @@ import {
   Delete as DeleteIcon,
   ArrowUpward,
   ArrowDownward,
-  Visibility as VisibilityIcon,
-  VisibilityOff as VisibilityOffIcon,
 } from '@mui/icons-material';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
@@ -43,7 +42,7 @@ export default function ChannelsPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '' });
+  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -102,10 +101,10 @@ export default function ChannelsPage() {
   const handleOpenDialog = (channel?: Channel) => {
     if (channel) {
       setEditingChannel(channel);
-      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '' });
+      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true });
     } else {
       setEditingChannel(null);
-      setFormData({ name: '', logo_url: '', handle: '' });
+      setFormData({ name: '', logo_url: '', handle: '', is_visible: false });
     }
     setOpenDialog(true);
   };
@@ -113,7 +112,7 @@ export default function ChannelsPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingChannel(null);
-    setFormData({ name: '', logo_url: '', handle: '' });
+    setFormData({ name: '', logo_url: '', handle: '', is_visible: false });
   };
 
   const handleSubmit = async () => {
@@ -253,13 +252,12 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
-                  <IconButton 
-                    onClick={() => handleToggleVisibility(channel)}
-                    color={channel.is_visible ? 'primary' : 'default'}
-                    title={channel.is_visible ? 'Ocultar canal' : 'Mostrar canal'}
-                  >
-                    {channel.is_visible ? <VisibilityIcon /> : <VisibilityOffIcon />}
-                  </IconButton>
+                  <Switch
+                    checked={channel.is_visible}
+                    onChange={() => handleToggleVisibility(channel)}
+                    color="primary"
+                    size="small"
+                  />
                   <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
                 </TableCell>
               </TableRow>
@@ -292,6 +290,14 @@ export default function ChannelsPage() {
               onChange={e => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
             />
+            <Box display="flex" alignItems="center" justifyContent="space-between">
+              <Typography>Visible</Typography>
+              <Switch
+                checked={formData.is_visible}
+                onChange={e => setFormData({ ...formData, is_visible: e.target.checked })}
+                color="primary"
+              />
+            </Box>
           </Box>
         </DialogContent>
         <DialogActions sx={{ p:2 }}>
