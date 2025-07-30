@@ -290,7 +290,7 @@ export default function ChannelsPage() {
               onChange={e => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
             />
-            <Box display="flex" alignItems="center" justifyContent="space-between">
+            <Box display="flex" alignItems="center" gap={2}>
               <Typography>Visible</Typography>
               <Switch
                 checked={formData.is_visible}
