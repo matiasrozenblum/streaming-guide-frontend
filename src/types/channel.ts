@@ -8,6 +8,7 @@ export interface Channel {
   handle?: string | null;
   youtube_channel_id?: string | null;
   order?: number | null;
+  is_visible?: boolean;
   created_at?: string; // opcional si tu API devuelve esto
   updated_at?: string; // opcional si tu API devuelve esto
 }
