@@ -20,6 +20,7 @@
     "@nestjs/common": "^11.0.12",
     "@nestjs/config": "^4.0.1",
     "@nestjs/typeorm": "^11.0.0",
+    "@sentry/nextjs": "^8.55.0",
     "@types/ua-parser-js": "^0.7.39",
     "axios": "^1.8.4",
     "dayjs": "^1.11.13",
