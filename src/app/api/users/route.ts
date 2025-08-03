@@ -10,7 +10,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json([], { status: 401 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users`, {
+    // Get pagination parameters from URL
+    const { searchParams } = new URL(request.url);
+    const page = searchParams.get('page') || '1';
+    const pageSize = searchParams.get('pageSize') || '20';
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/users?page=${page}&pageSize=${pageSize}`, {
       headers: {
         'Authorization': `Bearer ${token}`,
       },
@@ -22,7 +27,7 @@ export async function GET(request: NextRequest) {
         status: response.status,
         statusText: response.statusText,
         data: errorData,
-        requestUrl: `${process.env.NEXT_PUBLIC_API_URL}/users`,
+        requestUrl: `${process.env.NEXT_PUBLIC_API_URL}/users?page=${page}&pageSize=${pageSize}`,
         requestHeaders: {
           'Authorization': `Bearer ${token.substring(0, 10)}...`
         }
@@ -32,16 +37,11 @@ export async function GET(request: NextRequest) {
     
     const data = await response.json();
     
-    // Ensure we're returning an array
-    if (!Array.isArray(data)) {
-      console.error('Backend did not return an array:', data);
-      return NextResponse.json([], { status: 200 });
-    }
-    
+    // Return the paginated response structure
     return NextResponse.json(data);
   } catch (error) {
     console.error('Error fetching users:', error);
-    return NextResponse.json([], { status: 500 });
+    return NextResponse.json({ users: [], total: 0, page: 1, pageSize: 20 }, { status: 500 });
   }
 }
 
