@@ -11,5 +11,6 @@ export interface SessionUser {
 export interface SessionWithToken {
   user: SessionUser;
   accessToken?: string;
+  refreshToken?: string;
   // Agregá aquí otras propiedades relevantes de la sesión si las hay
 } 

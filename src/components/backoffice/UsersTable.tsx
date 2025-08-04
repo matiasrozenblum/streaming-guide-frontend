@@ -25,8 +25,10 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Pagination,
+  SelectChangeEvent,
 } from '@mui/material';
-import { Edit, Delete, Add } from '@mui/icons-material';
+import { Edit, Delete, Add, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { User } from '@/types/user';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -65,6 +67,13 @@ interface FormData {
   birthDate: string;
 }
 
+interface PaginatedUsersResponse {
+  users: User[];
+  total: number;
+  page: number;
+  pageSize: number;
+}
+
 export function UsersTable() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -88,30 +97,51 @@ export function UsersTable() {
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
   const [managingDevicesForUser, setManagingDevicesForUser] = useState<User | null>(null);
   const [managingSubsForUser, setManagingSubsForUser] = useState<User | null>(null);
+  
+  // Pagination state
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageSize, setPageSize] = useState(20);
+  const [totalUsers, setTotalUsers] = useState(0);
 
-  const fetchUsers = useCallback(async () => {
+  const fetchUsers = useCallback(async (page: number = currentPage, size: number = pageSize) => {
     try {
-      const response = await fetch('/api/users', {
+      setLoading(true);
+      const response = await fetch(`/api/users?page=${page}&pageSize=${size}`, {
         headers: {
           Authorization: `Bearer ${typedSession?.accessToken}`,
         },
       });
       if (!response.ok) throw new Error('Failed to fetch users');
-      const data = await response.json();
-      setUsers(data);
+      const data: PaginatedUsersResponse = await response.json();
+      setUsers(data.users);
+      setTotalUsers(data.total);
+      setCurrentPage(data.page);
+      setPageSize(data.pageSize);
     } catch (error) {
       setError('Error loading users');
       console.error('Error:', error);
     } finally {
       setLoading(false);
     }
-  }, [typedSession?.accessToken]);
+  }, [typedSession?.accessToken, currentPage, pageSize]);
 
   useEffect(() => {
     if (typedSession?.accessToken) {
       fetchUsers();
     }
   }, [fetchUsers, typedSession?.accessToken]);
+
+  const handlePageChange = (event: React.ChangeEvent<unknown>, newPage: number) => {
+    setCurrentPage(newPage);
+    fetchUsers(newPage, pageSize);
+  };
+
+  const handlePageSizeChange = (event: SelectChangeEvent<number>) => {
+    const newPageSize = Number(event.target.value);
+    setPageSize(newPageSize);
+    setCurrentPage(1); // Reset to first page when changing page size
+    fetchUsers(1, newPageSize);
+  };
 
   const handleOpenDialog = (user?: User) => {
     if (user) {
@@ -241,7 +271,7 @@ export function UsersTable() {
       }
   
       handleCloseDialog();
-      fetchUsers();
+      fetchUsers(); // Refresh current page
       setSuccess(editingUser ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente');
     } catch (error) {
       setError(getErrorMessage(error));
@@ -267,7 +297,7 @@ export function UsersTable() {
         }
         throw new Error(getErrorMessage(data));
       }
-      fetchUsers();
+      fetchUsers(); // Refresh current page
       setSuccess('Usuario eliminado correctamente');
     } catch (error) {
       setError(getErrorMessage(error));
@@ -298,13 +328,58 @@ export function UsersTable() {
     );
   });
 
+  const totalPages = Math.ceil(totalUsers / pageSize);
+
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 2 }}>
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
         <Typography variant="h6" color="text.primary">Usuarios</Typography>
-        <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
-          Nuevo Usuario
-        </Button>
+        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+          {/* Pagination Controls */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <Typography variant="body2" color="text.secondary">
+              Mostrar:
+            </Typography>
+            <Select
+              value={pageSize}
+              onChange={handlePageSizeChange}
+              size="small"
+              sx={{ minWidth: 80 }}
+            >
+              <MenuItem value={10}>10</MenuItem>
+              <MenuItem value={20}>20</MenuItem>
+              <MenuItem value={50}>50</MenuItem>
+            </Select>
+            <Typography variant="body2" color="text.secondary">
+              de {totalUsers} usuarios
+            </Typography>
+          </Box>
+          
+          {/* Page Navigation */}
+          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+            <IconButton 
+              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
+              disabled={currentPage <= 1}
+              size="small"
+            >
+              <NavigateBefore />
+            </IconButton>
+            <Typography variant="body2" color="text.primary">
+              Página {currentPage} de {totalPages}
+            </Typography>
+            <IconButton 
+              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
+              disabled={currentPage >= totalPages}
+              size="small"
+            >
+              <NavigateNext />
+            </IconButton>
+          </Box>
+          
+          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
+            Nuevo Usuario
+          </Button>
+        </Box>
       </Box>
 
       <Box sx={{ mb: 2 }}>
@@ -316,7 +391,6 @@ export function UsersTable() {
           value={searchTerm}
           onChange={e => setSearchTerm(e.target.value)}
           placeholder="Buscar por nombre, apellido, email o teléfono"
-
         />
       </Box>
 
@@ -363,6 +437,18 @@ export function UsersTable() {
           </TableBody>
         </Table>
       </TableContainer>
+
+      {/* Pagination at bottom */}
+      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+        <Pagination
+          count={totalPages}
+          page={currentPage}
+          onChange={handlePageChange}
+          color="primary"
+          showFirstButton
+          showLastButton
+        />
+      </Box>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>

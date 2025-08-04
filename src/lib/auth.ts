@@ -110,7 +110,7 @@ export const authOptions: AuthOptions = {
   ],
   session: {
     strategy: 'jwt',
-    maxAge: 14 * 24 * 60 * 60, // 14 days
+    maxAge: 15 * 60, // 15 minutes - match backend access token expiration
   },
   callbacks: {
     async jwt({ token, user, account }) {
