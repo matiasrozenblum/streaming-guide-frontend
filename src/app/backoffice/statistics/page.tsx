@@ -47,6 +47,7 @@ interface UserDemographics {
     female: number;
     non_binary: number;
     rather_not_say: number;
+    unknown: number;
   };
   byAgeGroup: {
     under18: number;
@@ -325,6 +326,7 @@ export default function StatisticsPage() {
     { value: 'female', label: 'Femenino' },
     { value: 'non_binary', label: 'No binario' },
     { value: 'rather_not_say', label: 'Prefiero no decir' },
+    { value: 'unknown', label: 'Sin género' },
   ];
   const AGE_GROUP_OPTIONS = [
     { value: 'under18', label: 'Menor de 18' },
@@ -579,6 +581,7 @@ export default function StatisticsPage() {
       female: 'Femenino',
       non_binary: 'No binario',
       rather_not_say: 'Prefiero no decir',
+      unknown: 'Sin género',
     };
     return labels[gender as keyof typeof labels] || gender;
   };
@@ -600,7 +603,8 @@ export default function StatisticsPage() {
       male: '#3b82f6',
       female: '#ec4899',
       non_binary: '#8b5cf6',
-      rather_not_say: '#6b7280',
+      rather_not_say: '#5db510',
+      unknown: '#6b7280',
     };
     return colors[gender as keyof typeof colors] || '#6b7280';
   };
