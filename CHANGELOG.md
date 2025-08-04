@@ -17,6 +17,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.7.0] - 2025-08-03
+
+### Changed
+- Now users backoffice section has pagination
+
+### Fixed
+- Fixed session refresh bug
+- Fixed gender charts not counting unknown
+
 ## [1.6.0] - 2025-07-29
 
 ### Added
