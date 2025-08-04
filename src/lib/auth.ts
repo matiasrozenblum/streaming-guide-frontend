@@ -111,6 +111,7 @@ export const authOptions: AuthOptions = {
   session: {
     strategy: 'jwt',
     maxAge: 15 * 60, // 15 minutes - match backend access token expiration
+    updateAge: 5 * 60, // Update session every 5 minutes
   },
   callbacks: {
     async jwt({ token, user, account }) {
@@ -197,10 +198,21 @@ export const authOptions: AuthOptions = {
       if (token.accessToken && token.refreshToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
-        (session as ExtendedSession).profileIncomplete = false;
-      } else if (token.profileIncomplete) {
-        (session as ExtendedSession).profileIncomplete = true;
+        (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
         (session as ExtendedSession).registrationToken = token.registrationToken as string;
+      }
+
+      // Use JWT token expiration instead of NextAuth's calculated expiration
+      if (token.accessToken) {
+        try {
+          const decoded = jwtDecode<DecodedJWT>(token.accessToken as string);
+          if (decoded.exp) {
+            // Convert JWT expiration (seconds) to milliseconds and set session expiration
+            session.expires = new Date(decoded.exp * 1000).toISOString();
+          }
+        } catch (error) {
+          console.error('Error decoding JWT for session expiration:', error);
+        }
       }
 
       return session;
