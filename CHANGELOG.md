@@ -21,6 +21,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 - Now decoding JWT and setting session.expires to JWT token's exp value if decodable
+- Adapted SW to check for token refresh when tab becomes active again
+- Now session lasts 7 days instead of 15 minutes
+
+### Fixed
+- Fixed automatic session refresh
 
 ## [1.7.0] - 2025-08-03
 
