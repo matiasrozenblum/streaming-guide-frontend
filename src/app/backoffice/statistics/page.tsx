@@ -269,6 +269,7 @@ export default function StatisticsPage() {
     'Demografía por Canal',
     'Demografía por Programa',
     'Listados y Reportes',
+    'Reportes Completos',
   ];
 
   const [loading, setLoading] = useState(true);
@@ -950,6 +951,78 @@ export default function StatisticsPage() {
     setEmailDialogOpen(true);
   };
 
+  const handleChannelReport = async (channelId: number, action: 'download' | 'email') => {
+    try {
+      const from = generalFrom.format('YYYY-MM-DD');
+      const to = generalTo.format('YYYY-MM-DD');
+      
+      const response = await fetch(`/api/statistics/comprehensive-reports?path=/channel/${channelId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'channel-summary',
+          format: 'pdf',
+          from,
+          to,
+          channelId,
+          action,
+          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
+        }),
+      });
+
+      if (action === 'download') {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `channel_${channelId}_report_${from}_to_${to}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setSuccess('Reporte descargado correctamente');
+      } else {
+        const result = await response.json();
+        setSuccess(result.message || 'Reporte enviado correctamente');
+      }
+    } catch (error) {
+      console.error('Error generating channel report:', error);
+      setError('Error al generar el reporte del canal');
+    }
+  };
+
+  const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
+    try {
+      const response = await fetch(`/api/statistics/comprehensive-reports?path=/manual/${period}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+      });
+
+      if (action === 'download') {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `${period}_report.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setSuccess('Reporte descargado correctamente');
+      } else {
+        const result = await response.json();
+        setSuccess(result.message || 'Reporte enviado correctamente');
+      }
+    } catch (error) {
+      console.error('Error generating periodic report:', error);
+      setError('Error al generar el reporte periódico');
+    }
+  };
+
   if (status === 'loading') {
     return (
       <Box
@@ -1546,6 +1619,153 @@ export default function StatisticsPage() {
             <Button disabled={listSubsPage === 1} onClick={() => setListSubsPage(p => Math.max(1, p - 1))}>Anterior</Button>
             <Typography color="text.primary" sx={{ mx: 2 }}>Página {listSubsPage}</Typography>
             <Button disabled={listSubsPage * listSubsPageSize >= listSubsReport.total} onClick={() => setListSubsPage(p => p + 1)}>Siguiente</Button>
+          </Box>
+        </TabPanel>
+
+        {/* Reportes Completos */}
+        <TabPanel value={mainTab} index={4}>
+          <LocalizationProvider dateAdapter={AdapterDayjs}>
+            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+              <DatePicker label="Desde" value={generalFrom} onChange={v => setGeneralFrom(v!)} />
+              <DatePicker label="Hasta" value={generalTo} onChange={v => setGeneralTo(v!)} />
+            </Box>
+          </LocalizationProvider>
+          
+          <Typography variant="h6" gutterBottom>Reportes por Canal</Typography>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Genera reportes específicos por canal. Puedes descargar como PDF o enviar por email.
+            </Typography>
+            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+              {channelsList.map((channel) => (
+                <Card key={channel.id} sx={{ minWidth: 200, p: 2 }}>
+                  <CardContent>
+                    <Typography variant="h6">{channel.name}</Typography>
+                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        onClick={() => handleChannelReport(channel.id, 'download')}
+                      >
+                        Descargar PDF
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        onClick={() => handleChannelReport(channel.id, 'email')}
+                      >
+                        Enviar por Email
+                      </Button>
+                    </Box>
+                  </CardContent>
+                </Card>
+              ))}
+            </Box>
+          </Box>
+
+          <Typography variant="h6" gutterBottom>Reportes Periódicos</Typography>
+          <Box sx={{ mb: 4 }}>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Genera reportes semanales, mensuales, trimestrales y anuales.
+            </Typography>
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
+              <Card sx={{ p: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">Semanal</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Últimos 7 días
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('weekly', 'download')}>
+                      Descargar
+                    </Button>
+                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('weekly', 'email')}>
+                      Enviar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+              
+              <Card sx={{ p: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">Mensual</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Último mes
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('monthly', 'download')}>
+                      Descargar
+                    </Button>
+                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('monthly', 'email')}>
+                      Enviar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+              
+              <Card sx={{ p: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">Trimestral</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Último trimestre
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('quarterly', 'download')}>
+                      Descargar
+                    </Button>
+                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('quarterly', 'email')}>
+                      Enviar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+              
+              <Card sx={{ p: 2 }}>
+                <CardContent>
+                  <Typography variant="h6">Anual</Typography>
+                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+                    Último año
+                  </Typography>
+                  <Box sx={{ display: 'flex', gap: 1 }}>
+                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('yearly', 'download')}>
+                      Descargar
+                    </Button>
+                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('yearly', 'email')}>
+                      Enviar
+                    </Button>
+                  </Box>
+                </CardContent>
+              </Card>
+            </Box>
+          </Box>
+
+          <Typography variant="h6" gutterBottom>Reportes Automáticos</Typography>
+          <Box>
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+              Los reportes automáticos se envían a laguiadelstreaming@gmail.com en los siguientes horarios:
+            </Typography>
+            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
+              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+                <CardContent>
+                  <Typography variant="h6">Semanal</Typography>
+                  <Typography variant="body2">Domingos a las 6:00 PM</Typography>
+                </CardContent>
+              </Card>
+              
+              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+                <CardContent>
+                  <Typography variant="h6">Mensual</Typography>
+                  <Typography variant="body2">Primer día del mes a las 9:00 AM</Typography>
+                </CardContent>
+              </Card>
+              
+              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+                <CardContent>
+                  <Typography variant="h6">Anual</Typography>
+                  <Typography variant="body2">1 de Enero a las 10:00 AM</Typography>
+                </CardContent>
+              </Card>
+            </Box>
           </Box>
         </TabPanel>
       </Box>
