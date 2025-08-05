@@ -72,7 +72,7 @@ export default function SessionPoller() {
       
       // DEBUG MODE: Force token to appear expired for testing
       // Set this to true to test refresh mechanism
-      const DEBUG_FORCE_EXPIRED = false;
+      const DEBUG_FORCE_EXPIRED = true;
       const testExpiresAt = DEBUG_FORCE_EXPIRED ? now - (5 * 60 * 1000) : expiresAt; // 5 minutes ago
       
       console.log('SessionPoller: Token analysis:', {
