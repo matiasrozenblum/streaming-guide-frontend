@@ -1,7 +1,7 @@
 'use client';
 import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
 import { SessionProvider as CustomSessionProvider } from '@/contexts/SessionContext';
-import React, { ReactNode, useEffect } from 'react';
+import React, { ReactNode, useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
 import { useRouter, usePathname } from 'next/navigation';
 import SessionPoller from './SessionPoller';
@@ -35,11 +35,42 @@ function SessionRedirectHandler({ children }: Props) {
   return <>{children}</>;
 }
 
+function ServiceWorkerHandler() {
+  const [isClient, setIsClient] = useState(false);
+
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (!isClient) return;
+
+    // Only run on client side
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    // Register service worker if not already registered
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.register('/push-sw.js')
+        .then((registration) => {
+          console.log('[Service Worker] Registered:', registration);
+        })
+        .catch((error) => {
+          console.error('[Service Worker] Registration failed:', error);
+        });
+    }
+  }, [isClient]);
+
+  return null;
+}
+
 export default function SessionProviderWrapper({ children }: Props) {
   return (
     <NextAuthSessionProvider>
       <CustomSessionProvider>
         <SessionPoller />
+        <ServiceWorkerHandler />
         <SessionRedirectHandler>
           {children}
         </SessionRedirectHandler>
