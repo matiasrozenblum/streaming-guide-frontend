@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.7.1] - 2025-08-03
+## [1.7.1] - 2025-08-05
 
 ### Changed
 - Now decoding JWT and setting session.expires to JWT token's exp value if decodable
