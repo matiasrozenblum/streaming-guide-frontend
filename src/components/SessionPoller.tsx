@@ -56,26 +56,37 @@ export default function SessionPoller() {
     if (!accessToken || !refreshToken) {
       console.log('SessionPoller: No access token or refresh token available', {
         accessToken: !!accessToken,
-        refreshToken: !!refreshToken
+        refreshToken: !!refreshToken,
+        sessionKeys: session ? Object.keys(session as object) : []
       });
       return;
     }
 
+    console.log('SessionPoller: Found tokens, checking expiration...');
+
     try {
       // Decode JWT to check expiration
-      const decoded = jwtDecode<{ exp: number }>(accessToken);
+      const decoded = jwtDecode<{ exp: number; iat: number }>(accessToken);
       const expiresAt = decoded.exp * 1000;
       const now = Date.now();
       
-      console.log('SessionPoller: Token expires at:', new Date(expiresAt).toISOString());
-      console.log('SessionPoller: Current time:', new Date(now).toISOString());
+      console.log('SessionPoller: Token analysis:', {
+        expiresAt: new Date(expiresAt).toISOString(),
+        currentTime: new Date(now).toISOString(),
+        isExpired: now >= expiresAt,
+        timeUntilExpiry: Math.round((expiresAt - now) / 1000 / 60), // minutes
+        tokenAge: Math.round((now - (decoded.iat * 1000)) / 1000 / 60) // minutes since issued
+      });
       
       // Schedule the refresh to happen 10 minutes before the token expires (instead of 1 minute)
       const refreshAt = expiresAt - (10 * 60 * 1000); // 10 minutes before expiration
       const timeUntilRefresh = refreshAt - now;
 
-      console.log('SessionPoller: Will refresh at:', new Date(refreshAt).toISOString());
-      console.log('SessionPoller: Time until refresh:', Math.round(timeUntilRefresh / 1000), 'seconds');
+      console.log('SessionPoller: Refresh scheduling:', {
+        willRefreshAt: new Date(refreshAt).toISOString(),
+        timeUntilRefresh: Math.round(timeUntilRefresh / 1000 / 60), // minutes
+        shouldRefreshNow: refreshAt <= now
+      });
 
       // If the token is already expired or needs immediate refresh, attempt refresh now
       if (refreshAt <= now) {
@@ -85,6 +96,8 @@ export default function SessionPoller() {
       }
 
       const timeoutDuration = refreshAt - now;
+
+      console.log('SessionPoller: Setting timeout for refresh in', Math.round(timeoutDuration / 1000 / 60), 'minutes');
 
       timeoutRef.current = setTimeout(async () => {
         console.log('SessionPoller: Scheduled refresh triggered');
