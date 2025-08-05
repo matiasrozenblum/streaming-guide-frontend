@@ -72,7 +72,7 @@ export default function SessionPoller() {
       
       // DEBUG MODE: Force token to appear expired for testing
       // Set this to true to test refresh mechanism
-      const DEBUG_FORCE_EXPIRED = true;
+      const DEBUG_FORCE_EXPIRED = false;
       const testExpiresAt = DEBUG_FORCE_EXPIRED ? now - (5 * 60 * 1000) : expiresAt; // 5 minutes ago
       
       console.log('SessionPoller: Token analysis:', {
@@ -106,15 +106,39 @@ export default function SessionPoller() {
 
       console.log('SessionPoller: Setting timeout for refresh in', Math.round(timeoutDuration / 1000 / 60), 'minutes');
 
+      // Set up multiple refresh strategies for better reliability
       timeoutRef.current = setTimeout(async () => {
         console.log('SessionPoller: Scheduled refresh triggered');
         await handleTokenRefresh(refreshToken);
       }, timeoutDuration);
 
+      // Also set up a more frequent check for background scenarios
+      const backgroundCheckInterval = Math.min(timeoutDuration, 5 * 60 * 1000); // Check every 5 minutes max
+      const backgroundTimeout = setTimeout(async () => {
+        console.log('SessionPoller: Background check triggered');
+        // Re-check if refresh is needed
+        try {
+          const currentDecoded = jwtDecode<{ exp: number; iat: number }>(accessToken);
+          const currentExpiresAt = currentDecoded.exp * 1000;
+          const currentNow = Date.now();
+          const currentRefreshAt = currentExpiresAt - (10 * 60 * 1000);
+          
+          if (currentRefreshAt <= currentNow) {
+            console.log('SessionPoller: Background check found expired token, refreshing');
+            await handleTokenRefresh(refreshToken);
+          } else {
+            console.log('SessionPoller: Background check - token still valid');
+          }
+        } catch (error) {
+          console.error('SessionPoller: Background check error:', error);
+        }
+      }, backgroundCheckInterval);
+
       return () => {
         if (timeoutRef.current) {
           clearTimeout(timeoutRef.current);
         }
+        clearTimeout(backgroundTimeout);
       };
     } catch (error) {
       console.error('SessionPoller: Error decoding token:', error);
@@ -171,6 +195,43 @@ export default function SessionPoller() {
       
       console.log('SessionPoller: Manual refresh available at window.testTokenRefresh()');
     }
+  }, [session]);
+
+  // Handle visibility change (when user returns to tab after device sleep)
+  useEffect(() => {
+    const handleVisibilityChange = async () => {
+      if (document.visibilityState === 'visible') {
+        console.log('SessionPoller: Tab became visible, checking token status');
+        
+        const currentSession = session as SessionWithTokens;
+        const accessToken = currentSession?.accessToken || currentSession?.access_token;
+        const refreshToken = currentSession?.refreshToken || currentSession?.refresh_token;
+        
+        if (accessToken && refreshToken) {
+          try {
+            const decoded = jwtDecode<{ exp: number; iat: number }>(accessToken);
+            const expiresAt = decoded.exp * 1000;
+            const now = Date.now();
+            const refreshAt = expiresAt - (10 * 60 * 1000);
+            
+            if (refreshAt <= now) {
+              console.log('SessionPoller: Token needs refresh after visibility change');
+              await handleTokenRefresh(refreshToken);
+            } else {
+              console.log('SessionPoller: Token still valid after visibility change');
+            }
+          } catch (error) {
+            console.error('SessionPoller: Error checking token after visibility change:', error);
+          }
+        }
+      }
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    
+    return () => {
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
   }, [session]);
 
   return null;
