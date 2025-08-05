@@ -70,16 +70,23 @@ export default function SessionPoller() {
       const expiresAt = decoded.exp * 1000;
       const now = Date.now();
       
+      // DEBUG MODE: Force token to appear expired for testing
+      // Set this to true to test refresh mechanism
+      const DEBUG_FORCE_EXPIRED = false;
+      const testExpiresAt = DEBUG_FORCE_EXPIRED ? now - (5 * 60 * 1000) : expiresAt; // 5 minutes ago
+      
       console.log('SessionPoller: Token analysis:', {
         expiresAt: new Date(expiresAt).toISOString(),
         currentTime: new Date(now).toISOString(),
         isExpired: now >= expiresAt,
         timeUntilExpiry: Math.round((expiresAt - now) / 1000 / 60), // minutes
-        tokenAge: Math.round((now - (decoded.iat * 1000)) / 1000 / 60) // minutes since issued
+        tokenAge: Math.round((now - (decoded.iat * 1000)) / 1000 / 60), // minutes since issued
+        debugMode: DEBUG_FORCE_EXPIRED,
+        testExpiresAt: DEBUG_FORCE_EXPIRED ? new Date(testExpiresAt).toISOString() : 'not used'
       });
       
       // Schedule the refresh to happen 10 minutes before the token expires (instead of 1 minute)
-      const refreshAt = expiresAt - (10 * 60 * 1000); // 10 minutes before expiration
+      const refreshAt = testExpiresAt - (10 * 60 * 1000); // 10 minutes before expiration
       const timeUntilRefresh = refreshAt - now;
 
       console.log('SessionPoller: Refresh scheduling:', {
@@ -146,6 +153,25 @@ export default function SessionPoller() {
       console.error('SessionPoller: Token refresh error:', error);
     }
   };
+
+  // DEBUG: Expose manual refresh function to window for testing
+  useEffect(() => {
+    if (typeof window !== 'undefined') {
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      (window as any).testTokenRefresh = () => {
+        console.log('SessionPoller: Manual refresh triggered from console');
+        // Get refresh token from current session
+        const currentSession = session as SessionWithTokens;
+        if (currentSession?.refreshToken) {
+          handleTokenRefresh(currentSession.refreshToken);
+        } else {
+          console.error('SessionPoller: No refresh token available for manual refresh');
+        }
+      };
+      
+      console.log('SessionPoller: Manual refresh available at window.testTokenRefresh()');
+    }
+  }, [session]);
 
   return null;
 } 
