@@ -156,10 +156,19 @@ export const authOptions: AuthOptions = {
               token.profileIncomplete = true;
               token.registrationToken = data.registration_token;
             } else {
-              // Profile complete: set backend tokens
+              // Profile complete: set backend tokens and user data
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
               token.profileIncomplete = false;
+              
+              // Update token with backend user data (including role)
+              if (data.user) {
+                token.role = data.user.role || token.role;
+                token.name = data.user.name || token.name;
+                token.email = data.user.email || token.email;
+                token.firstName = data.user.firstName || token.firstName;
+                token.lastName = data.user.lastName || token.lastName;
+              }
             }
           }
         } catch (error) {
@@ -170,6 +179,15 @@ export const authOptions: AuthOptions = {
       return token;
     },
     async session({ session, token }) {
+      console.log('[NextAuth Session] Building session:', {
+        hasToken: !!token,
+        tokenKeys: token ? Object.keys(token) : [],
+        hasAccessToken: !!(token as Record<string, unknown>)?.accessToken,
+        hasRefreshToken: !!(token as Record<string, unknown>)?.refreshToken,
+        tokenRole: (token as Record<string, unknown>)?.role,
+        tokenSub: (token as Record<string, unknown>)?.sub
+      });
+
       // Set backend user ID
       if (token.sub) {
         session.user.id = token.sub.toString();
@@ -200,6 +218,17 @@ export const authOptions: AuthOptions = {
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
         (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
         (session as ExtendedSession).registrationToken = token.registrationToken as string;
+        
+        console.log('[NextAuth Session] Tokens set:', {
+          accessToken: !!(session as ExtendedSession).accessToken,
+          refreshToken: !!(session as ExtendedSession).refreshToken,
+          profileIncomplete: (session as ExtendedSession).profileIncomplete
+        });
+      } else {
+        console.log('[NextAuth Session] No tokens available:', {
+          hasAccessToken: !!(token as Record<string, unknown>)?.accessToken,
+          hasRefreshToken: !!(token as Record<string, unknown>)?.refreshToken
+        });
       }
 
       // Use JWT token expiration instead of NextAuth's calculated expiration
@@ -209,11 +238,20 @@ export const authOptions: AuthOptions = {
           if (decoded.exp) {
             // Convert JWT expiration (seconds) to milliseconds and set session expiration
             session.expires = new Date(decoded.exp * 1000).toISOString();
+            console.log('[NextAuth Session] Set expiration:', session.expires);
           }
         } catch (error) {
           console.error('Error decoding JWT for session expiration:', error);
         }
       }
+
+      console.log('[NextAuth Session] Final session:', {
+        userId: session.user.id,
+        userRole: session.user.role,
+        hasAccessToken: !!(session as ExtendedSession).accessToken,
+        hasRefreshToken: !!(session as ExtendedSession).refreshToken,
+        expires: session.expires
+      });
 
       return session;
     },
