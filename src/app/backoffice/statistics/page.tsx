@@ -995,11 +995,19 @@ export default function StatisticsPage() {
 
   const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
     try {
-      const response = await fetch(`/api/statistics/comprehensive-reports?path=/manual/${period}`, {
+      const response = await fetch(`/api/statistics/comprehensive-reports?path=/periodic`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
+        body: JSON.stringify({
+          period,
+          format: 'pdf',
+          action,
+          from: generalFrom.format('YYYY-MM-DD'),
+          to: generalTo.format('YYYY-MM-DD'),
+          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
+        }),
       });
 
       if (action === 'download') {
@@ -1631,7 +1639,7 @@ export default function StatisticsPage() {
             </Box>
           </LocalizationProvider>
           
-          <Typography variant="h6" gutterBottom>Reportes por Canal</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes por Canal</Typography>
           <Box sx={{ mb: 4 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Genera reportes específicos por canal. Puedes descargar como PDF o enviar por email.
@@ -1663,7 +1671,7 @@ export default function StatisticsPage() {
             </Box>
           </Box>
 
-          <Typography variant="h6" gutterBottom>Reportes Periódicos</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Periódicos</Typography>
           <Box sx={{ mb: 4 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Genera reportes semanales, mensuales, trimestrales y anuales.
@@ -1739,7 +1747,7 @@ export default function StatisticsPage() {
             </Box>
           </Box>
 
-          <Typography variant="h6" gutterBottom>Reportes Automáticos</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Automáticos</Typography>
           <Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Los reportes automáticos se envían a laguiadelstreaming@gmail.com en los siguientes horarios:
