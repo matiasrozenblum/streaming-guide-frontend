@@ -275,6 +275,8 @@ export default function StatisticsPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [downloadingReports, setDownloadingReports] = useState<Set<string>>(new Set());
+  const [sendingReports, setSendingReports] = useState<Set<string>>(new Set());
   const [demographics, setDemographics] = useState<UserDemographics | null>(null);
   const [usersPageSize] = useState(20);
   const [usersPage] = useState(1);
@@ -952,7 +954,15 @@ export default function StatisticsPage() {
   };
 
   const handleChannelReport = async (channelId: number, action: 'download' | 'email') => {
+    const reportKey = `channel_${channelId}_${action}`;
+    
     try {
+      if (action === 'download') {
+        setDownloadingReports(prev => new Set([...prev, reportKey]));
+      } else {
+        setSendingReports(prev => new Set([...prev, reportKey]));
+      }
+
       const from = generalFrom.format('YYYY-MM-DD');
       const to = generalTo.format('YYYY-MM-DD');
       
@@ -990,11 +1000,33 @@ export default function StatisticsPage() {
     } catch (error) {
       console.error('Error generating channel report:', error);
       setError('Error al generar el reporte del canal');
+    } finally {
+      if (action === 'download') {
+        setDownloadingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      } else {
+        setSendingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      }
     }
   };
 
   const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
+    const reportKey = `${period}_${action}`;
+    
     try {
+      if (action === 'download') {
+        setDownloadingReports(prev => new Set([...prev, reportKey]));
+      } else {
+        setSendingReports(prev => new Set([...prev, reportKey]));
+      }
+
       // Map period to the correct report type
       const getReportType = (period: string) => {
         switch (period) {
@@ -1040,6 +1072,20 @@ export default function StatisticsPage() {
     } catch (error) {
       console.error('Error generating periodic report:', error);
       setError('Error al generar el reporte periódico');
+    } finally {
+      if (action === 'download') {
+        setDownloadingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      } else {
+        setSendingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      }
     }
   };
 
@@ -1656,31 +1702,41 @@ export default function StatisticsPage() {
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Genera reportes específicos por canal. Puedes descargar como PDF o enviar por email.
             </Typography>
-            <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-              {channelsList.map((channel) => (
-                <Card key={channel.id} sx={{ minWidth: 200, p: 2 }}>
-                  <CardContent>
-                    <Typography variant="h6">{channel.name}</Typography>
-                    <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                      <Button
-                        size="small"
-                        variant="outlined"
-                        onClick={() => handleChannelReport(channel.id, 'download')}
-                      >
-                        Descargar PDF
-                      </Button>
-                      <Button
-                        size="small"
-                        variant="contained"
-                        onClick={() => handleChannelReport(channel.id, 'email')}
-                      >
-                        Enviar por Email
-                      </Button>
-                    </Box>
-                  </CardContent>
-                </Card>
-              ))}
-            </Box>
+            {channelsList.length === 0 ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                {channelsList.map((channel) => (
+                  <Card key={channel.id} sx={{ minWidth: 200, p: 2 }}>
+                    <CardContent>
+                      <Typography variant="h6">{channel.name}</Typography>
+                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
+                        <Button
+                          size="small"
+                          variant="outlined"
+                          onClick={() => handleChannelReport(channel.id, 'download')}
+                          disabled={downloadingReports.has(`channel_${channel.id}_download`) || sendingReports.has(`channel_${channel.id}_email`)}
+                          startIcon={downloadingReports.has(`channel_${channel.id}_download`) ? <CircularProgress size={16} /> : undefined}
+                        >
+                          {downloadingReports.has(`channel_${channel.id}_download`) ? 'Descargando...' : 'Descargar PDF'}
+                        </Button>
+                        <Button
+                          size="small"
+                          variant="contained"
+                          onClick={() => handleChannelReport(channel.id, 'email')}
+                          disabled={sendingReports.has(`channel_${channel.id}_email`) || downloadingReports.has(`channel_${channel.id}_download`)}
+                          startIcon={sendingReports.has(`channel_${channel.id}_email`) ? <CircularProgress size={16} /> : undefined}
+                        >
+                          {sendingReports.has(`channel_${channel.id}_email`) ? 'Enviando...' : 'Enviar por Email'}
+                        </Button>
+                      </Box>
+                    </CardContent>
+                  </Card>
+                ))}
+              </Box>
+            )}
           </Box>
 
           <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Periódicos</Typography>
@@ -1696,11 +1752,23 @@ export default function StatisticsPage() {
                     Últimos 7 días
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('weekly', 'download')}>
-                      Descargar
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      onClick={() => handlePeriodicReport('weekly', 'download')}
+                      disabled={downloadingReports.has('weekly_download') || sendingReports.has('weekly_email')}
+                      startIcon={downloadingReports.has('weekly_download') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {downloadingReports.has('weekly_download') ? 'Descargando...' : 'Descargar'}
                     </Button>
-                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('weekly', 'email')}>
-                      Enviar
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      onClick={() => handlePeriodicReport('weekly', 'email')}
+                      disabled={sendingReports.has('weekly_email') || downloadingReports.has('weekly_download')}
+                      startIcon={sendingReports.has('weekly_email') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {sendingReports.has('weekly_email') ? 'Enviando...' : 'Enviar'}
                     </Button>
                   </Box>
                 </CardContent>
@@ -1713,11 +1781,23 @@ export default function StatisticsPage() {
                     Último mes
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('monthly', 'download')}>
-                      Descargar
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      onClick={() => handlePeriodicReport('monthly', 'download')}
+                      disabled={downloadingReports.has('monthly_download') || sendingReports.has('monthly_email')}
+                      startIcon={downloadingReports.has('monthly_download') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {downloadingReports.has('monthly_download') ? 'Descargando...' : 'Descargar'}
                     </Button>
-                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('monthly', 'email')}>
-                      Enviar
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      onClick={() => handlePeriodicReport('monthly', 'email')}
+                      disabled={sendingReports.has('monthly_email') || downloadingReports.has('monthly_download')}
+                      startIcon={sendingReports.has('monthly_email') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {sendingReports.has('monthly_email') ? 'Enviando...' : 'Enviar'}
                     </Button>
                   </Box>
                 </CardContent>
@@ -1730,11 +1810,23 @@ export default function StatisticsPage() {
                     Último trimestre
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('quarterly', 'download')}>
-                      Descargar
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      onClick={() => handlePeriodicReport('quarterly', 'download')}
+                      disabled={downloadingReports.has('quarterly_download') || sendingReports.has('quarterly_email')}
+                      startIcon={downloadingReports.has('quarterly_download') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {downloadingReports.has('quarterly_download') ? 'Descargando...' : 'Descargar'}
                     </Button>
-                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('quarterly', 'email')}>
-                      Enviar
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      onClick={() => handlePeriodicReport('quarterly', 'email')}
+                      disabled={sendingReports.has('quarterly_email') || downloadingReports.has('quarterly_download')}
+                      startIcon={sendingReports.has('quarterly_email') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {sendingReports.has('quarterly_email') ? 'Enviando...' : 'Enviar'}
                     </Button>
                   </Box>
                 </CardContent>
@@ -1747,11 +1839,23 @@ export default function StatisticsPage() {
                     Último año
                   </Typography>
                   <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button size="small" variant="outlined" onClick={() => handlePeriodicReport('yearly', 'download')}>
-                      Descargar
+                    <Button 
+                      size="small" 
+                      variant="outlined" 
+                      onClick={() => handlePeriodicReport('yearly', 'download')}
+                      disabled={downloadingReports.has('yearly_download') || sendingReports.has('yearly_email')}
+                      startIcon={downloadingReports.has('yearly_download') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {downloadingReports.has('yearly_download') ? 'Descargando...' : 'Descargar'}
                     </Button>
-                    <Button size="small" variant="contained" onClick={() => handlePeriodicReport('yearly', 'email')}>
-                      Enviar
+                    <Button 
+                      size="small" 
+                      variant="contained" 
+                      onClick={() => handlePeriodicReport('yearly', 'email')}
+                      disabled={sendingReports.has('yearly_email') || downloadingReports.has('yearly_download')}
+                      startIcon={sendingReports.has('yearly_email') ? <CircularProgress size={16} /> : undefined}
+                    >
+                      {sendingReports.has('yearly_email') ? 'Enviando...' : 'Enviar'}
                     </Button>
                   </Box>
                 </CardContent>
