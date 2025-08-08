@@ -995,12 +995,24 @@ export default function StatisticsPage() {
 
   const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
     try {
+      // Map period to the correct report type
+      const getReportType = (period: string) => {
+        switch (period) {
+          case 'weekly': return 'weekly-summary';
+          case 'monthly': return 'monthly-summary';
+          case 'quarterly': return 'quarterly-summary';
+          case 'yearly': return 'yearly-summary';
+          default: return 'weekly-summary';
+        }
+      };
+
       const response = await fetch(`/api/statistics/comprehensive-reports?path=/periodic`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
+          type: getReportType(period),
           period,
           format: 'pdf',
           action,
