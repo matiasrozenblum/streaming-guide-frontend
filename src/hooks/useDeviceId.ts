@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState, useCallback } from 'react';
+import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
@@ -9,6 +9,7 @@ export function useDeviceId() {
   const [deviceId, setDeviceId] = useState<string | null>(null);
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const registrationAttempted = useRef<Set<string>>(new Set());
 
   // Use localStorage to persist registration state across reloads
   const getRegistrationKey = (userId: string, deviceId: string) => `device_registered_${userId}_${deviceId}`;
@@ -20,9 +21,20 @@ export function useDeviceId() {
     if (isLegacyUser) return;
 
     const registrationKey = getRegistrationKey(typedSession.user.id, deviceId);
+    
+    // Check if already registered in localStorage
     if (localStorage.getItem(registrationKey) === 'true') {
       return;
     }
+
+    // Check if registration is already in progress for this session
+    const sessionKey = `${typedSession.user.id}_${deviceId}`;
+    if (registrationAttempted.current.has(sessionKey)) {
+      return;
+    }
+
+    // Mark as attempted to prevent duplicate calls
+    registrationAttempted.current.add(sessionKey);
 
     try {
       await api.post('/subscriptions/device', 
@@ -34,6 +46,8 @@ export function useDeviceId() {
       localStorage.setItem(registrationKey, 'true');
     } catch (error) {
       console.error('❌ [useDeviceId] Failed to register device:', error);
+      // Remove from attempted set on failure so it can retry
+      registrationAttempted.current.delete(sessionKey);
     }
   }, [typedSession?.accessToken, typedSession?.user?.id]);
 
