@@ -32,8 +32,6 @@ import {
   TextField,
   FormControlLabel,
   Checkbox,
-  Container,
-  useTheme,
 } from '@mui/material';
 import { BarChart } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -960,69 +958,7 @@ export default function StatisticsPage() {
     setEmailDialogOpen(true);
   };
 
-  const handleChannelReport = async (channelId: number, action: 'download' | 'email') => {
-    const reportKey = `channel_${channelId}_${action}`;
-    
-    try {
-      if (action === 'download') {
-        setDownloadingReports(prev => new Set([...prev, reportKey]));
-      } else {
-        setSendingReports(prev => new Set([...prev, reportKey]));
-      }
 
-      const from = generalFrom.format('YYYY-MM-DD');
-      const to = generalTo.format('YYYY-MM-DD');
-      
-      const response = await fetch(`/api/statistics/comprehensive-reports?path=/channel/${channelId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'channel-summary',
-          format: 'pdf',
-          from,
-          to,
-          channelId,
-          action,
-          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
-        }),
-      });
-
-      if (action === 'download') {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `channel_${channelId}_report_${from}_to_${to}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setSuccess('Reporte descargado correctamente');
-      } else {
-        const result = await response.json();
-        setSuccess(result.message || 'Reporte enviado correctamente');
-      }
-    } catch (error) {
-      console.error('Error generating channel report:', error);
-      setError('Error al generar el reporte del canal');
-    } finally {
-      if (action === 'download') {
-        setDownloadingReports(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(reportKey);
-          return newSet;
-        });
-      } else {
-        setSendingReports(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(reportKey);
-          return newSet;
-        });
-      }
-    }
-  };
 
   const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
     const reportKey = `${period}_${action}`;
@@ -1899,7 +1835,7 @@ export default function StatisticsPage() {
                   <Typography variant="body2" color="text.secondary">
                     <strong>Período:</strong> {channelPeriod === 'weekly' ? 'Semanal' : channelPeriod === 'monthly' ? 'Mensual' : channelPeriod === 'quarterly' ? 'Trimestral' : 'Anual'}
                   </Typography>
-                  {channelPeriod === 'custom' && (
+                  {channelPeriod === 'custom' && channelFrom && channelTo && (
                     <Typography variant="body2" color="text.secondary">
                       <strong>Fechas:</strong> {channelFrom.format('DD/MM/YYYY')} - {channelTo.format('DD/MM/YYYY')}
                     </Typography>
