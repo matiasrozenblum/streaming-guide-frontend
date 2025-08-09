@@ -346,10 +346,11 @@ export default function StatisticsPage() {
   const [selectedChannels, setSelectedChannels] = useState<number[]>([]); // for channel tab
   const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]); // for program tab
 
-  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(null);
-  const [channelFrom, setChannelFrom] = useState<Dayjs | null>(dayjs().subtract(7, 'day'));
-  const [channelTo, setChannelTo] = useState<Dayjs | null>(dayjs());
-  const [channelPeriod, setChannelPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'>('custom');
+  // Unified state for reports
+  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(null); // null means "Todos los canales"
+  const [reportFrom, setReportFrom] = useState<Dayjs | null>(dayjs().subtract(7, 'day'));
+  const [reportTo, setReportTo] = useState<Dayjs | null>(dayjs());
+  const [reportPeriod, setReportPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'>('custom');
 
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -960,8 +961,8 @@ export default function StatisticsPage() {
 
 
 
-  const handlePeriodicReport = async (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly', action: 'download' | 'email') => {
-    const reportKey = `${period}_${action}`;
+  const handleChannelPeriodicReport = async (channelId: number | null, action: 'download' | 'email') => {
+    const reportKey = `channel_periodic_${channelId || 'all'}_${action}`;
     
     try {
       if (action === 'download') {
@@ -970,115 +971,89 @@ export default function StatisticsPage() {
         setSendingReports(prev => new Set([...prev, reportKey]));
       }
 
-      // Map period to the correct report type
-      const getReportType = (period: string) => {
-        switch (period) {
-          case 'weekly': return 'weekly-summary';
-          case 'monthly': return 'monthly-summary';
-          case 'quarterly': return 'quarterly-summary';
-          case 'yearly': return 'yearly-summary';
-          default: return 'weekly-summary';
-        }
-      };
-
-      const response = await fetch(`/api/statistics/comprehensive-reports?path=/periodic`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: getReportType(period),
-          period,
-          format: 'pdf',
-          action,
-          from: generalFrom.format('YYYY-MM-DD'),
-          to: generalTo.format('YYYY-MM-DD'),
-          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
-        }),
-      });
-
-      if (action === 'download') {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `${period}_report.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setSuccess('Reporte descargado correctamente');
-      } else {
-        const result = await response.json();
-        setSuccess(result.message || 'Reporte enviado correctamente');
-      }
-    } catch (error) {
-      console.error('Error generating periodic report:', error);
-      setError('Error al generar el reporte periódico');
-    } finally {
-      if (action === 'download') {
-        setDownloadingReports(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(reportKey);
-          return newSet;
-        });
-      } else {
-        setSendingReports(prev => {
-          const newSet = new Set(prev);
-          newSet.delete(reportKey);
-          return newSet;
-        });
-      }
-    }
-  };
-
-  const handleChannelPeriodicReport = async (channelId: number, action: 'download' | 'email') => {
-    const reportKey = `channel_periodic_${channelId}_${action}`;
-    
-    try {
-      if (action === 'download') {
-        setDownloadingReports(prev => new Set([...prev, reportKey]));
-      } else {
-        setSendingReports(prev => new Set([...prev, reportKey]));
-      }
-
-      const from = channelFrom?.format('YYYY-MM-DD') || generalFrom.format('YYYY-MM-DD');
-      const to = channelTo?.format('YYYY-MM-DD') || generalTo.format('YYYY-MM-DD');
+      const from = reportFrom?.format('YYYY-MM-DD') || generalFrom.format('YYYY-MM-DD');
+      const to = reportTo?.format('YYYY-MM-DD') || generalTo.format('YYYY-MM-DD');
       
-      const response = await fetch(`/api/statistics/comprehensive-reports?path=/channel/${channelId}`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({
-          type: 'channel-summary',
-          format: 'pdf',
-          from,
-          to,
-          channelId,
-          action,
-          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
-        }),
-      });
+      // If no specific channel is selected, use the periodic report endpoint
+      if (channelId === null) {
+        const getReportType = (period: string) => {
+          switch (period) {
+            case 'weekly': return 'weekly-summary';
+            case 'monthly': return 'monthly-summary';
+            case 'quarterly': return 'quarterly-summary';
+            case 'yearly': return 'yearly-summary';
+            default: return 'weekly-summary';
+          }
+        };
 
-      if (action === 'download') {
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `channel_${channelId}_report_${from}_to_${to}.pdf`;
-        document.body.appendChild(a);
-        a.click();
-        window.URL.revokeObjectURL(url);
-        document.body.removeChild(a);
-        setSuccess('Reporte descargado correctamente');
+        const response = await fetch(`/api/statistics/comprehensive-reports?path=/periodic`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: getReportType(reportPeriod),
+            period: reportPeriod,
+            format: 'pdf',
+            action,
+            from,
+            to,
+            toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
+          }),
+        });
+
+        if (action === 'download') {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `${reportPeriod}_report_${from}_to_${to}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          setSuccess('Reporte descargado correctamente');
+        } else {
+          const result = await response.json();
+          setSuccess(result.message || 'Reporte enviado correctamente');
+        }
       } else {
-        const result = await response.json();
-        setSuccess(result.message || 'Reporte enviado correctamente');
+        // Specific channel report
+        const response = await fetch(`/api/statistics/comprehensive-reports?path=/channel/${channelId}`, {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({
+            type: 'channel-summary',
+            format: 'pdf',
+            from,
+            to,
+            channelId,
+            action,
+            toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
+          }),
+        });
+
+        if (action === 'download') {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          const a = document.createElement('a');
+          a.href = url;
+          a.download = `channel_${channelId}_report_${from}_to_${to}.pdf`;
+          document.body.appendChild(a);
+          a.click();
+          window.URL.revokeObjectURL(url);
+          document.body.removeChild(a);
+          setSuccess('Reporte descargado correctamente');
+        } else {
+          const result = await response.json();
+          setSuccess(result.message || 'Reporte enviado correctamente');
+        }
       }
     } catch (error) {
-      console.error('Error generating channel periodic report:', error);
-      setError('Error al generar el reporte periódico del canal');
+      console.error('Error generating report:', error);
+      setError('Error al generar el reporte');
     } finally {
       if (action === 'download') {
         setDownloadingReports(prev => {
@@ -1704,279 +1679,154 @@ export default function StatisticsPage() {
             </Box>
           </LocalizationProvider>
           
-          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes por Canal</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Generación de Reportes</Typography>
           <Box sx={{ mb: 4 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-              Genera reportes específicos por canal. Selecciona un canal y elige entre fechas personalizadas o períodos predefinidos.
+              Genera reportes con fechas personalizadas o períodos predefinidos. Selecciona un canal específico o genera reportes para todos los canales.
             </Typography>
             
-            {/* Channel Selection */}
+            {/* Unified Date and Channel Selection */}
             <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" sx={{ mb: 1, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
-                Seleccionar Canal
-              </Typography>
-              <FormControl fullWidth sx={{ maxWidth: 400 }}>
-                <InputLabel id="channel-select-label">Canal</InputLabel>
-                <Select
-                  labelId="channel-select-label"
-                  id="channel-select"
-                  value={selectedChannelId || ''}
-                  label="Canal"
-                  onChange={(e) => setSelectedChannelId(e.target.value as number)}
-                >
-                  {channelsList.map((channel) => (
-                    <MenuItem key={channel.id} value={channel.id}>
-                      {channel.name}
-                    </MenuItem>
-                  ))}
-                </Select>
-              </FormControl>
-            </Box>
-
-            {/* Date Range Options */}
-            <Box sx={{ mb: 3 }}>
-              <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
-                Rango de Fechas
-              </Typography>
-              
-              {/* Custom Date Range */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  Fechas personalizadas:
-                </Typography>
-                <LocalizationProvider dateAdapter={AdapterDayjs}>
-                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                    <DatePicker 
-                      label="Desde" 
-                      value={channelFrom} 
-                      onChange={v => setChannelFrom(v!)} 
-                      sx={{ minWidth: 150 }}
-                    />
-                    <DatePicker 
-                      label="Hasta" 
-                      value={channelTo} 
-                      onChange={v => setChannelTo(v!)} 
-                      sx={{ minWidth: 150 }}
-                    />
+              <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', flexWrap: 'wrap' }}>
+                {/* Date Range */}
+                <Box sx={{ flex: 1, minWidth: 300 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                    Rango de Fechas
+                  </Typography>
+                  
+                  {/* Custom Date Range */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Fechas personalizadas:
+                    </Typography>
+                    <LocalizationProvider dateAdapter={AdapterDayjs}>
+                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                        <DatePicker 
+                          label="Desde" 
+                          value={reportFrom} 
+                          onChange={v => setReportFrom(v!)} 
+                          sx={{ minWidth: 150 }}
+                        />
+                        <DatePicker 
+                          label="Hasta" 
+                          value={reportTo} 
+                          onChange={v => setReportTo(v!)} 
+                          sx={{ minWidth: 150 }}
+                        />
+                      </Box>
+                    </LocalizationProvider>
                   </Box>
-                </LocalizationProvider>
-              </Box>
 
-              {/* Quick Period Buttons */}
-              <Box sx={{ mb: 2 }}>
-                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
-                  Períodos predefinidos:
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
-                  <Button
-                    size="small"
-                    variant={channelPeriod === 'weekly' ? 'contained' : 'outlined'}
-                    onClick={() => setChannelPeriod('weekly')}
-                  >
-                    Semanal
-                  </Button>
-                  <Button
-                    size="small"
-                    variant={channelPeriod === 'monthly' ? 'contained' : 'outlined'}
-                    onClick={() => setChannelPeriod('monthly')}
-                  >
-                    Mensual
-                  </Button>
-                  <Button
-                    size="small"
-                    variant={channelPeriod === 'quarterly' ? 'contained' : 'outlined'}
-                    onClick={() => setChannelPeriod('quarterly')}
-                  >
-                    Trimestral
-                  </Button>
-                  <Button
-                    size="small"
-                    variant={channelPeriod === 'yearly' ? 'contained' : 'outlined'}
-                    onClick={() => setChannelPeriod('yearly')}
-                  >
-                    Anual
-                  </Button>
+                  {/* Quick Period Buttons */}
+                  <Box sx={{ mb: 2 }}>
+                    <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                      Períodos predefinidos:
+                    </Typography>
+                    <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                      <Button
+                        size="small"
+                        variant={reportPeriod === 'weekly' ? 'contained' : 'outlined'}
+                        onClick={() => setReportPeriod('weekly')}
+                      >
+                        Semanal
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={reportPeriod === 'monthly' ? 'contained' : 'outlined'}
+                        onClick={() => setReportPeriod('monthly')}
+                      >
+                        Mensual
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={reportPeriod === 'quarterly' ? 'contained' : 'outlined'}
+                        onClick={() => setReportPeriod('quarterly')}
+                      >
+                        Trimestral
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={reportPeriod === 'yearly' ? 'contained' : 'outlined'}
+                        onClick={() => setReportPeriod('yearly')}
+                      >
+                        Anual
+                      </Button>
+                    </Box>
+                  </Box>
+                </Box>
+
+                {/* Channel Selection */}
+                <Box sx={{ flex: 1, minWidth: 300 }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                    Seleccionar Canal
+                  </Typography>
+                  <FormControl fullWidth>
+                    <InputLabel id="channel-select-label">Canal</InputLabel>
+                    <Select
+                      labelId="channel-select-label"
+                      id="channel-select"
+                      value={selectedChannelId === null ? '' : String(selectedChannelId)}
+                      label="Canal"
+                      onChange={(e) => setSelectedChannelId(e.target.value === '' ? null : Number(e.target.value))}
+                    >
+                      <MenuItem value="">
+                        <em>Todos los canales</em>
+                      </MenuItem>
+                      {channelsList.map((channel) => (
+                        <MenuItem key={channel.id} value={String(channel.id)}>
+                          {channel.name}
+                        </MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
                 </Box>
               </Box>
             </Box>
 
             {/* Report Actions */}
-            {selectedChannelId && (
-              <Box>
-                <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
-                  Generar Reporte
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                  <Button
-                    variant="outlined"
-                    onClick={() => handleChannelPeriodicReport(selectedChannelId, 'download')}
-                    disabled={downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) || sendingReports.has(`channel_periodic_${selectedChannelId}_email`)}
-                    startIcon={downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) ? <CircularProgress size={20} /> : undefined}
-                    size="large"
-                  >
-                    {downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) ? 'Descargando...' : 'Descargar PDF'}
-                  </Button>
-                  <Button
-                    variant="contained"
-                    onClick={() => handleChannelPeriodicReport(selectedChannelId, 'email')}
-                    disabled={sendingReports.has(`channel_periodic_${selectedChannelId}_email`) || downloadingReports.has(`channel_periodic_${selectedChannelId}_download`)}
-                    startIcon={sendingReports.has(`channel_periodic_${selectedChannelId}_email`) ? <CircularProgress size={20} /> : undefined}
-                    size="large"
-                  >
-                    {sendingReports.has(`channel_periodic_${selectedChannelId}_email`) ? 'Enviando...' : 'Enviar por Email'}
-                  </Button>
-                </Box>
-                
-                {/* Selected Channel Info */}
-                <Box sx={{ mt: 2, p: 2, backgroundColor: mode === 'light' ? '#f8fafc' : '#1e293b', borderRadius: 1 }}>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Canal seleccionado:</strong> {channelsList.find(c => c.id === selectedChannelId)?.name}
-                  </Typography>
-                  <Typography variant="body2" color="text.secondary">
-                    <strong>Período:</strong> {channelPeriod === 'weekly' ? 'Semanal' : channelPeriod === 'monthly' ? 'Mensual' : channelPeriod === 'quarterly' ? 'Trimestral' : 'Anual'}
-                  </Typography>
-                  {channelPeriod === 'custom' && channelFrom && channelTo && (
-                    <Typography variant="body2" color="text.secondary">
-                      <strong>Fechas:</strong> {channelFrom.format('DD/MM/YYYY')} - {channelTo.format('DD/MM/YYYY')}
-                    </Typography>
-                  )}
-                </Box>
+            <Box>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                Generar Reporte
+              </Typography>
+              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => handleChannelPeriodicReport(selectedChannelId, 'download')}
+                  disabled={downloadingReports.has(`channel_periodic_${selectedChannelId || 'all'}_download`) || sendingReports.has(`channel_periodic_${selectedChannelId || 'all'}_email`)}
+                  startIcon={downloadingReports.has(`channel_periodic_${selectedChannelId || 'all'}_download`) ? <CircularProgress size={20} /> : undefined}
+                  size="large"
+                >
+                  {downloadingReports.has(`channel_periodic_${selectedChannelId || 'all'}_download`) ? 'Descargando...' : 'Descargar PDF'}
+                </Button>
+                <Button
+                  variant="contained"
+                  onClick={() => handleChannelPeriodicReport(selectedChannelId, 'email')}
+                  disabled={sendingReports.has(`channel_periodic_${selectedChannelId || 'all'}_email`) || downloadingReports.has(`channel_periodic_${selectedChannelId || 'all'}_download`)}
+                  startIcon={sendingReports.has(`channel_periodic_${selectedChannelId || 'all'}_email`) ? <CircularProgress size={20} /> : undefined}
+                  size="large"
+                >
+                  {sendingReports.has(`channel_periodic_${selectedChannelId || 'all'}_email`) ? 'Enviando...' : 'Enviar por Email'}
+                </Button>
               </Box>
-            )}
-
-            {/* No Channel Selected Message */}
-            {!selectedChannelId && (
-              <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
-                <Typography variant="body1">
-                  Selecciona un canal para generar reportes específicos
+              
+              {/* Report Info */}
+              <Box sx={{ mt: 2, p: 2, backgroundColor: mode === 'light' ? '#f8fafc' : '#1e293b', borderRadius: 1 }}>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Canal:</strong> {selectedChannelId ? channelsList.find(c => c.id === selectedChannelId)?.name : 'Todos los canales'}
                 </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  <strong>Período:</strong> {reportPeriod === 'weekly' ? 'Semanal' : reportPeriod === 'monthly' ? 'Mensual' : reportPeriod === 'quarterly' ? 'Trimestral' : 'Anual'}
+                </Typography>
+                {reportPeriod === 'custom' && reportFrom && reportTo && (
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Fechas:</strong> {reportFrom.format('DD/MM/YYYY')} - {reportTo.format('DD/MM/YYYY')}
+                  </Typography>
+                )}
               </Box>
-            )}
-          </Box>
-
-          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Periódicos</Typography>
-          <Box sx={{ mb: 4 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Genera reportes semanales, mensuales, trimestrales y anuales.
-            </Typography>
-            <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(4, 1fr)' } }}>
-              <Card sx={{ p: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">Semanal</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Últimos 7 días
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      onClick={() => handlePeriodicReport('weekly', 'download')}
-                      disabled={downloadingReports.has('weekly_download') || sendingReports.has('weekly_email')}
-                      startIcon={downloadingReports.has('weekly_download') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {downloadingReports.has('weekly_download') ? 'Descargando...' : 'Descargar'}
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained" 
-                      onClick={() => handlePeriodicReport('weekly', 'email')}
-                      disabled={sendingReports.has('weekly_email') || downloadingReports.has('weekly_download')}
-                      startIcon={sendingReports.has('weekly_email') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {sendingReports.has('weekly_email') ? 'Enviando...' : 'Enviar'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-              
-              <Card sx={{ p: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">Mensual</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Último mes
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      onClick={() => handlePeriodicReport('monthly', 'download')}
-                      disabled={downloadingReports.has('monthly_download') || sendingReports.has('monthly_email')}
-                      startIcon={downloadingReports.has('monthly_download') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {downloadingReports.has('monthly_download') ? 'Descargando...' : 'Descargar'}
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained" 
-                      onClick={() => handlePeriodicReport('monthly', 'email')}
-                      disabled={sendingReports.has('monthly_email') || downloadingReports.has('monthly_download')}
-                      startIcon={sendingReports.has('monthly_email') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {sendingReports.has('monthly_email') ? 'Enviando...' : 'Enviar'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-              
-              <Card sx={{ p: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">Trimestral</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Último trimestre
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      onClick={() => handlePeriodicReport('quarterly', 'download')}
-                      disabled={downloadingReports.has('quarterly_download') || sendingReports.has('quarterly_email')}
-                      startIcon={downloadingReports.has('quarterly_download') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {downloadingReports.has('quarterly_download') ? 'Descargando...' : 'Descargar'}
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained" 
-                      onClick={() => handlePeriodicReport('quarterly', 'email')}
-                      disabled={sendingReports.has('quarterly_email') || downloadingReports.has('quarterly_download')}
-                      startIcon={sendingReports.has('quarterly_email') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {sendingReports.has('quarterly_email') ? 'Enviando...' : 'Enviar'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
-              
-              <Card sx={{ p: 2 }}>
-                <CardContent>
-                  <Typography variant="h6">Anual</Typography>
-                  <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-                    Último año
-                  </Typography>
-                  <Box sx={{ display: 'flex', gap: 1 }}>
-                    <Button 
-                      size="small" 
-                      variant="outlined" 
-                      onClick={() => handlePeriodicReport('yearly', 'download')}
-                      disabled={downloadingReports.has('yearly_download') || sendingReports.has('yearly_email')}
-                      startIcon={downloadingReports.has('yearly_download') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {downloadingReports.has('yearly_download') ? 'Descargando...' : 'Descargar'}
-                    </Button>
-                    <Button 
-                      size="small" 
-                      variant="contained" 
-                      onClick={() => handlePeriodicReport('yearly', 'email')}
-                      disabled={sendingReports.has('yearly_email') || downloadingReports.has('yearly_download')}
-                      startIcon={sendingReports.has('yearly_email') ? <CircularProgress size={16} /> : undefined}
-                    >
-                      {sendingReports.has('yearly_email') ? 'Enviando...' : 'Enviar'}
-                    </Button>
-                  </Box>
-                </CardContent>
-              </Card>
             </Box>
           </Box>
+
+
 
           <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Automáticos</Typography>
           <Box>
