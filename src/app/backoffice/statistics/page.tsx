@@ -32,6 +32,8 @@ import {
   TextField,
   FormControlLabel,
   Checkbox,
+  Container,
+  useTheme,
 } from '@mui/material';
 import { BarChart } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -345,6 +347,11 @@ export default function StatisticsPage() {
   // State for multi-select
   const [selectedChannels, setSelectedChannels] = useState<number[]>([]); // for channel tab
   const [selectedPrograms, setSelectedPrograms] = useState<number[]>([]); // for program tab
+
+  const [selectedChannelId, setSelectedChannelId] = useState<number | null>(null);
+  const [channelFrom, setChannelFrom] = useState<Dayjs | null>(dayjs().subtract(7, 'day'));
+  const [channelTo, setChannelTo] = useState<Dayjs | null>(dayjs());
+  const [channelPeriod, setChannelPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'>('custom');
 
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
@@ -1089,6 +1096,70 @@ export default function StatisticsPage() {
     }
   };
 
+  const handleChannelPeriodicReport = async (channelId: number, action: 'download' | 'email') => {
+    const reportKey = `channel_periodic_${channelId}_${action}`;
+    
+    try {
+      if (action === 'download') {
+        setDownloadingReports(prev => new Set([...prev, reportKey]));
+      } else {
+        setSendingReports(prev => new Set([...prev, reportKey]));
+      }
+
+      const from = channelFrom?.format('YYYY-MM-DD') || generalFrom.format('YYYY-MM-DD');
+      const to = channelTo?.format('YYYY-MM-DD') || generalTo.format('YYYY-MM-DD');
+      
+      const response = await fetch(`/api/statistics/comprehensive-reports?path=/channel/${channelId}`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          type: 'channel-summary',
+          format: 'pdf',
+          from,
+          to,
+          channelId,
+          action,
+          toEmail: action === 'email' ? 'laguiadelstreaming@gmail.com' : undefined,
+        }),
+      });
+
+      if (action === 'download') {
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = `channel_${channelId}_report_${from}_to_${to}.pdf`;
+        document.body.appendChild(a);
+        a.click();
+        window.URL.revokeObjectURL(url);
+        document.body.removeChild(a);
+        setSuccess('Reporte descargado correctamente');
+      } else {
+        const result = await response.json();
+        setSuccess(result.message || 'Reporte enviado correctamente');
+      }
+    } catch (error) {
+      console.error('Error generating channel periodic report:', error);
+      setError('Error al generar el reporte periódico del canal');
+    } finally {
+      if (action === 'download') {
+        setDownloadingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      } else {
+        setSendingReports(prev => {
+          const newSet = new Set(prev);
+          newSet.delete(reportKey);
+          return newSet;
+        });
+      }
+    }
+  };
+
   if (status === 'loading') {
     return (
       <Box
@@ -1699,42 +1770,150 @@ export default function StatisticsPage() {
           
           <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes por Canal</Typography>
           <Box sx={{ mb: 4 }}>
-            <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
-              Genera reportes específicos por canal. Puedes descargar como PDF o enviar por email.
+            <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+              Genera reportes específicos por canal. Selecciona un canal y elige entre fechas personalizadas o períodos predefinidos.
             </Typography>
-            {channelsList.length === 0 ? (
-              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-                <CircularProgress />
+            
+            {/* Channel Selection */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ mb: 1, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                Seleccionar Canal
+              </Typography>
+              <FormControl fullWidth sx={{ maxWidth: 400 }}>
+                <InputLabel id="channel-select-label">Canal</InputLabel>
+                <Select
+                  labelId="channel-select-label"
+                  id="channel-select"
+                  value={selectedChannelId || ''}
+                  label="Canal"
+                  onChange={(e) => setSelectedChannelId(e.target.value as number)}
+                >
+                  {channelsList.map((channel) => (
+                    <MenuItem key={channel.id} value={channel.id}>
+                      {channel.name}
+                    </MenuItem>
+                  ))}
+                </Select>
+              </FormControl>
+            </Box>
+
+            {/* Date Range Options */}
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                Rango de Fechas
+              </Typography>
+              
+              {/* Custom Date Range */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Fechas personalizadas:
+                </Typography>
+                <LocalizationProvider dateAdapter={AdapterDayjs}>
+                  <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
+                    <DatePicker 
+                      label="Desde" 
+                      value={channelFrom} 
+                      onChange={v => setChannelFrom(v!)} 
+                      sx={{ minWidth: 150 }}
+                    />
+                    <DatePicker 
+                      label="Hasta" 
+                      value={channelTo} 
+                      onChange={v => setChannelTo(v!)} 
+                      sx={{ minWidth: 150 }}
+                    />
+                  </Box>
+                </LocalizationProvider>
               </Box>
-            ) : (
-              <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
-                {channelsList.map((channel) => (
-                  <Card key={channel.id} sx={{ minWidth: 200, p: 2 }}>
-                    <CardContent>
-                      <Typography variant="h6">{channel.name}</Typography>
-                      <Box sx={{ display: 'flex', gap: 1, mt: 2 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          onClick={() => handleChannelReport(channel.id, 'download')}
-                          disabled={downloadingReports.has(`channel_${channel.id}_download`) || sendingReports.has(`channel_${channel.id}_email`)}
-                          startIcon={downloadingReports.has(`channel_${channel.id}_download`) ? <CircularProgress size={16} /> : undefined}
-                        >
-                          {downloadingReports.has(`channel_${channel.id}_download`) ? 'Descargando...' : 'Descargar PDF'}
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="contained"
-                          onClick={() => handleChannelReport(channel.id, 'email')}
-                          disabled={sendingReports.has(`channel_${channel.id}_email`) || downloadingReports.has(`channel_${channel.id}_download`)}
-                          startIcon={sendingReports.has(`channel_${channel.id}_email`) ? <CircularProgress size={16} /> : undefined}
-                        >
-                          {sendingReports.has(`channel_${channel.id}_email`) ? 'Enviando...' : 'Enviar por Email'}
-                        </Button>
-                      </Box>
-                    </CardContent>
-                  </Card>
-                ))}
+
+              {/* Quick Period Buttons */}
+              <Box sx={{ mb: 2 }}>
+                <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
+                  Períodos predefinidos:
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                  <Button
+                    size="small"
+                    variant={channelPeriod === 'weekly' ? 'contained' : 'outlined'}
+                    onClick={() => setChannelPeriod('weekly')}
+                  >
+                    Semanal
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={channelPeriod === 'monthly' ? 'contained' : 'outlined'}
+                    onClick={() => setChannelPeriod('monthly')}
+                  >
+                    Mensual
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={channelPeriod === 'quarterly' ? 'contained' : 'outlined'}
+                    onClick={() => setChannelPeriod('quarterly')}
+                  >
+                    Trimestral
+                  </Button>
+                  <Button
+                    size="small"
+                    variant={channelPeriod === 'yearly' ? 'contained' : 'outlined'}
+                    onClick={() => setChannelPeriod('yearly')}
+                  >
+                    Anual
+                  </Button>
+                </Box>
+              </Box>
+            </Box>
+
+            {/* Report Actions */}
+            {selectedChannelId && (
+              <Box>
+                <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                  Generar Reporte
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleChannelPeriodicReport(selectedChannelId, 'download')}
+                    disabled={downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) || sendingReports.has(`channel_periodic_${selectedChannelId}_email`)}
+                    startIcon={downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) ? <CircularProgress size={20} /> : undefined}
+                    size="large"
+                  >
+                    {downloadingReports.has(`channel_periodic_${selectedChannelId}_download`) ? 'Descargando...' : 'Descargar PDF'}
+                  </Button>
+                  <Button
+                    variant="contained"
+                    onClick={() => handleChannelPeriodicReport(selectedChannelId, 'email')}
+                    disabled={sendingReports.has(`channel_periodic_${selectedChannelId}_email`) || downloadingReports.has(`channel_periodic_${selectedChannelId}_download`)}
+                    startIcon={sendingReports.has(`channel_periodic_${selectedChannelId}_email`) ? <CircularProgress size={20} /> : undefined}
+                    size="large"
+                  >
+                    {sendingReports.has(`channel_periodic_${selectedChannelId}_email`) ? 'Enviando...' : 'Enviar por Email'}
+                  </Button>
+                </Box>
+                
+                {/* Selected Channel Info */}
+                <Box sx={{ mt: 2, p: 2, backgroundColor: mode === 'light' ? '#f8fafc' : '#1e293b', borderRadius: 1 }}>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Canal seleccionado:</strong> {channelsList.find(c => c.id === selectedChannelId)?.name}
+                  </Typography>
+                  <Typography variant="body2" color="text.secondary">
+                    <strong>Período:</strong> {channelPeriod === 'weekly' ? 'Semanal' : channelPeriod === 'monthly' ? 'Mensual' : channelPeriod === 'quarterly' ? 'Trimestral' : 'Anual'}
+                  </Typography>
+                  {channelPeriod === 'custom' && (
+                    <Typography variant="body2" color="text.secondary">
+                      <strong>Fechas:</strong> {channelFrom.format('DD/MM/YYYY')} - {channelTo.format('DD/MM/YYYY')}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
+            )}
+
+            {/* No Channel Selected Message */}
+            {!selectedChannelId && (
+              <Box sx={{ textAlign: 'center', py: 4, color: 'text.secondary' }}>
+                <Typography variant="body1">
+                  Selecciona un canal para generar reportes específicos
+                </Typography>
               </Box>
             )}
           </Box>
