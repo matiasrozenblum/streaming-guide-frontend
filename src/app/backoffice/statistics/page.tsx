@@ -352,6 +352,56 @@ export default function StatisticsPage() {
   const [reportTo, setReportTo] = useState<Dayjs | null>(dayjs());
   const [reportPeriod, setReportPeriod] = useState<'weekly' | 'monthly' | 'quarterly' | 'yearly' | 'custom'>('custom');
 
+  // Add channels loading for reports tab
+  const fetchChannelsForReports = useCallback(async () => {
+    if (status !== 'authenticated') return;
+    try {
+      const channelsRes = await fetch('/api/channels');
+      if (channelsRes.ok) {
+        const channelsData = await channelsRes.json();
+        setChannelsList(channelsData);
+      }
+    } catch (error) {
+      console.error('Error loading channels for reports:', error);
+    }
+  }, [status]);
+
+  // Date picker handlers to automatically set period to 'custom'
+  const handleReportFromChange = (date: Dayjs | null) => {
+    setReportFrom(date);
+    setReportPeriod('custom');
+  };
+
+  const handleReportToChange = (date: Dayjs | null) => {
+    setReportTo(date);
+    setReportPeriod('custom');
+  };
+
+  // Period button handlers to update dates
+  const handlePeriodChange = (period: 'weekly' | 'monthly' | 'quarterly' | 'yearly') => {
+    setReportPeriod(period);
+    const now = dayjs();
+    
+    switch (period) {
+      case 'weekly':
+        setReportFrom(now.subtract(7, 'day'));
+        setReportTo(now);
+        break;
+      case 'monthly':
+        setReportFrom(now.subtract(1, 'month'));
+        setReportTo(now);
+        break;
+      case 'quarterly':
+        setReportFrom(now.subtract(3, 'month'));
+        setReportTo(now);
+        break;
+      case 'yearly':
+        setReportFrom(now.subtract(1, 'year'));
+        setReportTo(now);
+        break;
+    }
+  };
+
   const fetchGeneralData = useCallback(async () => {
     if (status !== 'authenticated') return;
     setLoading(true);
@@ -566,9 +616,10 @@ export default function StatisticsPage() {
   useEffect(() => {
     if (status === 'authenticated' && !hasFetched.current) {
       fetchGeneralData();
+      fetchChannelsForReports(); // Load channels immediately
       hasFetched.current = true;
     }
-  }, [status, fetchGeneralData]);
+  }, [status, fetchGeneralData, fetchChannelsForReports]);
 
   // Auto-refresh when date range changes
   useEffect(() => {
@@ -583,6 +634,7 @@ export default function StatisticsPage() {
   useEffect(() => { if (mainTab === 2) fetchProgramTabData(); }, [mainTab, fetchProgramTabData]);
   useEffect(() => { if (mainTab === 3) fetchListUsersReport(); }, [mainTab, fetchListUsersReport]);
   useEffect(() => { if (mainTab === 3) fetchListSubsReport(); }, [mainTab, fetchListSubsReport]);
+  useEffect(() => { if (mainTab === 4) fetchChannelsForReports(); }, [mainTab, fetchChannelsForReports]);
 
   const getGenderLabel = (gender: string) => {
     const labels = {
@@ -1704,13 +1756,13 @@ export default function StatisticsPage() {
                         <DatePicker 
                           label="Desde" 
                           value={reportFrom} 
-                          onChange={v => setReportFrom(v!)} 
+                          onChange={handleReportFromChange} 
                           sx={{ minWidth: 150 }}
                         />
                         <DatePicker 
                           label="Hasta" 
                           value={reportTo} 
-                          onChange={v => setReportTo(v!)} 
+                          onChange={handleReportToChange} 
                           sx={{ minWidth: 150 }}
                         />
                       </Box>
@@ -1726,30 +1778,37 @@ export default function StatisticsPage() {
                       <Button
                         size="small"
                         variant={reportPeriod === 'weekly' ? 'contained' : 'outlined'}
-                        onClick={() => setReportPeriod('weekly')}
+                        onClick={() => handlePeriodChange('weekly')}
                       >
                         Semanal
                       </Button>
                       <Button
                         size="small"
                         variant={reportPeriod === 'monthly' ? 'contained' : 'outlined'}
-                        onClick={() => setReportPeriod('monthly')}
+                        onClick={() => handlePeriodChange('monthly')}
                       >
                         Mensual
                       </Button>
                       <Button
                         size="small"
                         variant={reportPeriod === 'quarterly' ? 'contained' : 'outlined'}
-                        onClick={() => setReportPeriod('quarterly')}
+                        onClick={() => handlePeriodChange('quarterly')}
                       >
                         Trimestral
                       </Button>
                       <Button
                         size="small"
                         variant={reportPeriod === 'yearly' ? 'contained' : 'outlined'}
-                        onClick={() => setReportPeriod('yearly')}
+                        onClick={() => handlePeriodChange('yearly')}
                       >
                         Anual
+                      </Button>
+                      <Button
+                        size="small"
+                        variant={reportPeriod === 'custom' ? 'contained' : 'outlined'}
+                        onClick={() => setReportPeriod('custom')}
+                      >
+                        Personalizado
                       </Button>
                     </Box>
                   </Box>
