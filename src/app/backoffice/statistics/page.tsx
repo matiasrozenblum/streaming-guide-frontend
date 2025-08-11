@@ -1077,7 +1077,7 @@ export default function StatisticsPage() {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify({
-            type: 'channel-summary',
+            type: 'comprehensive-channel-summary',
             format: 'pdf',
             from,
             to,
