@@ -1209,7 +1209,9 @@ export default function StatisticsPage() {
               </Button>
             </Box>
           </LocalizationProvider>
-          {demographics && demographics.byGender && demographics.byAgeGroup ? (
+          {demographics && demographics.byGender && demographics.byAgeGroup && 
+           typeof demographics.byGender === 'object' && 
+           typeof demographics.byAgeGroup === 'object' ? (
             <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
               {/* Resumen General */}
               <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
