@@ -637,6 +637,7 @@ export default function StatisticsPage() {
   useEffect(() => { if (mainTab === 4) fetchChannelsForReports(); }, [mainTab, fetchChannelsForReports]);
 
   const getGenderLabel = (gender: string) => {
+    if (!gender) return 'Sin género';
     const labels = {
       male: 'Masculino',
       female: 'Femenino',
@@ -648,6 +649,7 @@ export default function StatisticsPage() {
   };
 
   const getAgeGroupLabel = (ageGroup: string) => {
+    if (!ageGroup) return 'Sin fecha de nacimiento';
     const labels = {
       under18: 'Menor de 18',
       age18to30: '18-30 años',
@@ -660,6 +662,7 @@ export default function StatisticsPage() {
   };
 
   const getGenderColor = (gender: string) => {
+    if (!gender) return '#6b7280';
     const colors = {
       male: '#3b82f6',
       female: '#ec4899',
@@ -671,6 +674,7 @@ export default function StatisticsPage() {
   };
 
   const getAgeGroupColor = (ageGroup: string) => {
+    if (!ageGroup) return '#6b7280';
     const colors = {
       under18: '#ef4444',
       age18to30: '#f59e0b',
@@ -1205,7 +1209,7 @@ export default function StatisticsPage() {
               </Button>
             </Box>
           </LocalizationProvider>
-          {demographics && (
+          {demographics && demographics.byGender && demographics.byAgeGroup ? (
             <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
               {/* Resumen General */}
               <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
@@ -1223,12 +1227,15 @@ export default function StatisticsPage() {
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Distribución por Género</Typography>
                   <Box display="flex" flexDirection="column" gap={1}>
-                    {Object.entries(demographics.byGender ?? {}).map(([gender, count]) => (
-                      <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
-                        <Chip label={getGenderLabel(gender)} size="small" sx={{ backgroundColor: getGenderColor(gender), color: 'white', fontWeight: 'bold' }} />
-                        <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
-                      </Box>
-                    ))}
+                    {Object.entries(demographics.byGender).map(([gender, count]) => {
+                      if (!gender || count === undefined || count === null) return null;
+                      return (
+                        <Box key={gender} display="flex" justifyContent="space-between" alignItems="center">
+                          <Chip label={getGenderLabel(gender)} size="small" sx={{ backgroundColor: getGenderColor(gender), color: 'white', fontWeight: 'bold' }} />
+                          <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
+                        </Box>
+                      );
+                    }).filter(Boolean)}
                   </Box>
                 </CardContent>
               </Card>
@@ -1238,16 +1245,23 @@ export default function StatisticsPage() {
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Distribución por Edad</Typography>
                     <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
-                      {Object.entries(demographics.byAgeGroup ?? {}).map(([ageGroup, count]) => (
-                        <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
-                          <Chip label={getAgeGroupLabel(ageGroup)} size="small" sx={{ backgroundColor: getAgeGroupColor(ageGroup), color: 'white', fontWeight: 'bold' }} />
-                          <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
-                        </Box>
-                      ))}
+                      {Object.entries(demographics.byAgeGroup).map(([ageGroup, count]) => {
+                        if (!ageGroup || count === undefined || count === null) return null;
+                        return (
+                          <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
+                            <Chip label={getAgeGroupLabel(ageGroup)} size="small" sx={{ backgroundColor: getAgeGroupColor(ageGroup), color: 'white', fontWeight: 'bold' }} />
+                            <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
+                          </Box>
+                        );
+                      }).filter(Boolean)}
                     </Box>
                   </CardContent>
                 </Card>
               </Box>
+            </Box>
+          ) : (
+            <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '200px' }}>
+              <Typography color="text.secondary">Cargando datos demográficos...</Typography>
             </Box>
           )}
           {/* Top 5 Channels/Programs by Subscriptions/Clicks */}
@@ -1676,7 +1690,7 @@ export default function StatisticsPage() {
                     <TableCell>{user.id}</TableCell>
                     <TableCell>{user.firstName}</TableCell>
                     <TableCell>{user.lastName}</TableCell>
-                    <TableCell>{getGenderLabel(user.gender)}</TableCell>
+                    <TableCell>{user.gender ? getGenderLabel(user.gender) : '-'}</TableCell>
                     <TableCell>{user.birthDate ? dayjs(user.birthDate).format('YYYY-MM-DD') : '-'}</TableCell>
                     <TableCell>{user.createdAt ? dayjs(user.createdAt).format('YYYY-MM-DD HH:mm') : '-'}</TableCell>
                   </TableRow>
