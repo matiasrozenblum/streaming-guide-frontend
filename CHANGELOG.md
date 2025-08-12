@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.7.3] - 2025-08-12
+
+### Fixed
+- Made backoffice statistics section more resilient
+
 ## [1.7.2] - 2025-08-11
 
 ### Added
