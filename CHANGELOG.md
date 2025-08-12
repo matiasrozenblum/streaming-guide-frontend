@@ -17,6 +17,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.7.2] - 2025-08-11
+
+### Added
+- Added reports by channel
+- Added automatic weekly, monthly, quarterly and yearly reports
+
+### Changed
+- Backoffice reports section refactor
+
+### Fixed
+- Fixed several device save operations on sign up
+
 ## [1.7.1] - 2025-08-05
 
 ### Changed
