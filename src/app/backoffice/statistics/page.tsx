@@ -284,6 +284,10 @@ export default function StatisticsPage() {
   const [emailToSend, setEmailToSend] = useState('');
   const [emailReports, setEmailReports] = useState<{pdf: boolean, csvUsers: boolean, csvSubs: boolean}>({pdf: true, csvUsers: false, csvSubs: false});
 
+  // Add state for PostHog connection test
+  const [posthogTestResult, setPosthogTestResult] = useState<string | null>(null);
+  const [testingPosthog, setTestingPosthog] = useState(false);
+
   // Add state for top 5 rankings
   const [topChannelsBySubs, setTopChannelsBySubs] = useState<TopChannel[]>([]);
   const [topChannelsByClicks, setTopChannelsByClicks] = useState<TopChannel[]>([]);
@@ -560,6 +564,30 @@ export default function StatisticsPage() {
       setLoading(false);
     }
   }, [programTabFrom, programTabTo, status]);
+
+  // Test PostHog connection
+  const testPostHogConnection = async () => {
+    try {
+      setTestingPosthog(true);
+      setPosthogTestResult(null);
+      
+      const response = await fetch('/api/statistics/test-posthog');
+      const data = await response.json();
+      
+      if (response.ok) {
+        setPosthogTestResult(`✅ ${data.message}`);
+        if (data.details) {
+          console.log('PostHog test details:', data.details);
+        }
+      } else {
+        setPosthogTestResult(`❌ ${data.error || 'Unknown error'}`);
+      }
+    } catch (error) {
+      setPosthogTestResult(`❌ Error: ${error instanceof Error ? error.message : String(error)}`);
+    } finally {
+      setTestingPosthog(false);
+    }
+  };
 
   const fetchListUsersReport = useCallback(async () => {
     try {
@@ -1203,6 +1231,23 @@ export default function StatisticsPage() {
               >
                 Actualizar
               </Button>
+              <Button 
+                variant="outlined" 
+                onClick={testPostHogConnection}
+                disabled={testingPosthog}
+                sx={{ ml: 1 }}
+                color="secondary"
+              >
+                {testingPosthog ? 'Probando...' : 'Test PostHog'}
+              </Button>
+              {posthogTestResult && (
+                <Typography 
+                  variant="body2" 
+                  sx={{ ml: 2, color: posthogTestResult.includes('✅') ? 'success.main' : 'error.main' }}
+                >
+                  {posthogTestResult}
+                </Typography>
+              )}
             </Box>
           </LocalizationProvider>
           {demographics && (
