@@ -4,10 +4,11 @@ import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
+import { processOverlappingPrograms, logOverlapInfo } from '@/utils/scheduleOverlapHandler';
 
 interface Program {
   id: string;
@@ -23,6 +24,13 @@ interface Program {
   isWeeklyOverride?: boolean;
   overrideType?: 'cancel' | 'time_change' | 'reschedule';
   style_override?: string | null;
+  // Overlap handling fields
+  display_start_time?: string;
+  display_end_time?: string;
+  original_start_time?: string;
+  original_end_time?: string;
+  hasOverlap?: boolean;
+  overlapPriority?: number;
 }
 
 interface Props {
@@ -47,6 +55,19 @@ export const ScheduleRow = ({
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const { liveStatus } = useLiveStatus();
+
+  // Process overlapping programs to prevent visual conflicts
+  const processedPrograms = React.useMemo(() => {
+    const adjusted = processOverlappingPrograms(programs);
+    
+    // Log overlap information for debugging
+    if (adjusted.some(p => p.hasOverlap)) {
+      console.log(`🔄 Channel ${channelName} has overlapping programs:`);
+      logOverlapInfo(adjusted);
+    }
+    
+    return adjusted;
+  }, [programs, channelName]);
 
   const StandardLayout = (
     <Box
@@ -196,19 +217,23 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p) => {
+          {processedPrograms.map((p) => {
             // Get live status from context
             const currentLiveStatus = liveStatus[p.id.toString()];
             const isLive = currentLiveStatus?.is_live || p.is_live;
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            // Use display times for positioning, but keep original times for data
+            const displayStart = p.display_start_time || p.start_time;
+            const displayEnd = p.display_end_time || p.end_time;
 
             return (
               <React.Fragment key={p.id}>
                 <ProgramBlock
                   id={p.id}
                   name={p.name}
-                  start={p.start_time}
-                  end={p.end_time}
+                  start={displayStart}
+                  end={displayEnd}
                   description={p.description}
                   panelists={p.panelists}
                   logo_url={p.logo_url}
