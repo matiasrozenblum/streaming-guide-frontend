@@ -37,7 +37,7 @@ export interface WeeklyOverride {
   newDayOfWeek?: string;
   reason?: string;
   createdBy?: string;
-  expiresAt: string;
+  expiresAt: string; // Format: YYYY-MM-DD HH:mm:ss (Buenos Aires time)
   createdAt: string;
   panelistIds?: number[];
   specialProgram?: {
