@@ -36,6 +36,7 @@ import {
 import {
   Add,
   Delete,
+  Edit,
   Refresh,
   Schedule,
   Cancel,
@@ -120,6 +121,8 @@ export function WeeklyOverridesTable() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [channels, setChannels] = useState<{ id: number; name: string }[]>([]);
+  const [editingOverride, setEditingOverride] = useState<WeeklyOverride | null>(null);
+  const [isEditMode, setIsEditMode] = useState(false);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -269,6 +272,8 @@ export function WeeklyOverridesTable() {
     setOpenDialog(false);
     setSelectedSchedule(null);
     setSelectedProgram(null);
+    setEditingOverride(null);
+    setIsEditMode(false);
     setPanelistSearchTerm('');
     setFormData({
       targetWeek: 'current',
@@ -337,8 +342,14 @@ export function WeeklyOverridesTable() {
         createdBy: typedSession?.user?.name || 'Admin',
       };
 
-      const response = await fetch('/api/weekly-overrides', {
-        method: 'POST',
+      const url = isEditMode && editingOverride 
+        ? `/api/weekly-overrides/${editingOverride.id}`
+        : '/api/weekly-overrides';
+      
+      const method = isEditMode ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
           Authorization: `Bearer ${typedSession?.accessToken}`,
@@ -348,10 +359,10 @@ export function WeeklyOverridesTable() {
 
       if (!response.ok) {
         const errorData = await response.json();
-        throw new Error(errorData.message || 'Error al crear el cambio');
+        throw new Error(errorData.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el cambio`);
       }
 
-      setSuccess('Cambio semanal creado correctamente');
+      setSuccess(`Cambio semanal ${isEditMode ? 'actualizado' : 'creado'} correctamente`);
       handleCloseDialog();
       await fetchData();
     } catch (err) {
@@ -379,6 +390,35 @@ export function WeeklyOverridesTable() {
       console.error('Error deleting override:', err);
       setError('Error al eliminar el cambio');
     }
+  };
+
+  const handleEdit = (override: WeeklyOverride) => {
+    setEditingOverride(override);
+    setIsEditMode(true);
+    
+    // Populate form with existing data
+    setFormData({
+      targetWeek: override.weekStartDate === getWeekStartDate('current') ? 'current' : 'next',
+      overrideType: override.overrideType,
+      newStartTime: override.newStartTime || '',
+      newEndTime: override.newEndTime || '',
+      newDayOfWeek: override.newDayOfWeek || '',
+      reason: override.reason || '',
+      panelistIds: override.panelistIds || [],
+      specialProgram: override.specialProgram ? {
+        name: override.specialProgram.name || '',
+        description: override.specialProgram.description || '',
+        channelId: override.specialProgram.channelId || 0,
+        imageUrl: override.specialProgram.imageUrl || '',
+      } : {
+        name: '',
+        description: '',
+        channelId: 0,
+        imageUrl: '',
+      },
+    });
+    
+    setOpenDialog(true);
   };
 
   const handleCleanup = async () => {
@@ -443,6 +483,22 @@ export function WeeklyOverridesTable() {
   const getOverrideLabel = (type: string) => {
     const override = OVERRIDE_TYPES.find(ot => ot.value === type);
     return override ? override.label : type;
+  };
+
+  const getWeekStartDate = (targetWeek: 'current' | 'next'): string => {
+    const now = new Date();
+    const currentDay = now.getDay();
+    const daysToMonday = currentDay === 0 ? 6 : currentDay - 1; // Sunday = 0, Monday = 1
+    
+    if (targetWeek === 'current') {
+      const monday = new Date(now);
+      monday.setDate(now.getDate() - daysToMonday);
+      return monday.toISOString().split('T')[0];
+    } else {
+      const nextMonday = new Date(now);
+      nextMonday.setDate(now.getDate() - daysToMonday + 7);
+      return nextMonday.toISOString().split('T')[0];
+    }
   };
 
   const getDayLabel = (day: string) => {
@@ -617,6 +673,9 @@ export function WeeklyOverridesTable() {
                     </TableCell>
                     <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
+                      <IconButton onClick={() => handleEdit(override)} color="primary" sx={{ mr: 1 }}>
+                        <Edit />
+                      </IconButton>
                       <IconButton onClick={() => handleDelete(override.id)} color="error">
                         <Delete />
                       </IconButton>
@@ -715,6 +774,9 @@ export function WeeklyOverridesTable() {
                     </TableCell>
                     <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
+                      <IconButton onClick={() => handleEdit(override)} color="primary" sx={{ mr: 1 }}>
+                        <Edit />
+                      </IconButton>
                       <IconButton onClick={() => handleDelete(override.id)} color="error">
                         <Delete />
                       </IconButton>
@@ -1098,6 +1160,9 @@ export function WeeklyOverridesTable() {
                           />
                         </TableCell>
                         <TableCell>
+                          <IconButton onClick={() => handleEdit(override)} color="primary" sx={{ mr: 1 }}>
+                            <Edit />
+                          </IconButton>
                           <IconButton onClick={() => handleDelete(override.id)} color="error">
                             <Delete />
                           </IconButton>
@@ -1125,7 +1190,7 @@ export function WeeklyOverridesTable() {
       >
         <DialogTitle>
           <Typography variant="h6" sx={{ fontWeight: 600 }}>
-            Crear Cambio Semanal
+            {isEditMode ? 'Editar Cambio Semanal' : 'Crear Cambio Semanal'}
           </Typography>
           {selectedSchedule && (
             <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
@@ -1438,14 +1503,14 @@ export function WeeklyOverridesTable() {
           <Button 
             onClick={handleSubmit} 
             variant="contained" 
-            startIcon={<Add />}
+            startIcon={isEditMode ? <Edit /> : <Add />}
             disabled={
               formData.overrideType !== 'cancel' && 
               (!formData.newStartTime || !formData.newEndTime || 
                (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
             }
           >
-            Crear Cambio
+            {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
           </Button>
         </DialogActions>
       </Dialog>
