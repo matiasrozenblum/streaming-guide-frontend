@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.8.0] - 2025-08-19
+
+### Added
+- Now weelky overrides are modifiable
+
 ## [1.7.3] - 2025-08-12
 
 ### Fixed
