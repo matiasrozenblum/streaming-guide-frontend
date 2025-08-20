@@ -130,7 +130,6 @@ export function WeeklyOverridesTable() {
 
     try {
       setLoading(true);
-      console.log('Fetching weekly overrides data...');
       
       const [overridesRes, schedulesRes, programsRes, panelistsRes, statsRes] = await Promise.all([
         fetch('/api/weekly-overrides', {
@@ -150,17 +149,8 @@ export function WeeklyOverridesTable() {
         }),
       ]);
 
-      console.log('Response statuses:', {
-        overrides: overridesRes.status,
-        schedules: schedulesRes.status,
-        programs: programsRes.status,
-        panelists: panelistsRes.status,
-        stats: statsRes.status
-      });
-
       if (overridesRes.ok) {
         const overridesData = await overridesRes.json();
-        console.log('Overrides data:', overridesData);
         setCurrentWeekOverrides(overridesData.currentWeek || []);
         setNextWeekOverrides(overridesData.nextWeek || []);
       } else {
@@ -169,15 +159,13 @@ export function WeeklyOverridesTable() {
 
       if (schedulesRes.ok) {
         const schedulesData = await schedulesRes.json();
-        console.log('Schedules data length:', schedulesData?.length);
         setSchedules(schedulesData || []);
       } else {
         console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
-      }
+    }
 
       if (programsRes.ok) {
         const programsData = await programsRes.json();
-        console.log('Programs data length:', programsData?.length);
         setPrograms(programsData || []);
       } else {
         console.error('Failed to fetch programs:', programsRes.status, await programsRes.text());
@@ -185,7 +173,6 @@ export function WeeklyOverridesTable() {
 
       if (panelistsRes.ok) {
         const panelistsData = await panelistsRes.json();
-        console.log('Panelists data length:', panelistsData?.length);
         setPanelists(panelistsData || []);
       } else {
         console.error('Failed to fetch panelists:', panelistsRes.status, await panelistsRes.text());
@@ -193,7 +180,6 @@ export function WeeklyOverridesTable() {
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
-        console.log('Stats data:', statsData);
         setStats(statsData);
       } else {
         console.error('Failed to fetch stats (non-critical):', statsRes.status);
@@ -293,7 +279,7 @@ export function WeeklyOverridesTable() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create') return;
+    if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create' && !isEditMode) return;
 
     try {
       interface OverridePayload {
@@ -329,11 +315,17 @@ export function WeeklyOverridesTable() {
           newDayOfWeek: formData.newDayOfWeek,
           specialProgram: formData.specialProgram,
         }),
-        ...(formData.overrideType !== 'create' && selectedSchedule && {
-          scheduleId: selectedSchedule.id,
-        }),
-        ...(formData.overrideType !== 'create' && selectedProgram && {
-          programId: selectedProgram.id,
+        // For edit mode, use the existing override's IDs; for create mode, use selected entities
+        ...(isEditMode && editingOverride ? {
+          ...(editingOverride.scheduleId && { scheduleId: editingOverride.scheduleId }),
+          ...(editingOverride.programId && { programId: editingOverride.programId }),
+        } : {
+          ...(formData.overrideType !== 'create' && selectedSchedule && {
+            scheduleId: selectedSchedule.id,
+          }),
+          ...(formData.overrideType !== 'create' && selectedProgram && {
+            programId: selectedProgram.id,
+          }),
         }),
         ...(formData.panelistIds.length > 0 && {
           panelistIds: formData.panelistIds,
