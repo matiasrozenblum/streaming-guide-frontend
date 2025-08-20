@@ -293,7 +293,7 @@ export function WeeklyOverridesTable() {
   };
 
   const handleSubmit = async () => {
-    if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create') return;
+    if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create' && !isEditMode) return;
 
     try {
       interface OverridePayload {
@@ -329,11 +329,17 @@ export function WeeklyOverridesTable() {
           newDayOfWeek: formData.newDayOfWeek,
           specialProgram: formData.specialProgram,
         }),
-        ...(formData.overrideType !== 'create' && selectedSchedule && {
-          scheduleId: selectedSchedule.id,
-        }),
-        ...(formData.overrideType !== 'create' && selectedProgram && {
-          programId: selectedProgram.id,
+        // For edit mode, use the existing override's IDs; for create mode, use selected entities
+        ...(isEditMode && editingOverride ? {
+          ...(editingOverride.scheduleId && { scheduleId: editingOverride.scheduleId }),
+          ...(editingOverride.programId && { programId: editingOverride.programId }),
+        } : {
+          ...(formData.overrideType !== 'create' && selectedSchedule && {
+            scheduleId: selectedSchedule.id,
+          }),
+          ...(formData.overrideType !== 'create' && selectedProgram && {
+            programId: selectedProgram.id,
+          }),
         }),
         ...(formData.panelistIds.length > 0 && {
           panelistIds: formData.panelistIds,
@@ -347,6 +353,8 @@ export function WeeklyOverridesTable() {
         : '/api/weekly-overrides';
       
       const method = isEditMode ? 'PUT' : 'POST';
+      
+      console.log('Submitting override:', { isEditMode, editingOverride, payload, url, method });
       
       const response = await fetch(url, {
         method,
@@ -1515,6 +1523,12 @@ export function WeeklyOverridesTable() {
               (!formData.newStartTime || !formData.newEndTime || 
                (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
             }
+            onMouseEnter={() => {
+              console.log('Form data:', formData);
+              console.log('Button disabled:', formData.overrideType !== 'cancel' && 
+                (!formData.newStartTime || !formData.newEndTime || 
+                 (formData.overrideType === 'reschedule' && !formData.newDayOfWeek)));
+            }}
           >
             {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
           </Button>
