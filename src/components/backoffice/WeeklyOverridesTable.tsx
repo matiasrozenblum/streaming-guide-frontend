@@ -116,6 +116,7 @@ export function WeeklyOverridesTable() {
       description: '',
       channelId: 0,
       imageUrl: '',
+      stream_url: '',
     },
   });
   const [error, setError] = useState<string | null>(null);
@@ -130,7 +131,6 @@ export function WeeklyOverridesTable() {
 
     try {
       setLoading(true);
-      console.log('Fetching weekly overrides data...');
       
       const [overridesRes, schedulesRes, programsRes, panelistsRes, statsRes] = await Promise.all([
         fetch('/api/weekly-overrides', {
@@ -150,17 +150,8 @@ export function WeeklyOverridesTable() {
         }),
       ]);
 
-      console.log('Response statuses:', {
-        overrides: overridesRes.status,
-        schedules: schedulesRes.status,
-        programs: programsRes.status,
-        panelists: panelistsRes.status,
-        stats: statsRes.status
-      });
-
       if (overridesRes.ok) {
         const overridesData = await overridesRes.json();
-        console.log('Overrides data:', overridesData);
         setCurrentWeekOverrides(overridesData.currentWeek || []);
         setNextWeekOverrides(overridesData.nextWeek || []);
       } else {
@@ -169,15 +160,13 @@ export function WeeklyOverridesTable() {
 
       if (schedulesRes.ok) {
         const schedulesData = await schedulesRes.json();
-        console.log('Schedules data length:', schedulesData?.length);
         setSchedules(schedulesData || []);
       } else {
         console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
-      }
+    }
 
       if (programsRes.ok) {
         const programsData = await programsRes.json();
-        console.log('Programs data length:', programsData?.length);
         setPrograms(programsData || []);
       } else {
         console.error('Failed to fetch programs:', programsRes.status, await programsRes.text());
@@ -185,7 +174,6 @@ export function WeeklyOverridesTable() {
 
       if (panelistsRes.ok) {
         const panelistsData = await panelistsRes.json();
-        console.log('Panelists data length:', panelistsData?.length);
         setPanelists(panelistsData || []);
       } else {
         console.error('Failed to fetch panelists:', panelistsRes.status, await panelistsRes.text());
@@ -193,7 +181,6 @@ export function WeeklyOverridesTable() {
 
       if (statsRes.ok) {
         const statsData = await statsRes.json();
-        console.log('Stats data:', statsData);
         setStats(statsData);
       } else {
         console.error('Failed to fetch stats (non-critical):', statsRes.status);
@@ -242,6 +229,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     setOpenDialog(true);
@@ -263,6 +251,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     setOpenDialog(true);
@@ -288,6 +277,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
   };
@@ -312,6 +302,7 @@ export function WeeklyOverridesTable() {
           description?: string;
           channelId: number;
           imageUrl?: string;
+          stream_url?: string;
         };
       }
 
@@ -418,11 +409,13 @@ export function WeeklyOverridesTable() {
         description: override.specialProgram.description || '',
         channelId: override.specialProgram.channelId || 0,
         imageUrl: override.specialProgram.imageUrl || '',
+        stream_url: override.specialProgram.stream_url || '',
       } : {
         name: '',
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     
@@ -1091,6 +1084,7 @@ export function WeeklyOverridesTable() {
                   description: '',
                   channelId: 0,
                   imageUrl: '',
+                  stream_url: '',
                 },
               });
               setOpenDialog(true);
@@ -1434,6 +1428,18 @@ export function WeeklyOverridesTable() {
                   })}
                   fullWidth
                   placeholder="https://example.com/image.jpg"
+                />
+                
+                <TextField
+                  label="URL de stream/playlist (opcional)"
+                  value={formData.specialProgram.stream_url}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, stream_url: e.target.value }
+                  })}
+                  fullWidth
+                  placeholder="https://www.youtube.com/playlist?list=PL... o https://www.youtube.com/watch?v=..."
+                  helperText="URL de YouTube playlist o video para el programa especial"
                 />
               </Box>
             )}
