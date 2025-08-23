@@ -116,6 +116,7 @@ export function WeeklyOverridesTable() {
       description: '',
       channelId: 0,
       imageUrl: '',
+      stream_url: '',
     },
   });
   const [error, setError] = useState<string | null>(null);
@@ -228,6 +229,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     setOpenDialog(true);
@@ -249,6 +251,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     setOpenDialog(true);
@@ -274,6 +277,7 @@ export function WeeklyOverridesTable() {
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
   };
@@ -298,6 +302,7 @@ export function WeeklyOverridesTable() {
           description?: string;
           channelId: number;
           imageUrl?: string;
+          stream_url?: string;
         };
       }
 
@@ -402,11 +407,13 @@ export function WeeklyOverridesTable() {
         description: override.specialProgram.description || '',
         channelId: override.specialProgram.channelId || 0,
         imageUrl: override.specialProgram.imageUrl || '',
+        stream_url: override.specialProgram.stream_url || '',
       } : {
         name: '',
         description: '',
         channelId: 0,
         imageUrl: '',
+        stream_url: '',
       },
     });
     
@@ -1075,6 +1082,7 @@ export function WeeklyOverridesTable() {
                   description: '',
                   channelId: 0,
                   imageUrl: '',
+                  stream_url: '',
                 },
               });
               setOpenDialog(true);
@@ -1418,6 +1426,18 @@ export function WeeklyOverridesTable() {
                   })}
                   fullWidth
                   placeholder="https://example.com/image.jpg"
+                />
+                
+                <TextField
+                  label="URL de stream/playlist (opcional)"
+                  value={formData.specialProgram.stream_url}
+                  onChange={(e) => setFormData({
+                    ...formData,
+                    specialProgram: { ...formData.specialProgram, stream_url: e.target.value }
+                  })}
+                  fullWidth
+                  placeholder="https://www.youtube.com/playlist?list=PL... o https://www.youtube.com/watch?v=..."
+                  helperText="URL de YouTube playlist o video para el programa especial"
                 />
               </Box>
             )}
