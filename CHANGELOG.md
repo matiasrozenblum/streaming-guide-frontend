@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.8.3] - 2025-08-23
+
+### Changed
+- Now special program pill text says "especial" if it's not today
+
 ## [1.8.2] - 2025-08-23
 
 ### Added

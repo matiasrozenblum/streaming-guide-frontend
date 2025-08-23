@@ -402,9 +402,18 @@ export const ProgramBlock: React.FC<Props> = ({
   let pillPy = 0.1;
   let pillTop = 6;
   let pillLeft = 6;
-  let pillLabel = overrideType === 'cancel'
-    ? 'Cancelado'
-    : '¡Hoy!';
+  
+  // Determine pill label based on program type and whether it's actually today
+  let pillLabel: string;
+  if (overrideType === 'cancel') {
+    pillLabel = 'Cancelado';
+  } else if (isWeeklyOverride) {
+    // For special programs, show "¡Hoy!" only if it's actually today
+    pillLabel = isToday ? '¡Hoy!' : '¡Especial!';
+  } else {
+    pillLabel = '¡Hoy!';
+  }
+  
   if (blockWidth !== null) {
     if (blockWidth < 90) {
       pillFontSize = '0.7rem';
