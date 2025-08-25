@@ -98,10 +98,12 @@ export function SchedulesTable() {
   const hasFetched = useRef(false);
 
   const fetchSchedules = useCallback(async () => {
+    if (!typedSession?.accessToken) return;
+    
     setLoading(true);
     try {
       const [schedulesRes, programsRes] = await Promise.all([
-        api.get<ScheduleType[]>('/schedules', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }),
+        api.get<ScheduleType[]>('/schedules?raw=true', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }),
         api.get<Program[]>('/programs?include=channel', { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } }),
       ]);
       const schedules = schedulesRes.data || [];
@@ -117,7 +119,7 @@ export function SchedulesTable() {
     } finally {
       setLoading(false);
     }
-  }, [typedSession]);
+  }, [typedSession?.accessToken]);
 
   useEffect(() => {
     if (
