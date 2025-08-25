@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.8.4] - 2025-08-25
+
+### Fixed
+- Now backoffice schedules section only reads from the DB
+
 ## [1.8.3] - 2025-08-23
 
 ### Changed
