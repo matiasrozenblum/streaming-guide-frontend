@@ -12,7 +12,8 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { LiveStream } from '@/types/live-stream';
 
 interface Program {
-  id: string;
+  id: string; // program ID
+  scheduleId: string; // schedule ID for live status lookup
   name: string;
   start_time: string;
   end_time: string;
@@ -201,8 +202,8 @@ export const ScheduleRow = ({
 
         <Box position="relative" flex="1" height="100%">
           {programs.map((p) => {
-            // Get live status from context
-            const currentLiveStatus = liveStatus[p.id.toString()];
+            // Get live status from context using schedule ID
+            const currentLiveStatus = liveStatus[p.scheduleId];
             const isLive = currentLiveStatus?.is_live || p.is_live;
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
