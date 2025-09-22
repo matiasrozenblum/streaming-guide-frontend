@@ -181,6 +181,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
               channelLogo={channel.logo_url || undefined}
               programs={getSchedulesForChannel(channel.id).map(s => ({
                 id: s.program.id.toString(),
+                scheduleId: s.id.toString(),
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
@@ -190,6 +191,8 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 logo_url: s.program.logo_url || undefined,
                 is_live: s.program.is_live,
                 stream_url: s.program.stream_url || undefined,
+                live_streams: s.program.live_streams,
+                stream_count: s.program.stream_count,
                 isWeeklyOverride: s.isWeeklyOverride,
                 overrideType: s.overrideType,
                 style_override: s.program.style_override,
