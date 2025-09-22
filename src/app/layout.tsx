@@ -18,6 +18,7 @@ import {
 } from '@/components/ConditionalTrackingLoader';
 import PageviewTracker from '@/components/PageviewTracker';
 import LiveStatusListener from '@/components/LiveStatusListener';
+import { SpeedInsights } from '@vercel/speed-insights/next';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -71,6 +72,7 @@ export default function RootLayout({
                     </div>
                     <YouTubeGlobalPlayer />
                     <LiveStatusListener />
+                    <SpeedInsights />
                   </YouTubePlayerProvider>
                   
                   {/* Cookie Consent Components */}
