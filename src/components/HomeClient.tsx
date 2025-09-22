@@ -45,21 +45,23 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
 
-  // Populate live status context with initial data
+  // Populate live status context with initial data synchronously
+  const initialLiveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+  if (initialData.weekSchedules.length > 0) {
+    initialData.weekSchedules.forEach(ch =>
+      ch.schedules.forEach(sch => {
+        initialLiveMap[sch.id.toString()] = {
+          is_live: sch.program.is_live,
+          stream_url: sch.program.stream_url,
+        };
+      })
+    );
+  }
+  
+  // Set initial live statuses immediately
   useEffect(() => {
-    if (initialData.weekSchedules.length > 0) {
-      const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-      initialData.weekSchedules.forEach(ch =>
-        ch.schedules.forEach(sch => {
-          liveMap[sch.id.toString()] = {
-            is_live: sch.program.is_live,
-            stream_url: sch.program.stream_url,
-          };
-        })
-      );
-      setLiveStatuses(liveMap);
-    }
-  }, [initialData.weekSchedules, setLiveStatuses]);
+    setLiveStatuses(initialLiveMap);
+  }, [setLiveStatuses]);
 
   // Derive flat lists for grid
   const channels = useMemo(
