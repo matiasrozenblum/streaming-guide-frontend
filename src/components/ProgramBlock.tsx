@@ -21,6 +21,7 @@ import LoginModal from './auth/LoginModal';
 import IOSNotificationSetup from './IOSNotificationSetup';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { programStyleOverrides } from '@/styles/programStyleOverrides';
+import type { LiveStream } from '@/types/live-stream';
 
 dayjs.extend(customParseFormat);
 
@@ -38,6 +39,8 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
+  live_streams?: LiveStream[] | null;
+  stream_count?: number;
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
@@ -63,6 +66,8 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
+  live_streams,
+  stream_count,
   isWeeklyOverride,
   overrideType,
   styleOverride,
@@ -73,6 +78,10 @@ export const ProgramBlock: React.FC<Props> = ({
   const dynamic = liveStatus[id] ?? { is_live, stream_url };
   const isLive = dynamic.is_live;
   const streamUrl = dynamic.stream_url;
+  
+  // Handle multiple live streams
+  const hasMultipleStreams = stream_count && stream_count > 1;
+  const availableStreams = live_streams || [];
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -491,25 +500,80 @@ export const ProgramBlock: React.FC<Props> = ({
       ) : null}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
         {streamUrl && (
-          <BaseButton
-            onClick={handleClick}
-            onTouchStart={handleClick}
-            variant="contained"
-            size="small"
-            startIcon={<OpenInNew />}
-            className="youtube-button"
-            sx={{
-              backgroundColor: '#FF0000',
-              '&:hover': { backgroundColor: '#cc0000' },
-              fontWeight: tokens.typography.fontWeight.bold,
-              textTransform: 'none',
-              fontSize: tokens.typography.fontSize.sm,
-              boxShadow: 'none',
-              touchAction: 'manipulation',
-            }}
-          >
-            {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-          </BaseButton>
+          <>
+            {hasMultipleStreams ? (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
+                <Text
+                  variant="body2"
+                  fontWeight={tokens.typography.fontWeight.bold}
+                  sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
+                >
+                  {stream_count} transmisiones en vivo:
+                </Text>
+                {availableStreams.slice(0, 3).map((stream) => (
+                  <BaseButton
+                    key={stream.videoId}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      const videoId = stream.videoId;
+                      if (videoId) {
+                        openVideo(videoId);
+                      }
+                    }}
+                    variant="contained"
+                    size="small"
+                    startIcon={<OpenInNew />}
+                    className="youtube-button"
+                    sx={{
+                      backgroundColor: '#FF0000',
+                      '&:hover': { backgroundColor: '#cc0000' },
+                      fontWeight: tokens.typography.fontWeight.bold,
+                      textTransform: 'none',
+                      fontSize: tokens.typography.fontSize.sm,
+                      boxShadow: 'none',
+                      touchAction: 'manipulation',
+                      justifyContent: 'flex-start',
+                      textAlign: 'left',
+                      whiteSpace: 'nowrap',
+                      overflow: 'hidden',
+                      textOverflow: 'ellipsis',
+                    }}
+                    title={stream.title}
+                  >
+                    {stream.title.length > 40 ? `${stream.title.substring(0, 40)}...` : stream.title}
+                  </BaseButton>
+                ))}
+                {stream_count && stream_count > 3 && (
+                  <Text
+                    variant="caption"
+                    sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary }}
+                  >
+                    +{stream_count - 3} transmisiones más
+                  </Text>
+                )}
+              </Box>
+            ) : (
+              <BaseButton
+                onClick={handleClick}
+                onTouchStart={handleClick}
+                variant="contained"
+                size="small"
+                startIcon={<OpenInNew />}
+                className="youtube-button"
+                sx={{
+                  backgroundColor: '#FF0000',
+                  '&:hover': { backgroundColor: '#cc0000' },
+                  fontWeight: tokens.typography.fontWeight.bold,
+                  textTransform: 'none',
+                  fontSize: tokens.typography.fontSize.sm,
+                  boxShadow: 'none',
+                  touchAction: 'manipulation',
+                }}
+              >
+                {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+              </BaseButton>
+            )}
+          </>
         )}
         <IconButton
           size="small"
@@ -636,9 +700,29 @@ export const ProgramBlock: React.FC<Props> = ({
                       borderRadius: '4px',
                       fontWeight: 'bold',
                       zIndex: 5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
                     }}
                   >
                     LIVE
+                    {hasMultipleStreams && (
+                      <Box
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
+                          borderRadius: '50%',
+                          width: '14px',
+                          height: '14px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          fontSize: '0.55rem',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        {stream_count}
+                      </Box>
+                    )}
                   </Box>
                 )}
                 {isWeeklyOverride && (

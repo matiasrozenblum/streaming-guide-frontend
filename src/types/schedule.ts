@@ -1,3 +1,5 @@
+import { LiveStream } from './live-stream';
+
 export interface Schedule {
   id: number;
   day_of_week: string;
@@ -11,6 +13,8 @@ export interface Schedule {
     description: string | null;
     stream_url: string | null;
     is_live: boolean;
+    live_streams?: LiveStream[] | null;
+    stream_count?: number;
     panelists: { id: number; name: string }[];
     channel: {
       id: number;
