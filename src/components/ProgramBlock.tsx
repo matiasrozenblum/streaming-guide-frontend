@@ -576,7 +576,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   fontWeight={tokens.typography.fontWeight.bold}
                   sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
                 >
-                  {stream_count} transmisiones en vivo:
+                  {stream_count} {stream_count === 1 ? 'transmisión en vivo' : 'transmisiones en vivo'}:
                 </Text>
                 {matchedStreams.slice(0, showSecondaryStreams ? 3 : 1).map((stream, index) => {
                   const isPrimary = index === 0;
@@ -615,7 +615,7 @@ export const ProgramBlock: React.FC<Props> = ({
                       }}
                       title={stream.title}
                     >
-                      {isPrimary ? 'Ver en YouTube' : (stream.title.length > 25 ? `${stream.title.substring(0, 25)}...` : stream.title)}
+                      {isPrimary ? (isLive ? 'Ver en vivo' : 'Ver en YouTube') : (stream.title.length > 25 ? `${stream.title.substring(0, 25)}...` : stream.title)}
                     </BaseButton>
                   );
                 })}
