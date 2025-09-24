@@ -61,7 +61,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   // Set initial live statuses immediately
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
-  }, [setLiveStatuses]);
+  }, [setLiveStatuses, initialLiveMap]);
 
   // Derive flat lists for grid
   const channels = useMemo(

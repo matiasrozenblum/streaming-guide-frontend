@@ -783,7 +783,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                   >
                     LIVE
-                    {hasMultipleStreams && stream_count && stream_count > 1 && (
+                    {stream_count && stream_count > 1 && (
                       <Box
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.3)',

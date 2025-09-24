@@ -201,23 +201,51 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p, index) => {
+          {programs.map((p) => {
             // Get live status from context using schedule ID
             const currentLiveStatus = liveStatus[p.scheduleId];
             // Always prioritize program's is_live field if it's explicitly set
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
-
-            // Check if this is a multiple live streams scenario
-            const hasMultipleLiveStreams = isLive && p.stream_count && p.stream_count > 1;
             
-            // Count how many programs actually have multiple streams
-            const totalMultipleStreams = programs.filter(prog => 
-              prog.is_live && prog.stream_count && prog.stream_count > 1
-            ).length;
+            // Check for time overlap with other programs
+            const hasTimeOverlap = programs.some(otherProg => {
+              if (otherProg.id === p.id) return false; // Don't compare with self
+              
+              // Convert time strings to minutes for comparison
+              const parseTime = (timeStr: string) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+              };
+              
+              const pStart = parseTime(p.start_time);
+              const pEnd = parseTime(p.end_time);
+              const otherStart = parseTime(otherProg.start_time);
+              const otherEnd = parseTime(otherProg.end_time);
+              
+              // Check for overlap: two time ranges overlap if one starts before the other ends
+              return pStart < otherEnd && otherStart < pEnd;
+            });
             
-            // For multiple live streams, we'll render them differently
-            if (hasMultipleLiveStreams && totalMultipleStreams > 1) {
+            // Count overlapping programs (including self)
+            const overlappingPrograms = programs.filter(prog => {
+              if (prog.id === p.id) return true; // Include self
+              
+              const parseTime = (timeStr: string) => {
+                const [hours, minutes] = timeStr.split(':').map(Number);
+                return hours * 60 + minutes;
+              };
+              
+              const pStart = parseTime(p.start_time);
+              const pEnd = parseTime(p.end_time);
+              const progStart = parseTime(prog.start_time);
+              const progEnd = parseTime(prog.end_time);
+              
+              return pStart < progEnd && progStart < pEnd;
+            });
+            
+            // Apply multiple streams layout if there's time overlap
+            if (hasTimeOverlap) {
               return (
                 <React.Fragment key={p.id}>
                   <ProgramBlock
@@ -239,8 +267,8 @@ export const ScheduleRow = ({
                     isWeeklyOverride={p.isWeeklyOverride ?? false}
                     overrideType={p.overrideType ?? ''}
                     styleOverride={p.style_override}
-                    multipleStreamsIndex={index}
-                    totalMultipleStreams={totalMultipleStreams}
+                    multipleStreamsIndex={overlappingPrograms.findIndex(prog => prog.id === p.id)}
+                    totalMultipleStreams={overlappingPrograms.length}
                   />
                 </React.Fragment>
               );
