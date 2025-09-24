@@ -46,17 +46,20 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const { setLiveStatuses } = useLiveStatus();
 
   // Populate live status context with initial data synchronously
-  const initialLiveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-  if (initialData.weekSchedules.length > 0) {
-    initialData.weekSchedules.forEach(ch =>
-      ch.schedules.forEach(sch => {
-        initialLiveMap[sch.id.toString()] = {
-          is_live: sch.program.is_live,
-          stream_url: sch.program.stream_url,
-        };
-      })
-    );
-  }
+  const initialLiveMap = useMemo(() => {
+    const map: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+    if (initialData.weekSchedules.length > 0) {
+      initialData.weekSchedules.forEach(ch =>
+        ch.schedules.forEach(sch => {
+          map[sch.id.toString()] = {
+            is_live: sch.program.is_live,
+            stream_url: sch.program.stream_url,
+          };
+        })
+      );
+    }
+    return map;
+  }, [initialData.weekSchedules]);
   
   // Set initial live statuses immediately
   useEffect(() => {
