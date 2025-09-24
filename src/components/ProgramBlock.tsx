@@ -10,7 +10,6 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
-import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
@@ -44,6 +43,8 @@ interface Props {
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
+  multipleStreamsIndex?: number;
+  totalMultipleStreams?: number;
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -71,13 +72,13 @@ export const ProgramBlock: React.FC<Props> = ({
   isWeeklyOverride,
   overrideType,
   styleOverride,
+  multipleStreamsIndex,
+  totalMultipleStreams,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const { liveStatus } = useLiveStatus();
-  const dynamic = liveStatus[id] ?? { is_live, stream_url };
-  const isLive = dynamic.is_live;
-  const streamUrl = dynamic.stream_url;
+  const isLive = is_live || false;
+  const streamUrl = stream_url;
   
   // Handle multiple live streams
   const hasMultipleStreams = stream_count && stream_count > 1;
@@ -113,7 +114,19 @@ export const ProgramBlock: React.FC<Props> = ({
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
   const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * pixelsPerMinute - 1;
+  
+  // Handle multiple streams positioning
+  let widthPx = duration * pixelsPerMinute - 1;
+  let topOffset = 0;
+  let height = '100%';
+  
+  if (totalMultipleStreams && totalMultipleStreams > 1) {
+    // Split width between multiple streams
+    widthPx = (duration * pixelsPerMinute - 1) / totalMultipleStreams;
+    // Stack vertically with slight offset
+    topOffset = (multipleStreamsIndex || 0) * 8; // 8px offset per stream
+    height = `${100 / totalMultipleStreams}%`;
+  }
 
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
@@ -645,7 +658,8 @@ export const ProgramBlock: React.FC<Props> = ({
               position: 'absolute',
               left: `${offsetPx}px`,
               width: `${widthPx}px`,
-              height: '100%',
+              height: height,
+              top: `${topOffset}px`,
               ...(overrideStyle ? overrideStyle.boxStyle : {}),
             }}
             height="100%"
