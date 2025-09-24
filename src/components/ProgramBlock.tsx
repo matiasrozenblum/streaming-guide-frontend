@@ -24,6 +24,9 @@ import type { LiveStream } from '@/types/live-stream';
 
 dayjs.extend(customParseFormat);
 
+// Extended type for streams with similarity scores
+type ScoredStream = LiveStream & { similarity?: number };
+
 interface Props {
   id: string;
   name: string;
@@ -83,6 +86,48 @@ export const ProgramBlock: React.FC<Props> = ({
   // Handle multiple live streams
   const hasMultipleStreams = stream_count && stream_count > 1;
   const availableStreams = live_streams || [];
+  
+  // Function to calculate string similarity (simple Jaccard similarity)
+  const calculateSimilarity = (str1: string, str2: string): number => {
+    const normalize = (str: string) => str.toLowerCase()
+      .replace(/[^\w\s]/g, '') // Remove punctuation
+      .replace(/\s+/g, ' ') // Normalize spaces
+      .trim();
+    
+    const words1 = new Set(normalize(str1).split(' '));
+    const words2 = new Set(normalize(str2).split(' '));
+    
+    const intersection = new Set([...words1].filter(x => words2.has(x)));
+    const union = new Set([...words1, ...words2]);
+    
+    return intersection.size / union.size;
+  };
+  
+  // Match the best stream for this program
+  const getMatchedStreams = (): ScoredStream[] => {
+    if (!hasMultipleStreams || availableStreams.length === 0) {
+      return availableStreams.map(stream => ({ ...stream, similarity: 0 }));
+    }
+    
+    // Calculate similarity scores for each stream
+    const scoredStreams: ScoredStream[] = availableStreams.map(stream => ({
+      ...stream,
+      similarity: calculateSimilarity(name, stream.title)
+    }));
+    
+    // Sort by similarity (highest first)
+    scoredStreams.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
+    
+    // If the best match has a reasonable similarity (>0.3), use it as primary
+    // Otherwise, return all streams as before
+    if ((scoredStreams[0].similarity || 0) > 0.3) {
+      return [scoredStreams[0], ...scoredStreams.slice(1)];
+    }
+    
+    return scoredStreams;
+  };
+  
+  const matchedStreams = getMatchedStreams();
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -526,7 +571,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 >
                   {stream_count} transmisiones en vivo:
                 </Text>
-                {availableStreams.slice(0, 3).map((stream) => (
+                {matchedStreams.slice(0, 3).map((stream, index) => (
                   <BaseButton
                     key={stream.videoId}
                     onClick={(e) => {
@@ -541,8 +586,8 @@ export const ProgramBlock: React.FC<Props> = ({
                     startIcon={<OpenInNew />}
                     className="youtube-button"
                     sx={{
-                      backgroundColor: '#FF0000',
-                      '&:hover': { backgroundColor: '#cc0000' },
+                      backgroundColor: index === 0 && (stream.similarity || 0) > 0.3 ? '#00C851' : '#FF0000', // Green for best match
+                      '&:hover': { backgroundColor: index === 0 && (stream.similarity || 0) > 0.3 ? '#00A041' : '#cc0000' },
                       fontWeight: tokens.typography.fontWeight.bold,
                       textTransform: 'none',
                       fontSize: tokens.typography.fontSize.sm,
@@ -556,6 +601,21 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                     title={stream.title}
                   >
+                    {index === 0 && (stream.similarity || 0) > 0.3 && (
+                      <Box
+                        component="span"
+                        sx={{
+                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
+                          borderRadius: '4px',
+                          padding: '1px 4px',
+                          fontSize: '0.6rem',
+                          marginRight: '4px',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        BEST
+                      </Box>
+                    )}
                     {stream.title.length > 40 ? `${stream.title.substring(0, 40)}...` : stream.title}
                   </BaseButton>
                 ))}
