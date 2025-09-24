@@ -176,6 +176,7 @@ export const ProgramBlock: React.FC<Props> = ({
     topOffset = (multipleStreamsIndex || 0) * heightPercentage;
     if (topOffset > 0) {
       topOffset = topOffset - 10;
+    }
     // Use a slightly smaller height to prevent overflow
     height = `${heightPercentage}%`; // Reduce by 1% to prevent overflow
   }
