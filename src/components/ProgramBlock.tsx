@@ -165,7 +165,7 @@ export const ProgramBlock: React.FC<Props> = ({
   // Handle multiple streams positioning
   let widthPx = duration * pixelsPerMinute - 1;
   let topOffset = 0;
-  const height = '100%';
+  let height = '100%';
   
   if (totalMultipleStreams && totalMultipleStreams > 1) {
     // Keep full width for each program, but stack them vertically
@@ -175,7 +175,7 @@ export const ProgramBlock: React.FC<Props> = ({
     const heightPercentage = 100 / totalMultipleStreams;
     topOffset = (multipleStreamsIndex || 0) * heightPercentage - 10;
     // Use a slightly smaller height to prevent overflow
-    // height = `${heightPercentage - 1}%`; // Reduce by 1% to prevent overflow
+    height = `${heightPercentage}%`; // Reduce by 1% to prevent overflow
   }
 
   const now = dayjs();
