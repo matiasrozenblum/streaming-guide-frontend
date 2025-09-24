@@ -173,9 +173,9 @@ export const ProgramBlock: React.FC<Props> = ({
     // Stack vertically to fill the entire row height without gaps
     // Ensure the total height doesn't exceed 100% of the row
     const heightPercentage = 100 / totalMultipleStreams;
-    topOffset = (multipleStreamsIndex || 0) * heightPercentage;
+    topOffset = (multipleStreamsIndex || 0) * heightPercentage - 10;
     // Use a slightly smaller height to prevent overflow
-    height = `${heightPercentage - 1}%`; // Reduce by 1% to prevent overflow
+    // height = `${heightPercentage - 1}%`; // Reduce by 1% to prevent overflow
   }
 
   const now = dayjs();
