@@ -175,7 +175,9 @@ export const ProgramBlock: React.FC<Props> = ({
     const heightPercentage = 100 / totalMultipleStreams;
     topOffset = (multipleStreamsIndex || 0) * heightPercentage;
     if (topOffset > 0) {
-      topOffset = topOffset - 10;
+      // Different offset adjustments for mobile vs web
+      const offsetAdjustment = isMobile ? 20 : 10;
+      topOffset = topOffset - offsetAdjustment;
     }
     // Use a slightly smaller height to prevent overflow
     height = `${heightPercentage}%`; // Reduce by 1% to prevent overflow
