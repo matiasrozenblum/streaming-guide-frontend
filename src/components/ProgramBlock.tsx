@@ -44,6 +44,7 @@ interface Props {
   stream_url?: string | null;
   live_streams?: LiveStream[] | null;
   stream_count?: number;
+  channel_stream_count?: number;
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
@@ -72,7 +73,7 @@ export const ProgramBlock: React.FC<Props> = ({
   is_live,
   stream_url,
   live_streams,
-  stream_count,
+  channel_stream_count,
   isWeeklyOverride,
   overrideType,
   styleOverride,
@@ -85,7 +86,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const streamUrl = stream_url;
   
   // Handle multiple live streams
-  const hasMultipleStreams = stream_count && stream_count > 1;
+  const hasMultipleStreams = channel_stream_count && channel_stream_count > 1;
   const availableStreams = live_streams || [];
   
   // Function to calculate string similarity (simple Jaccard similarity)
@@ -576,7 +577,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   fontWeight={tokens.typography.fontWeight.bold}
                   sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
                 >
-                  {stream_count} {stream_count === 1 ? 'transmisión en vivo' : 'transmisiones en vivo'}:
+                  {channel_stream_count} {channel_stream_count === 1 ? 'transmisión en vivo' : 'transmisiones en vivo'}:
                 </Text>
                 {matchedStreams.slice(0, showSecondaryStreams ? 3 : 1).map((stream, index) => {
                   const isPrimary = index === 0;
@@ -619,12 +620,12 @@ export const ProgramBlock: React.FC<Props> = ({
                     </BaseButton>
                   );
                 })}
-                {stream_count && stream_count > (showSecondaryStreams ? 3 : 1) && (
+                {channel_stream_count && channel_stream_count > (showSecondaryStreams ? 3 : 1) && (
                   <Text
                     variant="caption"
                     sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary }}
                   >
-                    +{stream_count - (showSecondaryStreams ? 3 : 1)} {stream_count - (showSecondaryStreams ? 3 : 1) === 1 ? 'transmisión' : 'transmisiones'} más
+                    +{channel_stream_count - (showSecondaryStreams ? 3 : 1)} {channel_stream_count - (showSecondaryStreams ? 3 : 1) === 1 ? 'transmisión' : 'transmisiones'} más
                   </Text>
                 )}
               </Box>
@@ -783,7 +784,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                   >
                     LIVE
-                    {stream_count && stream_count > 1 && (
+                    {channel_stream_count && channel_stream_count > 1 && (
                       <Box
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.3)',
@@ -797,7 +798,7 @@ export const ProgramBlock: React.FC<Props> = ({
                           fontWeight: 'bold',
                         }}
                       >
-                        {stream_count}
+                        {channel_stream_count}
                       </Box>
                     )}
                   </Box>

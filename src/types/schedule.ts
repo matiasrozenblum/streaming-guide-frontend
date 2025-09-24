@@ -15,6 +15,7 @@ export interface Schedule {
     is_live: boolean;
     live_streams?: LiveStream[] | null;
     stream_count?: number;
+    channel_stream_count?: number;
     panelists: { id: number; name: string }[];
     channel: {
       id: number;
