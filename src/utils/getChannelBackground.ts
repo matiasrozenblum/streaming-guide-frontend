@@ -30,6 +30,8 @@ export const getChannelBackground = (channelName: string): string => {
         return '#013561'; // azz blue
       case 'el trece':
         return '#ffffff'; // white for transparent logos
+        case 'carnaval':
+          return '#ffffff'; // white for transparent logos
       default:
         return '#f1f5f9'; // fallback gray
     }
