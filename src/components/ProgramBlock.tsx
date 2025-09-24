@@ -624,7 +624,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     variant="caption"
                     sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary }}
                   >
-                    +{stream_count - (showSecondaryStreams ? 3 : 1)} transmisiones más
+                    +{stream_count - (showSecondaryStreams ? 3 : 1)} {stream_count - (showSecondaryStreams ? 3 : 1) === 1 ? 'transmisión' : 'transmisiones'} más
                   </Text>
                 )}
               </Box>
@@ -783,7 +783,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                   >
                     LIVE
-                    {hasMultipleStreams && (
+                    {hasMultipleStreams && stream_count && stream_count > 1 && (
                       <Box
                         sx={{
                           backgroundColor: 'rgba(255, 255, 255, 0.3)',
