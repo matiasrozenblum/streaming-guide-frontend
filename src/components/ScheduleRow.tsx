@@ -211,8 +211,13 @@ export const ScheduleRow = ({
             // Check if this is a multiple live streams scenario
             const hasMultipleLiveStreams = isLive && p.stream_count && p.stream_count > 1;
             
+            // Count how many programs actually have multiple streams
+            const totalMultipleStreams = programs.filter(prog => 
+              prog.is_live && prog.stream_count && prog.stream_count > 1
+            ).length;
+            
             // For multiple live streams, we'll render them differently
-            if (hasMultipleLiveStreams) {
+            if (hasMultipleLiveStreams && totalMultipleStreams > 1) {
               return (
                 <React.Fragment key={p.id}>
                   <ProgramBlock
@@ -235,9 +240,7 @@ export const ScheduleRow = ({
                     overrideType={p.overrideType ?? ''}
                     styleOverride={p.style_override}
                     multipleStreamsIndex={index}
-                    totalMultipleStreams={programs.filter(prog => 
-                      prog.is_live && prog.stream_count && prog.stream_count > 1
-                    ).length}
+                    totalMultipleStreams={totalMultipleStreams}
                   />
                 </React.Fragment>
               );
