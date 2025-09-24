@@ -201,12 +201,47 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p) => {
+          {programs.map((p, index) => {
             // Get live status from context using schedule ID
             const currentLiveStatus = liveStatus[p.scheduleId];
             // Always prioritize program's is_live field if it's explicitly set
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            // Check if this is a multiple live streams scenario
+            const hasMultipleLiveStreams = isLive && p.stream_count && p.stream_count > 1;
+            
+            // For multiple live streams, we'll render them differently
+            if (hasMultipleLiveStreams) {
+              return (
+                <React.Fragment key={p.id}>
+                  <ProgramBlock
+                    id={p.id}
+                    name={p.name}
+                    start={p.start_time}
+                    end={p.end_time}
+                    description={p.description}
+                    panelists={p.panelists}
+                    logo_url={p.logo_url}
+                    channelName={channelName}
+                    color={color}
+                    isToday={isToday}
+                    stream_url={currentStreamUrl}
+                    is_live={isLive}
+                    live_streams={p.live_streams}
+                    stream_count={p.stream_count}
+                    subscribed={p.subscribed ?? false}
+                    isWeeklyOverride={p.isWeeklyOverride ?? false}
+                    overrideType={p.overrideType ?? ''}
+                    styleOverride={p.style_override}
+                    multipleStreamsIndex={index}
+                    totalMultipleStreams={programs.filter(prog => 
+                      prog.is_live && prog.stream_count && prog.stream_count > 1
+                    ).length}
+                  />
+                </React.Fragment>
+              );
+            }
 
             return (
               <React.Fragment key={p.id}>
