@@ -121,11 +121,14 @@ export const ProgramBlock: React.FC<Props> = ({
   let height = '100%';
   
   if (totalMultipleStreams && totalMultipleStreams > 1) {
-    // Split width between multiple streams
-    widthPx = (duration * pixelsPerMinute - 1) / totalMultipleStreams;
-    // Stack vertically with slight offset
-    topOffset = (multipleStreamsIndex || 0) * 8; // 8px offset per stream
-    height = `${100 / totalMultipleStreams}%`;
+    // Keep full width for each program, but stack them vertically
+    widthPx = duration * pixelsPerMinute - 1;
+    // Stack vertically with better spacing for readability
+    topOffset = (multipleStreamsIndex || 0) * 12; // 12px offset per stream for better spacing
+    // Use a minimum height to ensure readability
+    const minHeightPerStream = 60; // Minimum 60px per stream
+    const calculatedHeight = 100 / totalMultipleStreams;
+    height = `${Math.max(calculatedHeight, minHeightPerStream)}px`;
   }
 
   const now = dayjs();
@@ -826,9 +829,15 @@ export const ProgramBlock: React.FC<Props> = ({
                       variant="caption"
                       sx={{
                         fontWeight: 'bold',
-                        fontSize: '0.75rem',
+                        fontSize: totalMultipleStreams && totalMultipleStreams > 1 ? '0.7rem' : '0.75rem',
                         textAlign: 'center',
                         color: isPast ? alpha(color, 1) : color,
+                        lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 'normal',
+                        display: '-webkit-box',
+                        WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 2 : 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {name.toUpperCase()}
@@ -837,15 +846,15 @@ export const ProgramBlock: React.FC<Props> = ({
                       <Typography
                         variant="caption"
                         sx={{
-                          fontSize: '0.65rem',
+                          fontSize: totalMultipleStreams && totalMultipleStreams > 1 ? '0.6rem' : '0.65rem',
                           textAlign: 'center',
                           color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
-                          lineHeight: 1.2,
+                          lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 1.2,
                           maxWidth: '100%',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           display: '-webkit-box',
-                          WebkitLineClamp: 2,
+                          WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 1 : 2,
                           WebkitBoxOrient: 'vertical',
                         }}
                       >
