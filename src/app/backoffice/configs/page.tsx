@@ -113,6 +113,32 @@ const ConfigPage = () => {
           </TableBody>
         </Table>
       </TableContainer>
+      
+      {/* Preset Configurations */}
+      <Box sx={{ mb: 3 }}>
+        <Typography variant="h6" sx={{ mb: 2 }}>
+          Preset Configurations
+        </Typography>
+        <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setNewConfig({ key: 'secondary_streams_button_visibility', value: 'true' });
+            }}
+          >
+            Add: Secondary Streams Button (Show)
+          </Button>
+          <Button
+            variant="outlined"
+            onClick={() => {
+              setNewConfig({ key: 'secondary_streams_button_visibility', value: 'false' });
+            }}
+          >
+            Add: Secondary Streams Button (Hide)
+          </Button>
+        </Box>
+      </Box>
+      
       <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
         <TextField
           label="Key"

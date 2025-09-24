@@ -21,6 +21,7 @@ import IOSNotificationSetup from './IOSNotificationSetup';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { programStyleOverrides } from '@/styles/programStyleOverrides';
 import type { LiveStream } from '@/types/live-stream';
+import { useSecondaryStreamsConfig } from '@/hooks/useSecondaryStreamsConfig';
 
 dayjs.extend(customParseFormat);
 
@@ -138,6 +139,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
   const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
+  const { showSecondaryStreams } = useSecondaryStreamsConfig();
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -168,12 +170,10 @@ export const ProgramBlock: React.FC<Props> = ({
   if (totalMultipleStreams && totalMultipleStreams > 1) {
     // Keep full width for each program, but stack them vertically
     widthPx = duration * pixelsPerMinute - 1;
-    // Stack vertically with better spacing for readability
-    topOffset = (multipleStreamsIndex || 0) * 12; // 12px offset per stream for better spacing
-    // Use a minimum height to ensure readability
-    const minHeightPerStream = 60; // Minimum 60px per stream
-    const calculatedHeight = 100 / totalMultipleStreams;
-    height = `${Math.max(calculatedHeight, minHeightPerStream)}px`;
+    // Stack vertically to fill the entire row height without gaps
+    const heightPercentage = 100 / totalMultipleStreams;
+    topOffset = (multipleStreamsIndex || 0) * heightPercentage; // Use percentage-based offset
+    height = `${heightPercentage}%`;
   }
 
   const now = dayjs();
@@ -571,60 +571,53 @@ export const ProgramBlock: React.FC<Props> = ({
                 >
                   {stream_count} transmisiones en vivo:
                 </Text>
-                {matchedStreams.slice(0, 3).map((stream, index) => (
-                  <BaseButton
-                    key={stream.videoId}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      const videoId = stream.videoId;
-                      if (videoId) {
-                        openVideo(videoId);
-                      }
-                    }}
-                    variant="contained"
-                    size="small"
-                    startIcon={<OpenInNew />}
-                    className="youtube-button"
-                    sx={{
-                      backgroundColor: index === 0 && (stream.similarity || 0) > 0.3 ? '#00C851' : '#FF0000', // Green for best match
-                      '&:hover': { backgroundColor: index === 0 && (stream.similarity || 0) > 0.3 ? '#00A041' : '#cc0000' },
-                      fontWeight: tokens.typography.fontWeight.bold,
-                      textTransform: 'none',
-                      fontSize: tokens.typography.fontSize.sm,
-                      boxShadow: 'none',
-                      touchAction: 'manipulation',
-                      justifyContent: 'flex-start',
-                      textAlign: 'left',
-                      whiteSpace: 'nowrap',
-                      overflow: 'hidden',
-                      textOverflow: 'ellipsis',
-                    }}
-                    title={stream.title}
-                  >
-                    {index === 0 && (stream.similarity || 0) > 0.3 && (
-                      <Box
-                        component="span"
-                        sx={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.2)',
-                          borderRadius: '4px',
-                          padding: '1px 4px',
-                          fontSize: '0.6rem',
-                          marginRight: '4px',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        BEST
-                      </Box>
-                    )}
-                    {stream.title.length > 40 ? `${stream.title.substring(0, 40)}...` : stream.title}
-                  </BaseButton>
-                ))}
-                {stream_count && stream_count > 3 && (
+                {matchedStreams.slice(0, showSecondaryStreams ? 3 : 1).map((stream, index) => {
+                  const isPrimary = index === 0;
+                  const isBestMatch = isPrimary && (stream.similarity || 0) > 0.3;
+                  
+                  return (
+                    <BaseButton
+                      key={stream.videoId}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const videoId = stream.videoId;
+                        if (videoId) {
+                          openVideo(videoId);
+                        }
+                      }}
+                      variant="contained"
+                      size={isPrimary ? "small" : "small"}
+                      startIcon={<OpenInNew />}
+                      className="youtube-button"
+                      sx={{
+                        backgroundColor: isBestMatch ? '#FF0000' : '#666666', // Red for primary, gray for secondary
+                        '&:hover': { backgroundColor: isBestMatch ? '#cc0000' : '#555555' },
+                        fontWeight: tokens.typography.fontWeight.bold,
+                        textTransform: 'none',
+                        fontSize: isPrimary ? tokens.typography.fontSize.sm : '0.7rem',
+                        boxShadow: 'none',
+                        touchAction: 'manipulation',
+                        justifyContent: 'flex-start',
+                        textAlign: 'left',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        opacity: isPrimary ? 1 : 0.8,
+                        minHeight: isPrimary ? 'auto' : '28px',
+                        padding: isPrimary ? '6px 12px' : '4px 8px',
+                      }}
+                      title={stream.title}
+                    >
+                      {isPrimary ? 'Ver en YouTube' : (stream.title.length > 25 ? `${stream.title.substring(0, 25)}...` : stream.title)}
+                    </BaseButton>
+                  );
+                })}
+                {stream_count && stream_count > (showSecondaryStreams ? 3 : 1) && (
                   <Text
                     variant="caption"
                     sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary }}
                   >
-                    +{stream_count - 3} transmisiones más
+                    +{stream_count - (showSecondaryStreams ? 3 : 1)} transmisiones más
                   </Text>
                 )}
               </Box>
