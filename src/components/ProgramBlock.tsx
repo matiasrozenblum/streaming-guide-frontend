@@ -20,13 +20,12 @@ import LoginModal from './auth/LoginModal';
 import IOSNotificationSetup from './IOSNotificationSetup';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { programStyleOverrides } from '@/styles/programStyleOverrides';
-import type { LiveStream } from '@/types/live-stream';
-import { useSecondaryStreamsConfig } from '@/hooks/useSecondaryStreamsConfig';
+// Removed LiveStream import - no longer needed
+// Removed useSecondaryStreamsConfig - no longer needed
 
 dayjs.extend(customParseFormat);
 
-// Extended type for streams with similarity scores
-type ScoredStream = LiveStream & { similarity?: number };
+// Removed ScoredStream type - no longer needed
 
 interface Props {
   id: string;
@@ -42,9 +41,6 @@ interface Props {
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
-  live_streams?: LiveStream[] | null;
-  stream_count?: number;
-  channel_stream_count?: number;
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
@@ -72,8 +68,6 @@ export const ProgramBlock: React.FC<Props> = ({
   isToday,
   is_live,
   stream_url,
-  live_streams,
-  channel_stream_count,
   isWeeklyOverride,
   overrideType,
   styleOverride,
@@ -85,51 +79,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const isLive = is_live || false;
   const streamUrl = stream_url;
   
-  // Handle multiple live streams
-  const hasMultipleStreams = channel_stream_count && channel_stream_count > 1;
-  const availableStreams = live_streams || [];
-  
-  // Function to calculate string similarity (simple Jaccard similarity)
-  const calculateSimilarity = (str1: string, str2: string): number => {
-    const normalize = (str: string) => str.toLowerCase()
-      .replace(/[^\w\s]/g, '') // Remove punctuation
-      .replace(/\s+/g, ' ') // Normalize spaces
-      .trim();
-    
-    const words1 = new Set(normalize(str1).split(' '));
-    const words2 = new Set(normalize(str2).split(' '));
-    
-    const intersection = new Set([...words1].filter(x => words2.has(x)));
-    const union = new Set([...words1, ...words2]);
-    
-    return intersection.size / union.size;
-  };
-  
-  // Match the best stream for this program
-  const getMatchedStreams = (): ScoredStream[] => {
-    if (!hasMultipleStreams || availableStreams.length === 0) {
-      return availableStreams.map(stream => ({ ...stream, similarity: 0 }));
-    }
-    
-    // Calculate similarity scores for each stream
-    const scoredStreams: ScoredStream[] = availableStreams.map(stream => ({
-      ...stream,
-      similarity: calculateSimilarity(name, stream.title)
-    }));
-    
-    // Sort by similarity (highest first)
-    scoredStreams.sort((a, b) => (b.similarity || 0) - (a.similarity || 0));
-    
-    // If the best match has a reasonable similarity (>0.3), use it as primary
-    // Otherwise, return all streams as before
-    if ((scoredStreams[0].similarity || 0) > 0.3) {
-      return [scoredStreams[0], ...scoredStreams.slice(1)];
-    }
-    
-    return scoredStreams;
-  };
-  
-  const matchedStreams = getMatchedStreams();
+  // Simplified approach - no complex stream matching needed
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -140,7 +90,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
   const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
-  const { showSecondaryStreams } = useSecondaryStreamsConfig();
+  // Removed showSecondaryStreams - no longer needed
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -569,88 +519,25 @@ export const ProgramBlock: React.FC<Props> = ({
       ) : null}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
         {streamUrl && (
-          <>
-            {hasMultipleStreams ? (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1, width: '100%' }}>
-                <Text
-                  variant="body2"
-                  fontWeight={tokens.typography.fontWeight.bold}
-                  sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
-                >
-                  {channel_stream_count} {channel_stream_count === 1 ? 'transmisión en vivo' : 'transmisiones en vivo'}:
-                </Text>
-                {matchedStreams.slice(0, showSecondaryStreams ? 3 : 1).map((stream, index) => {
-                  const isPrimary = index === 0;
-                  const isBestMatch = isPrimary && (stream.similarity || 0) > 0.3;
-                  
-                  return (
-                    <BaseButton
-                      key={stream.videoId}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        const videoId = stream.videoId;
-                        if (videoId) {
-                          openVideo(videoId);
-                        }
-                      }}
-                      variant="contained"
-                      size={isPrimary ? "small" : "small"}
-                      startIcon={<OpenInNew />}
-                      className="youtube-button"
-                      sx={{
-                        backgroundColor: isBestMatch ? '#FF0000' : '#666666', // Red for primary, gray for secondary
-                        '&:hover': { backgroundColor: isBestMatch ? '#cc0000' : '#555555' },
-                        fontWeight: tokens.typography.fontWeight.bold,
-                        textTransform: 'none',
-                        fontSize: isPrimary ? tokens.typography.fontSize.sm : '0.7rem',
-                        boxShadow: 'none',
-                        touchAction: 'manipulation',
-                        justifyContent: 'flex-start',
-                        textAlign: 'left',
-                        whiteSpace: 'nowrap',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        opacity: isPrimary ? 1 : 0.8,
-                        minHeight: isPrimary ? 'auto' : '28px',
-                        padding: isPrimary ? '6px 12px' : '4px 8px',
-                      }}
-                      title={stream.title}
-                    >
-                      {isPrimary ? (isLive ? 'Ver en vivo' : 'Ver en YouTube') : (stream.title.length > 25 ? `${stream.title.substring(0, 25)}...` : stream.title)}
-                    </BaseButton>
-                  );
-                })}
-                {channel_stream_count && channel_stream_count > (showSecondaryStreams ? 3 : 1) && (
-                  <Text
-                    variant="caption"
-                    sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.6)' : theme.palette.text.secondary }}
-                  >
-                    +{channel_stream_count - (showSecondaryStreams ? 3 : 1)} {channel_stream_count - (showSecondaryStreams ? 3 : 1) === 1 ? 'transmisión' : 'transmisiones'} más
-                  </Text>
-                )}
-              </Box>
-            ) : (
-              <BaseButton
-                onClick={handleClick}
-                onTouchStart={handleClick}
-                variant="contained"
-                size="small"
-                startIcon={<OpenInNew />}
-                className="youtube-button"
-                sx={{
-                  backgroundColor: '#FF0000',
-                  '&:hover': { backgroundColor: '#cc0000' },
-                  fontWeight: tokens.typography.fontWeight.bold,
-                  textTransform: 'none',
-                  fontSize: tokens.typography.fontSize.sm,
-                  boxShadow: 'none',
-                  touchAction: 'manipulation',
-                }}
-              >
-                {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
-              </BaseButton>
-            )}
-          </>
+          <BaseButton
+            onClick={handleClick}
+            onTouchStart={handleClick}
+            variant="contained"
+            size="small"
+            startIcon={<OpenInNew />}
+            className="youtube-button"
+            sx={{
+              backgroundColor: '#FF0000',
+              '&:hover': { backgroundColor: '#cc0000' },
+              fontWeight: tokens.typography.fontWeight.bold,
+              textTransform: 'none',
+              fontSize: tokens.typography.fontSize.sm,
+              boxShadow: 'none',
+              touchAction: 'manipulation',
+            }}
+          >
+            {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
+          </BaseButton>
         )}
         <IconButton
           size="small"
@@ -784,23 +671,6 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                   >
                     LIVE
-                    {channel_stream_count && channel_stream_count > 1 && (
-                      <Box
-                        sx={{
-                          backgroundColor: 'rgba(255, 255, 255, 0.3)',
-                          borderRadius: '50%',
-                          width: '14px',
-                          height: '14px',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          fontSize: '0.55rem',
-                          fontWeight: 'bold',
-                        }}
-                      >
-                        {channel_stream_count}
-                      </Box>
-                    )}
                   </Box>
                 )}
                 {isWeeklyOverride && (
