@@ -9,7 +9,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { getChannelBackground } from '@/utils/getChannelBackground';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
-import { LiveStream } from '@/types/live-stream';
+// Removed LiveStream import - no longer needed
 
 interface Program {
   id: string; // program ID
@@ -22,9 +22,6 @@ interface Program {
   logo_url?: string;
   stream_url?: string;
   is_live?: boolean;
-  live_streams?: LiveStream[] | null;
-  stream_count?: number;
-  channel_stream_count?: number;
   subscribed?: boolean;
   isWeeklyOverride?: boolean;
   overrideType?: 'cancel' | 'time_change' | 'reschedule';
@@ -262,9 +259,6 @@ export const ScheduleRow = ({
                     isToday={isToday}
                     stream_url={currentStreamUrl}
                     is_live={isLive}
-                    live_streams={p.live_streams}
-                    stream_count={overlappingPrograms.length}
-                    channel_stream_count={p.channel_stream_count}
                     subscribed={p.subscribed ?? false}
                     isWeeklyOverride={p.isWeeklyOverride ?? false}
                     overrideType={p.overrideType ?? ''}
@@ -291,9 +285,6 @@ export const ScheduleRow = ({
                   isToday={isToday}
                   stream_url={currentStreamUrl}
                   is_live={isLive}
-                  live_streams={p.live_streams}
-                  stream_count={p.stream_count}
-                  channel_stream_count={p.channel_stream_count}
                   subscribed={p.subscribed ?? false}
                   isWeeklyOverride={p.isWeeklyOverride ?? false}
                   overrideType={p.overrideType ?? ''}
