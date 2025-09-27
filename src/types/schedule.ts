@@ -15,12 +15,12 @@ export interface Schedule {
     is_live: boolean;
     live_streams?: LiveStream[] | null;
     stream_count?: number;
-    channel_stream_count?: number;
     panelists: { id: number; name: string }[];
     channel: {
       id: number;
       name: string;
       logo_url: string | null;
+      stream_count?: number;
     };
     style_override?: string | null;
   };
