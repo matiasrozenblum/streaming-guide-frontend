@@ -193,7 +193,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
                 stream_url: s.program.stream_url || undefined,
                 live_streams: s.program.live_streams,
                 stream_count: s.program.stream_count,
-                channel_stream_count: s.program.channel_stream_count,
+                channel_stream_count: channel.stream_count,
                 isWeeklyOverride: s.isWeeklyOverride,
                 overrideType: s.overrideType,
                 style_override: s.program.style_override,

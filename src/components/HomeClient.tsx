@@ -68,7 +68,10 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   // Derive flat lists for grid
   const channels = useMemo(
-    () => channelsWithSchedules.map(c => c.channel),
+    () => channelsWithSchedules.map(c => ({
+      ...c.channel,
+      stream_count: c.channel.stream_count // Include stream_count from the enriched channel
+    })),
     [channelsWithSchedules]
   );
   const flattened = useMemo(
