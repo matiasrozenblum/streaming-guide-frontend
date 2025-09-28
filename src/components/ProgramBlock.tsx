@@ -10,7 +10,6 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { event as gaEvent } from '@/lib/gtag';
 import { extractVideoId } from '@/utils/extractVideoId';
-import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
@@ -21,8 +20,12 @@ import LoginModal from './auth/LoginModal';
 import IOSNotificationSetup from './IOSNotificationSetup';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { programStyleOverrides } from '@/styles/programStyleOverrides';
+// Removed LiveStream import - no longer needed
+// Removed useSecondaryStreamsConfig - no longer needed
 
 dayjs.extend(customParseFormat);
+
+// Removed ScoredStream type - no longer needed
 
 interface Props {
   id: string;
@@ -41,6 +44,8 @@ interface Props {
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
+  multipleStreamsIndex?: number;
+  totalMultipleStreams?: number;
 }
 
 // Helper to encode ArrayBuffer to base64
@@ -66,13 +71,15 @@ export const ProgramBlock: React.FC<Props> = ({
   isWeeklyOverride,
   overrideType,
   styleOverride,
+  multipleStreamsIndex,
+  totalMultipleStreams,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const { liveStatus } = useLiveStatus();
-  const dynamic = liveStatus[id] ?? { is_live, stream_url };
-  const isLive = dynamic.is_live;
-  const streamUrl = dynamic.stream_url;
+  const isLive = is_live || false;
+  const streamUrl = stream_url;
+  
+  // Simplified approach - no complex stream matching needed
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const theme = useTheme();
@@ -83,6 +90,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const { openVideo, openPlaylist } = useYouTubePlayer();
   const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
   const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
+  // Removed showSecondaryStreams - no longer needed
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const closeTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const [loginOpen, setLoginOpen] = useState(false);
@@ -104,7 +112,27 @@ export const ProgramBlock: React.FC<Props> = ({
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
   const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  const widthPx = duration * pixelsPerMinute - 1;
+  
+  // Handle multiple streams positioning
+  let widthPx = duration * pixelsPerMinute - 1;
+  let topOffset = 0;
+  let height = '100%';
+  
+  if (totalMultipleStreams && totalMultipleStreams > 1) {
+    // Keep full width for each program, but stack them vertically
+    widthPx = duration * pixelsPerMinute - 1;
+    // Stack vertically to fill the entire row height without gaps
+    // Ensure the total height doesn't exceed 100% of the row
+    const heightPercentage = 100 / totalMultipleStreams;
+    topOffset = (multipleStreamsIndex || 0) * heightPercentage;
+    if (topOffset > 0) {
+      // Different offset adjustments for mobile vs web
+      const offsetAdjustment = isMobile ? 20 : 10;
+      topOffset = topOffset - offsetAdjustment;
+    }
+    // Use a slightly smaller height to prevent overflow
+    height = `${heightPercentage}%`; // Reduce by 1% to prevent overflow
+  }
 
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
@@ -581,7 +609,8 @@ export const ProgramBlock: React.FC<Props> = ({
               position: 'absolute',
               left: `${offsetPx}px`,
               width: `${widthPx}px`,
-              height: '100%',
+              height: height,
+              top: `${topOffset}px`,
               ...(overrideStyle ? overrideStyle.boxStyle : {}),
             }}
             height="100%"
@@ -636,6 +665,9 @@ export const ProgramBlock: React.FC<Props> = ({
                       borderRadius: '4px',
                       fontWeight: 'bold',
                       zIndex: 5,
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: 0.5,
                     }}
                   >
                     LIVE
@@ -728,9 +760,15 @@ export const ProgramBlock: React.FC<Props> = ({
                       variant="caption"
                       sx={{
                         fontWeight: 'bold',
-                        fontSize: '0.75rem',
+                        fontSize: totalMultipleStreams && totalMultipleStreams > 1 ? '0.7rem' : '0.75rem',
                         textAlign: 'center',
                         color: isPast ? alpha(color, 1) : color,
+                        lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 'normal',
+                        display: '-webkit-box',
+                        WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 2 : 1,
+                        WebkitBoxOrient: 'vertical',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
                       }}
                     >
                       {name.toUpperCase()}
@@ -739,15 +777,15 @@ export const ProgramBlock: React.FC<Props> = ({
                       <Typography
                         variant="caption"
                         sx={{
-                          fontSize: '0.65rem',
+                          fontSize: totalMultipleStreams && totalMultipleStreams > 1 ? '0.6rem' : '0.65rem',
                           textAlign: 'center',
                           color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
-                          lineHeight: 1.2,
+                          lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 1.2,
                           maxWidth: '100%',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
                           display: '-webkit-box',
-                          WebkitLineClamp: 2,
+                          WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 1 : 2,
                           WebkitBoxOrient: 'vertical',
                         }}
                       >

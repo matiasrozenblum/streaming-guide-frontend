@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.9.0] - 2025-09-27
+
+### Added
+- Added support for multiple live streams in parallel for one channel
+- Added Carnaval channel background
+
 ## [1.8.4] - 2025-08-25
 
 ### Fixed
