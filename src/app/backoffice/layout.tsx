@@ -75,15 +75,16 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           <Image
             src="/img/logo.png"
             alt="La Guía del Streaming"
-            width={32}
-            height={32}
-            style={{ marginRight: '8px' }}
+            width={44}
+            height={44}
+            style={{ marginRight: '8px', objectFit: 'contain' }}
           />
           <Image
             src={mode === 'light' ? '/img/text.png' : '/img/text-white.png'}
             alt="La Guía del Streaming"
             width={120}
-            height={24}
+            height={44}
+            style={{ objectFit: 'contain' }}
           />
         </Box>
       </Toolbar>
