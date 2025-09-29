@@ -16,6 +16,7 @@ import {
 import PersonIcon from '@mui/icons-material/Person';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
+import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -24,9 +25,10 @@ const MIN_WIDTH = 155; // Minimum width based on natural "¡Hola, Matias!" size
 
 interface UserMenuProps {
   onLogout: () => Promise<void>;
+  showHomeOption?: boolean;
 }
 
-export default function UserMenu({ onLogout }: UserMenuProps) {
+export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuProps) {
   const router = useRouter();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -175,18 +177,32 @@ export default function UserMenu({ onLogout }: UserMenuProps) {
           Favoritos
         </MenuItem>
         <Divider sx={{ my: 0.5, borderColor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
-        {isAdmin && (
+        {showHomeOption ? (
           <MenuItem
             onClick={() => {
               handleClose();
-              router.push('/backoffice');
+              router.push('/');
             }}
           >
             <ListItemIcon>
-              <AdminPanelSettingsIcon fontSize="small" />
+              <HomeIcon fontSize="small" />
             </ListItemIcon>
-            Backoffice
+            Inicio
           </MenuItem>
+        ) : (
+          isAdmin && (
+            <MenuItem
+              onClick={() => {
+                handleClose();
+                router.push('/backoffice');
+              }}
+            >
+              <ListItemIcon>
+                <AdminPanelSettingsIcon fontSize="small" />
+              </ListItemIcon>
+              Backoffice
+            </MenuItem>
+          )
         )}
         <MenuItem onClick={handleLogout} sx={{ color: 'error.main' }}>
           <ListItemIcon>
