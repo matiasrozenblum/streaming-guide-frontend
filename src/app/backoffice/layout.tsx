@@ -21,6 +21,8 @@ import {
   BarChart
 } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
+import UserMenu from '@/components/UserMenu';
+import Image from 'next/image';
 
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
@@ -40,8 +42,8 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     }
   }, [status, typedSession, router, pathname]);
 
-  const handleLogout = () => {
-    signOut({ callbackUrl: '/' });
+  const handleLogout = async () => {
+    await signOut({ callbackUrl: '/' });
   };
 
   const drawerWidth = 240;
@@ -61,12 +63,30 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
   const drawer = (
     <Box>
       <Toolbar>
-        <Typography 
-          variant="h6" 
-          sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}
+        <Box 
+          sx={{ 
+            display: 'flex', 
+            alignItems: 'center', 
+            cursor: 'pointer',
+            '&:hover': { opacity: 0.8 }
+          }}
+          onClick={() => router.push('/')}
         >
-          La Guía del Streaming
-        </Typography>
+          <Image
+            src="/img/logo.png"
+            alt="La Guía del Streaming"
+            width={44}
+            height={44}
+            style={{ marginRight: '8px', objectFit: 'contain' }}
+          />
+          <Image
+            src={mode === 'light' ? '/img/text.png' : '/img/text-white.png'}
+            alt="La Guía del Streaming"
+            width={120}
+            height={44}
+            style={{ objectFit: 'contain' }}
+          />
+        </Box>
       </Toolbar>
       <List>
         {menuItems.map(item => (
@@ -131,12 +151,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           <Typography sx={{ flexGrow: 1, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
             Panel de Administración
           </Typography>
-          <IconButton 
-            onClick={handleLogout}
-            sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}
-          >
-            Salir
-          </IconButton>
+          <UserMenu onLogout={handleLogout} showHomeOption={true} />
         </Toolbar>
       </AppBar>
 
