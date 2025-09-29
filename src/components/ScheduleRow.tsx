@@ -6,7 +6,7 @@ import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { getChannelBackground } from '@/utils/getChannelBackground';
+// Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 // Removed LiveStream import - no longer needed
@@ -31,6 +31,7 @@ interface Program {
 interface Props {
   channelName: string;
   channelLogo?: string;
+  channelBackgroundColor?: string | null;
   programs: Program[];
   color?: string;
   isToday?: boolean;
@@ -39,6 +40,7 @@ interface Props {
 export const ScheduleRow = ({ 
   channelName, 
   channelLogo, 
+  channelBackgroundColor,
   programs, 
   color, 
   isToday,
@@ -79,7 +81,7 @@ export const ScheduleRow = ({
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
-            background: getChannelBackground(channelName),
+            background: channelBackgroundColor || '#f1f5f9', // fallback to default gray
             boxShadow: mode === 'light'
               ? '0 2px 4px rgba(0,0,0,0.1)'
               : '0 2px 4px rgba(0,0,0,0.2)',
