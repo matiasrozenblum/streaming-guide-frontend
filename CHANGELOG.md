@@ -8,17 +8,24 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Added background color field and visibility on schedule toggle to channel dialog
 
 ### Changed
-- Now getting channel background from the backend
-- Filtering channel visibility with new field
 
 ### Removed
 
 ### Fixed
 
 ---
+
+## [1.9.1] - 2025-09-29
+
+### Added
+- Added background color field and visibility on schedule toggle to channel dialog
+
+### Changed
+- Now getting channel background from the backend
+- Filtering channel visibility with new field
+- Updated backoffice header to add logo and user menu with links to other pages
 
 ## [1.9.0] - 2025-09-27
 
