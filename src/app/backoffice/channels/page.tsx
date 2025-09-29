@@ -42,7 +42,7 @@ export default function ChannelsPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false });
+  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -101,10 +101,10 @@ export default function ChannelsPage() {
   const handleOpenDialog = (channel?: Channel) => {
     if (channel) {
       setEditingChannel(channel);
-      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true });
+      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true, background_color: channel.background_color || '', show_only_when_scheduled: channel.show_only_when_scheduled ?? false });
     } else {
       setEditingChannel(null);
-      setFormData({ name: '', logo_url: '', handle: '', is_visible: false });
+      setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
     }
     setOpenDialog(true);
   };
@@ -112,7 +112,7 @@ export default function ChannelsPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingChannel(null);
-    setFormData({ name: '', logo_url: '', handle: '', is_visible: false });
+    setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
   };
 
   const handleSubmit = async () => {
@@ -290,11 +290,27 @@ export default function ChannelsPage() {
               onChange={e => setFormData({ ...formData, handle: e.target.value })}
               fullWidth
             />
+            <TextField
+              label="Color de Fondo"
+              value={formData.background_color}
+              onChange={e => setFormData({ ...formData, background_color: e.target.value })}
+              fullWidth
+              placeholder="#ffffff o linear-gradient(...)"
+              helperText="Color hexadecimal (#ffffff) o gradiente CSS (linear-gradient(...))"
+            />
             <Box display="flex" alignItems="center" gap={2}>
               <Typography>Visible</Typography>
               <Switch
                 checked={formData.is_visible}
                 onChange={e => setFormData({ ...formData, is_visible: e.target.checked })}
+                color="primary"
+              />
+            </Box>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography>Mostrar solo cuando tenga programación</Typography>
+              <Switch
+                checked={formData.show_only_when_scheduled}
+                onChange={e => setFormData({ ...formData, show_only_when_scheduled: e.target.checked })}
                 color="primary"
               />
             </Box>

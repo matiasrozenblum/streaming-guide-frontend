@@ -70,7 +70,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const channels = useMemo(
     () => channelsWithSchedules.map(c => ({
       ...c.channel,
-      stream_count: c.channel.stream_count // Include stream_count from the enriched channel
     })),
     [channelsWithSchedules]
   );

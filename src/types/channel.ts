@@ -9,7 +9,8 @@ export interface Channel {
   youtube_channel_id?: string | null;
   order?: number | null;
   is_visible?: boolean;
-  stream_count?: number;
+  background_color?: string | null;
+  show_only_when_scheduled?: boolean;
   created_at?: string; // opcional si tu API devuelve esto
   updated_at?: string; // opcional si tu API devuelve esto
 }

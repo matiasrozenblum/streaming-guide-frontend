@@ -116,7 +116,7 @@ export const ProgramBlock: React.FC<Props> = ({
   // Handle multiple streams positioning
   let widthPx = duration * pixelsPerMinute - 1;
   let topOffset = 0;
-  let height = '100%'; 
+  let height = '100%';
   
   if (totalMultipleStreams && totalMultipleStreams > 1) {
     // Keep full width for each program, but stack them vertically

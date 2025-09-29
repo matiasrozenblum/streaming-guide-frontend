@@ -99,6 +99,16 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const getSchedulesForChannel = (channelId: number) =>
     schedulesForDay.filter(s => s.program.channel.id === channelId);
 
+  // Filter channels based on conditional visibility
+  const visibleChannels = channels.filter(channel => {
+    // If channel should show only when scheduled, check if it has schedules for this day
+    if (channel.show_only_when_scheduled) {
+      return getSchedulesForChannel(channel.id).length > 0;
+    }
+    // Otherwise, always show the channel
+    return true;
+  });
+
   return (
     <Box
       sx={{
@@ -174,11 +184,12 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader isMobile={true} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
-          {channels.map((channel, idx) => (
+          {visibleChannels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
+              channelBackgroundColor={channel.background_color}
               programs={getSchedulesForChannel(channel.id).map(s => ({
                 id: s.program.id.toString(),
                 scheduleId: s.id.toString(),
