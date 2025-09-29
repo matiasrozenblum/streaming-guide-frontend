@@ -81,7 +81,7 @@ export const ScheduleRow = ({
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
-            background: channelBackgroundColor || '#f1f5f9', // fallback to default gray
+            background: channelBackgroundColor || '#ffffff', // fallback to white
             boxShadow: mode === 'light'
               ? '0 2px 4px rgba(0,0,0,0.1)'
               : '0 2px 4px rgba(0,0,0,0.2)',

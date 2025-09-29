@@ -20,7 +20,8 @@ export interface ChannelWithSchedules {
     id: number;
     name: string;
     logo_url: string | null;
-    stream_count?: number;
+    background_color: string | null;
+    show_only_when_scheduled: boolean;
   };
   schedules: Schedule[];
 }
