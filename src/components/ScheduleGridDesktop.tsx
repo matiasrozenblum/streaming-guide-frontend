@@ -140,7 +140,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       }}
     >
       {/* Category tabs */}
-      <Box px={2}>
+      <Box>
         <CategoryTabs
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
