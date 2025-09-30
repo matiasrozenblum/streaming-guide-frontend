@@ -79,15 +79,15 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
           fontWeight: 'bold',
           textTransform: 'none',
           backgroundColor: selectedCategory === null 
-            ? (mode === 'light' ? '#1976d2' : '#90caf9')
+            ? (mode === 'light' ? '#1976d2' : '#1976d2')
             : 'transparent',
           color: selectedCategory === null 
-            ? (mode === 'light' ? 'white' : '#1976d2')
+            ? 'white'
             : (mode === 'light' ? '#1976d2' : '#90caf9'),
           borderColor: mode === 'light' ? '#1976d2' : '#90caf9',
           '&:hover': {
             backgroundColor: selectedCategory === null 
-              ? (mode === 'light' ? '#1565c0' : '#42a5f5')
+              ? (mode === 'light' ? '#1565c0' : '#1565c0')
               : (mode === 'light' ? 'rgba(25, 118, 210, 0.04)' : 'rgba(144, 202, 249, 0.08)'),
           },
         }}

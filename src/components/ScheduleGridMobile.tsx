@@ -131,7 +131,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       }}
     >
       {/* Category tabs */}
-      <Box px={1} pb={1}>
+      <Box pb={1}>
         <CategoryTabs
           selectedCategory={selectedCategory}
           onCategoryChange={setSelectedCategory}
