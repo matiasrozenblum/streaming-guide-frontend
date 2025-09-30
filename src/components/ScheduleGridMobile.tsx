@@ -130,14 +130,6 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         overflow: 'hidden',
       }}
     >
-      {/* Category tabs */}
-      <Box pb={1}>
-        <CategoryTabs
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-      </Box>
-
       {/* Día Selector */}
       <Box
         display="flex"
@@ -177,6 +169,12 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           </Button>
         ))}
       </Box>
+
+      {/* Category tabs */}
+      <CategoryTabs
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
       {/* Contenedor scrollable */}
       <Box
