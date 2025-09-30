@@ -6,7 +6,8 @@ import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
-import { Channel } from '@/types/channel';
+import CategoryTabs from './CategoryTabs';
+import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
@@ -31,6 +32,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
@@ -108,8 +110,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const getSchedulesForChannel = (id: number) =>
     schedulesForDay.filter(s => s.program.channel.id === id);
 
-  // Filter channels based on conditional visibility
+  // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
+    // Filter by category if one is selected
+    if (selectedCategory) {
+      const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
+      if (!hasCategory) return false;
+    }
+
     // If channel should show only when scheduled, check if it has schedules for this day
     if (channel.show_only_when_scheduled) {
       return getSchedulesForChannel(channel.id).length > 0;
@@ -131,6 +139,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         overflow: 'hidden',
       }}
     >
+      {/* Category tabs */}
+      <Box px={2}>
+        <CategoryTabs
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+        />
+      </Box>
+
       {/* Day selector & Live button */}
       <Box
         display="flex"
