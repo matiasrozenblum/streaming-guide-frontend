@@ -20,7 +20,6 @@ export interface Schedule {
       id: number;
       name: string;
       logo_url: string | null;
-      stream_count?: number;
     };
     style_override?: string | null;
   };
