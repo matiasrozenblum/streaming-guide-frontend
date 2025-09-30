@@ -139,14 +139,6 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         overflow: 'hidden',
       }}
     >
-      {/* Category tabs */}
-      <Box>
-        <CategoryTabs
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-        />
-      </Box>
-
       {/* Day selector & Live button */}
       <Box
         display="flex"
@@ -222,6 +214,12 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           </Button>
         )}
       </Box>
+
+      {/* Category tabs */}
+      <CategoryTabs
+        selectedCategory={selectedCategory}
+        onCategoryChange={setSelectedCategory}
+      />
 
       {/* Grid scrollable area */}
       <Box

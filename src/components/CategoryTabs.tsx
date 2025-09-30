@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Box, Button } from '@mui/material';
+import { Box, Typography } from '@mui/material';
 import { Category } from '@/types/channel';
 import { useThemeContext } from '@/contexts/ThemeContext';
 
@@ -40,26 +40,50 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
   if (loading) {
     return (
       <Box
-        display="flex"
-        gap={1}
-        py={1}
-        alignItems="center"
-        sx={{ opacity: 0.7 }}
+        sx={{
+          display: 'flex',
+          alignItems: 'flex-end',
+          height: '40px',
+          backgroundColor: mode === 'light' ? '#f1f3f4' : '#2d2d2d',
+          borderBottom: `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`,
+          opacity: 0.7,
+        }}
       >
-        <Button variant="outlined" disabled>
-          Cargando...
-        </Button>
+        <Box
+          sx={{
+            display: 'flex',
+            alignItems: 'center',
+            minWidth: '120px',
+            height: '36px',
+            paddingX: '16px',
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
+            borderBottom: `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`,
+          }}
+        >
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: 400,
+              color: mode === 'light' ? '#3c4043' : '#e8eaed',
+              fontSize: '13px',
+            }}
+          >
+            Cargando...
+          </Typography>
+        </Box>
       </Box>
     );
   }
 
   return (
     <Box
-      display="flex"
-      gap={1}
-      py={1}
-      alignItems="center"
       sx={{
+        display: 'flex',
+        alignItems: 'flex-end',
+        height: '40px',
+        backgroundColor: mode === 'light' ? '#f1f3f4' : '#2d2d2d',
+        borderBottom: `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`,
         overflowX: 'auto',
         scrollbarWidth: 'none',
         '&::-webkit-scrollbar': {
@@ -68,62 +92,102 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
       }}
     >
       {/* "All" tab */}
-      <Button
-        variant={selectedCategory === null ? 'contained' : 'outlined'}
+      <Box
         onClick={() => handleCategoryClick(null)}
         sx={{
-          minWidth: '80px',
-          height: '36px',
-          transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
-          transform: selectedCategory === null ? 'scale(1.05)' : 'scale(1)',
-          fontWeight: 'bold',
-          textTransform: 'none',
+          display: 'flex',
+          alignItems: 'center',
+          minWidth: '120px',
+          maxWidth: '200px',
+          height: selectedCategory === null ? '40px' : '36px',
+          paddingX: '16px',
           backgroundColor: selectedCategory === null 
-            ? (mode === 'light' ? '#1976d2' : '#1976d2')
+            ? (mode === 'light' ? '#ffffff' : '#3c4043')
             : 'transparent',
-          color: selectedCategory === null 
-            ? 'white'
-            : (mode === 'light' ? '#1976d2' : '#90caf9'),
-          borderColor: mode === 'light' ? '#1976d2' : '#90caf9',
+          borderTopLeftRadius: '8px',
+          borderTopRightRadius: '8px',
+          border: selectedCategory === null 
+            ? `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`
+            : 'none',
+          borderBottom: selectedCategory === null 
+            ? 'none'
+            : `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`,
+          cursor: 'pointer',
+          transition: 'all 0.2s ease',
+          position: 'relative',
+          zIndex: selectedCategory === null ? 2 : 1,
           '&:hover': {
             backgroundColor: selectedCategory === null 
-              ? (mode === 'light' ? '#1565c0' : '#1565c0')
-              : (mode === 'light' ? 'rgba(25, 118, 210, 0.04)' : 'rgba(144, 202, 249, 0.08)'),
+              ? (mode === 'light' ? '#ffffff' : '#3c4043')
+              : (mode === 'light' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)'),
+            height: '38px',
           },
         }}
       >
-        Todos
-      </Button>
+        <Typography
+          variant="body2"
+          sx={{
+            fontWeight: selectedCategory === null ? 500 : 400,
+            color: mode === 'light' ? '#3c4043' : '#e8eaed',
+            fontSize: '13px',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            whiteSpace: 'nowrap',
+          }}
+        >
+          Todos
+        </Typography>
+      </Box>
 
       {/* Category tabs */}
       {categories.map((category) => (
-        <Button
+        <Box
           key={category.id}
-          variant={selectedCategory?.id === category.id ? 'contained' : 'outlined'}
           onClick={() => handleCategoryClick(category)}
           sx={{
-            minWidth: '80px',
-            height: '36px',
-            transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
-            transform: selectedCategory?.id === category.id ? 'scale(1.05)' : 'scale(1)',
-            fontWeight: 'bold',
-            textTransform: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            minWidth: '120px',
+            maxWidth: '200px',
+            height: selectedCategory?.id === category.id ? '40px' : '36px',
+            paddingX: '16px',
             backgroundColor: selectedCategory?.id === category.id 
-              ? (category.color || (mode === 'light' ? '#1976d2' : '#90caf9'))
+              ? (mode === 'light' ? '#ffffff' : '#3c4043')
               : 'transparent',
-            color: selectedCategory?.id === category.id 
-              ? 'white'
-              : (category.color || (mode === 'light' ? '#1976d2' : '#90caf9')),
-            borderColor: category.color || (mode === 'light' ? '#1976d2' : '#90caf9'),
+            borderTopLeftRadius: '8px',
+            borderTopRightRadius: '8px',
+            border: selectedCategory?.id === category.id 
+              ? `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`
+              : 'none',
+            borderBottom: selectedCategory?.id === category.id 
+              ? 'none'
+              : `1px solid ${mode === 'light' ? '#dadce0' : '#3c4043'}`,
+            cursor: 'pointer',
+            transition: 'all 0.2s ease',
+            position: 'relative',
+            zIndex: selectedCategory?.id === category.id ? 2 : 1,
             '&:hover': {
               backgroundColor: selectedCategory?.id === category.id 
-                ? (category.color || (mode === 'light' ? '#1565c0' : '#42a5f5'))
-                : (category.color ? `${category.color}20` : (mode === 'light' ? 'rgba(25, 118, 210, 0.04)' : 'rgba(144, 202, 249, 0.08)')),
+                ? (mode === 'light' ? '#ffffff' : '#3c4043')
+                : (mode === 'light' ? 'rgba(255, 255, 255, 0.1)' : 'rgba(255, 255, 255, 0.05)'),
+              height: '38px',
             },
           }}
         >
-          {category.name}
-        </Button>
+          <Typography
+            variant="body2"
+            sx={{
+              fontWeight: selectedCategory?.id === category.id ? 500 : 400,
+              color: mode === 'light' ? '#3c4043' : '#e8eaed',
+              fontSize: '13px',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {category.name}
+          </Typography>
+        </Box>
       ))}
     </Box>
   );
