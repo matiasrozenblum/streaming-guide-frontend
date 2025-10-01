@@ -229,8 +229,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
             : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
           border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '12px',
-          borderTopLeftRadius: 0, // Remove top-left radius for seamless connection with category tabs
+          borderTopLeftRadius: 0, // Straight top corners for seamless connection with category tabs
+          borderTopRightRadius: 0,
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
