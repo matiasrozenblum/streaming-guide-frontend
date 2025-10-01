@@ -61,7 +61,10 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
         borderBottom: 1,
         borderColor: 'divider',
         backgroundColor: 'background.paper',
-        borderBottomLeftRadius: 0, // Remove bottom-left radius for seamless connection
+        borderTopLeftRadius: '12px', // Round upper corners
+        borderTopRightRadius: '12px',
+        borderBottomLeftRadius: 0, // Straight bottom corners for seamless connection
+        borderBottomRightRadius: 0,
       }}
     >
       <Tabs
@@ -104,6 +107,10 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
             '&.Mui-selected': {
               color: '#1976d2',
             },
+            '&:hover': {
+              color: '#1976d2',
+              backgroundColor: 'rgba(25, 118, 210, 0.04)',
+            },
           }}
         />
         {categories.map((category) => (
@@ -118,6 +125,10 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
                 : 'text.secondary',
               '&.Mui-selected': {
                 color: category.color || '#1976d2',
+              },
+              '&:hover': {
+                color: category.color || '#1976d2',
+                backgroundColor: `${category.color || '#1976d2'}14`, // 14 is hex for ~8% opacity
               },
             }}
           />

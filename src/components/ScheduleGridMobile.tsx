@@ -180,8 +180,10 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       <Box
         ref={scrollRef}
         sx={{
-          borderRadius: '12px',
-          borderTopLeftRadius: 0, // Remove top-left radius for seamless connection with category tabs
+          borderTopLeftRadius: 0, // Straight top corners for seamless connection with category tabs
+          borderTopRightRadius: 0,
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowX: 'auto',
