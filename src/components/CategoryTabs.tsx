@@ -61,6 +61,7 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
         borderBottom: 1,
         borderColor: 'divider',
         backgroundColor: 'background.paper',
+        borderBottomLeftRadius: 0, // Remove bottom-left radius for seamless connection
       }}
     >
       <Tabs
@@ -90,6 +91,7 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
           '& .MuiTabs-indicator': {
             height: 3,
             borderRadius: '3px 3px 0 0',
+            backgroundColor: selectedCategory?.color || '#1976d2',
           },
         }}
       >
@@ -98,6 +100,10 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
           value="all"
           sx={{
             fontWeight: selectedCategory === null ? 600 : 500,
+            color: selectedCategory === null ? '#1976d2' : 'text.secondary',
+            '&.Mui-selected': {
+              color: '#1976d2',
+            },
           }}
         />
         {categories.map((category) => (
@@ -107,6 +113,12 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange }: Cat
             value={`category-${category.id}`}
             sx={{
               fontWeight: selectedCategory?.id === category.id ? 600 : 500,
+              color: selectedCategory?.id === category.id 
+                ? (category.color || '#1976d2') 
+                : 'text.secondary',
+              '&.Mui-selected': {
+                color: category.color || '#1976d2',
+              },
             }}
           />
         ))}
