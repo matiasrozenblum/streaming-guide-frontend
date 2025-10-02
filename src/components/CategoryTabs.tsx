@@ -11,7 +11,7 @@ interface CategoryTabsProps {
 }
 
 export default function CategoryTabs({ selectedCategory, onCategoryChange, categories }: CategoryTabsProps) {
-  const { pixelsPerMinute } = useLayoutValues();
+  const { pixelsPerMinute, channelLabelWidth } = useLayoutValues();
   const tabWidth = pixelsPerMinute * 60; // Same width as each hour block (120px)
   
   const handleCategoryClick = (category: Category | null) => {
@@ -31,8 +31,29 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
         borderTopRightRadius: '12px',
         borderBottomLeftRadius: 0, // Straight bottom corners for seamless connection
         borderBottomRightRadius: 0,
+        display: 'flex', // Make this a flex container
+        width: '100%', // Full width
       }}
     >
+      {/* Channel label spacer - matches the "Canal" column width */}
+      <Box
+        sx={{
+          width: `${channelLabelWidth}px`,
+          minWidth: `${channelLabelWidth}px`,
+          maxWidth: `${channelLabelWidth}px`,
+          borderRight: '1px solid',
+          borderColor: 'divider',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'background.paper',
+        }}
+      >
+        {/* Empty space to align with "Canal" column */}
+      </Box>
+      
+      {/* Category tabs container */}
+      <Box sx={{ flex: 1, overflowX: 'auto' }}>
       <Tabs
         value={currentValue}
         onChange={(event, newValue) => {
@@ -104,6 +125,7 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
           />
         ))}
       </Tabs>
+      </Box>
     </Box>
   );
 }
