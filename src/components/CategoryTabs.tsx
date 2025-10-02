@@ -1,56 +1,18 @@
 'use client';
 
-import { useState, useEffect } from 'react';
-import { Box, Button, Tabs, Tab } from '@mui/material';
+import { Box, Tabs, Tab } from '@mui/material';
 import { Category } from '@/types/channel';
 
 interface CategoryTabsProps {
   selectedCategory: Category | null;
   onCategoryChange: (category: Category | null) => void;
+  categories: Category[];
 }
 
-export default function CategoryTabs({ selectedCategory, onCategoryChange }: CategoryTabsProps) {
-  const [categories, setCategories] = useState<Category[]>([]);
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    fetchCategories();
-  }, []);
-
-  const fetchCategories = async () => {
-    try {
-      setLoading(true);
-      const response = await fetch('/api/categories');
-      if (!response.ok) throw new Error('Failed to fetch categories');
-      const data = await response.json();
-      setCategories(data.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)));
-    } catch (error) {
-      console.error('Error fetching categories:', error);
-    } finally {
-      setLoading(false);
-    }
-  };
-
+export default function CategoryTabs({ selectedCategory, onCategoryChange, categories }: CategoryTabsProps) {
   const handleCategoryClick = (category: Category | null) => {
     onCategoryChange(category);
   };
-
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          display: 'flex',
-          justifyContent: 'center',
-          py: 2,
-          opacity: 0.7,
-        }}
-      >
-        <Button variant="outlined" disabled>
-          Cargando...
-        </Button>
-      </Box>
-    );
-  }
 
   // Create tab value based on selected category
   const currentValue = selectedCategory ? `category-${selectedCategory.id}` : 'all';

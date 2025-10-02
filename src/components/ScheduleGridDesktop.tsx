@@ -25,9 +25,10 @@ dayjs.extend(weekday);
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
+  categories: Category[];
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -219,6 +220,7 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
       <CategoryTabs
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        categories={categories}
       />
 
       {/* Grid scrollable area */}
