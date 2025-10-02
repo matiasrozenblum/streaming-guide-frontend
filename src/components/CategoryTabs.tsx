@@ -2,6 +2,7 @@
 
 import { Box, Tabs, Tab } from '@mui/material';
 import { Category } from '@/types/channel';
+import { useLayoutValues } from '@/constants/layout';
 
 interface CategoryTabsProps {
   selectedCategory: Category | null;
@@ -10,6 +11,9 @@ interface CategoryTabsProps {
 }
 
 export default function CategoryTabs({ selectedCategory, onCategoryChange, categories }: CategoryTabsProps) {
+  const { pixelsPerMinute } = useLayoutValues();
+  const tabWidth = pixelsPerMinute * 60; // Same width as each hour block (120px)
+  
   const handleCategoryClick = (category: Category | null) => {
     onCategoryChange(category);
   };
@@ -52,6 +56,10 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
             fontWeight: 500,
             fontSize: '0.875rem',
             px: 2,
+            width: `${tabWidth}px`,
+            minWidth: `${tabWidth}px`,
+            maxWidth: `${tabWidth}px`,
+            flex: 'none', // Prevent flex from changing the width
           },
           '& .MuiTabs-indicator': {
             height: 3,
