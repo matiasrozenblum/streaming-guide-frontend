@@ -35,25 +35,6 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
         width: '100%', // Full width
       }}
     >
-      {/* Channel label spacer - matches the "Canal" column width */}
-      <Box
-        sx={{
-          width: `${channelLabelWidth}px`,
-          minWidth: `${channelLabelWidth}px`,
-          maxWidth: `${channelLabelWidth}px`,
-          borderRight: '1px solid',
-          borderColor: 'divider',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          backgroundColor: 'background.paper',
-        }}
-      >
-        {/* Empty space to align with "Canal" column */}
-      </Box>
-      
-      {/* Category tabs container */}
-      <Box sx={{ flex: 1, overflowX: 'auto' }}>
       <Tabs
         value={currentValue}
         onChange={(event, newValue) => {
@@ -77,10 +58,19 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
             fontWeight: 500,
             fontSize: '0.875rem',
             px: 2,
+            flex: 'none', // Prevent flex from changing the width
+          },
+          '& .MuiTab-root:first-of-type': {
+            // First tab ("Todos") matches channel label width
+            width: `${channelLabelWidth}px`,
+            minWidth: `${channelLabelWidth}px`,
+            maxWidth: `${channelLabelWidth}px`,
+          },
+          '& .MuiTab-root:not(:first-of-type)': {
+            // Other tabs match hour block width
             width: `${tabWidth}px`,
             minWidth: `${tabWidth}px`,
             maxWidth: `${tabWidth}px`,
-            flex: 'none', // Prevent flex from changing the width
           },
           '& .MuiTabs-indicator': {
             height: 3,
@@ -125,7 +115,6 @@ export default function CategoryTabs({ selectedCategory, onCategoryChange, categ
           />
         ))}
       </Tabs>
-      </Box>
     </Box>
   );
 }
