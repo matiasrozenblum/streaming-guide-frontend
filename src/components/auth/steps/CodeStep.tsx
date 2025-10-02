@@ -124,10 +124,27 @@ export default function CodeStep({
     onSubmit(code.trim());
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setCanResend(false);
     setCountdown(30);
-    // aquí puedes llamar a tu API para reenviar
+    
+    try {
+      const res = await fetch('/api/auth/send-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ identifier: email }),
+      });
+
+      if (!res.ok) {
+        const error = await res.json();
+        throw new Error(error.message || 'Error al reenviar el código');
+      }
+      
+      console.log('✅ Código reenviado exitosamente');
+    } catch (error) {
+      console.error('❌ Error al reenviar código:', error);
+      setLocalErr(error instanceof Error ? error.message : 'Error al reenviar el código');
+    }
   };
 
   return (
