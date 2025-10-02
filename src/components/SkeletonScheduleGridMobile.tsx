@@ -79,6 +79,31 @@ export const SkeletonScheduleGridMobile: React.FC<Props> = ({ rowCount }) => {
         />
       </Box>
 
+      {/* — Category tabs skeleton — */}
+      <Box
+        sx={{
+          borderBottom: 1,
+          borderColor: 'divider',
+          backgroundColor: 'background.paper',
+          borderTopLeftRadius: '12px',
+          borderTopRightRadius: '12px',
+          borderBottomLeftRadius: 0,
+          borderBottomRightRadius: 0,
+        }}
+      >
+        <Box display="flex" gap={1} p={1} alignItems="center">
+          {Array.from({ length: 4 }).map((_, i) => (
+            <Skeleton
+              key={i}
+              variant="rectangular"
+              width={80}
+              height={48}
+              sx={{ borderRadius: theme.shape.borderRadius }}
+            />
+          ))}
+        </Box>
+      </Box>
+
       {/* — Header de horas — */}
       <Box display="flex" sx={{ borderBottom: `1px solid ${theme.palette.divider}` }}>
         <Box sx={{ width: channelLabelWidth, minWidth: channelLabelWidth }}>

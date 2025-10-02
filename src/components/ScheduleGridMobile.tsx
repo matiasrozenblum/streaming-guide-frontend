@@ -21,9 +21,10 @@ import { SessionWithToken } from '@/types/session';
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
+  categories: Category[];
 }
 
-export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
+export const ScheduleGridMobile = ({ channels, schedules, categories }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -174,6 +175,7 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
       <CategoryTabs
         selectedCategory={selectedCategory}
         onCategoryChange={setSelectedCategory}
+        categories={categories}
       />
 
       {/* Contenedor scrollable */}

@@ -1,6 +1,6 @@
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
-import type { ChannelWithSchedules } from '@/types/channel';
+import type { ChannelWithSchedules, Category } from '@/types/channel';
 import { getBuenosAiresDayOfWeek } from '@/utils/date';
 import { Schedule } from '@/types/schedule';
 
@@ -8,6 +8,7 @@ interface InitialData {
   holiday: boolean;
   todaySchedules: ChannelWithSchedules[];
   weekSchedules: ChannelWithSchedules[];
+  categories: Category[];
 }
 
 async function getInitialData(): Promise<InitialData> {
@@ -24,9 +25,17 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.json());
 
-    const [holidayData, weekSchedules] = await Promise.all([
+    const categoriesPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+      {
+        next: { revalidate: 3600 } // Categories change less frequently
+      }
+    ).then(res => res.json());
+
+    const [holidayData, weekSchedules, categories] = await Promise.all([
       holidayPromise,
       weekPromise,
+      categoriesPromise,
     ]);
 
     const today = getBuenosAiresDayOfWeek();
@@ -41,12 +50,14 @@ async function getInitialData(): Promise<InitialData> {
       holiday: !!holidayData.holiday,
       todaySchedules,
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
+      categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
     };
   } catch {
     return {
       holiday: false,
       todaySchedules: [],
       weekSchedules: [],
+      categories: [],
     };
   }
 }
