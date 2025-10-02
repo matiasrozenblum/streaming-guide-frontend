@@ -7,14 +7,13 @@ const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-
 export async function GET() {
   try {
     const response = await fetch(`${BACKEND_URL}/categories`, {
-      method: 'GET',
       headers: {
         'Content-Type': 'application/json',
       },
     });
 
     if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
+      throw new Error('Failed to fetch categories');
     }
 
     const data = await response.json();
@@ -31,11 +30,12 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    if (!session?.accessToken) {
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const body = await request.json();
+
     const response = await fetch(`${BACKEND_URL}/categories`, {
       method: 'POST',
       headers: {
@@ -46,7 +46,8 @@ export async function POST(request: NextRequest) {
     });
 
     if (!response.ok) {
-      throw new Error(`Backend responded with status: ${response.status}`);
+      const errorData = await response.json().catch(() => ({}));
+      throw new Error(errorData.message || 'Failed to create category');
     }
 
     const data = await response.json();
@@ -54,7 +55,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating category:', error);
     return NextResponse.json(
-      { error: 'Failed to create category' },
+      { error: error instanceof Error ? error.message : 'Failed to create category' },
       { status: 500 }
     );
   }
