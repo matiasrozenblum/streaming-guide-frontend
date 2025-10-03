@@ -250,6 +250,36 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
           '&.dragging': {
             cursor: 'grabbing',
           },
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.2)' 
+              : 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            border: '1px solid transparent',
+            backgroundClip: 'content-box',
+            '&:hover': {
+              background: mode === 'light' 
+                ? 'rgba(0, 0, 0, 0.3)' 
+                : 'rgba(255, 255, 255, 0.3)',
+            },
+          },
+          '&::-webkit-scrollbar-corner': {
+            background: 'transparent',
+          },
+          // Firefox scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: mode === 'light' 
+            ? 'rgba(0, 0, 0, 0.2) transparent' 
+            : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
