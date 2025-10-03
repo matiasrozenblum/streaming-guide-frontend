@@ -36,7 +36,7 @@ async function getInitialData(): Promise<InitialData> {
     const categoriesEnabledPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/config/categories_enabled`,
       {
-        next: { revalidate: 300 } // Config can change more frequently
+        next: { revalidate: 0 } // No caching for config - changes should be immediate
       }
     ).then(res => res.text()); // Config endpoint returns plain text
 

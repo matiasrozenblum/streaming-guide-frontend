@@ -42,7 +42,7 @@ export default async function Page() {
       ),
       fetch(
         `${url}/config/categories_enabled`,
-        { next: { revalidate: 300 } }
+        { next: { revalidate: 0 } } // No caching for config - changes should be immediate
       )
     ]);
 
