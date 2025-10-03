@@ -9,6 +9,7 @@ interface InitialData {
   todaySchedules: ChannelWithSchedules[];
   weekSchedules: ChannelWithSchedules[];
   categories: Category[];
+  categoriesEnabled: boolean;
 }
 
 async function getInitialData(): Promise<InitialData> {
@@ -32,10 +33,18 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.json());
 
-    const [holidayData, weekSchedules, categories] = await Promise.all([
+    const categoriesEnabledPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/categories-enabled`,
+      {
+        next: { revalidate: 300 } // Config can change more frequently
+      }
+    ).then(res => res.json());
+
+    const [holidayData, weekSchedules, categories, categoriesEnabledData] = await Promise.all([
       holidayPromise,
       weekPromise,
       categoriesPromise,
+      categoriesEnabledPromise,
     ]);
 
     const today = getBuenosAiresDayOfWeek();
@@ -51,6 +60,7 @@ async function getInitialData(): Promise<InitialData> {
       todaySchedules,
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
+      categoriesEnabled: categoriesEnabledData?.categories_enabled || false,
     };
   } catch {
     return {
@@ -58,6 +68,7 @@ async function getInitialData(): Promise<InitialData> {
       todaySchedules: [],
       weekSchedules: [],
       categories: [],
+      categoriesEnabled: false, // Default to false on error
     };
   }
 }

@@ -26,9 +26,10 @@ interface Props {
   channels: Channel[];
   schedules: Schedule[];
   categories: Category[];
+  categoriesEnabled: boolean;
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules, categories }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -217,11 +218,13 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories }: Props) 
       </Box>
 
       {/* Category tabs */}
-      <CategoryTabs
-        selectedCategory={selectedCategory}
-        onCategoryChange={setSelectedCategory}
-        categories={categories}
-      />
+      {categoriesEnabled && (
+        <CategoryTabs
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          categories={categories}
+        />
+      )}
 
       {/* Grid scrollable area */}
       <Box

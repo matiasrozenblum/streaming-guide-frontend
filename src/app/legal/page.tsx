@@ -11,6 +11,7 @@ interface InitialData {
   todaySchedules: ChannelWithSchedules[];
   weekSchedules: ChannelWithSchedules[];
   categories: Category[];
+  categoriesEnabled: boolean;
 }
 
 export default async function Page() {
@@ -19,13 +20,14 @@ export default async function Page() {
 
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
-  // Fetch today's schedules, week's schedules, and categories in parallel
+  // Fetch today's schedules, week's schedules, categories, and categories enabled status in parallel
   let todaySchedules: ChannelWithSchedules[] = [];
   let weekSchedules: ChannelWithSchedules[] = [];
   let categories: Category[] = [];
+  let categoriesEnabled = false;
 
   try {
-    const [todayRes, weekRes, categoriesRes] = await Promise.all([
+    const [todayRes, weekRes, categoriesRes, categoriesEnabledRes] = await Promise.all([
       fetch(
         `${url}/channels/with-schedules?day=${today}`,
         { next: { revalidate: 60 } }
@@ -37,6 +39,10 @@ export default async function Page() {
       fetch(
         `${url}/categories`,
         { next: { revalidate: 3600 } }
+      ),
+      fetch(
+        `${url}/channels/categories-enabled`,
+        { next: { revalidate: 300 } }
       )
     ]);
 
@@ -58,6 +64,13 @@ export default async function Page() {
     } else {
       console.warn('Categories fetch failed with status', categoriesRes.status);
     }
+
+    if (categoriesEnabledRes.ok) {
+      const categoriesEnabledData = await categoriesEnabledRes.json();
+      categoriesEnabled = categoriesEnabledData?.categories_enabled || false;
+    } else {
+      console.warn('Categories enabled fetch failed with status', categoriesEnabledRes.status);
+    }
   } catch (err) {
     console.warn('Fetch error during build/runtime:', err);
   }
@@ -67,7 +80,8 @@ export default async function Page() {
     holiday: false, // Legal page doesn't need holiday info
     todaySchedules,
     weekSchedules,
-    categories
+    categories,
+    categoriesEnabled
   };
 
   // Renderiza componente cliente con datos pre-cargados
