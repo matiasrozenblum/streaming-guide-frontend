@@ -20,6 +20,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.10.0] - 2025-10-04
+
+### Added
+- Added categories for channels
+
+## [1.9.2] - 2025-10-02
+
+### Fixed
+- Fixed resend code button not doing anything
+
 ## [1.9.1] - 2025-09-29
 
 ### Added

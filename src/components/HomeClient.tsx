@@ -30,6 +30,7 @@ interface HomeClientProps {
     todaySchedules: ChannelWithSchedules[];
     weekSchedules: ChannelWithSchedules[];
     categories: Category[];
+    categoriesEnabled: boolean;
   };
 }
 
@@ -183,7 +184,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               backdropFilter: 'blur(8px)',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
           </MotionBox>
         </Container>
       </Box>
