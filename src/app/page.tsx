@@ -34,11 +34,11 @@ async function getInitialData(): Promise<InitialData> {
     ).then(res => res.json());
 
     const categoriesEnabledPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/categories-enabled`,
+      `${process.env.NEXT_PUBLIC_API_URL}/config/categories_enabled`,
       {
         next: { revalidate: 300 } // Config can change more frequently
       }
-    ).then(res => res.json());
+    ).then(res => res.text()); // Config endpoint returns plain text
 
     const [holidayData, weekSchedules, categories, categoriesEnabledData] = await Promise.all([
       holidayPromise,
@@ -60,7 +60,7 @@ async function getInitialData(): Promise<InitialData> {
       todaySchedules,
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
-      categoriesEnabled: categoriesEnabledData?.categories_enabled || false,
+      categoriesEnabled: categoriesEnabledData === 'true',
     };
   } catch {
     return {
