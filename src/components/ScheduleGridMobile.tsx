@@ -185,8 +185,8 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       <Box
         ref={scrollRef}
         sx={{
-          borderTopLeftRadius: 0, // Straight top corners for seamless connection with category tabs
-          borderTopRightRadius: 0,
+          borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
+          borderTopRightRadius: categoriesEnabled ? 0 : '12px',
           borderBottomLeftRadius: '12px', // Round bottom corners
           borderBottomRightRadius: '12px',
           flex: 1,
