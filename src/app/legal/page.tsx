@@ -41,7 +41,7 @@ export default async function Page() {
         { next: { revalidate: 3600 } }
       ),
       fetch(
-        `${url}/channels/categories-enabled`,
+        `${url}/config/categories_enabled`,
         { next: { revalidate: 300 } }
       )
     ]);
@@ -66,8 +66,8 @@ export default async function Page() {
     }
 
     if (categoriesEnabledRes.ok) {
-      const categoriesEnabledData = await categoriesEnabledRes.json();
-      categoriesEnabled = categoriesEnabledData?.categories_enabled || false;
+      const categoriesEnabledData = await categoriesEnabledRes.text();
+      categoriesEnabled = categoriesEnabledData === 'true';
     } else {
       console.warn('Categories enabled fetch failed with status', categoriesEnabledRes.status);
     }
