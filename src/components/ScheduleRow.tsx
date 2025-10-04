@@ -11,6 +11,46 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 // Removed LiveStream import - no longer needed
 
+// Helper function to split 24-hour programs into 4 blocks of 6 hours each
+const split24HourProgram = (program: Program): Program[] => {
+  const parseTime = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+  
+  const startMinutes = parseTime(program.start_time);
+  const endMinutes = parseTime(program.end_time);
+  const duration = endMinutes - startMinutes;
+  
+  // Check if this is a 24-hour program (1440 minutes = 24 hours)
+  if (duration >= 1440) {
+    const blocks: Program[] = [];
+    const blockDuration = 360; // 6 hours in minutes
+    
+    for (let i = 0; i < 4; i++) {
+      const blockStart = startMinutes + (i * blockDuration);
+      const blockEnd = Math.min(blockStart + blockDuration, endMinutes);
+      
+      blocks.push({
+        ...program,
+        id: `${program.id}-block-${i}`, // Unique ID for each block
+        start_time: formatTime(blockStart),
+        end_time: formatTime(blockEnd),
+      });
+    }
+    
+    return blocks;
+  }
+  
+  return [program]; // Return original program if not 24-hour
+};
+
 interface Program {
   id: string; // program ID
   scheduleId: string; // schedule ID for live status lookup
@@ -201,7 +241,7 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p) => {
+          {programs.flatMap(split24HourProgram).map((p) => {
             // Get live status from context using schedule ID
             const currentLiveStatus = liveStatus[p.scheduleId];
             // Always prioritize program's is_live field if it's explicitly set

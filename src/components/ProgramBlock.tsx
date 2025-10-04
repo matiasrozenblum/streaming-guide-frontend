@@ -98,7 +98,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
-  const tooltipAnchorRef = useRef<HTMLDivElement>(null);
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
@@ -113,9 +112,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
   const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  
-  // Check if this is a 24-hour program
-  const is24HourProgram = duration >= 1440; // 24 hours = 1440 minutes
   
   // Handle multiple streams positioning
   let widthPx = duration * pixelsPerMinute - 1;
@@ -601,42 +597,10 @@ export const ProgramBlock: React.FC<Props> = ({
                   : '#fff',
                 boxShadow: theme.shadows[3],
               }
-            },
-            // For 24-hour programs, position tooltip relative to current time instead of block center
-            ...(is24HourProgram && {
-              anchorEl: tooltipAnchorRef.current
-            })
+            }
           }}
         >
-          <Box sx={{ position: 'relative', width: '100%', height: '100%' }}>
-            {/* Hidden anchor element for 24-hour program tooltip positioning */}
-            {is24HourProgram && (
-              <Box
-                ref={tooltipAnchorRef}
-                sx={{
-                  position: 'absolute',
-                  left: (() => {
-                    const now = new Date();
-                    const currentHour = now.getHours();
-                    const currentMinute = now.getMinutes();
-                    const currentTimeInMinutes = currentHour * 60 + currentMinute;
-                    const relativeCurrentTime = currentTimeInMinutes - minutesFromMidnightStart;
-                    
-                    if (relativeCurrentTime >= 0 && relativeCurrentTime <= duration) {
-                      const currentTimeOffsetPx = relativeCurrentTime * pixelsPerMinute;
-                      return `${offsetPx + currentTimeOffsetPx}px`;
-                    }
-                    return `${offsetPx}px`;
-                  })(),
-                  top: '50%',
-                  width: '1px',
-                  height: '1px',
-                  pointerEvents: 'none',
-                  zIndex: -1,
-                }}
-              />
-            )}
-            <Box
+          <Box
             className="program-block"
             onMouseEnter={handleTooltipOpen}
             onMouseLeave={handleTooltipClose}
@@ -707,27 +671,6 @@ export const ProgramBlock: React.FC<Props> = ({
                     }}
                   >
                     LIVE
-                  </Box>
-                )}
-                {is24HourProgram && (
-                  <Box
-                    sx={{
-                      position: 'absolute',
-                      top: tokens.spacing.xs,
-                      left: tokens.spacing.xs,
-                      backgroundColor: '#9c27b0',
-                      color: 'white',
-                      fontSize: '0.65rem',
-                      padding: '2px 6px',
-                      borderRadius: '4px',
-                      fontWeight: 'bold',
-                      zIndex: 5,
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: 0.5,
-                    }}
-                  >
-                    24H
                   </Box>
                 )}
                 {isWeeklyOverride && (
@@ -853,7 +796,6 @@ export const ProgramBlock: React.FC<Props> = ({
                 </Box>
               </Box>
             )}
-          </Box>
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
