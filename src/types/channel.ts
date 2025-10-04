@@ -1,5 +1,13 @@
 import { Schedule } from './schedule';
 
+export interface Category {
+  id: number;
+  name: string;
+  description?: string;
+  color?: string;
+  order?: number;
+}
+
 export interface Channel {
   id: number;
   name: string;
@@ -11,6 +19,7 @@ export interface Channel {
   is_visible?: boolean;
   background_color?: string | null;
   show_only_when_scheduled?: boolean;
+  categories?: Category[];
   created_at?: string; // opcional si tu API devuelve esto
   updated_at?: string; // opcional si tu API devuelve esto
 }

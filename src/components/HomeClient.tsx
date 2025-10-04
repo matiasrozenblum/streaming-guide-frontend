@@ -13,7 +13,7 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
-import type { ChannelWithSchedules } from '@/types/channel';
+import type { ChannelWithSchedules, Category } from '@/types/channel';
 import Header from './Header';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
@@ -29,6 +29,8 @@ interface HomeClientProps {
     holiday: boolean;
     todaySchedules: ChannelWithSchedules[];
     weekSchedules: ChannelWithSchedules[];
+    categories: Category[];
+    categoriesEnabled: boolean;
   };
 }
 
@@ -182,7 +184,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               backdropFilter: 'blur(8px)',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
           </MotionBox>
         </Container>
       </Box>

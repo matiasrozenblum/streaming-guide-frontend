@@ -5,7 +5,8 @@ import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
-import { Channel } from '@/types/channel';
+import CategoryTabs from './CategoryTabs';
+import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
@@ -20,13 +21,16 @@ import { SessionWithToken } from '@/types/session';
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
+  categories: Category[];
+  categoriesEnabled: boolean;
 }
 
-export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
+export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
 
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
@@ -99,8 +103,14 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
   const getSchedulesForChannel = (channelId: number) =>
     schedulesForDay.filter(s => s.program.channel.id === channelId);
 
-  // Filter channels based on conditional visibility
+  // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
+    // Filter by category if one is selected
+    if (selectedCategory) {
+      const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
+      if (!hasCategory) return false;
+    }
+
     // If channel should show only when scheduled, check if it has schedules for this day
     if (channel.show_only_when_scheduled) {
       return getSchedulesForChannel(channel.id).length > 0;
@@ -162,11 +172,23 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
         ))}
       </Box>
 
+      {/* Category tabs */}
+      {categoriesEnabled && (
+        <CategoryTabs
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          categories={categories}
+        />
+      )}
+
       {/* Contenedor scrollable */}
       <Box
         ref={scrollRef}
         sx={{
-          borderRadius: '12px',
+          borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
+          borderTopRightRadius: categoriesEnabled ? 0 : '12px',
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowX: 'auto',
@@ -179,6 +201,36 @@ export const ScheduleGridMobile = ({ channels, schedules }: Props) => {
           '&.dragging': {
             cursor: 'grabbing',
           },
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.2)' 
+              : 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            border: '1px solid transparent',
+            backgroundClip: 'content-box',
+            '&:hover': {
+              background: mode === 'light' 
+                ? 'rgba(0, 0, 0, 0.3)' 
+                : 'rgba(255, 255, 255, 0.3)',
+            },
+          },
+          '&::-webkit-scrollbar-corner': {
+            background: 'transparent',
+          },
+          // Firefox scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: mode === 'light' 
+            ? 'rgba(0, 0, 0, 0.2) transparent' 
+            : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>

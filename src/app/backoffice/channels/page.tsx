@@ -31,8 +31,9 @@ import {
   ArrowUpward,
   ArrowDownward,
 } from '@mui/icons-material';
-import { Channel } from '@/types/channel';
+import { Channel, Category } from '@/types/channel';
 import Image from 'next/image';
+import CategorySelector from '@/components/backoffice/CategorySelector';
 
 export default function ChannelsPage() {
   // Require session; redirect on unauth
@@ -43,6 +44,7 @@ export default function ChannelsPage() {
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
   const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+  const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
@@ -102,9 +104,11 @@ export default function ChannelsPage() {
     if (channel) {
       setEditingChannel(channel);
       setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true, background_color: channel.background_color || '', show_only_when_scheduled: channel.show_only_when_scheduled ?? false });
+      setSelectedCategories(channel.categories || []);
     } else {
       setEditingChannel(null);
       setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+      setSelectedCategories([]);
     }
     setOpenDialog(true);
   };
@@ -113,16 +117,21 @@ export default function ChannelsPage() {
     setOpenDialog(false);
     setEditingChannel(null);
     setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+    setSelectedCategories([]);
   };
 
   const handleSubmit = async () => {
     try {
       const url = editingChannel ? `/api/channels/${editingChannel.id}` : '/api/channels';
       const method = editingChannel ? 'PATCH' : 'POST';
+      const requestData = {
+        ...formData,
+        category_ids: selectedCategories.map(cat => cat.id),
+      };
       const res = await fetch(url, {
         method,
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify(requestData),
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el canal');
@@ -314,6 +323,10 @@ export default function ChannelsPage() {
                 color="primary"
               />
             </Box>
+            <CategorySelector
+              selectedCategories={selectedCategories}
+              onCategoriesChange={setSelectedCategories}
+            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ p:2 }}>
