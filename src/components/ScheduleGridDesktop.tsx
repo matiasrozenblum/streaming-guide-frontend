@@ -6,7 +6,8 @@ import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
-import { Channel } from '@/types/channel';
+import CategoryTabs from './CategoryTabs';
+import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
@@ -24,13 +25,16 @@ dayjs.extend(weekday);
 interface Props {
   channels: Channel[];
   schedules: Schedule[];
+  categories: Category[];
+  categoriesEnabled: boolean;
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
+  const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
@@ -108,8 +112,14 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
   const getSchedulesForChannel = (id: number) =>
     schedulesForDay.filter(s => s.program.channel.id === id);
 
-  // Filter channels based on conditional visibility
+  // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
+    // Filter by category if one is selected
+    if (selectedCategory) {
+      const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
+      if (!hasCategory) return false;
+    }
+
     // If channel should show only when scheduled, check if it has schedules for this day
     if (channel.show_only_when_scheduled) {
       return getSchedulesForChannel(channel.id).length > 0;
@@ -207,6 +217,15 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
         )}
       </Box>
 
+      {/* Category tabs */}
+      {categoriesEnabled && (
+        <CategoryTabs
+          selectedCategory={selectedCategory}
+          onCategoryChange={setSelectedCategory}
+          categories={categories}
+        />
+      )}
+
       {/* Grid scrollable area */}
       <Box
         ref={scrollRef}
@@ -215,7 +234,10 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
             : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
           border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          borderRadius: '12px',
+          borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
+          borderTopRightRadius: categoriesEnabled ? 0 : '12px',
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
@@ -228,6 +250,36 @@ export const ScheduleGridDesktop = ({ channels, schedules }: Props) => {
           '&.dragging': {
             cursor: 'grabbing',
           },
+          // Custom scrollbar styling
+          '&::-webkit-scrollbar': {
+            width: '8px',
+            height: '8px',
+          },
+          '&::-webkit-scrollbar-track': {
+            background: 'transparent',
+            borderRadius: '4px',
+          },
+          '&::-webkit-scrollbar-thumb': {
+            background: mode === 'light' 
+              ? 'rgba(0, 0, 0, 0.2)' 
+              : 'rgba(255, 255, 255, 0.2)',
+            borderRadius: '4px',
+            border: '1px solid transparent',
+            backgroundClip: 'content-box',
+            '&:hover': {
+              background: mode === 'light' 
+                ? 'rgba(0, 0, 0, 0.3)' 
+                : 'rgba(255, 255, 255, 0.3)',
+            },
+          },
+          '&::-webkit-scrollbar-corner': {
+            background: 'transparent',
+          },
+          // Firefox scrollbar styling
+          scrollbarWidth: 'thin',
+          scrollbarColor: mode === 'light' 
+            ? 'rgba(0, 0, 0, 0.2) transparent' 
+            : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>

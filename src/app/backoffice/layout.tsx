@@ -18,7 +18,8 @@ import {
   Movie,
   Mic,
   CalendarMonth,
-  BarChart
+  BarChart,
+  Category as CategoryIcon
 } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
 import UserMenu from '@/components/UserMenu';
@@ -50,6 +51,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
   const menuItems = [
     { text: 'Dashboard', icon: <Dashboard />, path: '/backoffice' },
     { text: 'Canales',   icon: <LiveTv />,     path: '/backoffice/channels' },
+    { text: 'Categorías', icon: <CategoryIcon />, path: '/backoffice/categories' },
     { text: 'Programas',  icon: <Movie />,   path: '/backoffice/programs' },
     { text: 'Panelistas', icon: <Mic />,     path: '/backoffice/panelists' },
     { text: 'Horarios',   icon: <Schedule />,   path: '/backoffice/schedules' },
