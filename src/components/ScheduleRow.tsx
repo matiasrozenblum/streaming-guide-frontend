@@ -11,8 +11,8 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 // Removed LiveStream import - no longer needed
 
-// Helper function to split 24-hour programs into 4 blocks of 6 hours each
-const split24HourProgram = (program: Program): Program[] => {
+// Helper function to split long programs into smaller blocks for better visibility
+const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
   const parseTime = (timeStr: string) => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
@@ -28,14 +28,19 @@ const split24HourProgram = (program: Program): Program[] => {
   const endMinutes = parseTime(program.end_time);
   const duration = endMinutes - startMinutes;
   
-  // Check if this is a 24-hour program (1440 minutes = 24 hours)
-  if (duration >= 1440) {
+  // Define thresholds and max block duration based on device
+  const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
+  const maxBlockDuration = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
+  
+  // Check if program needs to be split
+  if (duration > threshold) {
     const blocks: Program[] = [];
-    const blockDuration = 360; // 6 hours in minutes
+    const numBlocks = Math.ceil(duration / maxBlockDuration);
+    const actualBlockDuration = Math.ceil(duration / numBlocks);
     
-    for (let i = 0; i < 4; i++) {
-      const blockStart = startMinutes + (i * blockDuration);
-      const blockEnd = Math.min(blockStart + blockDuration, endMinutes);
+    for (let i = 0; i < numBlocks; i++) {
+      const blockStart = startMinutes + (i * actualBlockDuration);
+      const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
       
       blocks.push({
         ...program,
@@ -48,7 +53,7 @@ const split24HourProgram = (program: Program): Program[] => {
     return blocks;
   }
   
-  return [program]; // Return original program if not 24-hour
+  return [program]; // Return original program if doesn't need splitting
 };
 
 interface Program {
@@ -241,7 +246,7 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.flatMap(split24HourProgram).map((p) => {
+          {programs.flatMap(p => splitLongProgram(p, isMobile)).map((p) => {
             // Get live status from context using schedule ID
             const currentLiveStatus = liveStatus[p.scheduleId];
             // Always prioritize program's is_live field if it's explicitly set
