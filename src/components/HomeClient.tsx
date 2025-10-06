@@ -97,7 +97,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           params.deviceId = currentDeviceId;
         }
 
-        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', {
           params
         });
         if (!isMounted) return;
