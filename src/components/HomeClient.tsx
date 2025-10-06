@@ -92,7 +92,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const updateLiveStatuses = async () => {
       const currentDeviceId = deviceId;
       try {
-        const params: { live_status: boolean; deviceId?: string } = { live_status: false }; // Temporarily disable live status for performance
+        const params: { live_status: boolean; deviceId?: string } = { live_status: true }; // Re-enabled with optimized backend
         if (currentDeviceId) {
           params.deviceId = currentDeviceId;
         }
