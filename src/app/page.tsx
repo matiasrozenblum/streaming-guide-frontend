@@ -17,16 +17,16 @@ async function getInitialData(): Promise<InitialData> {
       next: { revalidate: 3600 }
     }).then(res => res.json());
 
-    // Use new optimized endpoints
+    // Use new optimized endpoints (temporarily disable live status for performance)
     const todayPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/today?live_status=true`,
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/today?live_status=false`,
       {
         next: { revalidate: 300 }
       }
     ).then(res => res.json());
 
     const weekPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?live_status=true`,
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?live_status=false`,
       {
         next: { revalidate: 300 }
       }

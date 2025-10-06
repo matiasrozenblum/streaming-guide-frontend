@@ -13,7 +13,7 @@ export default function SmartLiveStatusPoller({ deviceId }: { deviceId: string }
 
   const updateLiveStatuses = useCallback(async () => {
     try {
-      const params: { live_status: boolean; deviceId?: string } = { live_status: true };
+      const params: { live_status: boolean; deviceId?: string } = { live_status: false }; // Temporarily disable live status for performance
       if (deviceId) {
         params.deviceId = deviceId;
       }
