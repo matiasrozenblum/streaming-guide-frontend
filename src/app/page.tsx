@@ -1,8 +1,6 @@
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
-import { getBuenosAiresDayOfWeek } from '@/utils/date';
-import { Schedule } from '@/types/schedule';
 
 interface InitialData {
   holiday: boolean;
@@ -19,8 +17,16 @@ async function getInitialData(): Promise<InitialData> {
       next: { revalidate: 3600 }
     }).then(res => res.json());
 
+    // Use new optimized endpoints
+    const todayPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/today?live_status=true`,
+      {
+        next: { revalidate: 300 }
+      }
+    ).then(res => res.json());
+
     const weekPromise = fetch(
-      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules?live_status=true`,
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?live_status=true`,
       {
         next: { revalidate: 300 }
       }
@@ -40,24 +46,17 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.text()); // Config endpoint returns plain text
 
-    const [holidayData, weekSchedules, categories, categoriesEnabledData] = await Promise.all([
+    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData] = await Promise.all([
       holidayPromise,
+      todayPromise,
       weekPromise,
       categoriesPromise,
       categoriesEnabledPromise,
     ]);
 
-    const today = getBuenosAiresDayOfWeek();
-    const todaySchedules = Array.isArray(weekSchedules)
-      ? weekSchedules.map((channel: ChannelWithSchedules) => ({
-          ...channel,
-          schedules: channel.schedules.filter((schedule: Schedule) => schedule.day_of_week.toLowerCase() === today.toLowerCase()),
-        })).filter((channel: ChannelWithSchedules) => channel.schedules.length > 0)
-      : [];
-
     return {
       holiday: !!holidayData.holiday,
-      todaySchedules,
+      todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
       categoriesEnabled: categoriesEnabledData === 'true',

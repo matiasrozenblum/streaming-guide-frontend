@@ -18,7 +18,7 @@ export default function SmartLiveStatusPoller({ deviceId }: { deviceId: string }
         params.deviceId = deviceId;
       }
 
-      const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+      const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', {
         params
       });
 
