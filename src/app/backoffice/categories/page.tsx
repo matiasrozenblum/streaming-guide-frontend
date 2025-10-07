@@ -78,7 +78,7 @@ export default function CategoriesPage() {
 
   const fetchCategories = async () => {
     try {
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories/admin');
       if (!response.ok) throw new Error('Failed to fetch categories');
       const data = await response.json();
       // Sort by order field
