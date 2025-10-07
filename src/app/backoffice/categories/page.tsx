@@ -23,11 +23,14 @@ import {
   Alert,
   Snackbar,
   Chip,
+  Switch,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
+  ArrowBack,
+  ArrowForward,
 } from '@mui/icons-material';
 import { Category } from '@/types/category';
 
@@ -62,10 +65,12 @@ export default function CategoriesPage() {
   const [formData, setFormData] = useState({ 
     name: '', 
     description: '', 
-    color: '#2196f3' 
+    color: '#2196f3',
+    is_visible: true
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') fetchCategories();
@@ -76,12 +81,46 @@ export default function CategoriesPage() {
       const response = await fetch('/api/categories');
       if (!response.ok) throw new Error('Failed to fetch categories');
       const data = await response.json();
-      setCategories(data);
+      // Sort by order field
+      setCategories(data.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)));
     } catch (err: unknown) {
       console.error('Error fetching categories:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar las categorías');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleMoveLeft = (index: number) => {
+    if (index === 0) return;
+    const arr = [...categories];
+    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+    setCategories(arr);
+  };
+
+  const handleMoveRight = (index: number) => {
+    if (index === categories.length - 1) return;
+    const arr = [...categories];
+    [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+    setCategories(arr);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      setSavingOrder(true);
+      const ids = categories.map(c => c.id);
+      const res = await fetch('/api/categories/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) throw new Error('Error al guardar el orden');
+      setSuccess('Orden guardado correctamente');
+    } catch (err: unknown) {
+      console.error('Error saving order:', err);
+      setError(err instanceof Error ? err.message : 'Error al guardar el orden');
+    } finally {
+      setSavingOrder(false);
     }
   };
 
@@ -91,11 +130,12 @@ export default function CategoriesPage() {
       setFormData({ 
         name: category.name, 
         description: category.description || '', 
-        color: category.color || '#2196f3' 
+        color: category.color || '#2196f3',
+        is_visible: category.is_visible ?? true
       });
     } else {
       setEditingCategory(null);
-      setFormData({ name: '', description: '', color: '#2196f3' });
+      setFormData({ name: '', description: '', color: '#2196f3', is_visible: true });
     }
     setOpenDialog(true);
   };
@@ -103,7 +143,7 @@ export default function CategoriesPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingCategory(null);
-    setFormData({ name: '', description: '', color: '#2196f3' });
+    setFormData({ name: '', description: '', color: '#2196f3', is_visible: true });
   };
 
   const handleSubmit = async () => {
@@ -159,25 +199,58 @@ export default function CategoriesPage() {
     <Box>
       <Box display="flex" justifyContent="space-between" alignItems="center" mb={3}>
         <Typography variant="h4" color="text.primary">Categorías</Typography>
-        <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
-          Nueva Categoría
-        </Button>
+        <Box display="flex" gap={2}>
+          <Button 
+            variant="outlined" 
+            onClick={handleSaveOrder}
+            disabled={savingOrder}
+            startIcon={savingOrder ? <CircularProgress size={16} /> : null}
+          >
+            {savingOrder ? 'Guardando...' : 'Guardar Orden'}
+          </Button>
+          <Button variant="contained" startIcon={<AddIcon />} onClick={() => handleOpenDialog()}>
+            Nueva Categoría
+          </Button>
+        </Box>
       </Box>
 
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Orden</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Descripción</TableCell>
               <TableCell>Color</TableCell>
+              <TableCell>Visible</TableCell>
               <TableCell>Canales</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
           <TableBody>
-            {categories.map((category) => (
+            {categories.map((category, index) => (
               <TableRow key={category.id}>
+                <TableCell>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveLeft(index)}
+                      disabled={index === 0}
+                    >
+                      <ArrowBack />
+                    </IconButton>
+                    <Typography variant="body2" fontWeight="medium">
+                      {index + 1}
+                    </Typography>
+                    <IconButton 
+                      size="small" 
+                      onClick={() => handleMoveRight(index)}
+                      disabled={index === categories.length - 1}
+                    >
+                      <ArrowForward />
+                    </IconButton>
+                  </Box>
+                </TableCell>
                 <TableCell>
                   <Typography variant="subtitle1" fontWeight="medium">
                     {category.name}
@@ -202,6 +275,26 @@ export default function CategoriesPage() {
                       {category.color || '#2196f3'}
                     </Typography>
                   </Box>
+                </TableCell>
+                <TableCell>
+                  <Switch
+                    checked={category.is_visible ?? true}
+                    onChange={async (e) => {
+                      try {
+                        const res = await fetch(`/api/categories/${category.id}`, {
+                          method: 'PATCH',
+                          headers: { 'Content-Type': 'application/json' },
+                          body: JSON.stringify({ is_visible: e.target.checked }),
+                        });
+                        if (!res.ok) throw new Error('Error al actualizar visibilidad');
+                        await fetchCategories();
+                        setSuccess('Visibilidad actualizada correctamente');
+                      } catch (err: unknown) {
+                        console.error('Error updating visibility:', err);
+                        setError(err instanceof Error ? err.message : 'Error al actualizar visibilidad');
+                      }
+                    }}
+                  />
                 </TableCell>
                 <TableCell>
                   <Chip
@@ -246,6 +339,16 @@ export default function CategoriesPage() {
               multiline
               rows={3}
             />
+            
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography variant="subtitle2">
+                Visible en la interfaz
+              </Typography>
+              <Switch
+                checked={formData.is_visible}
+                onChange={e => setFormData({ ...formData, is_visible: e.target.checked })}
+              />
+            </Box>
             
             <Box>
               <Typography variant="subtitle2" gutterBottom>
