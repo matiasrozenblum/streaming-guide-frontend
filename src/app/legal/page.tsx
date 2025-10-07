@@ -4,7 +4,6 @@ export const dynamic = 'force-dynamic';
 import { ChannelWithSchedules, Category } from '@/types/channel';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
-import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
 interface InitialData {
   holiday: boolean;
@@ -15,9 +14,6 @@ interface InitialData {
 }
 
 export default async function Page() {
-  // Get today's day of week using Buenos Aires time
-  const today = getBuenosAiresDayOfWeek();
-
   const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
 
   // Fetch today's schedules, week's schedules, categories, and categories enabled status in parallel
@@ -29,11 +25,11 @@ export default async function Page() {
   try {
     const [todayRes, weekRes, categoriesRes, categoriesEnabledRes] = await Promise.all([
       fetch(
-        `${url}/channels/with-schedules?day=${today}`,
+        `${url}/channels/with-schedules/today`,
         { next: { revalidate: 60 } }
       ),
       fetch(
-        `${url}/channels/with-schedules`,
+        `${url}/channels/with-schedules/week`,
         { next: { revalidate: 60 } }
       ),
       fetch(
