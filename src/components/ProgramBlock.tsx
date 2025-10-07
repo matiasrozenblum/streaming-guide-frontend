@@ -615,10 +615,10 @@ export const ProgramBlock: React.FC<Props> = ({
             }}
             height="100%"
             sx={overrideStyle ? overrideStyle.sx : {
-              backgroundColor: isPast
-                ? alpha(color, 0.05)
-                : isLive
-                  ? alpha(color, 0.3)
+              backgroundColor: isLive
+                ? alpha(color, 0.3)
+                : isPast
+                  ? alpha(color, 0.05)
                   : alpha(color, 0.15),
               border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
               borderRadius: tokens.borderRadius.sm,
@@ -627,10 +627,10 @@ export const ProgramBlock: React.FC<Props> = ({
               overflow: 'hidden',
               boxShadow: tokens.boxShadow.sm,
               '&:hover': {
-                backgroundColor: isPast
-                  ? alpha(color, mode === 'light' ? 0.36 : 0.28)
-                  : isLive
-                    ? alpha(color, mode === 'light' ? 0.38 : 0.48)
+                backgroundColor: isLive
+                  ? alpha(color, mode === 'light' ? 0.38 : 0.48)
+                  : isPast
+                    ? alpha(color, mode === 'light' ? 0.36 : 0.28)
                     : alpha(color, mode === 'light' ? 0.22 : 0.28),
                 transform: 'scale(1.01)',
               },
