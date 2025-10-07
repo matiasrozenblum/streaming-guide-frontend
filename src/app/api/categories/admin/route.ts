@@ -1,18 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { requireAccessToken } from '@/utils/auth-server';
+import { NextResponse } from 'next/server';
+import { getServerSession } from 'next-auth';
+import { authOptions } from '@/lib/auth';
+
+const BACKEND_URL = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-backend-production.up.railway.app';
 
 export async function GET() {
   try {
-    const token = await requireAccessToken(new NextRequest('http://localhost'));
-
-    if (!token) {
+    const session = await getServerSession(authOptions);
+    if (!session || session.user.role !== 'admin') {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/categories/admin`, {
+    const response = await fetch(`${BACKEND_URL}/categories/admin`, {
       headers: {
         'Content-Type': 'application/json',
-        'Authorization': `Bearer ${token}`,
+        'Authorization': `Bearer ${session.accessToken}`,
       },
     });
 
