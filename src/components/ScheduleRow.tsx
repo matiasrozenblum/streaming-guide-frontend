@@ -47,6 +47,8 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
         id: `${program.id}-block-${i}`, // Unique ID for each block
         start_time: formatTime(blockStart),
         end_time: formatTime(blockEnd),
+        // Preserve the original program's live status for all blocks
+        is_live: program.is_live,
       });
     }
     
