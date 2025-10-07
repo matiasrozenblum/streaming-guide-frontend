@@ -13,12 +13,12 @@ export default function SmartLiveStatusPoller({ deviceId }: { deviceId: string }
 
   const updateLiveStatuses = useCallback(async () => {
     try {
-      const params: { live_status: boolean; deviceId?: string } = { live_status: true };
+      const params: { live_status: boolean; deviceId?: string } = { live_status: true }; // Re-enabled with optimized backend
       if (deviceId) {
         params.deviceId = deviceId;
       }
 
-      const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', {
+      const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', {
         params
       });
 

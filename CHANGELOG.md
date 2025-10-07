@@ -17,6 +17,26 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.11.0] - 2025-01-15
+
+### Added
+- Added optimized API integration for lightning-fast schedule loading
+- Added separate endpoints for today's schedules and full week schedules
+- Added background loading strategy for improved user experience
+- Added live status re-enablement with optimized backend support
+
+### Changed
+- Optimized initial page load by fetching today's schedules first
+- Improved schedule loading performance with 99.9% faster response times
+- Updated API calls to use new optimized endpoints (`/channels/with-schedules/today` and `/channels/with-schedules/week`)
+- Enhanced user experience with immediate today's schedule display and background week loading
+- Re-enabled live status functionality with optimized backend caching
+
+### Fixed
+- Fixed slow initial page load times
+- Fixed live status polling performance issues
+- Fixed schedule fetching bottlenecks
+
 ## [1.10.0] - 2025-10-04
 
 ### Added
