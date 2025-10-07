@@ -116,6 +116,8 @@ export default function CategoriesPage() {
       });
       if (!res.ok) throw new Error('Error al guardar el orden');
       setSuccess('Orden guardado correctamente');
+      // Refetch categories to show the updated order
+      await fetchCategories();
     } catch (err: unknown) {
       console.error('Error saving order:', err);
       setError(err instanceof Error ? err.message : 'Error al guardar el orden');
