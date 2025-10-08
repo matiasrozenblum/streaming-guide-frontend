@@ -15,18 +15,15 @@ export default function LiveStatusListener() {
         eventSourceRef.current = eventSource;
 
         eventSource.onopen = () => {
-          console.log('🔌 SSE connection opened successfully');
         };
 
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            console.log('🔔 SSE Event received:', data);
             
             // Handle different types of events
             if (data.type === 'live_status_changed') {
               // Live status events - trigger live status refresh
-              console.log('📡 Dispatching liveStatusRefresh event');
               const refreshEvent = new CustomEvent('liveStatusRefresh', {
                 detail: data
               });
@@ -40,26 +37,23 @@ export default function LiveStatusListener() {
                       data.type === 'channel_deleted' ||
                       data.type === 'channels_reordered') {
               // Category/Channel events - trigger page refresh
-              console.log(`🔄 Received ${data.type} event, dispatching pageRefresh...`);
               const refreshEvent = new CustomEvent('pageRefresh', {
                 detail: data
               });
               window.dispatchEvent(refreshEvent);
             } else {
               // Other events - trigger live status refresh as fallback
-              console.log('📡 Dispatching liveStatusRefresh event (fallback)');
               const refreshEvent = new CustomEvent('liveStatusRefresh', {
                 detail: data
               });
               window.dispatchEvent(refreshEvent);
             }
-          } catch (error) {
-            console.error('❌ Error parsing SSE event:', error);
+          } catch {
+            // Silently handle JSON parse errors
           }
         };
 
-        eventSource.onerror = (error) => {
-          console.error('❌ SSE connection error:', error);
+        eventSource.onerror = () => {
           eventSource.close();
           // Reconnect after 5 seconds
           setTimeout(connectSSE, 5000);
