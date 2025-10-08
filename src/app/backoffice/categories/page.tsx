@@ -83,6 +83,7 @@ export default function CategoriesPage() {
     const handlePageRefresh = (event: CustomEvent) => {
       console.log('🔄 Categories page received refresh event:', event.detail);
       if (event.detail?.type?.includes('category')) {
+        console.log('🔄 Categories page: Refreshing categories data...');
         fetchCategories();
       }
     };
