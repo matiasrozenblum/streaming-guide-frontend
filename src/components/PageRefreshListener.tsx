@@ -10,7 +10,7 @@ export default function PageRefreshListener() {
     // Only create event listener in browser
     if (typeof window === 'undefined') return;
 
-    const handlePageRefresh = (event: CustomEvent) => {
+    const handlePageRefresh = () => {
       // Use Next.js router to refresh the current page
       // This will trigger a re-fetch of server components and update the UI
       router.refresh();
