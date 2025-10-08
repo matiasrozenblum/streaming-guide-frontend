@@ -76,6 +76,24 @@ export default function CategoriesPage() {
     if (status === 'authenticated') fetchCategories();
   }, [status]);
 
+  // Listen for SSE events to refresh categories automatically
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+
+    const handlePageRefresh = (event: CustomEvent) => {
+      console.log('🔄 Categories page received refresh event:', event.detail);
+      if (event.detail?.type?.includes('category')) {
+        fetchCategories();
+      }
+    };
+
+    window.addEventListener('pageRefresh', handlePageRefresh as EventListener);
+
+    return () => {
+      window.removeEventListener('pageRefresh', handlePageRefresh as EventListener);
+    };
+  }, []);
+
   const fetchCategories = async () => {
     try {
       const response = await fetch('/api/categories/admin');

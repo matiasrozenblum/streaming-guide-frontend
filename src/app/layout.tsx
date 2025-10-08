@@ -18,6 +18,7 @@ import {
 } from '@/components/ConditionalTrackingLoader';
 import PageviewTracker from '@/components/PageviewTracker';
 import LiveStatusListener from '@/components/LiveStatusListener';
+import PageRefreshListener from '@/components/PageRefreshListener';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
 
@@ -73,6 +74,7 @@ export default function RootLayout({
                     </div>
                     <YouTubeGlobalPlayer />
                     <LiveStatusListener />
+                    <PageRefreshListener />
                     <SpeedInsights />
                     <Analytics />
                   </YouTubePlayerProvider>
