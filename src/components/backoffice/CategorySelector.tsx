@@ -41,7 +41,7 @@ export default function CategorySelector({ selectedCategories, onCategoriesChang
   const fetchCategories = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/categories');
+      const response = await fetch('/api/categories/admin');
       if (!response.ok) throw new Error('Failed to fetch categories');
       const data = await response.json();
       setCategories(data);
