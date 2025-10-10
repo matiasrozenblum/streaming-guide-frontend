@@ -17,7 +17,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.11.0] - 2025-01-15
+## [1.12.0] - 2025-10-08
+
+### Added
+- Now categories can be hidden and reordered individually
+- Long programs are now split into smaller program blocks for improved visibility
+
+### Fixed
+- Fixed the frontend not listening SSE events from the backend
+
+## [1.11.0] - 2025-10-06
 
 ### Added
 - Added optimized API integration for lightning-fast schedule loading

@@ -11,6 +11,53 @@ import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
 // Removed LiveStream import - no longer needed
 
+// Helper function to split long programs into smaller blocks for better visibility
+const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
+  const parseTime = (timeStr: string) => {
+    const [hours, minutes] = timeStr.split(':').map(Number);
+    return hours * 60 + minutes;
+  };
+  
+  const formatTime = (minutes: number) => {
+    const hours = Math.floor(minutes / 60);
+    const mins = minutes % 60;
+    return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
+  };
+  
+  const startMinutes = parseTime(program.start_time);
+  const endMinutes = parseTime(program.end_time);
+  const duration = endMinutes - startMinutes;
+  
+  // Define thresholds and max block duration based on device
+  const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
+  const maxBlockDuration = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
+  
+  // Check if program needs to be split
+  if (duration > threshold) {
+    const blocks: Program[] = [];
+    const numBlocks = Math.ceil(duration / maxBlockDuration);
+    const actualBlockDuration = Math.ceil(duration / numBlocks);
+    
+    for (let i = 0; i < numBlocks; i++) {
+      const blockStart = startMinutes + (i * actualBlockDuration);
+      const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
+      
+      blocks.push({
+        ...program,
+        id: `${program.id}-block-${i}`, // Unique ID for each block
+        start_time: formatTime(blockStart),
+        end_time: formatTime(blockEnd),
+        // Preserve the original program's live status for all blocks
+        is_live: program.is_live,
+      });
+    }
+    
+    return blocks;
+  }
+  
+  return [program]; // Return original program if doesn't need splitting
+};
+
 interface Program {
   id: string; // program ID
   scheduleId: string; // schedule ID for live status lookup
@@ -201,7 +248,7 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.map((p) => {
+          {programs.flatMap(p => splitLongProgram(p, isMobile)).map((p) => {
             // Get live status from context using schedule ID
             const currentLiveStatus = liveStatus[p.scheduleId];
             // Always prioritize program's is_live field if it's explicitly set

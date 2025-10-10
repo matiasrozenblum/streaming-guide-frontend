@@ -20,11 +20,34 @@ export default function LiveStatusListener() {
         eventSource.onmessage = (event) => {
           try {
             const data = JSON.parse(event.data);
-            // On any event, trigger a refresh
-            const refreshEvent = new CustomEvent('liveStatusRefresh', {
-              detail: data
-            });
-            window.dispatchEvent(refreshEvent);
+            
+            // Handle different types of events
+            if (data.type === 'live_status_changed') {
+              // Live status events - trigger live status refresh
+              const refreshEvent = new CustomEvent('liveStatusRefresh', {
+                detail: data
+              });
+              window.dispatchEvent(refreshEvent);
+            } else if (data.type === 'category_created' || 
+                      data.type === 'category_updated' || 
+                      data.type === 'category_deleted' ||
+                      data.type === 'categories_reordered' ||
+                      data.type === 'channel_created' || 
+                      data.type === 'channel_updated' || 
+                      data.type === 'channel_deleted' ||
+                      data.type === 'channels_reordered') {
+              // Category/Channel events - trigger page refresh
+              const refreshEvent = new CustomEvent('pageRefresh', {
+                detail: data
+              });
+              window.dispatchEvent(refreshEvent);
+            } else {
+              // Other events - trigger live status refresh as fallback
+              const refreshEvent = new CustomEvent('liveStatusRefresh', {
+                detail: data
+              });
+              window.dispatchEvent(refreshEvent);
+            }
           } catch {
             // Silently handle JSON parse errors
           }
