@@ -35,10 +35,9 @@ import {
 } from '@mui/material';
 import { BarChart } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
 import dayjs, { Dayjs } from 'dayjs';
+import 'dayjs/locale/es';
+import { DateRangePicker } from '@/components/common/DateTimePickers';
 
 interface UserDemographics {
   totalUsers: number;
@@ -1195,20 +1194,24 @@ export default function StatisticsPage() {
 
         {/* Resumen General */}
         <TabPanel value={mainTab} index={0}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
-              <DatePicker label="Desde" value={generalFrom} onChange={v => setGeneralFrom(v!)} />
-              <DatePicker label="Hasta" value={generalTo} onChange={v => setGeneralTo(v!)} />
-              <Button 
-                variant="contained" 
-                onClick={fetchGeneralData}
-                disabled={loading}
-                sx={{ ml: 2 }}
-              >
-                Actualizar
-              </Button>
-            </Box>
-          </LocalizationProvider>
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+            <DateRangePicker
+              startLabel="Desde"
+              endLabel="Hasta"
+              startValue={generalFrom}
+              endValue={generalTo}
+              onStartChange={(v) => setGeneralFrom(v!)}
+              onEndChange={(v) => setGeneralTo(v!)}
+            />
+            <Button 
+              variant="contained" 
+              onClick={fetchGeneralData}
+              disabled={loading}
+              sx={{ ml: 2 }}
+            >
+              Actualizar
+            </Button>
+          </Box>
           {demographics && demographics.byGender && demographics.byAgeGroup && 
            typeof demographics.byGender === 'object' && 
            typeof demographics.byAgeGroup === 'object' ? (
@@ -1299,10 +1302,16 @@ export default function StatisticsPage() {
 
         {/* Programas Más Populares */}
         <TabPanel value={mainTab} index={1}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-              <DatePicker label="Desde" value={channelTabFrom} onChange={v => setChannelTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
-              <DatePicker label="Hasta" value={channelTabTo} onChange={v => setChannelTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+          <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+            <DateRangePicker
+              startLabel="Desde"
+              endLabel="Hasta"
+              startValue={channelTabFrom}
+              endValue={channelTabTo}
+              onStartChange={(v) => setChannelTabFrom(v!)}
+              onEndChange={(v) => setChannelTabTo(v!)}
+              size="small"
+            />
               {/* Channel Multi-select */}
               <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="channel-label" shrink>Canal</InputLabel>
@@ -1436,7 +1445,6 @@ export default function StatisticsPage() {
                 </Select>
               </FormControl>
             </Box>
-          </LocalizationProvider>
           {/* Top 5 Channels by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
@@ -1480,10 +1488,16 @@ export default function StatisticsPage() {
 
         {/* Análisis por Programa */}
         <TabPanel value={mainTab} index={2}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
-              <DatePicker label="Desde" value={programTabFrom} onChange={v => setProgramTabFrom(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
-              <DatePicker label="Hasta" value={programTabTo} onChange={v => setProgramTabTo(v!)} slotProps={{ textField: { size: 'small', sx: { minWidth: 140, maxWidth: 180 } } }} />
+          <Box sx={{ display: 'flex', gap: 1, mb: 3, alignItems: 'center', flexWrap: 'wrap' }}>
+            <DateRangePicker
+              startLabel="Desde"
+              endLabel="Hasta"
+              startValue={programTabFrom}
+              endValue={programTabTo}
+              onStartChange={(v) => setProgramTabFrom(v!)}
+              onEndChange={(v) => setProgramTabTo(v!)}
+              size="small"
+            />
               {/* Program Multi-select */}
               <FormControl sx={{ minWidth: 200, maxWidth: 240 }} size="small" variant="outlined">
                 <InputLabel id="program-label" shrink>Programa</InputLabel>
@@ -1614,7 +1628,6 @@ export default function StatisticsPage() {
                 </Select>
               </FormControl>
             </Box>
-          </LocalizationProvider>
           {/* Top 5 Programs by Subscriptions/Clicks (grouped) */}
           <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
             <StackedHorizontalBarChart
@@ -1662,16 +1675,20 @@ export default function StatisticsPage() {
 
         {/* Reportes */}
         <TabPanel value={mainTab} index={3}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
-              <DatePicker label="Desde" value={listTabFrom} onChange={v => setListTabFrom(v!)} />
-              <DatePicker label="Hasta" value={listTabTo} onChange={v => setListTabTo(v!)} />
+          <Box sx={{ display: 'flex', gap: 2, mb: 3 }}>
+            <DateRangePicker
+              startLabel="Desde"
+              endLabel="Hasta"
+              startValue={listTabFrom}
+              endValue={listTabTo}
+              onStartChange={(v) => setListTabFrom(v!)}
+              onEndChange={(v) => setListTabTo(v!)}
+            />
               <Box sx={{ flex: 1 }} />
               <Button onClick={() => handleMultiReportEmail(emailToSend, { pdf: false, csvUsers: true, csvSubs: true }, undefined)}>Descargar CSVs</Button>
               <Button onClick={() => handleMultiReportEmail(emailToSend, { pdf: true, csvUsers: false, csvSubs: false }, undefined)}>Descargar PDF</Button>
               <Button onClick={() => handleEmail()}>Enviar por Email</Button>
             </Box>
-          </LocalizationProvider>
           {/* Users Table */}
           <Typography color="text.primary" variant="h6" sx={{ mt: 2, mb: 1 }}>Listado de Usuarios Nuevos</Typography>
           <TableContainer component={Paper}>
@@ -1740,12 +1757,16 @@ export default function StatisticsPage() {
 
         {/* Reportes Completos */}
         <TabPanel value={mainTab} index={4}>
-          <LocalizationProvider dateAdapter={AdapterDayjs}>
-            <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
-              <DatePicker label="Desde" value={generalFrom} onChange={v => setGeneralFrom(v!)} />
-              <DatePicker label="Hasta" value={generalTo} onChange={v => setGeneralTo(v!)} />
-            </Box>
-          </LocalizationProvider>
+          <Box sx={{ display: 'flex', gap: 2, mb: 3, alignItems: 'center' }}>
+            <DateRangePicker
+              startLabel="Desde"
+              endLabel="Hasta"
+              startValue={generalFrom}
+              endValue={generalTo}
+              onStartChange={(v) => setGeneralFrom(v!)}
+              onEndChange={(v) => setGeneralTo(v!)}
+            />
+          </Box>
           
           <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Generación de Reportes</Typography>
           <Box sx={{ mb: 4 }}>
@@ -1767,22 +1788,15 @@ export default function StatisticsPage() {
                     <Typography variant="body2" color="text.secondary" sx={{ mb: 1 }}>
                       Fechas personalizadas:
                     </Typography>
-                    <LocalizationProvider dateAdapter={AdapterDayjs}>
-                      <Box sx={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-                        <DatePicker 
-                          label="Desde" 
-                          value={reportFrom} 
-                          onChange={handleReportFromChange} 
-                          sx={{ minWidth: 150 }}
-                        />
-                        <DatePicker 
-                          label="Hasta" 
-                          value={reportTo} 
-                          onChange={handleReportToChange} 
-                          sx={{ minWidth: 150 }}
-                        />
-                      </Box>
-                    </LocalizationProvider>
+                    <DateRangePicker
+                      startLabel="Desde"
+                      endLabel="Hasta"
+                      startValue={reportFrom}
+                      endValue={reportTo}
+                      onStartChange={handleReportFromChange}
+                      onEndChange={handleReportToChange}
+                      size="small"
+                    />
                   </Box>
 
                   {/* Quick Period Buttons */}

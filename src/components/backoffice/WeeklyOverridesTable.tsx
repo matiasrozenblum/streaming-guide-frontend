@@ -54,6 +54,7 @@ import type { WeeklyOverride } from '@/types/schedule';
 import type { Program } from '@/types/program';
 import type { Panelist } from '@/types/panelist';
 import { useTheme } from '@mui/material/styles';
+import { TimeRangePicker } from '@/components/common/DateTimePickers';
 
 // Types
 interface WeeklyStats {
@@ -1444,26 +1445,16 @@ export function WeeklyOverridesTable() {
 
             {formData.overrideType !== 'cancel' && (
               <>
-                <Box sx={{ display: 'flex', gap: 2 }}>
-                  <TextField
-                    label="Nueva hora de inicio"
-                    type="time"
-                    value={formData.newStartTime}
-                    onChange={(e) => setFormData({ ...formData, newStartTime: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                    required
-                  />
-                  <TextField
-                    label="Nueva hora de fin"
-                    type="time"
-                    value={formData.newEndTime}
-                    onChange={(e) => setFormData({ ...formData, newEndTime: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                    required
-                  />
-                </Box>
+                <TimeRangePicker
+                  startLabel="Nueva hora de inicio"
+                  endLabel="Nueva hora de fin"
+                  startValue={formData.newStartTime}
+                  endValue={formData.newEndTime}
+                  onStartChange={(value) => setFormData({ ...formData, newStartTime: value })}
+                  onEndChange={(value) => setFormData({ ...formData, newEndTime: value })}
+                  required
+                  fullWidth
+                />
 
                 {formData.overrideType === 'reschedule' && (
                   <FormControl fullWidth>
