@@ -110,6 +110,25 @@ export const StandardTimePicker: React.FC<StandardTimePickerProps> = ({
               shrink: true,
             },
           },
+          popper: {
+            sx: {
+              '& .MuiPaper-root': {
+                margin: 0,
+                minWidth: 'auto',
+                marginLeft: 0,
+                marginRight: 0,
+              },
+              '& .MuiTimePickerToolbar-root': {
+                paddingLeft: 0,
+                paddingRight: 0,
+              },
+              '& .MuiTimePicker-root': {
+                paddingLeft: 0,
+                paddingRight: 0,
+              },
+            },
+            placement: 'bottom-start',
+          },
         }}
       />
     </LocalizationProvider>

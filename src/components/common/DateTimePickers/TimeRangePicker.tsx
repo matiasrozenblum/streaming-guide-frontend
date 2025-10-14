@@ -93,31 +93,40 @@ export const TimeRangePicker: React.FC<TimeRangePickerProps> = ({
   const showHelperText = externalHelperText || internalHelperText;
 
   return (
-    <Box sx={{ display: 'flex', gap, width: fullWidth ? '100%' : 'auto' }}>
-      <StandardTimePicker
-        label={startLabel}
-        value={startValue}
-        onChange={onStartChange}
-        error={showError}
-        helperText={showError && showHelperText ? showHelperText : undefined}
-        required={required}
-        disabled={disabled}
-        fullWidth={fullWidth}
-        size={size}
-        maxTime={endValue || undefined}
-      />
-      <StandardTimePicker
-        label={endLabel}
-        value={endValue}
-        onChange={onEndChange}
-        error={showError}
-        helperText={showError && showHelperText ? ' ' : undefined} // Space to maintain alignment
-        required={required}
-        disabled={disabled}
-        fullWidth={fullWidth}
-        size={size}
-        minTime={startValue || undefined}
-      />
+    <Box sx={{ 
+      display: 'flex', 
+      gap, 
+      width: fullWidth ? '100%' : 'auto',
+      alignItems: 'flex-start', // Align items to top to prevent height misalignment
+    }}>
+      <Box sx={{ flex: 1, minWidth: 0 }}> {/* Ensure equal flex distribution */}
+        <StandardTimePicker
+          label={startLabel}
+          value={startValue}
+          onChange={onStartChange}
+          error={showError}
+          helperText={showError && showHelperText ? showHelperText : undefined}
+          required={required}
+          disabled={disabled}
+          fullWidth={true} // Always full width within flex container
+          size={size}
+          maxTime={endValue || undefined}
+        />
+      </Box>
+      <Box sx={{ flex: 1, minWidth: 0 }}> {/* Ensure equal flex distribution */}
+        <StandardTimePicker
+          label={endLabel}
+          value={endValue}
+          onChange={onEndChange}
+          error={showError}
+          helperText={showError && showHelperText ? ' ' : undefined} // Space to maintain alignment
+          required={required}
+          disabled={disabled}
+          fullWidth={true} // Always full width within flex container
+          size={size}
+          minTime={startValue || undefined}
+        />
+      </Box>
     </Box>
   );
 };
