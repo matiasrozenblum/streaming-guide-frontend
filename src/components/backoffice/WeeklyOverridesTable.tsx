@@ -1446,10 +1446,13 @@ export function WeeklyOverridesTable() {
             {formData.overrideType !== 'cancel' && (
               <>
                 <TimeRangePicker
+                  startLabel="Nueva hora de inicio"
+                  endLabel="Nueva hora de fin"
                   startValue={formData.newStartTime}
                   endValue={formData.newEndTime}
                   onStartChange={(value) => setFormData({ ...formData, newStartTime: value })}
                   onEndChange={(value) => setFormData({ ...formData, newEndTime: value })}
+                  required
                   fullWidth
                 />
 

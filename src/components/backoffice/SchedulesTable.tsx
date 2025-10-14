@@ -543,6 +543,8 @@ export function SchedulesTable() {
                       ))}
                     </TextField>
                     <TimeRangePicker
+                      startLabel="Hora de inicio"
+                      endLabel="Hora de fin"
                       startValue={programFormData.startTime}
                       endValue={programFormData.endTime}
                       onStartChange={(value) => setProgramFormData({ ...programFormData, startTime: value })}
@@ -597,6 +599,8 @@ export function SchedulesTable() {
                     {/* Time Range */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
                       <TimeRangePicker
+                        startLabel="Hora de inicio"
+                        endLabel="Hora de fin"
                         startValue={bulkTimeRange.startTime}
                         endValue={bulkTimeRange.endTime}
                         onStartChange={(value) => setBulkTimeRange({ ...bulkTimeRange, startTime: value })}
