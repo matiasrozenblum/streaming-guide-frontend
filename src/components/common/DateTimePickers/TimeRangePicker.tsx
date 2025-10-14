@@ -1,15 +1,27 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React from 'react';
 import { Box } from '@mui/material';
-import { StandardTimePicker } from './StandardTimePicker';
-import { isTimeBefore } from './StandardTimePicker';
+import { TimeRangePicker as MuiTimeRangePicker } from '@mui/x-date-pickers-pro/TimeRangePicker';
+import { MultiInputTimeRangeField } from '@mui/x-date-pickers-pro/MultiInputTimeRangeField';
+import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
+import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
+import dayjs, { Dayjs } from 'dayjs';
+import customParseFormat from 'dayjs/plugin/customParseFormat';
+
+dayjs.extend(customParseFormat);
 
 /**
  * TimeRangePicker
  * 
- * A component that combines two StandardTimePickers for selecting a time range.
- * Automatically validates that the end time is after the start time.
+ * A component using MUI's native TimeRangePicker with MultiInputTimeRangeField
+ * for selecting a time range. Uses two separate input fields for start and end times.
+ * 
+ * Features:
+ * - 24-hour format (HH:mm)
+ * - No AM/PM option
+ * - Two separate input fields for better UX
+ * - Consistent styling across the application
  * 
  * Usage:
  * ```tsx
@@ -26,10 +38,6 @@ import { isTimeBefore } from './StandardTimePicker';
  */
 
 export interface TimeRangePickerProps {
-  /** Label for the start time picker */
-  startLabel?: string;
-  /** Label for the end time picker */
-  endLabel?: string;
   /** Current start time value (HH:mm format) */
   startValue: string;
   /** Current end time value (HH:mm format) */
@@ -38,96 +46,46 @@ export interface TimeRangePickerProps {
   onStartChange: (value: string) => void;
   /** Callback when end time changes */
   onEndChange: (value: string) => void;
-  /** Show error state */
-  error?: boolean;
-  /** Custom error message (overrides default validation message) */
-  helperText?: string;
-  /** Make both fields required */
-  required?: boolean;
   /** Disable both pickers */
   disabled?: boolean;
   /** Make pickers full width */
   fullWidth?: boolean;
-  /** Size variant */
-  size?: 'small' | 'medium';
-  /** Gap between pickers (in theme spacing units) */
-  gap?: number;
 }
 
 export const TimeRangePicker: React.FC<TimeRangePickerProps> = ({
-  startLabel = 'Hora de inicio',
-  endLabel = 'Hora de fin',
   startValue,
   endValue,
   onStartChange,
   onEndChange,
-  error: externalError = false,
-  helperText: externalHelperText,
-  required = false,
   disabled = false,
   fullWidth = true,
-  size = 'medium',
-  gap = 2,
 }) => {
-  const [internalError, setInternalError] = useState(false);
-  const [internalHelperText, setInternalHelperText] = useState('');
+  // Convert string times to Dayjs for the picker
+  const startDayjs = startValue ? dayjs(startValue, 'HH:mm') : null;
+  const endDayjs = endValue ? dayjs(endValue, 'HH:mm') : null;
+  const value = [startDayjs, endDayjs] as [Dayjs | null, Dayjs | null];
 
-  // Validate time range whenever values change
-  useEffect(() => {
-    if (startValue && endValue) {
-      if (!isTimeBefore(startValue, endValue)) {
-        setInternalError(true);
-        setInternalHelperText('La hora de fin debe ser posterior a la hora de inicio');
-      } else {
-        setInternalError(false);
-        setInternalHelperText('');
-      }
-    } else {
-      setInternalError(false);
-      setInternalHelperText('');
-    }
-  }, [startValue, endValue]);
-
-  // Use external error/helperText if provided, otherwise use internal validation
-  const showError = externalError || internalError;
-  const showHelperText = externalHelperText || internalHelperText;
+  const handleChange = (newValue: [Dayjs | null, Dayjs | null]) => {
+    const [newStart, newEnd] = newValue;
+    onStartChange(newStart && newStart.isValid() ? newStart.format('HH:mm') : '');
+    onEndChange(newEnd && newEnd.isValid() ? newEnd.format('HH:mm') : '');
+  };
 
   return (
-    <Box sx={{ 
-      display: 'flex', 
-      gap, 
-      width: fullWidth ? '100%' : 'auto',
-      alignItems: 'flex-start', // Align items to top to prevent height misalignment
-    }}>
-      <Box sx={{ flex: 1, minWidth: 0 }}> {/* Ensure equal flex distribution */}
-        <StandardTimePicker
-          label={startLabel}
-          value={startValue}
-          onChange={onStartChange}
-          error={showError}
-          helperText={showError && showHelperText ? showHelperText : undefined}
-          required={required}
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
+      <Box sx={{ width: fullWidth ? '100%' : 'auto' }}>
+        <MuiTimeRangePicker
+          value={value}
+          onChange={handleChange}
+          format="HH:mm"
+          ampm={false}
           disabled={disabled}
-          fullWidth={true} // Always full width within flex container
-          size={size}
-          maxTime={endValue || undefined}
+          slots={{
+            field: MultiInputTimeRangeField,
+          }}
         />
       </Box>
-      <Box sx={{ flex: 1, minWidth: 0 }}> {/* Ensure equal flex distribution */}
-        <StandardTimePicker
-          label={endLabel}
-          value={endValue}
-          onChange={onEndChange}
-          error={showError}
-          helperText={showError && showHelperText ? ' ' : undefined} // Space to maintain alignment
-          required={required}
-          disabled={disabled}
-          fullWidth={true} // Always full width within flex container
-          size={size}
-          minTime={startValue || undefined}
-        />
-      </Box>
-    </Box>
+    </LocalizationProvider>
   );
 };
 
