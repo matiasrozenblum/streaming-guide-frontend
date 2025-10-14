@@ -47,6 +47,7 @@ import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { StandardTimePicker, TimeRangePicker } from '@/components/common/DateTimePickers';
 
 const formatTime = (time: string) => {
   if (!time) return '';
@@ -476,21 +477,21 @@ export function SchedulesTable() {
                                   </TextField>
                                 </TableCell>
                                 <TableCell>
-                                  <TextField
-                                    type="time"
+                                  <StandardTimePicker
+                                    label=""
                                     value={formData.startTime}
-                                    onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
-                                    InputLabelProps={{ shrink: true }}
+                                    onChange={(value) => setFormData({ ...formData, startTime: value })}
                                     fullWidth
+                                    size="small"
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <TextField
-                                    type="time"
+                                  <StandardTimePicker
+                                    label=""
                                     value={formData.endTime}
-                                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                                    InputLabelProps={{ shrink: true }}
+                                    onChange={(value) => setFormData({ ...formData, endTime: value })}
                                     fullWidth
+                                    size="small"
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -541,20 +542,13 @@ export function SchedulesTable() {
                         </MenuItem>
                       ))}
                     </TextField>
-                    <TextField
-                      label="Hora de inicio"
-                      type="time"
-                      value={programFormData.startTime}
-                      onChange={(e) => setProgramFormData({ ...programFormData, startTime: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Hora de fin"
-                      type="time"
-                      value={programFormData.endTime}
-                      onChange={(e) => setProgramFormData({ ...programFormData, endTime: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
+                    <TimeRangePicker
+                      startLabel="Hora de inicio"
+                      endLabel="Hora de fin"
+                      startValue={programFormData.startTime}
+                      endValue={programFormData.endTime}
+                      onStartChange={(value) => setProgramFormData({ ...programFormData, startTime: value })}
+                      onEndChange={(value) => setProgramFormData({ ...programFormData, endTime: value })}
                       fullWidth
                     />
                     <Button
@@ -604,20 +598,13 @@ export function SchedulesTable() {
 
                     {/* Time Range */}
                     <Box sx={{ display: 'flex', gap: 2, mb: 2 }}>
-                      <TextField
-                        label="Hora de inicio"
-                        type="time"
-                        value={bulkTimeRange.startTime}
-                        onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, startTime: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
-                        fullWidth
-                      />
-                      <TextField
-                        label="Hora de fin"
-                        type="time"
-                        value={bulkTimeRange.endTime}
-                        onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, endTime: e.target.value })}
-                        InputLabelProps={{ shrink: true }}
+                      <TimeRangePicker
+                        startLabel="Hora de inicio"
+                        endLabel="Hora de fin"
+                        startValue={bulkTimeRange.startTime}
+                        endValue={bulkTimeRange.endTime}
+                        onStartChange={(value) => setBulkTimeRange({ ...bulkTimeRange, startTime: value })}
+                        onEndChange={(value) => setBulkTimeRange({ ...bulkTimeRange, endTime: value })}
                         fullWidth
                       />
                       <Button

@@ -29,11 +29,17 @@ import {
   SelectChangeEvent,
 } from '@mui/material';
 import { Edit, Delete, Add, NavigateBefore, NavigateNext } from '@mui/icons-material';
+import { Dayjs } from 'dayjs';
 import { User } from '@/types/user';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { ManageDevicesDialog } from './ManageDevicesDialog';
 import { ManageSubscriptionsDialog } from './ManageSubscriptionsDialog';
+import { 
+  StandardDatePicker, 
+  dateToBackendFormat, 
+  dateFromBackendFormat 
+} from '@/components/common/DateTimePickers';
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
@@ -540,18 +546,17 @@ export function UsersTable() {
                 </Select>
                 {fieldErrors.gender && <Typography color="error" variant="caption">{fieldErrors.gender}</Typography>}
               </FormControl>
-              <TextField
+              <StandardDatePicker
                 label="Fecha de nacimiento"
-                type="date"
-                value={formData.birthDate}
-                onChange={e => {
-                  setFormData({ ...formData, birthDate: e.target.value });
+                value={dateFromBackendFormat(formData.birthDate)}
+                onChange={(newDate: Dayjs | null) => {
+                  setFormData({ ...formData, birthDate: dateToBackendFormat(newDate) });
                   setFieldErrors(prev => ({ ...prev, birthDate: '' }));
                 }}
                 fullWidth
-                InputLabelProps={{ shrink: true }}
                 error={!!fieldErrors.birthDate}
                 helperText={fieldErrors.birthDate || ''}
+                required
               />
               <TextField
                 label="Contraseña"

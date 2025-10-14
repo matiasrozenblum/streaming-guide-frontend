@@ -39,8 +39,13 @@ import { event as gaEvent } from '@/lib/gtag';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import dayjs from 'dayjs';
+import dayjs, { Dayjs } from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
+import { 
+  StandardDatePicker, 
+  dateToBackendFormat, 
+  dateFromBackendFormat 
+} from '@/components/common/DateTimePickers';
 
 const MotionBox = motion(Box);
 
@@ -518,15 +523,12 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           />
                         </Grid>
                         <Grid component="div" size={6}>
-                          <TextField
+                          <StandardDatePicker
                             label="Fecha de nacimiento"
-                            type="date"
+                            value={dateFromBackendFormat(birthDate)}
+                            onChange={(newDate: Dayjs | null) => setBirthDate(dateToBackendFormat(newDate))}
                             fullWidth
-                            value={birthDate}
-                            onChange={e => setBirthDate(e.target.value)}
-                            variant="outlined"
                             size="small"
-                            InputLabelProps={{ shrink: true }}
                           />
                         </Grid>
                         <Grid component="div" size={6}>
