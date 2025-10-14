@@ -88,7 +88,7 @@ export const StandardTimePicker: React.FC<StandardTimePickerProps> = ({
   };
 
   return (
-    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+    <LocalizationProvider dateAdapter={AdapterDayjs}>
       <TimePicker
         label={label}
         value={dayjsValue}
