@@ -126,6 +126,37 @@ export const StandardTimePicker: React.FC<StandardTimePickerProps> = ({
                 paddingLeft: 0,
                 paddingRight: 0,
               },
+              // Fix the 3-column grid layout issue
+              '& .MuiPickersLayout-root': {
+                display: 'grid !important',
+                gridAutoColumns: '1fr 1fr !important', // Only 2 columns: hours and minutes
+                gridAutoRows: 'max-content auto max-content !important',
+              },
+              // Target the MultiSectionDigitalClock specifically
+              '& .MuiMultiSectionDigitalClock-root': {
+                display: 'flex !important',
+                flexDirection: 'row !important',
+                justifyContent: 'center !important',
+                padding: '0 !important',
+                margin: '0 !important',
+                gap: '8px !important',
+              },
+              // Style the individual sections (hours/minutes)
+              '& .MuiMultiSectionDigitalClockSection-root': {
+                padding: '0 !important',
+                margin: '0 !important',
+                minWidth: 'auto !important',
+                flex: '1 1 auto !important',
+                display: 'flex !important',
+                flexDirection: 'column !important',
+                alignItems: 'center !important',
+              },
+              // Style the lists within sections
+              '& .MuiList-root': {
+                padding: '0 !important',
+                margin: '0 !important',
+                minWidth: '60px !important',
+              },
             },
             placement: 'bottom-start',
           },
