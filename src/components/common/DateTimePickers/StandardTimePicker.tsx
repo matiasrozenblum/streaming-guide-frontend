@@ -126,11 +126,32 @@ export const StandardTimePicker: React.FC<StandardTimePickerProps> = ({
                 paddingLeft: 0,
                 paddingRight: 0,
               },
-              // Fix the 3-column grid layout issue
+              // Fix the 3-column grid layout issue by hiding AM/PM section
               '& .MuiPickersLayout-root': {
                 display: 'grid !important',
                 gridAutoColumns: '1fr 1fr !important', // Only 2 columns: hours and minutes
                 gridAutoRows: 'max-content auto max-content !important',
+              },
+              // Hide the AM/PM picker completely (even though ampm={false})
+              '& .MuiDigitalClockSection-root:last-child': {
+                display: 'none !important', // Hide AM/PM section
+              },
+              '& .MuiMultiSectionDigitalClockSection-root:last-child': {
+                display: 'none !important', // Hide AM/PM section
+              },
+              // Alternative selectors for AM/PM section
+              '& [data-testid="meridiem-section"]': {
+                display: 'none !important',
+              },
+              '& .MuiTimePicker-meridiemSection': {
+                display: 'none !important',
+              },
+              '& [aria-label*="AM"], & [aria-label*="PM"]': {
+                display: 'none !important',
+              },
+              // Force the layout to only use 2 columns by targeting any potential third column
+              '& .MuiPickersLayout-root > *:nth-child(3)': {
+                display: 'none !important',
               },
               // Target the MultiSectionDigitalClock specifically
               '& .MuiMultiSectionDigitalClock-root': {
