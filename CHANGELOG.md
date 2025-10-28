@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.12.1] - 2025-10-28
+
+### Added
+- Added several new SSE events to listener
+
 ## [1.12.0] - 2025-10-08
 
 ### Added
