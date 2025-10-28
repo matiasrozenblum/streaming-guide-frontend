@@ -120,13 +120,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
+    // Initial load
     updateLiveStatuses();
 
+    // Reduced from 60 seconds to 5 minutes to optimize YouTube API usage
+    // Backend cron (every 2 min) keeps cache fresh, so 5 min frontend polling is sufficient
     const intervalId = setInterval(() => {
       updateLiveStatuses();
-    }, 60_000); // Keep 60 seconds for now, but we could reduce this
+    }, 300_000); // 5 minutes (was 60 seconds - 92% reduction in API calls)
 
-    // Listen for live status refresh events from SSE
+    // Listen for live status refresh events from SSE for real-time updates
     const handleLiveStatusRefresh = () => {
       updateLiveStatuses();
     };
