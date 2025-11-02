@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
+import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -97,7 +97,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
-  const tooltipRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
@@ -440,6 +440,21 @@ export const ProgramBlock: React.FC<Props> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
+  // Update anchor position based on mouse position
+  useEffect(() => {
+    if (anchorRef.current && mousePosition && blockRef.current && isTooltipOpenForThis) {
+      const blockRect = blockRef.current.getBoundingClientRect();
+      const blockLeft = blockRect.left;
+      const mouseXInBlock = mousePosition.x - blockLeft;
+      anchorRef.current.style.position = 'absolute';
+      anchorRef.current.style.left = `${mouseXInBlock}px`;
+      anchorRef.current.style.top = '0';
+      anchorRef.current.style.width = '0';
+      anchorRef.current.style.height = '0';
+      anchorRef.current.style.pointerEvents = 'none';
+    }
+  }, [mousePosition, isTooltipOpenForThis]);
+
   // Responsive pill styles
   let pillFontSize = '0.82rem';
   let pillPx = 1;
@@ -591,22 +606,58 @@ export const ProgramBlock: React.FC<Props> = ({
       }
     }>
       <>
-        <Box
-          className="program-block"
-          onMouseEnter={handleTooltipOpen}
-          onMouseLeave={handleTooltipClose}
-          onMouseMove={handleMouseMove}
-          onClick={handleTooltipClick}
-          style={{
-            position: 'absolute',
-            left: `${offsetPx}px`,
-            width: `${widthPx}px`,
-            height: height,
-            top: `${topOffset}px`,
-            ...(overrideStyle ? overrideStyle.boxStyle : {}),
+        <Tooltip
+          title={tooltipContent}
+          arrow
+          placement="top"
+          open={isTooltipOpenForThis}
+          disableTouchListener={isMobile}
+          disableFocusListener={isMobile}
+          disableHoverListener
+          disableInteractive
+          PopperProps={{
+            anchorEl: anchorRef.current,
+            modifiers: [
+              {
+                name: 'offset',
+                options: {
+                  offset: [0, -10],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                enabled: true,
+              },
+            ],
+            sx: {
+              '& .MuiTooltip-tooltip': {
+                backgroundColor: mode === 'light'
+                  ? theme.palette.background.paper
+                  : '#0F172A',
+                color: mode === 'light'
+                  ? theme.palette.text.primary
+                  : '#fff',
+                boxShadow: theme.shadows[3],
+              }
+            }
           }}
-          height="100%"
-          sx={overrideStyle ? overrideStyle.sx : {
+        >
+          <Box
+            className="program-block"
+            onMouseEnter={handleTooltipOpen}
+            onMouseLeave={handleTooltipClose}
+            onMouseMove={handleMouseMove}
+            onClick={handleTooltipClick}
+            style={{
+              position: 'absolute',
+              left: `${offsetPx}px`,
+              width: `${widthPx}px`,
+              height: height,
+              top: `${topOffset}px`,
+              ...(overrideStyle ? overrideStyle.boxStyle : {}),
+            }}
+            height="100%"
+            sx={overrideStyle ? overrideStyle.sx : {
               backgroundColor: isLive
                 ? alpha(color, 0.3)
                 : isPast
@@ -788,33 +839,9 @@ export const ProgramBlock: React.FC<Props> = ({
                 </Box>
               </Box>
             )}
+            <div ref={anchorRef} />
           </Box>
-        {/* Custom tooltip positioned at mouse cursor */}
-        {isTooltipOpenForThis && mousePosition && !isMobile && (
-          <Box
-            ref={tooltipRef}
-            sx={{
-              position: 'fixed',
-              left: `${mousePosition.x}px`,
-              top: `${mousePosition.y - 10}px`,
-              transform: 'translate(-50%, -100%)',
-              backgroundColor: mode === 'light'
-                ? theme.palette.background.paper
-                : '#0F172A',
-              color: mode === 'light'
-                ? theme.palette.text.primary
-                : '#fff',
-              boxShadow: theme.shadows[3],
-              borderRadius: '8px',
-              padding: 0,
-              zIndex: 9999,
-              pointerEvents: 'none',
-              maxWidth: '400px',
-            }}
-          >
-            {tooltipContent}
-          </Box>
-        )}
+        </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
         <IOSNotificationSetup 
           open={iosSetupOpen} 
