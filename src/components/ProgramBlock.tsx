@@ -386,12 +386,14 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
-  // Track mouse position
-  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
-    if (isTooltipOpenForThis && !isMobile) {
-      setMousePosition({ x: event.clientX, y: event.clientY });
-    }
-  };
+  // Track mouse position (disabled for non-following behavior)
+  // To enable cursor following, uncomment this function and the logic inside:
+  // const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  //   if (isTooltipOpenForThis && !isMobile) {
+  //     setMousePosition({ x: event.clientX, y: event.clientY });
+  //   }
+  // };
+  const handleMouseMove = () => {};
 
   // Apertura inmediata al hacer click
   const handleTooltipClick = (event: React.MouseEvent) => {
