@@ -440,20 +440,28 @@ export const ProgramBlock: React.FC<Props> = ({
     return () => window.removeEventListener('resize', handleResize);
   }, []);
 
-  // Update anchor position based on mouse position
+  // Update anchor position based on mouse position (desktop) or center (mobile)
   useEffect(() => {
-    if (anchorRef.current && mousePosition && blockRef.current && isTooltipOpenForThis) {
-      const blockRect = blockRef.current.getBoundingClientRect();
-      const blockLeft = blockRect.left;
-      const mouseXInBlock = mousePosition.x - blockLeft;
+    if (anchorRef.current && blockRef.current && isTooltipOpenForThis) {
       anchorRef.current.style.position = 'absolute';
-      anchorRef.current.style.left = `${mouseXInBlock}px`;
       anchorRef.current.style.top = '0';
       anchorRef.current.style.width = '0';
       anchorRef.current.style.height = '0';
       anchorRef.current.style.pointerEvents = 'none';
+      
+      if (!isMobile && mousePosition) {
+        // Desktop: position at cursor X
+        const blockRect = blockRef.current.getBoundingClientRect();
+        const blockLeft = blockRect.left;
+        const mouseXInBlock = mousePosition.x - blockLeft;
+        anchorRef.current.style.left = `${mouseXInBlock}px`;
+      } else if (isMobile) {
+        // Mobile: center the tooltip
+        anchorRef.current.style.left = '50%';
+        anchorRef.current.style.transform = 'translateX(-50%)';
+      }
     }
-  }, [mousePosition, isTooltipOpenForThis]);
+  }, [mousePosition, isTooltipOpenForThis, isMobile]);
 
   // Responsive pill styles
   let pillFontSize = '0.82rem';
@@ -614,9 +622,15 @@ export const ProgramBlock: React.FC<Props> = ({
           disableTouchListener={isMobile}
           disableFocusListener={isMobile}
           disableHoverListener
-          disableInteractive
           PopperProps={{
             anchorEl: anchorRef.current,
+            onMouseEnter: () => {
+              if (!isMobile && closeTimeoutRef.current) {
+                clearTimeout(closeTimeoutRef.current);
+                closeTimeoutRef.current = null;
+              }
+            },
+            onMouseLeave: handleTooltipClose,
             modifiers: [
               {
                 name: 'offset',
