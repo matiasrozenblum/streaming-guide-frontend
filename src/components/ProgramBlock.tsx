@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useRef } from 'react';
-import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
+import { Box, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues } from '@/constants/layout';
@@ -97,7 +97,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
+  const tooltipRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
@@ -369,12 +371,14 @@ export const ProgramBlock: React.FC<Props> = ({
   }, []);
 
   // Apertura retardada 500ms
-  const handleTooltipOpen = () => {
+  const handleTooltipOpen = (event: React.MouseEvent) => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
     if (!isMobile) {
+      // Capture initial mouse position
+      setMousePosition({ x: event.clientX, y: event.clientY });
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
         globalOpenTooltip(tooltipId);
@@ -382,8 +386,15 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  // Track mouse position
+  const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+    if (isTooltipOpenForThis && !isMobile) {
+      setMousePosition({ x: event.clientX, y: event.clientY });
+    }
+  };
+
   // Apertura inmediata al hacer click
-  const handleTooltipClick = () => {
+  const handleTooltipClick = (event: React.MouseEvent) => {
     // Cancelar cualquier timeout pendiente
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
@@ -396,7 +407,11 @@ export const ProgramBlock: React.FC<Props> = ({
     // Abrir/cerrar tooltip inmediatamente
     if (isTooltipOpenForThis) {
       globalCloseTooltip(tooltipId);
+      setMousePosition(null);
     } else {
+      if (!isMobile) {
+        setMousePosition({ x: event.clientX, y: event.clientY });
+      }
       globalOpenTooltip(tooltipId);
     }
   };
@@ -410,6 +425,7 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
         globalCloseTooltip(tooltipId);
+        setMousePosition(null);
       }, 100);
     }
   };
@@ -575,46 +591,22 @@ export const ProgramBlock: React.FC<Props> = ({
       }
     }>
       <>
-        <Tooltip
-          title={tooltipContent}
-          arrow
-          placement="top"
-          open={isTooltipOpenForThis}
-          onOpen={handleTooltipOpen}
-          onClose={handleTooltipClose}
-          disableTouchListener={isMobile}
-          disableFocusListener={isMobile}
-          PopperProps={{
-            onMouseEnter: handleTooltipOpen,
-            onMouseLeave: handleTooltipClose,
-            sx: {
-              '& .MuiTooltip-tooltip': {
-                backgroundColor: mode === 'light'
-                  ? theme.palette.background.paper
-                  : '#0F172A',
-                color: mode === 'light'
-                  ? theme.palette.text.primary
-                  : '#fff',
-                boxShadow: theme.shadows[3],
-              }
-            }
+        <Box
+          className="program-block"
+          onMouseEnter={handleTooltipOpen}
+          onMouseLeave={handleTooltipClose}
+          onMouseMove={handleMouseMove}
+          onClick={handleTooltipClick}
+          style={{
+            position: 'absolute',
+            left: `${offsetPx}px`,
+            width: `${widthPx}px`,
+            height: height,
+            top: `${topOffset}px`,
+            ...(overrideStyle ? overrideStyle.boxStyle : {}),
           }}
-        >
-          <Box
-            className="program-block"
-            onMouseEnter={handleTooltipOpen}
-            onMouseLeave={handleTooltipClose}
-            onClick={handleTooltipClick}
-            style={{
-              position: 'absolute',
-              left: `${offsetPx}px`,
-              width: `${widthPx}px`,
-              height: height,
-              top: `${topOffset}px`,
-              ...(overrideStyle ? overrideStyle.boxStyle : {}),
-            }}
-            height="100%"
-            sx={overrideStyle ? overrideStyle.sx : {
+          height="100%"
+          sx={overrideStyle ? overrideStyle.sx : {
               backgroundColor: isLive
                 ? alpha(color, 0.3)
                 : isPast
@@ -797,7 +789,32 @@ export const ProgramBlock: React.FC<Props> = ({
               </Box>
             )}
           </Box>
-        </Tooltip>
+        {/* Custom tooltip positioned at mouse cursor */}
+        {isTooltipOpenForThis && mousePosition && !isMobile && (
+          <Box
+            ref={tooltipRef}
+            sx={{
+              position: 'fixed',
+              left: `${mousePosition.x}px`,
+              top: `${mousePosition.y - 10}px`,
+              transform: 'translate(-50%, -100%)',
+              backgroundColor: mode === 'light'
+                ? theme.palette.background.paper
+                : '#0F172A',
+              color: mode === 'light'
+                ? theme.palette.text.primary
+                : '#fff',
+              boxShadow: theme.shadows[3],
+              borderRadius: '8px',
+              padding: 0,
+              zIndex: 9999,
+              pointerEvents: 'none',
+              maxWidth: '400px',
+            }}
+          >
+            {tooltipContent}
+          </Box>
+        )}
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
         <IOSNotificationSetup 
           open={iosSetupOpen} 
