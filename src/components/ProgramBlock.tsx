@@ -97,7 +97,9 @@ export const ProgramBlock: React.FC<Props> = ({
   const [iosSetupOpen, setIOSSetupOpen] = useState(false);
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
+  const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
   
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
@@ -369,12 +371,14 @@ export const ProgramBlock: React.FC<Props> = ({
   }, []);
 
   // Apertura retardada 500ms
-  const handleTooltipOpen = () => {
+  const handleTooltipOpen = (event: React.MouseEvent) => {
     if (closeTimeoutRef.current) {
       clearTimeout(closeTimeoutRef.current);
       closeTimeoutRef.current = null;
     }
     if (!isMobile) {
+      // Capture initial mouse position
+      setMousePosition({ x: event.clientX, y: event.clientY });
       if (openTimeoutRef.current) clearTimeout(openTimeoutRef.current);
       openTimeoutRef.current = setTimeout(() => {
         globalOpenTooltip(tooltipId);
@@ -382,8 +386,17 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
+  // Track mouse position (disabled for non-following behavior)
+  // To enable cursor following, uncomment this function and the logic inside:
+  // const handleMouseMove = (event: React.MouseEvent<HTMLDivElement>) => {
+  //   if (isTooltipOpenForThis && !isMobile) {
+  //     setMousePosition({ x: event.clientX, y: event.clientY });
+  //   }
+  // };
+  const handleMouseMove = () => {};
+
   // Apertura inmediata al hacer click
-  const handleTooltipClick = () => {
+  const handleTooltipClick = (event: React.MouseEvent) => {
     // Cancelar cualquier timeout pendiente
     if (openTimeoutRef.current) {
       clearTimeout(openTimeoutRef.current);
@@ -396,7 +409,11 @@ export const ProgramBlock: React.FC<Props> = ({
     // Abrir/cerrar tooltip inmediatamente
     if (isTooltipOpenForThis) {
       globalCloseTooltip(tooltipId);
+      setMousePosition(null);
     } else {
+      if (!isMobile) {
+        setMousePosition({ x: event.clientX, y: event.clientY });
+      }
       globalOpenTooltip(tooltipId);
     }
   };
@@ -410,6 +427,7 @@ export const ProgramBlock: React.FC<Props> = ({
     if (!isMobile) {
       closeTimeoutRef.current = setTimeout(() => {
         globalCloseTooltip(tooltipId);
+        setMousePosition(null);
       }, 100);
     }
   };
@@ -423,6 +441,29 @@ export const ProgramBlock: React.FC<Props> = ({
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
   }, []);
+
+  // Update anchor position based on mouse position (desktop) or center (mobile)
+  useEffect(() => {
+    if (anchorRef.current && blockRef.current && isTooltipOpenForThis) {
+      anchorRef.current.style.position = 'absolute';
+      anchorRef.current.style.top = '0';
+      anchorRef.current.style.width = '0';
+      anchorRef.current.style.height = '0';
+      anchorRef.current.style.pointerEvents = 'none';
+      
+      if (!isMobile && mousePosition) {
+        // Desktop: position at cursor X
+        const blockRect = blockRef.current.getBoundingClientRect();
+        const blockLeft = blockRect.left;
+        const mouseXInBlock = mousePosition.x - blockLeft;
+        anchorRef.current.style.left = `${mouseXInBlock}px`;
+      } else if (isMobile) {
+        // Mobile: center the tooltip
+        anchorRef.current.style.left = '50%';
+        anchorRef.current.style.transform = 'translateX(-50%)';
+      }
+    }
+  }, [mousePosition, isTooltipOpenForThis, isMobile]);
 
   // Responsive pill styles
   let pillFontSize = '0.82rem';
@@ -580,13 +621,30 @@ export const ProgramBlock: React.FC<Props> = ({
           arrow
           placement="top"
           open={isTooltipOpenForThis}
-          onOpen={handleTooltipOpen}
-          onClose={handleTooltipClose}
           disableTouchListener={isMobile}
           disableFocusListener={isMobile}
+          disableHoverListener
           PopperProps={{
-            onMouseEnter: handleTooltipOpen,
+            anchorEl: anchorRef.current,
+            onMouseEnter: () => {
+              if (!isMobile && closeTimeoutRef.current) {
+                clearTimeout(closeTimeoutRef.current);
+                closeTimeoutRef.current = null;
+              }
+            },
             onMouseLeave: handleTooltipClose,
+            modifiers: [
+              {
+                name: 'offset',
+                options: {
+                  offset: [0, -10],
+                },
+              },
+              {
+                name: 'preventOverflow',
+                enabled: true,
+              },
+            ],
             sx: {
               '& .MuiTooltip-tooltip': {
                 backgroundColor: mode === 'light'
@@ -604,6 +662,7 @@ export const ProgramBlock: React.FC<Props> = ({
             className="program-block"
             onMouseEnter={handleTooltipOpen}
             onMouseLeave={handleTooltipClose}
+            onMouseMove={handleMouseMove}
             onClick={handleTooltipClick}
             style={{
               position: 'absolute',
@@ -796,6 +855,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 </Box>
               </Box>
             )}
+            <div ref={anchorRef} />
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />

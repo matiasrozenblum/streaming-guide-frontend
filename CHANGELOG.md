@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.12.2] - 2025-11-02
+
+### Changed
+- Now tooltip shows up where the cursor is located in X position
+
 ## [1.12.1] - 2025-10-28
 
 ### Added
