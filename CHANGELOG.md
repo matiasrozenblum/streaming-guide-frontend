@@ -22,6 +22,9 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 - Now we can CRUD schedules within program dialog
 
+### Changed
+- Now showing all titles in uppercase in the tooltips
+
 ## [1.12.2] - 2025-11-02
 
 ### Changed
