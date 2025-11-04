@@ -511,7 +511,7 @@ export const ProgramBlock: React.FC<Props> = ({
           color: mode === 'dark' ? '#fff' : theme.palette.text.primary
         }}
       >
-        {name}
+        {name.toUpperCase()}
       </Text>
       <Text
         variant="body2"
