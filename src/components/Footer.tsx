@@ -5,7 +5,7 @@ import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 
 const Footer: React.FC = () => {
-  const email = 'laguiadelstreaming@gmail.com';
+  const email = 'hola@laguiadelstreaming.com';
   const { openPreferences } = useCookieConsent();
 
   return (
