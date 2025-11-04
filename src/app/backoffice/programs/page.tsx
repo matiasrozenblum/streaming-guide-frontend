@@ -36,11 +36,21 @@ import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
 import Image from 'next/image';
 import ProgramPanelistsDialog from '@/components/backoffice/ProgramPanelistsDialog';
+import { ProgramSchedulesSection } from '@/components/backoffice/ProgramSchedulesSection';
 import { useSessionContext } from '@/contexts/SessionContext';
+import type { SessionWithToken } from '@/types/session';
+
+interface PendingSchedule {
+  id: string;
+  dayOfWeek: string;
+  startTime: string;
+  endTime: string;
+}
 
 export default function ProgramsPage() {
   // Forzar sesión y redirigir si no está autenticado
-  const { status } = useSessionContext();
+  const { status, session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
 
   const [programs, setPrograms] = useState<Program[]>([]);
   const [channels, setChannels] = useState<Channel[]>([]);
@@ -58,6 +68,7 @@ export default function ProgramsPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openPanelistsDialog, setOpenPanelistsDialog] = useState(false);
+  const [pendingSchedules, setPendingSchedules] = useState<PendingSchedule[]>([]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -131,6 +142,7 @@ export default function ProgramsPage() {
       youtube_url: '',
       style_override: '',
     });
+    setPendingSchedules([]);
   };
 
   const handleSubmit = async () => {
@@ -150,9 +162,49 @@ export default function ProgramsPage() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el programa');
+      
+      // If creating a new program and there are pending schedules, create them
+      if (!editingProgram && pendingSchedules.length > 0 && typedSession?.accessToken) {
+        const newProgramId = body.id;
+        const channelId = parseInt(formData.channel_id);
+        
+        try {
+          // Use bulk creation endpoint
+          const bulkData = {
+            programId: newProgramId.toString(),
+            channelId: channelId.toString(),
+            schedules: pendingSchedules.map(s => ({
+              dayOfWeek: s.dayOfWeek,
+              startTime: s.startTime,
+              endTime: s.endTime,
+            })),
+          };
+          
+          const scheduleRes = await fetch('/api/schedules/bulk', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+              'Authorization': `Bearer ${typedSession.accessToken}`,
+            },
+            body: JSON.stringify(bulkData),
+          });
+          
+          if (!scheduleRes.ok) {
+            const scheduleBody = await scheduleRes.json().catch(() => ({}));
+            throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
+          }
+          
+          setSuccess(`Programa creado correctamente con ${pendingSchedules.length} horario(s)`);
+        } catch (scheduleErr) {
+          console.error('Error creating schedules:', scheduleErr);
+          setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
+        }
+      } else {
+        setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
+      }
+      
       await fetchPrograms();
       handleCloseDialog();
-      setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
     } catch (err: unknown) {
       console.error('Error saving program:', err);
       setError(err instanceof Error ? err.message : 'Error al guardar el programa');
@@ -268,7 +320,7 @@ export default function ProgramsPage() {
         </Table>
       </TableContainer>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle>{editingProgram ? 'Editar Programa' : 'Nuevo Programa'}</DialogTitle>
         <DialogContent>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
@@ -283,6 +335,13 @@ export default function ProgramsPage() {
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
             <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
+            
+            {/* Schedule Management Section */}
+            <ProgramSchedulesSection
+              programId={editingProgram?.id || null}
+              channelId={formData.channel_id ? parseInt(formData.channel_id) : null}
+              onSchedulesChange={setPendingSchedules}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
