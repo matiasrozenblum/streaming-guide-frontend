@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.12.3] - 2025-11-04
+## [1.12.4] - 2025-11-04
 
 ### Added
 - Now we can CRUD programs within program dialog
