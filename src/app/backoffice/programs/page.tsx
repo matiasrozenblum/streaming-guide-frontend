@@ -37,6 +37,7 @@ import { Channel } from '@/types/channel';
 import Image from 'next/image';
 import ProgramPanelistsDialog from '@/components/backoffice/ProgramPanelistsDialog';
 import { ProgramSchedulesSection } from '@/components/backoffice/ProgramSchedulesSection';
+import { ProgramPanelistsSection } from '@/components/backoffice/ProgramPanelistsSection';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 
@@ -69,6 +70,7 @@ export default function ProgramsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [openPanelistsDialog, setOpenPanelistsDialog] = useState(false);
   const [pendingSchedules, setPendingSchedules] = useState<PendingSchedule[]>([]);
+  const [pendingPanelistIds, setPendingPanelistIds] = useState<number[]>([]);
 
   useEffect(() => {
     if (status === 'authenticated') {
@@ -143,6 +145,7 @@ export default function ProgramsPage() {
       style_override: '',
     });
     setPendingSchedules([]);
+    setPendingPanelistIds([]);
   };
 
   const handleSubmit = async () => {
@@ -199,7 +202,34 @@ export default function ProgramsPage() {
           console.error('Error creating schedules:', scheduleErr);
           setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
         }
-      } else {
+      }
+
+      // If creating a new program and there are pending panelists, add them
+      if (!editingProgram && pendingPanelistIds.length > 0 && typedSession?.accessToken) {
+        const newProgramId = body.id;
+        
+        try {
+          // Add panelists to the program
+          const panelistPromises = pendingPanelistIds.map(panelistId =>
+            fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
+              method: 'POST',
+              headers: {
+                'Content-Type': 'application/json',
+                'Authorization': `Bearer ${typedSession.accessToken}`,
+              },
+            })
+          );
+          
+          await Promise.all(panelistPromises);
+          
+          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+          setSuccess(`Programa creado correctamente${scheduleMsg} con ${pendingPanelistIds.length} panelista(s)`);
+        } catch (panelistErr) {
+          console.error('Error adding panelists:', panelistErr);
+          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+          setSuccess(`Programa creado correctamente${scheduleMsg}, pero hubo un error al agregar algunos panelistas`);
+        }
+      } else if (!pendingSchedules.length && !pendingPanelistIds.length) {
         setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
       }
       
@@ -342,10 +372,15 @@ export default function ProgramsPage() {
               channelId={formData.channel_id ? parseInt(formData.channel_id) : null}
               onSchedulesChange={setPendingSchedules}
             />
+            
+            {/* Panelist Management Section */}
+            <ProgramPanelistsSection
+              programId={editingProgram?.id || null}
+              onPanelistsChange={setPendingPanelistIds}
+            />
           </Box>
         </DialogContent>
         <DialogActions>
-          {editingProgram && <Button startIcon={<GroupIcon />} onClick={handleOpenPanelistsDialog} variant="outlined">Panelistas</Button>}
           <Button onClick={handleCloseDialog}>Cancelar</Button>
           <Button onClick={handleSubmit} variant="contained">{editingProgram ? 'Actualizar' : 'Crear'}</Button>
         </DialogActions>
