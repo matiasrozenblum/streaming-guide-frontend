@@ -175,3 +175,12 @@ html {
     text-wrap: balance;
   }
 }
+
+/* Hidden SEO content section - visible to search engines but not users */
+.seo-hidden {
+  position: absolute;
+  left: -9999px;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+}

@@ -31,6 +31,7 @@ export interface ChannelWithSchedules {
     logo_url: string | null;
     background_color: string | null;
     show_only_when_scheduled: boolean;
+    handle?: string | null;
   };
   schedules: Schedule[];
 }
