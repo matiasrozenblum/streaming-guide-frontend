@@ -105,7 +105,7 @@ export async function generateMetadata(): Promise<Metadata> {
     : 'Olga, Luzu TV, Bondi';
   
   return {
-    title: 'Guía del Streaming - Ver Olga, Luzu, Bondi y más canales en vivo',
+    title: 'La Guía del Streaming',
     description: `Descubrí qué ver hoy en ${channelList} y otros canales de streaming. Programas, horarios y recomendaciones actualizadas.`,
   };
 }
