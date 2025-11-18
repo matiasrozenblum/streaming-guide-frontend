@@ -119,6 +119,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     return true;
   });
 
+  // Account for bottom navigation bar (56px height)
+  const bottomNavHeight = 56;
+
   return (
     <Box
       sx={{
@@ -126,7 +129,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: `${bottomNavHeight}px`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
