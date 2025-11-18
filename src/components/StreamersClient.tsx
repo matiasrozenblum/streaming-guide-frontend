@@ -22,6 +22,7 @@ import {
 import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
+import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
 import { getColorForChannel } from '@/utils/colors';
 
@@ -151,6 +152,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
+        pb: { xs: 9, sm: 2 }, // Add bottom padding on mobile for bottom navigation
       }}
     >
       <Header />
@@ -371,6 +373,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           )}
         </MotionBox>
       </Container>
+      <BottomNavigation />
     </Box>
   );
 }

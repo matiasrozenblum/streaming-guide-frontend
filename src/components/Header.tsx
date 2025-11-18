@@ -1,7 +1,7 @@
 import React from 'react';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Box, Container, useTheme, useMediaQuery } from '@mui/material';
-import { useRouter } from 'next/navigation';
+import { Box, Container, useTheme, useMediaQuery, Button } from '@mui/material';
+import { useRouter, usePathname } from 'next/navigation';
 import UserMenu from './UserMenu';
 import { ThemeToggle } from './ThemeToggle';
 import { tokens } from '@/design-system/tokens';
@@ -16,12 +16,16 @@ export default function Header() {
   const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
   const router = useRouter();
+  const pathname = usePathname();
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
   const logo = '/img/logo.png';
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
+  
+  const isProgramacionPage = pathname === '/';
+  const isStreamersPage = pathname === '/streamers';
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
@@ -99,8 +103,78 @@ export default function Header() {
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
+            gap: 1,
           }}
         >
+          {/* Desktop Navigation Buttons */}
+          {!isMobile && (
+            <>
+              <Button
+                onClick={() => {
+                  router.push('/');
+                  gaEvent({
+                    action: 'navigation_click',
+                    params: { section: 'programacion', location: 'header' },
+                    userData: typedSession?.user
+                  });
+                }}
+                variant={isProgramacionPage ? 'contained' : 'outlined'}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: isProgramacionPage ? 600 : 500,
+                  backgroundColor: isProgramacionPage 
+                    ? (mode === 'light' ? '#1976d2' : '#42a5f5')
+                    : 'transparent',
+                  borderColor: mode === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+                  color: isProgramacionPage 
+                    ? 'white'
+                    : (mode === 'light' ? '#1976d2' : '#90caf9'),
+                  '&:hover': {
+                    backgroundColor: isProgramacionPage
+                      ? (mode === 'light' ? '#1565c0' : '#42a5f5')
+                      : (mode === 'light' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(66, 165, 245, 0.16)'),
+                    borderColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  },
+                }}
+              >
+                Programación
+              </Button>
+              <Button
+                onClick={() => {
+                  router.push('/streamers');
+                  gaEvent({
+                    action: 'navigation_click',
+                    params: { section: 'streamers', location: 'header' },
+                    userData: typedSession?.user
+                  });
+                }}
+                variant={isStreamersPage ? 'contained' : 'outlined'}
+                sx={{
+                  textTransform: 'none',
+                  borderRadius: 2,
+                  px: 2,
+                  fontWeight: isStreamersPage ? 600 : 500,
+                  backgroundColor: isStreamersPage 
+                    ? (mode === 'light' ? '#1976d2' : '#42a5f5')
+                    : 'transparent',
+                  borderColor: mode === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
+                  color: isStreamersPage 
+                    ? 'white'
+                    : (mode === 'light' ? '#1976d2' : '#90caf9'),
+                  '&:hover': {
+                    backgroundColor: isStreamersPage
+                      ? (mode === 'light' ? '#1565c0' : '#42a5f5')
+                      : (mode === 'light' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(66, 165, 245, 0.16)'),
+                    borderColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  },
+                }}
+              >
+                Streamers
+              </Button>
+            </>
+          )}
           {!isAuth ? (
             <>
             <UserButton />
