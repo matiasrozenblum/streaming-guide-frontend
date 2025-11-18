@@ -1,6 +1,6 @@
 import React from 'react';
 import { useThemeContext } from '@/contexts/ThemeContext';
-import { Box, Container, useTheme, useMediaQuery, Button } from '@mui/material';
+import { Box, Container, useTheme, useMediaQuery, Typography } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
 import UserMenu from './UserMenu';
 import { ThemeToggle } from './ThemeToggle';
@@ -106,10 +106,17 @@ export default function Header() {
             gap: 1,
           }}
         >
-          {/* Desktop Navigation Buttons */}
+          {/* Desktop Navigation Tabs */}
           {!isMobile && (
-            <>
-              <Button
+            <Box
+              sx={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 3,
+                mr: 2,
+              }}
+            >
+              <Typography
                 onClick={() => {
                   router.push('/');
                   gaEvent({
@@ -118,30 +125,34 @@ export default function Header() {
                     userData: typedSession?.user
                   });
                 }}
-                variant={isProgramacionPage ? 'contained' : 'outlined'}
                 sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: isProgramacionPage ? 600 : 500,
-                  backgroundColor: isProgramacionPage 
-                    ? (mode === 'light' ? '#1976d2' : '#42a5f5')
-                    : 'transparent',
-                  borderColor: mode === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
-                  color: isProgramacionPage 
-                    ? 'white'
-                    : (mode === 'light' ? '#1976d2' : '#90caf9'),
+                  cursor: 'pointer',
+                  fontSize: '0.9375rem',
+                  fontWeight: isProgramacionPage ? 600 : 400,
+                  color: isProgramacionPage
+                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                    : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                  transition: 'color 0.2s ease-in-out',
                   '&:hover': {
-                    backgroundColor: isProgramacionPage
-                      ? (mode === 'light' ? '#1565c0' : '#42a5f5')
-                      : (mode === 'light' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(66, 165, 245, 0.16)'),
-                    borderColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                    color: isProgramacionPage
+                      ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                      : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
                   },
+                  position: 'relative',
+                  '&::after': isProgramacionPage ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  } : {},
                 }}
               >
                 Programación
-              </Button>
-              <Button
+              </Typography>
+              <Typography
                 onClick={() => {
                   router.push('/streamers');
                   gaEvent({
@@ -150,30 +161,34 @@ export default function Header() {
                     userData: typedSession?.user
                   });
                 }}
-                variant={isStreamersPage ? 'contained' : 'outlined'}
                 sx={{
-                  textTransform: 'none',
-                  borderRadius: 2,
-                  px: 2,
-                  fontWeight: isStreamersPage ? 600 : 500,
-                  backgroundColor: isStreamersPage 
-                    ? (mode === 'light' ? '#1976d2' : '#42a5f5')
-                    : 'transparent',
-                  borderColor: mode === 'light' ? 'rgba(0,0,0,0.2)' : 'rgba(255,255,255,0.2)',
-                  color: isStreamersPage 
-                    ? 'white'
-                    : (mode === 'light' ? '#1976d2' : '#90caf9'),
+                  cursor: 'pointer',
+                  fontSize: '0.9375rem',
+                  fontWeight: isStreamersPage ? 600 : 400,
+                  color: isStreamersPage
+                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                    : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                  transition: 'color 0.2s ease-in-out',
                   '&:hover': {
-                    backgroundColor: isStreamersPage
-                      ? (mode === 'light' ? '#1565c0' : '#42a5f5')
-                      : (mode === 'light' ? 'rgba(25, 118, 210, 0.08)' : 'rgba(66, 165, 245, 0.16)'),
-                    borderColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                    color: isStreamersPage
+                      ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                      : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
                   },
+                  position: 'relative',
+                  '&::after': isStreamersPage ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  } : {},
                 }}
               >
                 Streamers
-              </Button>
-            </>
+              </Typography>
+            </Box>
           )}
           {!isAuth ? (
             <>

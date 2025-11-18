@@ -58,6 +58,8 @@ export default function BottomNavigation() {
           ? 'rgba(255,255,255,0.95)' 
           : 'rgba(30,41,59,0.95)',
         backdropFilter: 'blur(8px)',
+        // Use safe area insets to avoid overlapping with system navigation bars
+        paddingBottom: 'env(safe-area-inset-bottom, 0px)',
       }}
     >
       <MuiBottomNavigation

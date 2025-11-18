@@ -152,7 +152,11 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
-        pb: { xs: 9, sm: 2 }, // Add bottom padding on mobile for bottom navigation
+        // Add bottom padding on mobile for bottom navigation + safe area inset
+        pb: { 
+          xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', 
+          sm: 2 
+        },
       }}
     >
       <Header />
