@@ -32,7 +32,7 @@ export default function BottomNavigation() {
       router.push('/');
       gaEvent({
         action: 'navigation_click',
-        params: { section: 'programacion', location: 'bottom_nav' },
+        params: { section: 'canales', location: 'bottom_nav' },
         userData: typedSession?.user
       });
     } else if (newValue === 1) {
@@ -77,7 +77,7 @@ export default function BottomNavigation() {
         }}
       >
         <BottomNavigationAction
-          label="Programación"
+          label="Canales"
           icon={<Schedule />}
         />
         <BottomNavigationAction
