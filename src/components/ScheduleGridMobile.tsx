@@ -119,7 +119,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     return true;
   });
 
-  // Account for bottom navigation bar (56px height)
+  // Account for bottom navigation bar (56px height) + safe area inset
   const bottomNavHeight = 56;
 
   return (
@@ -129,7 +129,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         top: 0,
         left: 0,
         right: 0,
-        bottom: `${bottomNavHeight}px`,
+        bottom: `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
