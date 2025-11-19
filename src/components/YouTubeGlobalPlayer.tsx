@@ -146,11 +146,14 @@ export const YouTubeGlobalPlayer = () => {
     }
     
     if (isMobile) {
-      // Mobile: 95% width, 70% viewport height for better viewing
-      // Slightly larger for Twitch/Kick (72% vs 70%)
+      // Mobile: 95% width, height calculated to maintain ~16:9 aspect ratio
+      // Account for padding (8px top + 8px bottom = 16px) and controls (~40px)
+      // For 95% width, approximate 16:9 height would be: width * (9/16)
+      // Using viewport width as reference: vw * 0.95 * (9/16) ≈ 53.4vw
+      // But we use vh for consistency, targeting ~50-55vh for better aspect ratio
       return {
         width: '95%',
-        height: isStreamingService ? '72vh' : '70vh',
+        height: isStreamingService ? '54vh' : '52vh',
       };
     }
     
