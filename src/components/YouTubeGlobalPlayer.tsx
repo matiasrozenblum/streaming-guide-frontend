@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '@mui/material/styles';
 
 export const YouTubeGlobalPlayer = () => {
-  const { embedPath, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
+  const { playerData, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
   const isMobile = useMediaQuery('(max-width:600px)');
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,12 +116,22 @@ export const YouTubeGlobalPlayer = () => {
     };
   }, [dragging]);
 
-  if (!open || !embedPath) return null;
+  if (!open || !playerData) return null;
 
-  const baseUrl = `https://www.youtube.com/embed/${embedPath}`;
-  const src = embedPath.includes('?')
-    ? `${baseUrl}&autoplay=1&enablejsapi=1`
-    : `${baseUrl}?autoplay=1&enablejsapi=1`;
+  // Build embed URL based on service type
+  let src = '';
+  if (playerData.service === 'youtube') {
+    const baseUrl = `https://www.youtube.com/embed/${playerData.embedPath}`;
+    src = playerData.embedPath.includes('?')
+      ? `${baseUrl}&autoplay=1&enablejsapi=1`
+      : `${baseUrl}?autoplay=1&enablejsapi=1`;
+  } else if (playerData.service === 'twitch') {
+    // Twitch embed requires parent domain for security
+    const parent = typeof window !== 'undefined' ? window.location.hostname : '';
+    src = `https://player.twitch.tv/?channel=${playerData.embedPath}&parent=${parent}&autoplay=true`;
+  } else if (playerData.service === 'kick') {
+    src = `https://player.kick.com/${playerData.embedPath}?autoplay=true`;
+  }
 
   return (
     <>

@@ -11,21 +11,23 @@ import {
   Button,
   Grid,
   Avatar,
-  Link,
   CircularProgress,
 } from '@mui/material';
 import {
   ArrowBack,
   LiveTv,
-  OpenInNew,
+  PlayArrow,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
 import { getColorForChannel } from '@/utils/colors';
 import { useState, useEffect } from 'react';
+import { extractTwitchChannel, extractKickChannel } from '@/utils/extractStreamChannel';
+import { extractVideoId } from '@/utils/extractVideoId';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -64,6 +66,7 @@ interface StreamersClientProps {
 export default function StreamersClient({ initialStreamers }: StreamersClientProps) {
   const router = useRouter();
   const { mode } = useThemeContext();
+  const { openVideo, openStream } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   const [loading, setLoading] = useState(!initialStreamers);
 
@@ -85,6 +88,30 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       setStreamers([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleServiceClick = (service: StreamingService, url: string) => {
+    if (service === StreamingService.YOUTUBE) {
+      // For YouTube, extract video ID and use openVideo
+      // Note: YouTube only supports embedding videos, not channel pages
+      const videoId = extractVideoId(url);
+      if (videoId && !videoId.startsWith('http') && !videoId.includes('@')) {
+        // It's a valid video ID - use it
+        openVideo(videoId);
+      }
+      // If it's a channel URL, we can't embed it directly
+      // The URL should be a video URL for embedding to work
+    } else if (service === StreamingService.TWITCH) {
+      const channelName = extractTwitchChannel(url);
+      if (channelName) {
+        openStream('twitch', channelName);
+      }
+    } else if (service === StreamingService.KICK) {
+      const channelName = extractKickChannel(url);
+      if (channelName) {
+        openStream('kick', channelName);
+      }
     }
   };
 
@@ -249,35 +276,29 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                         </Typography>
                         <Box display="flex" flexDirection="column" gap={1}>
                           {streamer.services.map((service, serviceIndex) => (
-                            <Link
+                            <Button
                               key={serviceIndex}
-                              href={service.url}
-                              target="_blank"
-                              rel="noopener noreferrer"
-                              underline="none"
-                            >
-                              <Button
-                                fullWidth
-                                variant="outlined"
-                                size="small"
-                                endIcon={<OpenInNew fontSize="small" />}
-                                sx={{
-                                  justifyContent: 'space-between',
-                                  borderRadius: 2,
+                              fullWidth
+                              variant="outlined"
+                              size="small"
+                              startIcon={<PlayArrow fontSize="small" />}
+                              onClick={() => handleServiceClick(service.service, service.url)}
+                              sx={{
+                                justifyContent: 'space-between',
+                                borderRadius: 2,
+                                borderColor: getServiceColor(service.service, mode),
+                                color: getServiceColor(service.service, mode),
+                                textTransform: 'none',
+                                '&:hover': {
                                   borderColor: getServiceColor(service.service, mode),
-                                  color: getServiceColor(service.service, mode),
-                                  textTransform: 'none',
-                                  '&:hover': {
-                                    borderColor: getServiceColor(service.service, mode),
-                                    backgroundColor: mode === 'light'
-                                      ? `${getServiceColor(service.service, mode)}15`
-                                      : `${getServiceColor(service.service, mode)}25`,
-                                  }
-                                }}
-                              >
-                                {getServiceName(service.service)}
-                              </Button>
-                            </Link>
+                                  backgroundColor: mode === 'light'
+                                    ? `${getServiceColor(service.service, mode)}15`
+                                    : `${getServiceColor(service.service, mode)}25`,
+                                }
+                              }}
+                            >
+                              {getServiceName(service.service)}
+                            </Button>
                           ))}
                         </Box>
                       </Box>
