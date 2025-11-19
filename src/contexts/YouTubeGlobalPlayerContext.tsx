@@ -4,12 +4,20 @@ import React, { createContext, useContext, useState } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 
+export type StreamingService = 'youtube' | 'twitch' | 'kick';
+
+interface StreamingPlayerData {
+  service: StreamingService;
+  embedPath: string; // For YouTube: videoId or "videoseries?list=PLAYLIST_ID", For Twitch/Kick: channel name
+}
+
 interface YouTubeGlobalPlayerContextType {
-  embedPath: string | null;     // Aquí guardamos "VIDEO_ID" o "videoseries?list=PLAYLIST_ID"
+  playerData: StreamingPlayerData | null;
   open: boolean;
   minimized: boolean;
   openVideo: (videoId: string) => void;
   openPlaylist: (listId: string) => void;
+  openStream: (service: StreamingService, channelName: string) => void;
   closePlayer: () => void;
   minimizePlayer: () => void;
   maximizePlayer: () => void;
@@ -18,26 +26,32 @@ interface YouTubeGlobalPlayerContextType {
 const YouTubeGlobalPlayerContext = createContext<YouTubeGlobalPlayerContextType | undefined>(undefined);
 
 export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [embedPath, setEmbedPath] = useState<string | null>(null);
+  const [playerData, setPlayerData] = useState<StreamingPlayerData | null>(null);
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
 
   const openVideo = (id: string) => {
-    setEmbedPath(id);
+    setPlayerData({ service: 'youtube', embedPath: id });
     setOpen(true);
     setMinimized(false);
   };
 
   const openPlaylist = (listId: string) => {
     // "videoseries?list=" es exactamente lo que usaba /embed/videoseries?list=...
-    setEmbedPath(`videoseries?list=${listId}`);
+    setPlayerData({ service: 'youtube', embedPath: `videoseries?list=${listId}` });
+    setOpen(true);
+    setMinimized(false);
+  };
+
+  const openStream = (service: StreamingService, channelName: string) => {
+    setPlayerData({ service, embedPath: channelName });
     setOpen(true);
     setMinimized(false);
   };
 
   const closePlayer = () => {
     setOpen(false);
-    setEmbedPath(null);
+    setPlayerData(null);
     setMinimized(false);
   };
 
@@ -62,11 +76,12 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   return (
     <YouTubeGlobalPlayerContext.Provider
       value={{
-        embedPath,
+        playerData,
         open,
         minimized,
         openVideo,
         openPlaylist,
+        openStream,
         closePlayer,
         minimizePlayer,
         maximizePlayer,
