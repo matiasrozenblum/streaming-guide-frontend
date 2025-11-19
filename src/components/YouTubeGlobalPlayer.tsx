@@ -133,6 +133,37 @@ export const YouTubeGlobalPlayer = () => {
     src = `https://player.kick.com/${playerData.embedPath}?autoplay=true`;
   }
 
+  // Determine if this is a streaming service (Twitch/Kick) that benefits from larger mobile popup
+  const isStreamingService = playerData.service === 'twitch' || playerData.service === 'kick';
+  
+  // Calculate responsive dimensions
+  const getPopupDimensions = () => {
+    if (minimized) {
+      return {
+        width: minimizedWidth,
+        height: minimizedHeight,
+      };
+    }
+    
+    if (isMobile) {
+      // Mobile: 95% width, 70% viewport height for better viewing
+      // Slightly larger for Twitch/Kick (72% vs 70%)
+      return {
+        width: '95%',
+        height: isStreamingService ? '72vh' : '70vh',
+      };
+    }
+    
+    // Desktop: keep current dimensions
+    return {
+      width: '80%',
+      maxWidth: 800,
+      height: 500,
+    };
+  };
+
+  const dimensions = getPopupDimensions();
+
   return (
     <>
       {minimized && dragging && (
@@ -162,13 +193,13 @@ export const YouTubeGlobalPlayer = () => {
           top: minimized ? position.y : '50%',
           left: minimized ? position.x : '50%',
           transform: minimized ? 'none' : 'translate(-50%, -50%)',
-          width: minimized ? minimizedWidth : '80%',
-          maxWidth: minimized ? undefined : 800,
-          height: minimized ? minimizedHeight : 500,
+          width: dimensions.width,
+          maxWidth: dimensions.maxWidth,
+          height: dimensions.height,
           bgcolor: 'background.paper',
           borderRadius: 3,
           boxShadow: 24,
-          p: 2,
+          p: isMobile && !minimized ? 1 : 2, // Reduced padding on mobile (8px vs 16px)
           overflow: 'hidden',
           zIndex: 2000,
           userSelect: 'none',
@@ -178,7 +209,13 @@ export const YouTubeGlobalPlayer = () => {
           transition: 'all 0.3s ease',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: isMobile && !minimized ? 0.5 : 1, 
+          gap: 1,
+          flexShrink: 0,
+        }}>
           {minimized ? (
             <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
@@ -193,7 +230,13 @@ export const YouTubeGlobalPlayer = () => {
           </IconButton>
         </Box>
 
-        <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
+        <Box sx={{ 
+          flexGrow: 1, 
+          width: '100%', 
+          borderRadius: 2, 
+          overflow: 'hidden',
+          minHeight: 0, // Important for flex children to shrink properly
+        }}>
           <iframe
             width="100%"
             height="100%"
