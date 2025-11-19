@@ -16,7 +16,6 @@ import {
 import {
   ArrowBack,
   LiveTv,
-  PlayArrow,
 } from '@mui/icons-material';
 import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
@@ -56,6 +55,19 @@ const getServiceName = (service: StreamingService): string => {
       return 'YouTube';
     default:
       return service;
+  }
+};
+
+const getServiceIconUrl = (service: StreamingService): string | null => {
+  switch (service) {
+    case StreamingService.TWITCH:
+      return 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/twitch_glitch_flat_purple.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvdHdpdGNoX2dsaXRjaF9mbGF0X3B1cnBsZS5wbmciLCJpYXQiOjE3NjM1MjA4NTUsImV4cCI6MTc5NTA1Njg1NX0.9nqfLHXQIsExihVdeGIaAnhWqlW9zRnx0FPFqHarVpA';
+    case StreamingService.KICK:
+      return 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/Kick%20Icon%20(Green).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvS2ljayBJY29uIChHcmVlbikucG5nIiwiaWF0IjoxNzYzNTIwODQyLCJleHAiOjE3OTUwNTY4NDJ9.3cqNHCk9mYT4k6E7mUiIDIA8CWXWIKTUQK1iThtSrmo';
+    case StreamingService.YOUTUBE:
+      return null; // YouTube doesn't have an icon in the requirements
+    default:
+      return null;
   }
 };
 
@@ -275,31 +287,52 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                           Plataformas:
                         </Typography>
                         <Box display="flex" flexDirection="column" gap={1}>
-                          {streamer.services.map((service, serviceIndex) => (
-                            <Button
-                              key={serviceIndex}
-                              fullWidth
-                              variant="outlined"
-                              size="small"
-                              startIcon={<PlayArrow fontSize="small" />}
-                              onClick={() => handleServiceClick(service.service, service.url)}
-                              sx={{
-                                justifyContent: 'space-between',
-                                borderRadius: 2,
-                                borderColor: getServiceColor(service.service, mode),
-                                color: getServiceColor(service.service, mode),
-                                textTransform: 'none',
-                                '&:hover': {
+                          {streamer.services.map((service, serviceIndex) => {
+                            const serviceIconUrl = getServiceIconUrl(service.service);
+                            const isTwitchOrKick = service.service === StreamingService.TWITCH || service.service === StreamingService.KICK;
+                            
+                            return (
+                              <Button
+                                key={serviceIndex}
+                                fullWidth
+                                variant="outlined"
+                                size={isTwitchOrKick ? "medium" : "small"}
+                                onClick={() => handleServiceClick(service.service, service.url)}
+                                sx={{
+                                  justifyContent: 'flex-start',
+                                  borderRadius: 2,
                                   borderColor: getServiceColor(service.service, mode),
-                                  backgroundColor: mode === 'light'
-                                    ? `${getServiceColor(service.service, mode)}15`
-                                    : `${getServiceColor(service.service, mode)}25`,
-                                }
-                              }}
-                            >
-                              {getServiceName(service.service)}
-                            </Button>
-                          ))}
+                                  color: getServiceColor(service.service, mode),
+                                  textTransform: 'none',
+                                  gap: 1.5,
+                                  py: isTwitchOrKick ? 1.25 : 0.75,
+                                  px: 2,
+                                  '&:hover': {
+                                    borderColor: getServiceColor(service.service, mode),
+                                    backgroundColor: mode === 'light'
+                                      ? `${getServiceColor(service.service, mode)}15`
+                                      : `${getServiceColor(service.service, mode)}25`,
+                                  }
+                                }}
+                              >
+                                {isTwitchOrKick && serviceIconUrl && (
+                                  <Box
+                                    component="img"
+                                    src={serviceIconUrl}
+                                    alt={`${getServiceName(service.service)} icon`}
+                                    sx={{
+                                      width: 20,
+                                      height: 20,
+                                      objectFit: 'contain',
+                                    }}
+                                  />
+                                )}
+                                <Typography variant="body2" fontWeight={500}>
+                                  {isTwitchOrKick ? `Ver en ${getServiceName(service.service)}` : getServiceName(service.service)}
+                                </Typography>
+                              </Button>
+                            );
+                          })}
                         </Box>
                       </Box>
                     </CardContent>
