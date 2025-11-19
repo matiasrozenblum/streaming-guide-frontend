@@ -294,11 +294,11 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                             return (
                               <Button
                                 key={serviceIndex}
-                                fullWidth
                                 variant="outlined"
                                 size={isTwitchOrKick ? "medium" : "small"}
                                 onClick={() => handleServiceClick(service.service, service.url)}
                                 sx={{
+                                  width: isTwitchOrKick ? 120 : 'auto',
                                   justifyContent: 'flex-start',
                                   borderRadius: 2,
                                   borderColor: getServiceColor(service.service, mode),
