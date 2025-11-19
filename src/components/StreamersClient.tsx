@@ -298,7 +298,8 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                                 size={isTwitchOrKick ? "medium" : "small"}
                                 onClick={() => handleServiceClick(service.service, service.url)}
                                 sx={{
-                                  width: isTwitchOrKick ? 120 : 'auto',
+                                  width: isTwitchOrKick ? 'fit-content' : 'auto',
+                                  minWidth: isTwitchOrKick ? 140 : 'auto',
                                   justifyContent: 'flex-start',
                                   borderRadius: 2,
                                   borderColor: getServiceColor(service.service, mode),
@@ -307,6 +308,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                                   gap: 1.5,
                                   py: isTwitchOrKick ? 1.25 : 0.75,
                                   px: 2,
+                                  whiteSpace: 'nowrap',
                                   '&:hover': {
                                     borderColor: getServiceColor(service.service, mode),
                                     backgroundColor: mode === 'light'
