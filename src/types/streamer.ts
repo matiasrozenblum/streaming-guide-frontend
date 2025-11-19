@@ -11,6 +11,22 @@ export interface StreamerService {
 }
 
 export interface Streamer {
+  id: number;
+  name: string;
+  logo_url?: string | null;
+  is_visible?: boolean;
+  services: StreamerService[];
+  categories?: Array<{
+    id: number;
+    name: string;
+    description?: string;
+    color?: string;
+    order?: number;
+  }>;
+}
+
+// Frontend display interface (for compatibility with existing components)
+export interface StreamerDisplay {
   id: string;
   name: string;
   displayName: string;
