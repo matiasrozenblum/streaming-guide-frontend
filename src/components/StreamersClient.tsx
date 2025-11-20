@@ -82,18 +82,16 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   const [loading, setLoading] = useState(!initialStreamers);
 
-  useEffect(() => {
-    if (!initialStreamers) {
-      fetchStreamers();
-    }
-  }, [initialStreamers]);
-
   const fetchStreamers = async () => {
     try {
       setLoading(true);
-      const res = await fetch('/api/streamers/visible');
+      const res = await fetch('/api/streamers/visible', {
+        cache: 'no-store', // Ensure we get fresh data
+      });
       if (!res.ok) throw new Error('Failed to fetch streamers');
       const data = await res.json();
+      console.log('📡 Fetched streamers with live status:', data);
+      console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
       setStreamers(data);
     } catch (err) {
       console.error('Error fetching streamers:', err);
@@ -102,6 +100,40 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       setLoading(false);
     }
   };
+
+  useEffect(() => {
+    if (!initialStreamers) {
+      fetchStreamers();
+    }
+  }, [initialStreamers]);
+
+  // Listen for live status updates via SSE
+  useEffect(() => {
+    const handleLiveStatusRefresh = async () => {
+      console.log('🔄 Live status refresh event received, refetching streamers...');
+      // Refetch streamers to get updated live status
+      try {
+        setLoading(true);
+        const res = await fetch('/api/streamers/visible', {
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('Failed to fetch streamers');
+        const data = await res.json();
+        console.log('📡 Refetched streamers after SSE event:', data);
+        console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
+        setStreamers(data);
+      } catch (err) {
+        console.error('Error refetching streamers:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+    return () => {
+      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+    };
+  }, []);
 
   const handleServiceClick = (service: StreamingService, url: string) => {
     if (service === StreamingService.YOUTUBE) {
@@ -252,7 +284,29 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                    <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
+                      {/* LIVE Badge */}
+                      {streamer.is_live && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            fontSize: '0.65rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            zIndex: 5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                          }}
+                        >
+                          LIVE
+                        </Box>
+                      )}
                       <Box display="flex" alignItems="center" mb={2}>
                         {streamer.logo_url ? (
                           <Avatar
