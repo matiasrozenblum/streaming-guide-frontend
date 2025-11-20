@@ -23,6 +23,7 @@ export interface Streamer {
     color?: string;
     order?: number;
   }>;
+  is_live?: boolean; // Live status from backend
 }
 
 // Frontend display interface (for compatibility with existing components)

@@ -64,6 +64,8 @@ export default function LiveStatusListener() {
             
             const liveStatusRefreshEvents = [
               'live_status_changed',
+              'streamer_went_live',
+              'streamer_went_offline',
             ];
             
             console.log('[SSE] Received event:', data.type);

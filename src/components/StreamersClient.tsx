@@ -88,6 +88,19 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
     }
   }, [initialStreamers]);
 
+  // Listen for live status updates via SSE
+  useEffect(() => {
+    const handleLiveStatusRefresh = async () => {
+      // Refetch streamers to get updated live status
+      await fetchStreamers();
+    };
+
+    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+    return () => {
+      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+    };
+  }, []);
+
   const fetchStreamers = async () => {
     try {
       setLoading(true);
@@ -252,7 +265,29 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 3 }}>
+                    <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
+                      {/* LIVE Badge */}
+                      {streamer.is_live && (
+                        <Box
+                          sx={{
+                            position: 'absolute',
+                            top: 12,
+                            right: 12,
+                            backgroundColor: '#f44336',
+                            color: 'white',
+                            fontSize: '0.65rem',
+                            padding: '2px 6px',
+                            borderRadius: '4px',
+                            fontWeight: 'bold',
+                            zIndex: 5,
+                            display: 'flex',
+                            alignItems: 'center',
+                            gap: 0.5,
+                          }}
+                        >
+                          LIVE
+                        </Box>
+                      )}
                       <Box display="flex" alignItems="center" mb={2}>
                         {streamer.logo_url ? (
                           <Avatar
