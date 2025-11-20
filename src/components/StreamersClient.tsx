@@ -109,29 +109,40 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
 
   // Listen for live status updates via SSE
   useEffect(() => {
-    const handleLiveStatusRefresh = async () => {
-      console.log('🔄 Live status refresh event received, refetching streamers...');
-      // Refetch streamers to get updated live status
-      try {
-        setLoading(true);
-        const res = await fetch('/api/streamers/visible', {
-          cache: 'no-store',
-        });
-        if (!res.ok) throw new Error('Failed to fetch streamers');
-        const data = await res.json();
-        console.log('📡 Refetched streamers after SSE event:', data);
-        console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
-        setStreamers(data);
-      } catch (err) {
-        console.error('Error refetching streamers:', err);
-      } finally {
-        setLoading(false);
+    const handleLiveStatusRefresh = (event: CustomEvent) => {
+      const eventData = event.detail;
+      console.log('🔄 Live status refresh event received:', eventData);
+
+      // Extract streamer info from SSE event payload
+      const streamerId = eventData.entityId || eventData.payload?.streamerId;
+      const isLive = eventData.payload?.isLive ?? false;
+
+      if (streamerId) {
+        // Update only the specific streamer's live status without showing spinner
+        setStreamers(prevStreamers => 
+          prevStreamers.map(streamer => 
+            streamer.id === streamerId
+              ? { ...streamer, is_live: isLive }
+              : streamer
+          )
+        );
+        console.log(`✅ Updated streamer ${streamerId} live status to ${isLive} (no spinner)`);
+      } else {
+        // Fallback: if we don't have streamerId, silently refetch in background
+        console.log('⚠️ No streamerId in event, silently refetching...');
+        fetch('/api/streamers/visible', { cache: 'no-store' })
+          .then(res => res.json())
+          .then(data => {
+            setStreamers(data);
+            console.log('📡 Silently updated all streamers');
+          })
+          .catch(err => console.error('Error silently refetching streamers:', err));
       }
     };
 
-    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh as EventListener);
     return () => {
-      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
+      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh as EventListener);
     };
   }, []);
 
