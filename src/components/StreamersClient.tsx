@@ -24,7 +24,7 @@ import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
 import { getColorForChannel } from '@/utils/colors';
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { extractTwitchChannel, extractKickChannel } from '@/utils/extractStreamChannel';
 import { extractVideoId } from '@/utils/extractVideoId';
 
@@ -80,11 +80,15 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
   const { mode } = useThemeContext();
   const { openVideo, openStream } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
+  // Only show loading if we have no initial data at all (undefined/null, not empty array)
   const [loading, setLoading] = useState(!initialStreamers);
+  const hasFetchedRef = useRef(false); // Track if we've already fetched to prevent double-fetch
 
-  const fetchStreamers = async () => {
+  const fetchStreamers = async (showLoading = true) => {
     try {
-      setLoading(true);
+      if (showLoading) {
+        setLoading(true);
+      }
       const res = await fetch('/api/streamers/visible', {
         cache: 'no-store', // Ensure we get fresh data
       });
@@ -93,56 +97,70 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       console.log('📡 Fetched streamers with live status:', data);
       console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
       setStreamers(data);
+      hasFetchedRef.current = true;
     } catch (err) {
       console.error('Error fetching streamers:', err);
       setStreamers([]);
     } finally {
-      setLoading(false);
+      if (showLoading) {
+        setLoading(false);
+      }
     }
   };
 
   useEffect(() => {
-    if (!initialStreamers) {
+    // Only fetch if we truly have no initial data (undefined/null) AND haven't fetched yet
+    // If initialStreamers is an empty array [], it means server fetched successfully but found no streamers
+    // In that case, don't fetch again - just use the empty array
+    if ((initialStreamers === undefined || initialStreamers === null) && !hasFetchedRef.current) {
+      // No initial data from server, need to fetch
       fetchStreamers();
+    } else {
+      // We have initial data (even if empty array), no need to show loading or fetch again
+      setLoading(false);
+      hasFetchedRef.current = true; // Mark as fetched to prevent double-fetch
     }
-  }, [initialStreamers]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []); // Empty deps - only run once on mount, initialStreamers is from props
 
   // Listen for live status updates via SSE
   useEffect(() => {
-    const handleLiveStatusRefresh = (event: CustomEvent) => {
-      const eventData = event.detail;
+    const handleLiveStatusRefresh = (event: Event) => {
+      const customEvent = event as CustomEvent;
+      const eventData = customEvent.detail;
       console.log('🔄 Live status refresh event received:', eventData);
 
       // Extract streamer info from SSE event payload
-      const streamerId = eventData.entityId || eventData.payload?.streamerId;
-      const isLive = eventData.payload?.isLive ?? false;
+      const streamerId = eventData?.entityId || eventData?.payload?.streamerId;
+      const isLive = eventData?.payload?.isLive ?? false;
 
       if (streamerId) {
         // Update only the specific streamer's live status without showing spinner
-        setStreamers(prevStreamers => 
-          prevStreamers.map(streamer => 
+        setStreamers(prevStreamers => {
+          const updated = prevStreamers.map(streamer => 
             streamer.id === streamerId
               ? { ...streamer, is_live: isLive }
               : streamer
-          )
-        );
-        console.log(`✅ Updated streamer ${streamerId} live status to ${isLive} (no spinner)`);
+          );
+          console.log(`✅ Updated streamer ${streamerId} live status to ${isLive} (no spinner, no reload)`);
+          return updated;
+        });
       } else {
-        // Fallback: if we don't have streamerId, silently refetch in background
-        console.log('⚠️ No streamerId in event, silently refetching...');
+        // Fallback: if we don't have streamerId, silently refetch in background (no spinner)
+        console.log('⚠️ No streamerId in event, silently refetching in background...');
         fetch('/api/streamers/visible', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
             setStreamers(data);
-            console.log('📡 Silently updated all streamers');
+            console.log('📡 Silently updated all streamers (no spinner)');
           })
           .catch(err => console.error('Error silently refetching streamers:', err));
       }
     };
 
-    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh as EventListener);
+    window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     return () => {
-      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh as EventListener);
+      window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     };
   }, []);
 
