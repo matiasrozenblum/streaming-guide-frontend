@@ -94,8 +94,6 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       });
       if (!res.ok) throw new Error('Failed to fetch streamers');
       const data = await res.json();
-      console.log('📡 Fetched streamers with live status:', data);
-      console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
       setStreamers(data);
       hasFetchedRef.current = true;
     } catch (err) {
@@ -128,13 +126,6 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
     const handleLiveStatusRefresh = (event: Event) => {
       const customEvent = event as CustomEvent;
       const eventData = customEvent.detail;
-      console.log('🔄 [StreamersClient] Live status refresh event received:', eventData);
-      console.log('🔍 [StreamersClient] Event structure:', {
-        type: eventData?.type,
-        entity: eventData?.entity,
-        entityId: eventData?.entityId,
-        payload: eventData?.payload,
-      });
 
       // Extract streamer info from SSE event payload
       // The backend sends: { type, entity, entityId, payload: { streamerId, isLive, ... } }
@@ -143,62 +134,44 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       const streamerId = streamerIdRaw ? Number(streamerIdRaw) : null;
       const isLive = eventData?.payload?.isLive ?? false;
 
-      console.log('🔍 [StreamersClient] Extracted:', { streamerIdRaw, streamerId, isLive, streamerIdType: typeof streamerId });
-
       if (streamerId && !isNaN(streamerId)) {
         // Update only the specific streamer's live status without showing spinner
         setStreamers(prevStreamers => {
           const streamerExists = prevStreamers.some(s => s.id === streamerId);
-          console.log(`🔍 [StreamersClient] Streamer ${streamerId} exists in list:`, streamerExists);
-          console.log(`🔍 [StreamersClient] Current streamers:`, prevStreamers.map(s => ({ id: s.id, name: s.name, is_live: s.is_live })));
           
           if (!streamerExists) {
-            console.warn(`⚠️ [StreamersClient] Streamer ${streamerId} not found in current list, cannot update`);
             return prevStreamers;
           }
           
           // Check if update is actually needed
           const currentStreamer = prevStreamers.find(s => s.id === streamerId);
           if (currentStreamer?.is_live === isLive) {
-            console.log(`ℹ️ [StreamersClient] Streamer ${streamerId} already has is_live=${isLive}, skipping update`);
             return prevStreamers;
           }
           
           const updated = prevStreamers.map(streamer => {
             if (streamer.id === streamerId) {
-              console.log(`🔄 [StreamersClient] Updating streamer ${streamerId} from is_live=${streamer.is_live} to is_live=${isLive}`);
               // Create a new object to ensure React detects the change
               return { ...streamer, is_live: isLive };
             }
             return streamer;
           });
           
-          // Verify the update was applied
-          const updatedStreamer = updated.find(s => s.id === streamerId);
-          console.log(`✅ [StreamersClient] Updated streamer ${streamerId} live status to ${isLive} (no spinner, no reload)`);
-          console.log(`🔍 [StreamersClient] Verification - Updated streamer:`, updatedStreamer ? { id: updatedStreamer.id, name: updatedStreamer.name, is_live: updatedStreamer.is_live } : 'NOT FOUND');
-          console.log(`🔍 [StreamersClient] All updated streamers:`, updated.map(s => ({ id: s.id, name: s.name, is_live: s.is_live })));
-          
           return updated;
         });
       } else {
         // Fallback: if we don't have streamerId, silently refetch in background (no spinner)
-        console.log('⚠️ [StreamersClient] No streamerId in event, silently refetching in background...');
-        console.log('⚠️ [StreamersClient] Full event data:', JSON.stringify(eventData, null, 2));
         fetch('/api/streamers/visible', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
             setStreamers(data);
-            console.log('📡 [StreamersClient] Silently updated all streamers (no spinner)');
           })
-          .catch(err => console.error('[StreamersClient] Error silently refetching streamers:', err));
+          .catch(err => console.error('Error silently refetching streamers:', err));
       }
     };
 
-    console.log('👂 [StreamersClient] Setting up liveStatusRefresh event listener');
     window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     return () => {
-      console.log('👋 [StreamersClient] Removing liveStatusRefresh event listener');
       window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     };
   }, []);
