@@ -82,6 +82,25 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   const [loading, setLoading] = useState(!initialStreamers);
 
+  const fetchStreamers = async () => {
+    try {
+      setLoading(true);
+      const res = await fetch('/api/streamers/visible', {
+        cache: 'no-store', // Ensure we get fresh data
+      });
+      if (!res.ok) throw new Error('Failed to fetch streamers');
+      const data = await res.json();
+      console.log('📡 Fetched streamers with live status:', data);
+      console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
+      setStreamers(data);
+    } catch (err) {
+      console.error('Error fetching streamers:', err);
+      setStreamers([]);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   useEffect(() => {
     if (!initialStreamers) {
       fetchStreamers();
@@ -91,8 +110,23 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
   // Listen for live status updates via SSE
   useEffect(() => {
     const handleLiveStatusRefresh = async () => {
+      console.log('🔄 Live status refresh event received, refetching streamers...');
       // Refetch streamers to get updated live status
-      await fetchStreamers();
+      try {
+        setLoading(true);
+        const res = await fetch('/api/streamers/visible', {
+          cache: 'no-store',
+        });
+        if (!res.ok) throw new Error('Failed to fetch streamers');
+        const data = await res.json();
+        console.log('📡 Refetched streamers after SSE event:', data);
+        console.log('🔍 Streamer 1 (Mernuel) is_live:', data.find((s: Streamer) => s.id === 1)?.is_live);
+        setStreamers(data);
+      } catch (err) {
+        console.error('Error refetching streamers:', err);
+      } finally {
+        setLoading(false);
+      }
     };
 
     window.addEventListener('liveStatusRefresh', handleLiveStatusRefresh);
@@ -100,21 +134,6 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
       window.removeEventListener('liveStatusRefresh', handleLiveStatusRefresh);
     };
   }, []);
-
-  const fetchStreamers = async () => {
-    try {
-      setLoading(true);
-      const res = await fetch('/api/streamers/visible');
-      if (!res.ok) throw new Error('Failed to fetch streamers');
-      const data = await res.json();
-      setStreamers(data);
-    } catch (err) {
-      console.error('Error fetching streamers:', err);
-      setStreamers([]);
-    } finally {
-      setLoading(false);
-    }
-  };
 
   const handleServiceClick = (service: StreamingService, url: string) => {
     if (service === StreamingService.YOUTUBE) {
