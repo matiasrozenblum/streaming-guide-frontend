@@ -10,6 +10,7 @@ import type { SessionWithToken } from '@/types/session';
 import { UserButton } from './UserButton';
 import { event as gaEvent } from '@/lib/gtag';
 import { signOut } from 'next-auth/react';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 
 export default function Header() {
   const { session } = useSessionContext();
@@ -23,6 +24,7 @@ export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
+  const { streamersEnabled } = useStreamersConfig();
   
   const isCanalesPage = pathname === '/';
   const isStreamersPage = pathname === '/streamers';
@@ -141,42 +143,44 @@ export default function Header() {
             >
               Canales
             </Typography>
-            <Typography
-              onClick={() => {
-                router.push('/streamers');
-                gaEvent({
-                  action: 'navigation_click',
-                  params: { section: 'streamers', location: 'header' },
-                  userData: typedSession?.user
-                });
-              }}
-              sx={{
-                cursor: 'pointer',
-                fontSize: '1.125rem',
-                fontWeight: isStreamersPage ? 600 : 400,
-                color: isStreamersPage
-                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
-                transition: 'color 0.2s ease-in-out',
-                '&:hover': {
+            {streamersEnabled && (
+              <Typography
+                onClick={() => {
+                  router.push('/streamers');
+                  gaEvent({
+                    action: 'navigation_click',
+                    params: { section: 'streamers', location: 'header' },
+                    userData: typedSession?.user
+                  });
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  fontSize: '1.125rem',
+                  fontWeight: isStreamersPage ? 600 : 400,
                   color: isStreamersPage
                     ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
-                },
-                position: 'relative',
-                '&::after': isStreamersPage ? {
-                  content: '""',
-                  position: 'absolute',
-                  bottom: '-8px',
-                  left: 0,
-                  right: 0,
-                  height: '2px',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
-                } : {},
-              }}
-            >
-              Streamers
-            </Typography>
+                    : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                  transition: 'color 0.2s ease-in-out',
+                  '&:hover': {
+                    color: isStreamersPage
+                      ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                      : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                  },
+                  position: 'relative',
+                  '&::after': isStreamersPage ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  } : {},
+                }}
+              >
+                Streamers
+              </Typography>
+            )}
           </Box>
         )}
 

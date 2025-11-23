@@ -8,6 +8,7 @@ import { useThemeContext } from '@/contexts/ThemeContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 
 export default function BottomNavigation() {
   const router = useRouter();
@@ -17,9 +18,10 @@ export default function BottomNavigation() {
   const typedSession = session as SessionWithToken | null;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { streamersEnabled } = useStreamersConfig();
 
   // Only show on mobile and on main pages (not on subscriptions, profile, etc.)
-  const showOnPage = pathname === '/' || pathname === '/streamers';
+  const showOnPage = pathname === '/' || (pathname === '/streamers' && streamersEnabled);
   
   if (!isMobile || !showOnPage) {
     return null;
@@ -80,10 +82,12 @@ export default function BottomNavigation() {
           label="Canales"
           icon={<Schedule />}
         />
-        <BottomNavigationAction
-          label="Streamers"
-          icon={<LiveTv />}
-        />
+        {streamersEnabled && (
+          <BottomNavigationAction
+            label="Streamers"
+            icon={<LiveTv />}
+          />
+        )}
       </MuiBottomNavigation>
     </Box>
   );
