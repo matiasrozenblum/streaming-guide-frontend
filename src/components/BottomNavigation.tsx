@@ -20,10 +20,20 @@ export default function BottomNavigation() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { streamersEnabled } = useStreamersConfig();
 
-  // Only show on mobile, when streamers are enabled (need at least 2 sections to navigate), and on main pages
-  const showOnPage = streamersEnabled && (pathname === '/' || pathname === '/streamers');
+  // Only show on mobile
+  if (!isMobile) {
+    return null;
+  }
+
+  // Hide entire bottom navigation if streamers are disabled (no need for navigation with only 1 section)
+  if (!streamersEnabled) {
+    return null;
+  }
+
+  // Only show on main pages (not on subscriptions, profile, etc.)
+  const showOnPage = pathname === '/' || pathname === '/streamers';
   
-  if (!isMobile || !showOnPage) {
+  if (!showOnPage) {
     return null;
   }
 
