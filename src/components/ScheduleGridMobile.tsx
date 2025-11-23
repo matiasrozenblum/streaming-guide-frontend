@@ -41,6 +41,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
 
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const { streamersEnabled } = useStreamersConfig();
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -120,7 +121,6 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     return true;
   });
 
-  const { streamersEnabled } = useStreamersConfig();
   // Account for bottom navigation bar (56px height) + safe area inset (only if streamers enabled)
   const bottomNavHeight = streamersEnabled ? 56 : 0;
 
