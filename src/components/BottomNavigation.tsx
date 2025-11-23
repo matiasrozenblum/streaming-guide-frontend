@@ -18,10 +18,15 @@ export default function BottomNavigation() {
   const typedSession = session as SessionWithToken | null;
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  const { streamersEnabled } = useStreamersConfig();
+  const { streamersEnabled, loading } = useStreamersConfig();
 
   // Only show on mobile
   if (!isMobile) {
+    return null;
+  }
+
+  // Don't render while loading config (prevents flash of content)
+  if (loading) {
     return null;
   }
 
