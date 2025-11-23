@@ -8,7 +8,7 @@ import { useEffect, useRef, useState, useCallback } from 'react';
 import { useTheme } from '@mui/material/styles';
 
 export const YouTubeGlobalPlayer = () => {
-  const { embedPath, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
+  const { playerData, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
   const isMobile = useMediaQuery('(max-width:600px)');
   const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
@@ -116,12 +116,56 @@ export const YouTubeGlobalPlayer = () => {
     };
   }, [dragging]);
 
-  if (!open || !embedPath) return null;
+  if (!open || !playerData) return null;
 
-  const baseUrl = `https://www.youtube.com/embed/${embedPath}`;
-  const src = embedPath.includes('?')
-    ? `${baseUrl}&autoplay=1&enablejsapi=1`
-    : `${baseUrl}?autoplay=1&enablejsapi=1`;
+  // Build embed URL based on service type
+  let src = '';
+  if (playerData.service === 'youtube') {
+    const baseUrl = `https://www.youtube.com/embed/${playerData.embedPath}`;
+    src = playerData.embedPath.includes('?')
+      ? `${baseUrl}&autoplay=1&enablejsapi=1`
+      : `${baseUrl}?autoplay=1&enablejsapi=1`;
+  } else if (playerData.service === 'twitch') {
+    // Twitch embed requires parent domain for security
+    const parent = typeof window !== 'undefined' ? window.location.hostname : '';
+    src = `https://player.twitch.tv/?channel=${playerData.embedPath}&parent=${parent}&autoplay=true`;
+  } else if (playerData.service === 'kick') {
+    src = `https://player.kick.com/${playerData.embedPath}?autoplay=true`;
+  }
+
+  // Determine if this is a streaming service (Twitch/Kick) that benefits from larger mobile popup
+  const isStreamingService = playerData.service === 'twitch' || playerData.service === 'kick';
+  
+  // Calculate responsive dimensions
+  const getPopupDimensions = () => {
+    if (minimized) {
+      return {
+        width: minimizedWidth,
+        height: minimizedHeight,
+      };
+    }
+    
+    if (isMobile) {
+      // Mobile: 95% width, height calculated to maintain ~16:9 aspect ratio
+      // Account for padding (8px top + 8px bottom = 16px) and controls (~40px)
+      // For 95% width, approximate 16:9 height would be: width * (9/16)
+      // Using viewport width as reference: vw * 0.95 * (9/16) ≈ 53.4vw
+      // But we use vh for consistency, targeting ~50-55vh for better aspect ratio
+      return {
+        width: '95%',
+        height: isStreamingService ? '54vh' : '52vh',
+      };
+    }
+    
+    // Desktop: keep current dimensions
+    return {
+      width: '80%',
+      maxWidth: 800,
+      height: 500,
+    };
+  };
+
+  const dimensions = getPopupDimensions();
 
   return (
     <>
@@ -152,13 +196,13 @@ export const YouTubeGlobalPlayer = () => {
           top: minimized ? position.y : '50%',
           left: minimized ? position.x : '50%',
           transform: minimized ? 'none' : 'translate(-50%, -50%)',
-          width: minimized ? minimizedWidth : '80%',
-          maxWidth: minimized ? undefined : 800,
-          height: minimized ? minimizedHeight : 500,
+          width: dimensions.width,
+          maxWidth: dimensions.maxWidth,
+          height: dimensions.height,
           bgcolor: 'background.paper',
           borderRadius: 3,
           boxShadow: 24,
-          p: 2,
+          p: isMobile && !minimized ? 1 : 2, // Reduced padding on mobile (8px vs 16px)
           overflow: 'hidden',
           zIndex: 2000,
           userSelect: 'none',
@@ -168,7 +212,13 @@ export const YouTubeGlobalPlayer = () => {
           transition: 'all 0.3s ease',
         }}
       >
-        <Box sx={{ display: 'flex', justifyContent: 'flex-end', mb: 1, gap: 1 }}>
+        <Box sx={{ 
+          display: 'flex', 
+          justifyContent: 'flex-end', 
+          mb: isMobile && !minimized ? 0.5 : 1, 
+          gap: 1,
+          flexShrink: 0,
+        }}>
           {minimized ? (
             <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
@@ -183,7 +233,13 @@ export const YouTubeGlobalPlayer = () => {
           </IconButton>
         </Box>
 
-        <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden' }}>
+        <Box sx={{ 
+          flexGrow: 1, 
+          width: '100%', 
+          borderRadius: 2, 
+          overflow: 'hidden',
+          minHeight: 0, // Important for flex children to shrink properly
+        }}>
           <iframe
             width="100%"
             height="100%"
