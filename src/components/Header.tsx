@@ -97,8 +97,8 @@ export default function Header() {
           />
         </Box>
         
-        {/* Desktop Navigation Tabs - positioned after logo */}
-        {!isMobile && (
+        {/* Desktop Navigation Tabs - only show if streamers are enabled (need at least 2 sections to navigate) */}
+        {!isMobile && streamersEnabled && (
           <Box
             sx={{
               display: 'flex',
@@ -143,44 +143,42 @@ export default function Header() {
             >
               Canales
             </Typography>
-            {streamersEnabled && (
-              <Typography
-                onClick={() => {
-                  router.push('/streamers');
-                  gaEvent({
-                    action: 'navigation_click',
-                    params: { section: 'streamers', location: 'header' },
-                    userData: typedSession?.user
-                  });
-                }}
-                sx={{
-                  cursor: 'pointer',
-                  fontSize: '1.125rem',
-                  fontWeight: isStreamersPage ? 600 : 400,
+            <Typography
+              onClick={() => {
+                router.push('/streamers');
+                gaEvent({
+                  action: 'navigation_click',
+                  params: { section: 'streamers', location: 'header' },
+                  userData: typedSession?.user
+                });
+              }}
+              sx={{
+                cursor: 'pointer',
+                fontSize: '1.125rem',
+                fontWeight: isStreamersPage ? 600 : 400,
+                color: isStreamersPage
+                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
+                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                transition: 'color 0.2s ease-in-out',
+                '&:hover': {
                   color: isStreamersPage
                     ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
-                  transition: 'color 0.2s ease-in-out',
-                  '&:hover': {
-                    color: isStreamersPage
-                      ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                      : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
-                  },
-                  position: 'relative',
-                  '&::after': isStreamersPage ? {
-                    content: '""',
-                    position: 'absolute',
-                    bottom: '-8px',
-                    left: 0,
-                    right: 0,
-                    height: '2px',
-                    backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
-                  } : {},
-                }}
-              >
-                Streamers
-              </Typography>
-            )}
+                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                },
+                position: 'relative',
+                '&::after': isStreamersPage ? {
+                  content: '""',
+                  position: 'absolute',
+                  bottom: '-8px',
+                  left: 0,
+                  right: 0,
+                  height: '2px',
+                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                } : {},
+              }}
+            >
+              Streamers
+            </Typography>
           </Box>
         )}
 

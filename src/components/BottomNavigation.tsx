@@ -20,8 +20,8 @@ export default function BottomNavigation() {
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { streamersEnabled } = useStreamersConfig();
 
-  // Only show on mobile and on main pages (not on subscriptions, profile, etc.)
-  const showOnPage = pathname === '/' || (pathname === '/streamers' && streamersEnabled);
+  // Only show on mobile, when streamers are enabled (need at least 2 sections to navigate), and on main pages
+  const showOnPage = streamersEnabled && (pathname === '/' || pathname === '/streamers');
   
   if (!isMobile || !showOnPage) {
     return null;
@@ -82,12 +82,10 @@ export default function BottomNavigation() {
           label="Canales"
           icon={<Schedule />}
         />
-        {streamersEnabled && (
-          <BottomNavigationAction
-            label="Streamers"
-            icon={<LiveTv />}
-          />
-        )}
+        <BottomNavigationAction
+          label="Streamers"
+          icon={<LiveTv />}
+        />
       </MuiBottomNavigation>
     </Box>
   );
