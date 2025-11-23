@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.13.0] - 2025-11-23
+
+### Added
+- Added streamers section
+- Streamers section, bottom navigation and margin conditioned by streamers config
+
 ## [1.12.4] - 2025-11-04
 
 ### Added
