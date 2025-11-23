@@ -17,6 +17,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 
 interface Props {
   channels: Channel[];
@@ -40,6 +41,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
 
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const { streamersEnabled } = useStreamersConfig();
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -119,6 +121,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     return true;
   });
 
+  // Account for bottom navigation bar (56px height) + safe area inset (only if streamers enabled)
+  const bottomNavHeight = streamersEnabled ? 56 : 0;
+
   return (
     <Box
       sx={{
@@ -126,7 +131,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         top: 0,
         left: 0,
         right: 0,
-        bottom: 0,
+        bottom: `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
