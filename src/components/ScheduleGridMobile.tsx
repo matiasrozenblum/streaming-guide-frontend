@@ -17,6 +17,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 
 interface Props {
   channels: Channel[];
@@ -119,8 +120,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     return true;
   });
 
-  // Account for bottom navigation bar (56px height) + safe area inset
-  const bottomNavHeight = 56;
+  const { streamersEnabled } = useStreamersConfig();
+  // Account for bottom navigation bar (56px height) + safe area inset (only if streamers enabled)
+  const bottomNavHeight = streamersEnabled ? 56 : 0;
 
   return (
     <Box

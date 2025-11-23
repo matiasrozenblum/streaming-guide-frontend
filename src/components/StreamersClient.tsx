@@ -23,6 +23,7 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { getColorForChannel } from '@/utils/colors';
 import { useState, useEffect, useRef } from 'react';
 import { extractTwitchChannel, extractKickChannel } from '@/utils/extractStreamChannel';
@@ -78,6 +79,7 @@ interface StreamersClientProps {
 export default function StreamersClient({ initialStreamers }: StreamersClientProps) {
   const router = useRouter();
   const { mode } = useThemeContext();
+  const { streamersEnabled } = useStreamersConfig();
   const { openVideo, openStream } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   // Only show loading if we have no initial data at all (undefined/null, not empty array)
@@ -208,9 +210,9 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
-        // Add bottom padding on mobile for bottom navigation + safe area inset
+        // Add bottom padding on mobile for bottom navigation + safe area inset (only if streamers enabled)
         pb: { 
-          xs: 'calc(72px + env(safe-area-inset-bottom, 0px))', 
+          xs: streamersEnabled ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 1, 
           sm: 2 
         },
       }}
