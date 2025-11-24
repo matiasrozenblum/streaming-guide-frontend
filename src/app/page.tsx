@@ -56,7 +56,7 @@ async function getInitialData(): Promise<InitialData> {
     ]);
 
     return {
-      holiday: !!holidayData.holiday,
+      holiday: !!holidayData.isHoliday,
       todaySchedules: Array.isArray(todaySchedules) ? todaySchedules : [],
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
