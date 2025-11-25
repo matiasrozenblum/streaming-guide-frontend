@@ -30,10 +30,12 @@ import {
   Delete as DeleteIcon,
   ArrowUpward,
   ArrowDownward,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { Channel, Category } from '@/types/channel';
 import Image from 'next/image';
 import CategorySelector from '@/components/backoffice/CategorySelector';
+import { ConfigService } from '@/services/config';
 
 export default function ChannelsPage() {
   // Require session; redirect on unauth
@@ -43,11 +45,13 @@ export default function ChannelsPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
-  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+  const [formData, setFormData] = useState({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [clearingCache, setClearingCache] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated') fetchChannels();
@@ -100,24 +104,49 @@ export default function ChannelsPage() {
     }
   };
 
-  const handleOpenDialog = (channel?: Channel) => {
+  const handleOpenDialog = async (channel?: Channel) => {
     if (channel) {
       setEditingChannel(channel);
-      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true, background_color: channel.background_color || '', show_only_when_scheduled: channel.show_only_when_scheduled ?? false });
+      setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true, background_color: channel.background_color || '', show_only_when_scheduled: channel.show_only_when_scheduled ?? false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
       setSelectedCategories(channel.categories || []);
+      
+      // Fetch current config values for this channel before opening dialog
+      if (channel.handle) {
+        setLoadingConfigs(true);
+        try {
+          const configs = await ConfigService.findAll();
+          const fetchEnabledConfig = configs.find(c => c.key === `youtube.fetch_enabled.${channel.handle}`);
+          const holidayOverrideConfig = configs.find(c => c.key === `youtube.fetch_override_holiday.${channel.handle}`);
+          
+          setFormData(prev => ({
+            ...prev,
+            youtube_fetch_enabled: fetchEnabledConfig ? fetchEnabledConfig.value === 'true' : true,
+            youtube_fetch_override_holiday: holidayOverrideConfig ? holidayOverrideConfig.value === 'true' : true,
+          }));
+        } catch (err) {
+          console.error('Error fetching config values:', err);
+          // Keep defaults if fetch fails
+        } finally {
+          setLoadingConfigs(false);
+        }
+      }
+      // Open dialog after configs are loaded (or if no handle to fetch)
+      setOpenDialog(true);
     } else {
       setEditingChannel(null);
-      setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+      setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
       setSelectedCategories([]);
+      // For new channels, open immediately (no config fetch needed)
+      setOpenDialog(true);
     }
-    setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingChannel(null);
-    setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false });
+    setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
     setSelectedCategories([]);
+    setLoadingConfigs(false);
   };
 
   const handleSubmit = async () => {
@@ -176,6 +205,32 @@ export default function ChannelsPage() {
     } catch (err: unknown) {
       console.error('Error deleting channel:', err);
       setError(err instanceof Error ? err.message : 'Error al eliminar el canal');
+    }
+  };
+
+  const handleClearCache = async (channel: Channel) => {
+    if (!channel.handle) {
+      setError('El canal no tiene handle de YouTube');
+      return;
+    }
+    
+    try {
+      setClearingCache(channel.id);
+      const res = await fetch(`/api/channels/${channel.id}/clear-cache`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.message || 'Error al limpiar la caché');
+      }
+      const data = await res.json();
+      setSuccess(`Caché limpiada correctamente para ${channel.name}. Entradas eliminadas: ${data.cleared?.join(', ') || 'todas'}`);
+    } catch (err: unknown) {
+      console.error('Error clearing cache:', err);
+      setError(err instanceof Error ? err.message : 'Error al limpiar la caché');
+    } finally {
+      setClearingCache(null);
     }
   };
 
@@ -260,14 +315,26 @@ export default function ChannelsPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
-                  <Switch
-                    checked={channel.is_visible}
-                    onChange={() => handleToggleVisibility(channel)}
-                    color="primary"
-                    size="small"
-                  />
-                  <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                    <Switch
+                      checked={channel.is_visible}
+                      onChange={() => handleToggleVisibility(channel)}
+                      color="primary"
+                      size="small"
+                    />
+                    {channel.handle && (
+                      <IconButton
+                        onClick={() => handleClearCache(channel)}
+                        disabled={clearingCache === channel.id}
+                        title="Limpiar caché de estado en vivo"
+                        color="secondary"
+                      >
+                        <RefreshIcon />
+                      </IconButton>
+                    )}
+                    <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
@@ -323,6 +390,22 @@ export default function ChannelsPage() {
                 color="primary"
               />
             </Box>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography>Fetch de YouTube habilitado</Typography>
+              <Switch
+                checked={formData.youtube_fetch_enabled}
+                onChange={e => setFormData({ ...formData, youtube_fetch_enabled: e.target.checked })}
+                color="primary"
+              />
+            </Box>
+            <Box display="flex" alignItems="center" gap={2}>
+              <Typography>Fetch de YouTube habilitado en feriados</Typography>
+              <Switch
+                checked={formData.youtube_fetch_override_holiday}
+                onChange={e => setFormData({ ...formData, youtube_fetch_override_holiday: e.target.checked })}
+                color="primary"
+              />
+            </Box>
             <CategorySelector
               selectedCategories={selectedCategories}
               onCategoriesChange={setSelectedCategories}
@@ -331,8 +414,8 @@ export default function ChannelsPage() {
         </DialogContent>
         <DialogActions sx={{ p:2 }}>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained">
-            {editingChannel ? 'Guardar' : 'Crear'}
+          <Button onClick={handleSubmit} variant="contained" disabled={loadingConfigs}>
+            {loadingConfigs ? 'Cargando...' : (editingChannel ? 'Guardar' : 'Crear')}
           </Button>
         </DialogActions>
       </Dialog>
