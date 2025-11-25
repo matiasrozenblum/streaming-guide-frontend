@@ -351,7 +351,7 @@ export default function ChannelsPage() {
               />
             </Box>
             <Box display="flex" alignItems="center" gap={2}>
-              <Typography>Habilitar obtención de YouTube</Typography>
+              <Typography>Fetch de YouTube habilitado</Typography>
               <Switch
                 checked={formData.youtube_fetch_enabled}
                 onChange={e => setFormData({ ...formData, youtube_fetch_enabled: e.target.checked })}
@@ -359,7 +359,7 @@ export default function ChannelsPage() {
               />
             </Box>
             <Box display="flex" alignItems="center" gap={2}>
-              <Typography>Habilitar obtención en feriados</Typography>
+              <Typography>Fetch de YouTube habilitado en feriados</Typography>
               <Switch
                 checked={formData.youtube_fetch_override_holiday}
                 onChange={e => setFormData({ ...formData, youtube_fetch_override_holiday: e.target.checked })}
