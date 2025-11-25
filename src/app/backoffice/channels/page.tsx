@@ -30,6 +30,7 @@ import {
   Delete as DeleteIcon,
   ArrowUpward,
   ArrowDownward,
+  Refresh as RefreshIcon,
 } from '@mui/icons-material';
 import { Channel, Category } from '@/types/channel';
 import Image from 'next/image';
@@ -50,6 +51,7 @@ export default function ChannelsPage() {
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
   const [loadingConfigs, setLoadingConfigs] = useState(false);
+  const [clearingCache, setClearingCache] = useState<number | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated') fetchChannels();
@@ -206,6 +208,32 @@ export default function ChannelsPage() {
     }
   };
 
+  const handleClearCache = async (channel: Channel) => {
+    if (!channel.handle) {
+      setError('El canal no tiene handle de YouTube');
+      return;
+    }
+    
+    try {
+      setClearingCache(channel.id);
+      const res = await fetch(`/api/channels/${channel.id}/clear-cache`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || body?.message || 'Error al limpiar la caché');
+      }
+      const data = await res.json();
+      setSuccess(`Caché limpiada correctamente para ${channel.name}. Entradas eliminadas: ${data.cleared?.join(', ') || 'todas'}`);
+    } catch (err: unknown) {
+      console.error('Error clearing cache:', err);
+      setError(err instanceof Error ? err.message : 'Error al limpiar la caché');
+    } finally {
+      setClearingCache(null);
+    }
+  };
+
   const handleCloseSnackbar = () => {
     setError(null);
     setSuccess(null);
@@ -287,14 +315,26 @@ export default function ChannelsPage() {
                   )}
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
-                  <Switch
-                    checked={channel.is_visible}
-                    onChange={() => handleToggleVisibility(channel)}
-                    color="primary"
-                    size="small"
-                  />
-                  <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                    <Switch
+                      checked={channel.is_visible}
+                      onChange={() => handleToggleVisibility(channel)}
+                      color="primary"
+                      size="small"
+                    />
+                    {channel.handle && (
+                      <IconButton
+                        onClick={() => handleClearCache(channel)}
+                        disabled={clearingCache === channel.id}
+                        title="Limpiar caché de estado en vivo"
+                        color="secondary"
+                      >
+                        <RefreshIcon />
+                      </IconButton>
+                    )}
+                    <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                  </Box>
                 </TableCell>
               </TableRow>
             ))}
