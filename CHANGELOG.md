@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.14.0] - 2025-11-25
+
+### Added
+- Added buttons to clear cache and modify youtube fetch configs from channel dialog
+
 ## [1.13.0] - 2025-11-23
 
 ### Added
