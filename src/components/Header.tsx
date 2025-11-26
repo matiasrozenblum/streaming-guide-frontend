@@ -24,7 +24,8 @@ export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
-  const { streamersEnabled } = useStreamersConfig();
+  const streamersConfig = useStreamersConfig();
+  const streamersEnabled = streamersConfig.streamersEnabled;
   
   const isCanalesPage = pathname === '/';
   const isStreamersPage = pathname === '/streamers';

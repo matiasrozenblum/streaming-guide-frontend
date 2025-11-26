@@ -210,14 +210,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Banner Carousel - Only show when streamers are enabled and banners exist */}
-          {streamersEnabled && !bannersLoading && banners.length > 0 && (
+          {!streamersConfigLoading && streamersEnabled && !bannersLoading && banners.length > 0 && (
             <MotionBox
-              initial={{ opacity: 0, y: -20 }}
+              initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.1 }}
+              transition={{ duration: 0.3 }} // Faster animation, no delay
               sx={{
                 px: { xs: 2, sm: 3 },
-                pb: { xs: 2, sm: 3 },
+                pb: { xs: 1, sm: 2 }, // Reduced spacing below banner
               }}
             >
               <BannerCarousel banners={banners} />
@@ -231,6 +231,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               flex: 1,
               backdropFilter: 'blur(8px)',
+              px: { xs: 2, sm: 3 }, // Match banner padding for alignment
             }}
           >
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}

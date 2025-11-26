@@ -143,7 +143,8 @@ export default function BannerCarousel({
               objectFit: 'cover',
             }}
             sizes={isMobile ? '100vw' : '1200px'}
-            priority={currentIndex === 0} // Prioritize first image
+            priority={true} // Always prioritize banner images for fast loading
+            quality={85} // Optimize quality vs size
           />
 
           {/* Overlay for better text readability */}
