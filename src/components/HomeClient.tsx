@@ -9,14 +9,18 @@ import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
+import { bannersApi } from '@/services/banners';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
+import BannerCarousel from '@/components/BannerCarousel';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
+import type { Banner } from '@/types/banner';
 import Header from './Header';
 import BottomNavigation from './BottomNavigation';
 import { useDeviceId } from '@/hooks/useDeviceId';
+import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -39,11 +43,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const deviceId = useDeviceId();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const { streamersEnabled, loading: streamersConfigLoading } = useStreamersConfig();
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
+  const [banners, setBanners] = useState<Banner[]>([]);
+  const [bannersLoading, setBannersLoading] = useState(true);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -68,6 +75,29 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
   }, [setLiveStatuses, initialLiveMap]);
+
+  // Fetch banners when streamers are enabled
+  useEffect(() => {
+    const fetchBanners = async () => {
+      if (!streamersEnabled || streamersConfigLoading) {
+        setBanners([]);
+        setBannersLoading(false);
+        return;
+      }
+
+      try {
+        const activeBanners = await bannersApi.getActiveBanners();
+        setBanners(activeBanners);
+      } catch (error) {
+        console.warn('Error fetching banners:', error);
+        setBanners([]);
+      } finally {
+        setBannersLoading(false);
+      }
+    };
+
+    fetchBanners();
+  }, [streamersEnabled, streamersConfigLoading]);
 
   // Derive flat lists for grid
   const channels = useMemo(
@@ -179,6 +209,21 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <Header />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+          {/* Banner Carousel - Only show when streamers are enabled and banners exist */}
+          {streamersEnabled && !bannersLoading && banners.length > 0 && (
+            <MotionBox
+              initial={{ opacity: 0, y: -20 }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              sx={{
+                px: { xs: 2, sm: 3 },
+                pb: { xs: 2, sm: 3 },
+              }}
+            >
+              <BannerCarousel banners={banners} />
+            </MotionBox>
+          )}
+
           <MotionBox
             initial={{ opacity: 0 }}
             animate={{ opacity: 1 }}
