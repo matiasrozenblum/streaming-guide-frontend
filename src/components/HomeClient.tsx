@@ -215,6 +215,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }} // Faster animation, no delay
+              sx={{
+                pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
+              }}
             >
               <BannerCarousel banners={banners} />
             </MotionBox>

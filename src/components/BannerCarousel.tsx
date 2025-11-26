@@ -35,6 +35,11 @@ export default function BannerCarousel({
   
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
+  const [isHovered, setIsHovered] = useState(false);
+
+  // Touch/swipe handling for mobile
+  const [touchStart, setTouchStart] = useState<number | null>(null);
+  const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
   // Auto-rotation logic
   useEffect(() => {
@@ -64,6 +69,32 @@ export default function BannerCarousel({
   const goToSlide = useCallback((index: number) => {
     setCurrentIndex(index);
   }, []);
+
+  // Touch/swipe handlers for mobile
+  const minSwipeDistance = 50;
+
+  const onTouchStart = (e: React.TouchEvent) => {
+    setTouchEnd(null);
+    setTouchStart(e.targetTouches[0].clientX);
+  };
+
+  const onTouchMove = (e: React.TouchEvent) => {
+    setTouchEnd(e.targetTouches[0].clientX);
+  };
+
+  const onTouchEnd = () => {
+    if (!touchStart || !touchEnd) return;
+    
+    const distance = touchStart - touchEnd;
+    const isLeftSwipe = distance > minSwipeDistance;
+    const isRightSwipe = distance < -minSwipeDistance;
+
+    if (isLeftSwipe) {
+      goToNext();
+    } else if (isRightSwipe) {
+      goToPrevious();
+    }
+  };
 
   const handleBannerClick = useCallback((banner: Banner) => {
     // Track banner click
@@ -117,9 +148,18 @@ export default function BannerCarousel({
             : '0 6px 20px rgba(0, 0, 0, 0.4)',
         },
       }}
-      onMouseEnter={() => setIsPaused(true)}
-      onMouseLeave={() => setIsPaused(false)}
+      onMouseEnter={() => {
+        setIsPaused(true);
+        setIsHovered(true);
+      }}
+      onMouseLeave={() => {
+        setIsPaused(false);
+        setIsHovered(false);
+      }}
       onClick={() => handleBannerClick(currentBanner)}
+      onTouchStart={isMobile ? onTouchStart : undefined}
+      onTouchMove={isMobile ? onTouchMove : undefined}
+      onTouchEnd={isMobile ? onTouchEnd : undefined}
     >
       <AnimatePresence mode="wait">
         <MotionBox
@@ -203,8 +243,8 @@ export default function BannerCarousel({
         </MotionBox>
       </AnimatePresence>
 
-      {/* Navigation Controls - Only show if multiple banners */}
-      {hasMultipleBanners && (
+      {/* Navigation Controls - Only show on desktop and when hovered, hide on mobile */}
+      {hasMultipleBanners && !isMobile && (
         <>
           {/* Previous/Next Buttons */}
           <IconButton
@@ -217,16 +257,18 @@ export default function BannerCarousel({
               left: 8,
               top: '50%',
               transform: 'translateY(-50%)',
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              color: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'transparent',
+              color: 'white',
+              opacity: isHovered ? 1 : 0,
+              transition: 'opacity 0.3s ease',
               '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
+                backgroundColor: 'rgba(255,255,255,0.1)',
               },
-              width: isMobile ? 32 : 40,
-              height: isMobile ? 32 : 40,
+              width: 40,
+              height: 40,
             }}
           >
-            <ChevronLeft fontSize={isMobile ? 'small' : 'medium'} />
+            <ChevronLeft fontSize="medium" />
           </IconButton>
 
           <IconButton
@@ -239,16 +281,18 @@ export default function BannerCarousel({
               right: 8,
               top: '50%',
               transform: 'translateY(-50%)',
-              backgroundColor: 'rgba(255,255,255,0.9)',
-              color: 'rgba(0,0,0,0.8)',
+              backgroundColor: 'transparent',
+              color: 'white',
+              opacity: isHovered ? 1 : 0,
+              transition: 'opacity 0.3s ease',
               '&:hover': {
-                backgroundColor: 'rgba(255,255,255,1)',
+                backgroundColor: 'rgba(255,255,255,0.1)',
               },
-              width: isMobile ? 32 : 40,
-              height: isMobile ? 32 : 40,
+              width: 40,
+              height: 40,
             }}
           >
-            <ChevronRight fontSize={isMobile ? 'small' : 'medium'} />
+            <ChevronRight fontSize="medium" />
           </IconButton>
 
           {/* Dots Indicator */}
