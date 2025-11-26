@@ -20,7 +20,6 @@ import type { Banner } from '@/types/banner';
 import Header from './Header';
 import BottomNavigation from './BottomNavigation';
 import { useDeviceId } from '@/hooks/useDeviceId';
-import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -36,6 +35,7 @@ interface HomeClientProps {
     weekSchedules: ChannelWithSchedules[];
     categories: Category[];
     categoriesEnabled: boolean;
+    streamersEnabled: boolean;
   };
 }
 
@@ -43,7 +43,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const deviceId = useDeviceId();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const { streamersEnabled, loading: streamersConfigLoading } = useStreamersConfig();
+  const streamersEnabled = initialData.streamersEnabled;
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
@@ -79,7 +79,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   // Fetch banners when streamers are enabled
   useEffect(() => {
     const fetchBanners = async () => {
-      if (!streamersEnabled || streamersConfigLoading) {
+      if (!streamersEnabled) {
         setBanners([]);
         setBannersLoading(false);
         return;
@@ -97,7 +97,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     };
 
     fetchBanners();
-  }, [streamersEnabled, streamersConfigLoading]);
+  }, [streamersEnabled]);
 
   // Derive flat lists for grid
   const channels = useMemo(
@@ -206,18 +206,17 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           flexDirection: 'column'
         }}
       >
-        <Header />
+        <Header streamersEnabled={streamersEnabled} />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
           {/* Banner Carousel - Only show when streamers are enabled and banners exist */}
-          {!streamersConfigLoading && streamersEnabled && !bannersLoading && banners.length > 0 && (
+          {streamersEnabled && !bannersLoading && banners.length > 0 && (
             <MotionBox
               initial={{ opacity: 0, y: -10 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.3 }} // Faster animation, no delay
               sx={{
-                px: { xs: 2, sm: 3 },
-                pb: { xs: 1, sm: 2 }, // Reduced spacing below banner
+                pb: { xs: 1, sm: 1.5 }, // Reduced spacing below banner to match header spacing
               }}
             >
               <BannerCarousel banners={banners} />
@@ -231,7 +230,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               flex: 1,
               backdropFilter: 'blur(8px)',
-              px: { xs: 2, sm: 3 }, // Match banner padding for alignment
             }}
           >
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}

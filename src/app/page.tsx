@@ -9,6 +9,7 @@ interface InitialData {
   weekSchedules: ChannelWithSchedules[];
   categories: Category[];
   categoriesEnabled: boolean;
+  streamersEnabled: boolean;
 }
 
 async function getInitialData(): Promise<InitialData> {
@@ -47,12 +48,20 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.text()); // Config endpoint returns plain text
 
-    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData] = await Promise.all([
+    const streamersEnabledPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/config/streamers_enabled`,
+      {
+        next: { revalidate: 0 } // No caching for config - changes should be immediate
+      }
+    ).then(res => res.text()); // Config endpoint returns plain text
+
+    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData] = await Promise.all([
       holidayPromise,
       todayPromise,
       weekPromise,
       categoriesPromise,
       categoriesEnabledPromise,
+      streamersEnabledPromise,
     ]);
 
     return {
@@ -61,6 +70,7 @@ async function getInitialData(): Promise<InitialData> {
       weekSchedules: Array.isArray(weekSchedules) ? weekSchedules : [],
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
       categoriesEnabled: categoriesEnabledData === 'true',
+      streamersEnabled: streamersEnabledData === 'true',
     };
   } catch {
     return {
@@ -69,6 +79,7 @@ async function getInitialData(): Promise<InitialData> {
       weekSchedules: [],
       categories: [],
       categoriesEnabled: false, // Default to false on error
+      streamersEnabled: false, // Default to false on error
     };
   }
 }

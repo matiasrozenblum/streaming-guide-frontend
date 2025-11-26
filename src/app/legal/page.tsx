@@ -11,6 +11,7 @@ interface InitialData {
   weekSchedules: ChannelWithSchedules[];
   categories: Category[];
   categoriesEnabled: boolean;
+  streamersEnabled: boolean;
 }
 
 export default async function Page() {
@@ -21,9 +22,10 @@ export default async function Page() {
   let weekSchedules: ChannelWithSchedules[] = [];
   let categories: Category[] = [];
   let categoriesEnabled = false;
+  let streamersEnabled = false;
 
   try {
-    const [todayRes, weekRes, categoriesRes, categoriesEnabledRes] = await Promise.all([
+    const [todayRes, weekRes, categoriesRes, categoriesEnabledRes, streamersEnabledRes] = await Promise.all([
       fetch(
         `${url}/channels/with-schedules/today`,
         { next: { revalidate: 60 } }
@@ -38,6 +40,10 @@ export default async function Page() {
       ),
       fetch(
         `${url}/config/categories_enabled`,
+        { next: { revalidate: 0 } } // No caching for config - changes should be immediate
+      ),
+      fetch(
+        `${url}/config/streamers_enabled`,
         { next: { revalidate: 0 } } // No caching for config - changes should be immediate
       )
     ]);
@@ -67,6 +73,13 @@ export default async function Page() {
     } else {
       console.warn('Categories enabled fetch failed with status', categoriesEnabledRes.status);
     }
+
+    if (streamersEnabledRes.ok) {
+      const streamersEnabledData = await streamersEnabledRes.text();
+      streamersEnabled = streamersEnabledData === 'true';
+    } else {
+      console.warn('Streamers enabled fetch failed with status', streamersEnabledRes.status);
+    }
   } catch (err) {
     console.warn('Fetch error during build/runtime:', err);
   }
@@ -77,7 +90,8 @@ export default async function Page() {
     todaySchedules,
     weekSchedules,
     categories,
-    categoriesEnabled
+    categoriesEnabled,
+    streamersEnabled
   };
 
   // Renderiza componente cliente con datos pre-cargados

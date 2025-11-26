@@ -12,7 +12,11 @@ import { event as gaEvent } from '@/lib/gtag';
 import { signOut } from 'next-auth/react';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 
-export default function Header() {
+interface HeaderProps {
+  streamersEnabled?: boolean;
+}
+
+export default function Header({ streamersEnabled }: HeaderProps = {}) {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const { mode } = useThemeContext();
@@ -24,8 +28,9 @@ export default function Header() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
-  const streamersConfig = useStreamersConfig();
-  const streamersEnabled = streamersConfig.streamersEnabled;
+  // Use prop if provided, otherwise fall back to hook for backward compatibility
+  const streamersConfigHook = useStreamersConfig();
+  const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
   
   const isCanalesPage = pathname === '/';
   const isStreamersPage = pathname === '/streamers';
@@ -99,7 +104,7 @@ export default function Header() {
         </Box>
         
         {/* Desktop Navigation Tabs - only show if streamers are enabled (need at least 2 sections to navigate) */}
-        {!isMobile && streamersEnabled && (
+        {!isMobile && finalStreamersEnabled && (
           <Box
             sx={{
               display: 'flex',

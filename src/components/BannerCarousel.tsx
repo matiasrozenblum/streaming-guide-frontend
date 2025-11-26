@@ -102,21 +102,26 @@ export default function BannerCarousel({
   return (
     <Box
       sx={{
-        position: 'relative',
-        width: '100%',
-        height: bannerHeight,
-        borderRadius,
-        overflow: 'hidden',
-        cursor: currentBanner.link_type !== LinkType.NONE ? 'pointer' : 'default',
-        boxShadow: mode === 'light' 
-          ? '0 4px 12px rgba(0, 0, 0, 0.1)' 
-          : '0 4px 12px rgba(0, 0, 0, 0.3)',
-        '&:hover': {
-          boxShadow: mode === 'light' 
-            ? '0 6px 20px rgba(0, 0, 0, 0.15)' 
-            : '0 6px 20px rgba(0, 0, 0, 0.4)',
-        },
+        px: { xs: 2, sm: 3 }, // Match schedule grid padding for alignment
       }}
+    >
+      <Box
+        sx={{
+          position: 'relative',
+          width: '100%',
+          height: bannerHeight,
+          borderRadius,
+          overflow: 'hidden',
+          cursor: currentBanner.link_type !== LinkType.NONE ? 'pointer' : 'default',
+          boxShadow: mode === 'light' 
+            ? '0 4px 12px rgba(0, 0, 0, 0.1)' 
+            : '0 4px 12px rgba(0, 0, 0, 0.3)',
+          '&:hover': {
+            boxShadow: mode === 'light' 
+              ? '0 6px 20px rgba(0, 0, 0, 0.15)' 
+              : '0 6px 20px rgba(0, 0, 0, 0.4)',
+          },
+        }}
       onMouseEnter={() => setIsPaused(true)}
       onMouseLeave={() => setIsPaused(false)}
       onClick={() => handleBannerClick(currentBanner)}
@@ -286,6 +291,7 @@ export default function BannerCarousel({
           </Box>
         </>
       )}
+      </Box>
     </Box>
   );
 }
