@@ -51,6 +51,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
   const [banners, setBanners] = useState<Banner[]>([]);
   const [bannersLoading, setBannersLoading] = useState(true);
+  const [bannerVisible, setBannerVisible] = useState(true);
+  const [lastScrollY, setLastScrollY] = useState(0);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -98,6 +100,32 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     fetchBanners();
   }, [streamersEnabled]);
+
+  // Scroll detection for banner hide/show
+  useEffect(() => {
+    const handleScroll = () => {
+      const currentScrollY = window.scrollY;
+      
+      if (currentScrollY < 50) {
+        // Always show banner when near top
+        setBannerVisible(true);
+      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
+        // Scrolling down and past threshold - hide banner
+        setBannerVisible(false);
+      } else if (currentScrollY < lastScrollY) {
+        // Scrolling up - show banner
+        setBannerVisible(true);
+      }
+      
+      setLastScrollY(currentScrollY);
+    };
+
+    // Add scroll listener
+    window.addEventListener('scroll', handleScroll, { passive: true });
+    
+    // Cleanup
+    return () => window.removeEventListener('scroll', handleScroll);
+  }, [lastScrollY]);
 
   // Derive flat lists for grid
   const channels = useMemo(
@@ -213,10 +241,22 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           {streamersEnabled && !bannersLoading && banners.length > 0 && (
             <MotionBox
               initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }} // Faster animation, no delay
+              animate={{ 
+                opacity: 1, 
+                y: 0,
+                transform: bannerVisible ? 'translateY(0)' : 'translateY(-100%)'
+              }}
+              transition={{ 
+                duration: 0.3,
+                ease: 'easeInOut'
+              }}
               sx={{
                 pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
+                position: 'sticky',
+                top: 0,
+                zIndex: 10,
+                transition: 'transform 0.3s ease-in-out',
+                transform: bannerVisible ? 'translateY(0)' : 'translateY(-100%)',
               }}
             >
               <BannerCarousel banners={banners} />
