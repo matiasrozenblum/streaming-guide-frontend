@@ -24,10 +24,9 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
-  bannerVisible?: boolean;
 }
 
-export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled, bannerVisible = true }: Props) => {
+export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -129,17 +128,13 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     <Box
       sx={{
         position: 'fixed',
-        // Dynamic top position based on banner visibility
-        top: bannerVisible 
-          ? '300px' // Below header + banner + day buttons (mobile)
-          : '170px', // Below header + day buttons (no banner, mobile)
+        top: 0,
         left: 0,
         right: 0,
         bottom: `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        transition: 'top 0.3s ease-in-out',
       }}
     >
       {/* Día Selector */}

@@ -101,7 +101,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled]);
 
-  // Grid scroll detection for banner hide/show with dynamic height
+  // Grid scroll detection for banner hide/show - simplified
   useEffect(() => {
     const handleGridScroll = () => {
       const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
@@ -109,15 +109,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       
       const currentScrollY = scheduleGrid.scrollTop;
       
-      if (currentScrollY < 50) {
-        // Always show banner when near top of grid
+      if (currentScrollY < 10) {
+        // Show banner when at the very top
         setBannerVisible(true);
-      } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down within grid and past threshold - hide banner
+      } else {
+        // Hide banner on any scroll
         setBannerVisible(false);
-      } else if (currentScrollY < lastScrollY) {
-        // Scrolling up within grid - show banner
-        setBannerVisible(true);
       }
       
       setLastScrollY(currentScrollY);
@@ -243,26 +240,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <Header streamersEnabled={streamersEnabled} />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Banner Carousel - Only show when streamers are enabled and banners exist */}
-          {streamersEnabled && !bannersLoading && banners.length > 0 && (
+          {/* Banner Carousel - Only show when streamers are enabled, banners exist, and banner is visible */}
+          {streamersEnabled && !bannersLoading && banners.length > 0 && bannerVisible && (
             <MotionBox
               initial={{ opacity: 0, y: -10 }}
-              animate={{ 
-                opacity: 1, 
-                y: 0,
-                transform: bannerVisible ? 'translateY(0)' : 'translateY(-100%)'
-              }}
-              transition={{ 
-                duration: 0.3,
-                ease: 'easeInOut'
-              }}
+              animate={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.3 }}
               sx={{
                 pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
-                position: 'sticky',
-                top: 0,
-                zIndex: 10,
-                transition: 'transform 0.3s ease-in-out',
-                transform: bannerVisible ? 'translateY(0)' : 'translateY(-100%)',
               }}
             >
               <BannerCarousel banners={banners} />
@@ -278,7 +263,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               backdropFilter: 'blur(8px)',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} bannerVisible={bannerVisible} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
           </MotionBox>
         </Container>
         <BottomNavigation />
