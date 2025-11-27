@@ -133,18 +133,17 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
     <Box
       sx={{
         position: 'fixed',
-        top: 0,
+        // Dynamic top position based on banner visibility
+        top: bannerVisible 
+          ? '280px' // Below header + banner + day buttons
+          : '150px', // Below header + day buttons (no banner)
         left: 0,
         right: 0,
         bottom: 0,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
-        // Dynamic height based on banner visibility
-        height: bannerVisible 
-          ? 'calc(100vh - 280px)' // Space for header + banner + day buttons + bottom nav
-          : 'calc(100vh - 150px)', // Space for header + day buttons + bottom nav (no banner)
-        transition: 'height 0.3s ease-in-out',
+        transition: 'top 0.3s ease-in-out',
       }}
     >
       {/* Day selector & Live button */}
