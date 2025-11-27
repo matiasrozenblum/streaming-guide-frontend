@@ -276,15 +276,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               flex: 1,
               backdropFilter: 'blur(8px)',
-              // Dynamic height based on banner visibility
-              height: bannerVisible 
-                ? 'calc(100vh - 280px)' // Space for header + banner + day buttons + bottom nav
-                : 'calc(100vh - 150px)', // Space for header + day buttons + bottom nav (no banner)
-              transition: 'height 0.3s ease-in-out',
-              overflow: 'hidden', // Prevent double scrollbars
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} bannerVisible={bannerVisible} />}
           </MotionBox>
         </Container>
         <BottomNavigation />

@@ -27,9 +27,10 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  bannerVisible?: boolean;
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled, bannerVisible = true }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -139,6 +140,11 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
+        // Dynamic height based on banner visibility
+        height: bannerVisible 
+          ? 'calc(100vh - 280px)' // Space for header + banner + day buttons + bottom nav
+          : 'calc(100vh - 150px)', // Space for header + day buttons + bottom nav (no banner)
+        transition: 'height 0.3s ease-in-out',
       }}
     >
       {/* Day selector & Live button */}
