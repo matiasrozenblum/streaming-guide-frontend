@@ -229,6 +229,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
       {/* Grid scrollable area */}
       <Box
         ref={scrollRef}
+        data-schedule-grid="desktop"
         sx={{
           background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'

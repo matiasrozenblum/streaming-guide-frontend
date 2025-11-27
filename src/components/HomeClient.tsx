@@ -101,30 +101,36 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled]);
 
-  // Scroll detection for banner hide/show
+  // Grid scroll detection for banner hide/show with dynamic height
   useEffect(() => {
-    const handleScroll = () => {
-      const currentScrollY = window.scrollY;
+    const handleGridScroll = () => {
+      const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
+      if (!scheduleGrid) return;
+      
+      const currentScrollY = scheduleGrid.scrollTop;
       
       if (currentScrollY < 50) {
-        // Always show banner when near top
+        // Always show banner when near top of grid
         setBannerVisible(true);
       } else if (currentScrollY > lastScrollY && currentScrollY > 100) {
-        // Scrolling down and past threshold - hide banner
+        // Scrolling down within grid and past threshold - hide banner
         setBannerVisible(false);
       } else if (currentScrollY < lastScrollY) {
-        // Scrolling up - show banner
+        // Scrolling up within grid - show banner
         setBannerVisible(true);
       }
       
       setLastScrollY(currentScrollY);
     };
 
-    // Add scroll listener
-    window.addEventListener('scroll', handleScroll, { passive: true });
-    
-    // Cleanup
-    return () => window.removeEventListener('scroll', handleScroll);
+    // Find and attach listener to schedule grid
+    const scheduleGrid = document.querySelector('[data-schedule-grid]');
+    if (scheduleGrid) {
+      scheduleGrid.addEventListener('scroll', handleGridScroll, { passive: true });
+      
+      // Cleanup
+      return () => scheduleGrid.removeEventListener('scroll', handleGridScroll);
+    }
   }, [lastScrollY]);
 
   // Derive flat lists for grid
@@ -270,6 +276,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               flex: 1,
               backdropFilter: 'blur(8px)',
+              // Dynamic height based on banner visibility
+              height: bannerVisible 
+                ? 'calc(100vh - 280px)' // Space for header + banner + day buttons + bottom nav
+                : 'calc(100vh - 150px)', // Space for header + day buttons + bottom nav (no banner)
+              transition: 'height 0.3s ease-in-out',
+              overflow: 'hidden', // Prevent double scrollbars
             }}
           >
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}

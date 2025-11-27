@@ -189,6 +189,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       {/* Contenedor scrollable */}
       <Box
         ref={scrollRef}
+        data-schedule-grid="mobile"
         sx={{
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
