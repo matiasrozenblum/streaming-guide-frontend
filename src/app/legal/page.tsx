@@ -73,7 +73,7 @@ export default async function Page() {
     } else {
       console.warn('Categories enabled fetch failed with status', categoriesEnabledRes.status);
     }
-
+ 
     if (streamersEnabledRes.ok) {
       const streamersEnabledData = await streamersEnabledRes.text();
       streamersEnabled = streamersEnabledData === 'true';
