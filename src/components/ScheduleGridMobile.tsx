@@ -18,6 +18,7 @@ import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
+import Footer from './Footer';
 
 interface Props {
   channels: Channel[];
@@ -266,6 +267,10 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               isToday={isToday}
             />
           ))}
+          {/* Footer at the bottom of scrollable grid */}
+          <Box sx={{ width: '100%', mt: 2 }}>
+            <Footer />
+          </Box>
         </Box>
       </Box>
 

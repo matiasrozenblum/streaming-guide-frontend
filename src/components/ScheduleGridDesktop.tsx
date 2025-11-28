@@ -19,6 +19,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import Footer from './Footer';
 
 dayjs.extend(weekday);
 
@@ -312,6 +313,10 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               isToday={isToday}
             />
           ))}
+          {/* Footer at the bottom of scrollable grid */}
+          <Box sx={{ width: '100%', mt: 2 }}>
+            <Footer />
+          </Box>
         </Box>
       </Box>
     </Box>

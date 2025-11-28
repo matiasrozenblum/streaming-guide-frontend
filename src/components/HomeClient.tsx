@@ -230,13 +230,23 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             mode === 'light'
               ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
               : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
         }}
       >
-        <Header streamersEnabled={streamersEnabled} />
+        <Box
+          sx={{
+            flexShrink: 0,
+            py: { xs: 1, sm: 2 },
+            zIndex: 100,
+            background: mode === 'light'
+              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          }}
+        >
+          <Header streamersEnabled={streamersEnabled} />
+        </Box>
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* CSS Keyframes for banner and grid animations */}
