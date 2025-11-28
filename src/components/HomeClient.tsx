@@ -5,7 +5,6 @@ import {
   Box,
   Container,
 } from '@mui/material';
-import { motion } from 'framer-motion';
 import dynamic from 'next/dynamic';
 
 import { api } from '@/services/api';
@@ -26,7 +25,6 @@ import type { SessionWithToken } from '@/types/session';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
-const MotionBox = motion(Box);
 
 interface HomeClientProps {
   initialData: {
@@ -240,31 +238,127 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         <Header streamersEnabled={streamersEnabled} />
 
         <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
-          {/* Banner Carousel - Only show when streamers are enabled, banners exist, and banner is visible */}
-          {streamersEnabled && !bannersLoading && banners.length > 0 && bannerVisible && (
-            <MotionBox
-              initial={{ opacity: 0, y: -10 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
+          {/* CSS Keyframes for banner and grid animations */}
+          <Box
+            component="style"
+            dangerouslySetInnerHTML={{
+              __html: `
+                @keyframes bannerHide {
+                  from {
+                    transform: scaleY(1);
+                    opacity: 1;
+                    max-height: 200px;
+                  }
+                  to {
+                    transform: scaleY(0);
+                    opacity: 0;
+                    max-height: 0;
+                  }
+                }
+                @keyframes bannerShow {
+                  from {
+                    transform: scaleY(0);
+                    opacity: 0;
+                    max-height: 0;
+                  }
+                  to {
+                    transform: scaleY(1);
+                    opacity: 1;
+                    max-height: 200px;
+                  }
+                }
+                @keyframes gridMoveUp {
+                  from {
+                    margin-top: 0;
+                  }
+                  to {
+                    margin-top: -200px;
+                  }
+                }
+                @keyframes gridMoveDown {
+                  from {
+                    margin-top: -200px;
+                  }
+                  to {
+                    margin-top: 0;
+                  }
+                }
+                @media (max-width: 600px) {
+                  @keyframes bannerHide {
+                    from {
+                      transform: scaleY(1);
+                      opacity: 1;
+                      max-height: 132px;
+                    }
+                    to {
+                      transform: scaleY(0);
+                      opacity: 0;
+                      max-height: 0;
+                    }
+                  }
+                  @keyframes bannerShow {
+                    from {
+                      transform: scaleY(0);
+                      opacity: 0;
+                      max-height: 0;
+                    }
+                    to {
+                      transform: scaleY(1);
+                      opacity: 1;
+                      max-height: 132px;
+                    }
+                  }
+                  @keyframes gridMoveUp {
+                    from {
+                      margin-top: 0;
+                    }
+                    to {
+                      margin-top: -132px;
+                    }
+                  }
+                  @keyframes gridMoveDown {
+                    from {
+                      margin-top: -132px;
+                    }
+                    to {
+                      margin-top: 0;
+                    }
+                  }
+                }
+              `,
+            }}
+          />
+
+          {/* Banner Carousel - Always render when enabled, animate with keyframes */}
+          {streamersEnabled && !bannersLoading && banners.length > 0 && (
+            <Box
               sx={{
+                position: 'relative',
                 pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
+                overflow: 'hidden',
+                transformOrigin: 'top',
+                animation: bannerVisible
+                  ? 'bannerShow 0.3s ease-in-out forwards'
+                  : 'bannerHide 0.3s ease-in-out forwards',
+                maxHeight: bannerVisible ? { xs: '132px', sm: '200px' } : '0',
               }}
             >
               <BannerCarousel banners={banners} />
-            </MotionBox>
+            </Box>
           )}
 
-          <MotionBox
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
-            transition={{ duration: 0.5, delay: 0.2 }}
+          <Box
             sx={{
+              position: 'relative',
               flex: 1,
               backdropFilter: 'blur(8px)',
+              animation: bannerVisible
+                ? 'gridMoveDown 0.3s ease-in-out forwards'
+                : 'gridMoveUp 0.3s ease-in-out forwards',
             }}
           >
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
-          </MotionBox>
+          </Box>
         </Container>
         <BottomNavigation />
       </Box>

@@ -127,11 +127,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`,
+        position: 'relative',
+        width: '100%',
+        height: `calc(100vh - ${bottomNavHeight}px - env(safe-area-inset-bottom, 0px))`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
