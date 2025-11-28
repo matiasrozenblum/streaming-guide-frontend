@@ -224,7 +224,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
       <Box
         sx={{
-          minHeight: '100dvh',
+          height: '100%',
           maxWidth: '100vw',
           background:
             mode === 'light'
@@ -232,12 +232,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           py: { xs: 1, sm: 2 },
           display: 'flex',
-          flexDirection: 'column'
+          flexDirection: 'column',
+          overflow: 'hidden',
         }}
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column' }}>
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* CSS Keyframes for banner and grid animations */}
           <Box
             component="style"
@@ -351,6 +352,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             sx={{
               position: 'relative',
               flex: 1,
+              minHeight: 0,
               backdropFilter: 'blur(8px)',
               animation: bannerVisible
                 ? 'gridMoveDown 0.3s ease-in-out forwards'

@@ -67,9 +67,11 @@ export default function RootLayout({
               <TooltipProvider>
                 <CustomThemeProvider>
                   <YouTubePlayerProvider>
-                    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
                       <PageviewTracker />
-                      {children}
+                      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden' }}>
+                        {children}
+                      </div>
                       <Footer />
                     </div>
                     <YouTubeGlobalPlayer />

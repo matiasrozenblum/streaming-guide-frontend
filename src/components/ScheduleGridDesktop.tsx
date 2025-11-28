@@ -139,18 +139,18 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         overflow: 'hidden',
       }}
     >
-      {/* Day selector & Live button */}
+      {/* Day selector & Live button - Fixed at top */}
       <Box
         display="flex"
         gap={1}
         py={2}
         alignItems="center"
         sx={{
-          /*background: mode === 'light'
-            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          backdropFilter: 'blur(8px)',*/
+          flexShrink: 0,
+          backgroundColor: mode === 'light'
+            ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
+            : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          zIndex: 10,
         }}
       >
         {[
@@ -215,13 +215,15 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         )}
       </Box>
 
-      {/* Category tabs */}
+      {/* Category tabs - Fixed below day selector */}
       {categoriesEnabled && (
-        <CategoryTabs
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          categories={categories}
-        />
+        <Box sx={{ flexShrink: 0, zIndex: 10 }}>
+          <CategoryTabs
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            categories={categories}
+          />
+        </Box>
       )}
 
       {/* Grid scrollable area */}
