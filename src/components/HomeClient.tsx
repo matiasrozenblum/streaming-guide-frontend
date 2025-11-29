@@ -34,6 +34,7 @@ interface HomeClientProps {
     categories: Category[];
     categoriesEnabled: boolean;
     streamersEnabled: boolean;
+    banners: Banner[];
   };
 }
 
@@ -47,8 +48,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
-  const [banners, setBanners] = useState<Banner[]>([]);
-  const [bannersLoading, setBannersLoading] = useState(true);
+  const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const [bannerVisible, setBannerVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
@@ -76,28 +76,25 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     setLiveStatuses(initialLiveMap);
   }, [setLiveStatuses, initialLiveMap]);
 
-  // Fetch banners when streamers are enabled
+  // Banners are now loaded server-side, but we can refresh them periodically if needed
+  // Only fetch if streamers are enabled and we don't have banners yet (fallback)
   useEffect(() => {
-    const fetchBanners = async () => {
-      if (!streamersEnabled) {
-        setBanners([]);
-        setBannersLoading(false);
-        return;
-      }
+    if (!streamersEnabled || banners.length > 0) {
+      return;
+    }
 
+    // Fallback: fetch banners client-side if they weren't loaded server-side
+    const fetchBanners = async () => {
       try {
         const activeBanners = await bannersApi.getActiveBanners();
         setBanners(activeBanners);
       } catch (error) {
         console.warn('Error fetching banners:', error);
-        setBanners([]);
-      } finally {
-        setBannersLoading(false);
       }
     };
 
     fetchBanners();
-  }, [streamersEnabled]);
+  }, [streamersEnabled, banners.length]);
 
   // Grid scroll detection for banner hide/show - simplified
   useEffect(() => {
@@ -306,7 +303,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           />
 
           {/* Banner Carousel - Always render when enabled, animate with keyframes */}
-          {streamersEnabled && !bannersLoading && banners.length > 0 && (
+          {streamersEnabled && banners.length > 0 && (
             <Box
               sx={{
                 position: 'relative',

@@ -3,6 +3,8 @@ import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
 import type { Metadata } from 'next';
 
+import type { Banner } from '@/types/banner';
+
 interface InitialData {
   holiday: boolean;
   todaySchedules: ChannelWithSchedules[];
@@ -10,6 +12,7 @@ interface InitialData {
   categories: Category[];
   categoriesEnabled: boolean;
   streamersEnabled: boolean;
+  banners: Banner[];
 }
 
 async function getInitialData(): Promise<InitialData> {
@@ -55,14 +58,27 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.text()); // Config endpoint returns plain text
 
-    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData] = await Promise.all([
+    const bannersPromise = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/banners/active`,
+      {
+        next: { revalidate: 300 } // Cache for 5 minutes, same as API route
+      }
+    ).then(res => res.ok ? res.json() : []).catch(() => []);
+
+    // Fetch all data in parallel
+    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData, banners] = await Promise.all([
       holidayPromise,
       todayPromise,
       weekPromise,
       categoriesPromise,
       categoriesEnabledPromise,
       streamersEnabledPromise,
+      bannersPromise,
     ]);
+
+    // Only use banners if streamers are enabled
+    const streamersEnabled = streamersEnabledData === 'true';
+    const finalBanners = streamersEnabled ? (Array.isArray(banners) ? banners : []) : [];
 
     return {
       holiday: !!holidayData.isHoliday,
@@ -71,6 +87,7 @@ async function getInitialData(): Promise<InitialData> {
       categories: Array.isArray(categories) ? categories.sort((a: Category, b: Category) => (a.order || 0) - (b.order || 0)) : [],
       categoriesEnabled: categoriesEnabledData === 'true',
       streamersEnabled: streamersEnabledData === 'true',
+      banners: finalBanners,
     };
   } catch {
     return {
@@ -80,6 +97,7 @@ async function getInitialData(): Promise<InitialData> {
       categories: [],
       categoriesEnabled: false, // Default to false on error
       streamersEnabled: false, // Default to false on error
+      banners: [],
     };
   }
 }

@@ -2,6 +2,7 @@ export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 import { ChannelWithSchedules, Category } from '@/types/channel';
+import type { Banner } from '@/types/banner';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 
@@ -12,6 +13,7 @@ interface InitialData {
   categories: Category[];
   categoriesEnabled: boolean;
   streamersEnabled: boolean;
+  banners: Banner[];
 }
 
 export default async function Page() {
@@ -23,6 +25,7 @@ export default async function Page() {
   let categories: Category[] = [];
   let categoriesEnabled = false;
   let streamersEnabled = false;
+  let banners: Banner[] = [];
 
   try {
     const [todayRes, weekRes, categoriesRes, categoriesEnabledRes, streamersEnabledRes] = await Promise.all([
@@ -80,6 +83,21 @@ export default async function Page() {
     } else {
       console.warn('Streamers enabled fetch failed with status', streamersEnabledRes.status);
     }
+
+    // Fetch banners only if streamers are enabled
+    if (streamersEnabled) {
+      try {
+        const bannersRes = await fetch(
+          `${url}/banners/active`,
+          { next: { revalidate: 300 } }
+        );
+        if (bannersRes.ok) {
+          banners = await bannersRes.json();
+        }
+      } catch (err) {
+        console.warn('Error fetching banners:', err);
+      }
+    }
   } catch (err) {
     console.warn('Fetch error during build/runtime:', err);
   }
@@ -91,7 +109,8 @@ export default async function Page() {
     weekSchedules,
     categories,
     categoriesEnabled,
-    streamersEnabled
+    streamersEnabled,
+    banners
   };
 
   // Renderiza componente cliente con datos pre-cargados
