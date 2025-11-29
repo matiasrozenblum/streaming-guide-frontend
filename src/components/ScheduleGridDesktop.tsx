@@ -135,7 +135,6 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         position: 'relative',
         width: '100%',
         height: '100%',
-        maxHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -239,13 +238,12 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
           border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
-          borderBottomLeftRadius: 0, // No bottom radius - footer handles it
-          borderBottomRightRadius: 0,
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
           overflowX: 'auto',
-          paddingBottom: '120px', // Space for sticky footer
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
           userSelect: 'none',
@@ -315,12 +313,11 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               isToday={isToday}
             />
           ))}
-          {/* Footer at the bottom of scrollable grid - sticky like channel column */}
+          {/* Footer at the bottom of grid - full viewport width, sticky horizontally like channel column */}
           <Box 
             sx={{ 
               width: '100vw',
               position: 'sticky',
-              bottom: 0,
               left: 0,
               mt: 2,
               zIndex: 10,

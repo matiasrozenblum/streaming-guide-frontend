@@ -192,13 +192,12 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         sx={{
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
-          borderBottomLeftRadius: 0, // No bottom radius - footer handles it
-          borderBottomRightRadius: 0,
+          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
           overflowX: 'auto',
           overflowY: 'auto',
-          paddingBottom: '120px', // Space for sticky footer
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
           userSelect: 'none',
@@ -268,12 +267,11 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               isToday={isToday}
             />
           ))}
-          {/* Footer at the bottom of scrollable grid - sticky like channel column */}
+          {/* Footer at the bottom of grid - full viewport width, sticky horizontally like channel column */}
           <Box 
             sx={{ 
               width: '100vw',
               position: 'sticky',
-              bottom: 0,
               left: 0,
               mt: 2,
               zIndex: 10,
