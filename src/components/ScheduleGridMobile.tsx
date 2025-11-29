@@ -289,6 +289,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
                 position: 'sticky',
                 left: 0,
                 mt: 2,
+                pb: streamersEnabled 
+                  ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
+                  : 0,
                 zIndex: 10,
                 backgroundColor: mode === 'light' ? 'white' : '#1e293b',
                 borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
