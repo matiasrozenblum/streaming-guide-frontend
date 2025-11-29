@@ -267,10 +267,10 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               isToday={isToday}
             />
           ))}
-          {/* Footer at the bottom of grid - full viewport width, sticky horizontally like channel column */}
+          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
           <Box 
             sx={{ 
-              width: '100vw',
+              width: `${totalGridWidth}px`,
               position: 'sticky',
               left: 0,
               mt: 2,
@@ -279,11 +279,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
               display: 'flex',
               justifyContent: 'center',
-              marginLeft: `-${channelLabelWidth}px`, // Offset to align with viewport edge
-              paddingLeft: `${channelLabelWidth}px`, // Restore spacing for content
             }}
           >
-            <Box sx={{ width: '100%', maxWidth: '1536px' }}>
+            <Box sx={{ width: '100%' }}>
               <Footer />
             </Box>
           </Box>

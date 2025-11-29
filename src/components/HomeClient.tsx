@@ -278,22 +278,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     max-height: 200px;
                   }
                 }
-                @keyframes gridMoveUp {
-                  from {
-                    margin-top: 0;
-                  }
-                  to {
-                    margin-top: -100px;
-                  }
-                }
-                @keyframes gridMoveDown {
-                  from {
-                    margin-top: -200px;
-                  }
-                  to {
-                    margin-top: 0;
-                  }
-                }
                 @media (max-width: 600px) {
                   @keyframes bannerHide {
                     from {
@@ -317,22 +301,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                       transform: scaleY(1);
                       opacity: 1;
                       max-height: 132px;
-                    }
-                  }
-                  @keyframes gridMoveUp {
-                    from {
-                      margin-top: 0;
-                    }
-                    to {
-                      margin-top: -132px;
-                    }
-                  }
-                  @keyframes gridMoveDown {
-                    from {
-                      margin-top: -132px;
-                    }
-                    to {
-                      margin-top: 0;
                     }
                   }
                 }

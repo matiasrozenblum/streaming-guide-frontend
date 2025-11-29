@@ -313,10 +313,10 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               isToday={isToday}
             />
           ))}
-          {/* Footer at the bottom of grid - full viewport width, sticky horizontally like channel column */}
+          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
           <Box 
             sx={{ 
-              width: '100vw',
+              width: `${totalGridWidth}px`,
               position: 'sticky',
               left: 0,
               mt: 2,
@@ -327,7 +327,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               justifyContent: 'center',
             }}
           >
-            <Box sx={{ width: '100%', maxWidth: '1536px' }}>
+            <Box sx={{ width: '100%' }}>
               <Footer />
             </Box>
           </Box>
