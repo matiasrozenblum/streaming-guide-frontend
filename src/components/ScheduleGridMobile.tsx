@@ -34,6 +34,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const [selectedDay, setSelectedDay] = useState(today);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
@@ -93,6 +94,19 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       container.removeEventListener('scroll', checkNowIndicatorVisibility);
     };
   }, [checkNowIndicatorVisibility, selectedDay, today]);
+
+  // Get scrollable container width for footer
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (scrollRef.current) {
+        setContainerWidth(scrollRef.current.clientWidth);
+      }
+    };
+    
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, []);
 
   if (!channels.length || !schedules.length) {
     return (
@@ -268,23 +282,25 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             />
           ))}
           {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
-          <Box 
-            sx={{ 
-              width: `${totalGridWidth}px`,
-              position: 'sticky',
-              left: 0,
-              mt: 2,
-              zIndex: 10,
-              backgroundColor: mode === 'light' ? 'white' : '#1e293b',
-              borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-              display: 'flex',
-              justifyContent: 'center',
-            }}
-          >
-            <Box sx={{ width: '100%' }}>
-              <Footer />
+          {containerWidth > 0 && (
+            <Box 
+              sx={{ 
+                width: `${containerWidth}px`,
+                position: 'sticky',
+                left: 0,
+                mt: 2,
+                zIndex: 10,
+                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
+                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Footer />
+              </Box>
             </Box>
-          </Box>
+          )}
         </Box>
       </Box>
 
