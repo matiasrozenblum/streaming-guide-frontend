@@ -268,8 +268,18 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             />
           ))}
           {/* Footer at the bottom of scrollable grid */}
-          <Box sx={{ width: '100%', mt: 2 }}>
-            <Footer />
+          <Box 
+            sx={{ 
+              width: '100vw',
+              maxWidth: '100%',
+              mt: 2,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ width: '100%', maxWidth: '1536px' }}>
+              <Footer />
+            </Box>
           </Box>
         </Box>
       </Box>

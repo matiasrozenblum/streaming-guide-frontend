@@ -135,6 +135,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         position: 'relative',
         width: '100%',
         height: '100%',
+        maxHeight: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -148,7 +149,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         alignItems="center"
         sx={{
           flexShrink: 0,
-          backgroundColor: mode === 'light'
+          background: mode === 'light'
             ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
             : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           zIndex: 10,
@@ -314,8 +315,18 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
             />
           ))}
           {/* Footer at the bottom of scrollable grid */}
-          <Box sx={{ width: '100%', mt: 2 }}>
-            <Footer />
+          <Box 
+            sx={{ 
+              width: '100vw',
+              maxWidth: '100%',
+              mt: 2,
+              display: 'flex',
+              justifyContent: 'center',
+            }}
+          >
+            <Box sx={{ width: '100%', maxWidth: '1536px' }}>
+              <Footer />
+            </Box>
           </Box>
         </Box>
       </Box>
