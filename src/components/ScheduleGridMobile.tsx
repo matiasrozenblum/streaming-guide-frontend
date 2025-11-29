@@ -326,7 +326,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           }}
           sx={{
             position: 'fixed',
-            bottom: '5vh',
+            bottom: streamersEnabled 
+              ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + 16px)`
+              : '5vh',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: mode === 'light' ? '#2563eb' : '#3b82f6',
