@@ -363,10 +363,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               position: 'relative',
               flex: 1,
               minHeight: 0,
+              maxHeight: '100%',
               backdropFilter: 'blur(8px)',
               animation: bannerVisible
                 ? 'gridMoveDown 0.3s ease-in-out forwards'
                 : 'gridMoveUp 0.3s ease-in-out forwards',
+              display: 'flex',
+              flexDirection: 'column',
+              overflow: 'hidden',
             }}
           >
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}

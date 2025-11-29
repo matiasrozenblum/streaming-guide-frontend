@@ -239,12 +239,13 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
           border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
-          borderBottomLeftRadius: '12px', // Round bottom corners
-          borderBottomRightRadius: '12px',
+          borderBottomLeftRadius: 0, // No bottom radius - footer handles it
+          borderBottomRightRadius: 0,
           flex: 1,
           minHeight: 0,
           overflowY: 'auto',
           overflowX: 'auto',
+          paddingBottom: '120px', // Space for sticky footer
           WebkitOverflowScrolling: 'touch',
           position: 'relative',
           userSelect: 'none',
@@ -314,14 +315,21 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               isToday={isToday}
             />
           ))}
-          {/* Footer at the bottom of scrollable grid */}
+          {/* Footer at the bottom of scrollable grid - sticky like channel column */}
           <Box 
             sx={{ 
               width: '100vw',
-              maxWidth: '100%',
+              position: 'sticky',
+              bottom: 0,
+              left: 0,
               mt: 2,
+              zIndex: 10,
+              backgroundColor: mode === 'light' ? 'white' : '#1e293b',
+              borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
               display: 'flex',
               justifyContent: 'center',
+              marginLeft: `-${channelLabelWidth}px`, // Offset to align with viewport edge
+              paddingLeft: `${channelLabelWidth}px`, // Restore spacing for content
             }}
           >
             <Box sx={{ width: '100%', maxWidth: '1536px' }}>
