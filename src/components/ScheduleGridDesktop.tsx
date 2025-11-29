@@ -325,8 +325,6 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
               display: 'flex',
               justifyContent: 'center',
-              marginLeft: `-${channelLabelWidth}px`, // Offset to align with viewport edge
-              paddingLeft: `${channelLabelWidth}px`, // Restore spacing for content
             }}
           >
             <Box sx={{ width: '100%', maxWidth: '1536px' }}>

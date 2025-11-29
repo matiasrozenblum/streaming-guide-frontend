@@ -283,7 +283,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
                     margin-top: 0;
                   }
                   to {
-                    margin-top: -200px;
+                    margin-top: -100px;
                   }
                 }
                 @keyframes gridMoveDown {
