@@ -66,7 +66,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
   };
 
   return (
-    <Container maxWidth="xl" disableGutters sx={{ px: 0, mx: 2, mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } }}>
+    <Container maxWidth="xl" disableGutters sx={{ px: 0, mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } }}>
       <Box
         sx={{
           height: headerHeight,
