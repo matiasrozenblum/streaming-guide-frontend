@@ -22,7 +22,6 @@ import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
-import { tokens } from '@/design-system/tokens';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
