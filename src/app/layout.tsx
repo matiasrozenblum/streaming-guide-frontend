@@ -3,6 +3,7 @@ import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
 import ConditionalFooter from '@/components/ConditionalFooter';
+import ConditionalLayoutWrapper from '@/components/ConditionalLayoutWrapper';
 import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
@@ -67,13 +68,11 @@ export default function RootLayout({
               <TooltipProvider>
                 <CustomThemeProvider>
                   <YouTubePlayerProvider>
-                    <div style={{ height: '100dvh', display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+                    <ConditionalLayoutWrapper>
                       <PageviewTracker />
-                      <div style={{ flex: 1, minHeight: 0, overflow: 'hidden', position: 'relative' }}>
-                        {children}
-                      </div>
-                      <ConditionalFooter />
-                    </div>
+                      {children}
+                    </ConditionalLayoutWrapper>
+                    <ConditionalFooter />
                     <YouTubeGlobalPlayer />
                     <LiveStatusListener />
                     <PageRefreshListener />
