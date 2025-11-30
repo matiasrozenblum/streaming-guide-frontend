@@ -236,8 +236,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Box sx={{ px: { xs: tokens.spacing.sm, sm: 2 } }}>
-          <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* CSS Keyframes for banner and grid animations */}
           <Box
             component="style"
@@ -331,7 +330,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
           </Box>
         </Container>
-        </Box>
         <BottomNavigation />
       </Box>
     </>
