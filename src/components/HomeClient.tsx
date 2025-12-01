@@ -125,6 +125,37 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
   }, [lastScrollY]);
 
+  // Forward wheel events from anywhere on the page to the grid
+  useEffect(() => {
+    const handleWheel = (e: WheelEvent) => {
+      const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
+      if (!scheduleGrid) return;
+
+      // Check if the event target is already inside the grid or its children
+      const target = e.target as HTMLElement;
+      if (scheduleGrid.contains(target)) {
+        // Let the grid handle its own scroll
+        return;
+      }
+
+      // Check if we're scrolling vertically (deltaY)
+      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
+        // Prevent default page scroll
+        e.preventDefault();
+        
+        // Forward the scroll to the grid
+        scheduleGrid.scrollTop += e.deltaY;
+      }
+    };
+
+    // Add wheel event listener to the window
+    window.addEventListener('wheel', handleWheel, { passive: false });
+
+    return () => {
+      window.removeEventListener('wheel', handleWheel);
+    };
+  }, []);
+
   // Derive flat lists for grid
   const channels = useMemo(
     () => channelsWithSchedules.map(c => ({
@@ -235,7 +266,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Container maxWidth="xl" disableGutters sx={{ px: 0, mx: 2, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
           {/* CSS Keyframes for banner and grid animations */}
           <Box
             component="style"
