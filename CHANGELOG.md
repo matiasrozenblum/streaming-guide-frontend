@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.0] - 2025-12-03
+
+### Added
+- Added banner logic
+
+### Changed
+- Made footer part of the schedule grid, unifying scrolling logic
+
 ## [1.14.0] - 2025-11-25
 
 ### Added
