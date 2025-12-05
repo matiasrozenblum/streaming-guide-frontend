@@ -272,7 +272,14 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           sx={{ 
             px: 0, 
             mx: { xs: 0, sm: 2, md: 3, lg: 4 }, 
-            maxWidth: { xs: '100%', sm: '100%', md: '100%', lg: '1920px' },
+            maxWidth: { 
+              xs: '100%', 
+              sm: 'calc(100% - 32px)', 
+              md: 'calc(100% - 48px)', 
+              lg: 'min(1920px, calc(100vw - 64px))' 
+            },
+            width: '100%',
+            boxSizing: 'border-box',
             flex: 1, 
             display: 'flex', 
             flexDirection: 'column', 
