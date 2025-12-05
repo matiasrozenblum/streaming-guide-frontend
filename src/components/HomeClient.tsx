@@ -266,7 +266,19 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, mx: { xs: 0, sm: 2 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Container 
+          maxWidth={false} 
+          disableGutters 
+          sx={{ 
+            px: 0, 
+            mx: { xs: 0, sm: 2, md: 3, lg: 4 }, 
+            maxWidth: { xs: '100%', sm: '100%', md: '100%', lg: '1920px' },
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            minHeight: 0 
+          }}
+        >
           {/* CSS Keyframes for banner and grid animations */}
           <Box
             component="style"
