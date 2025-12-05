@@ -71,12 +71,10 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
       disableGutters 
       sx={{ 
         px: 0, 
-        mx: { xs: 0, sm: 2, md: 3, lg: 4 }, 
+        mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
         maxWidth: { 
           xs: '100%', 
-          sm: 'calc(100% - 32px)', 
-          md: 'calc(100% - 48px)', 
-          lg: 'min(1920px, calc(100vw - 64px))' 
+          sm: 'min(1920px, 100%)' // Max 1920px but never exceed container width
         },
         width: '100%',
         boxSizing: 'border-box',

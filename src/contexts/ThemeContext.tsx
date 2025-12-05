@@ -122,8 +122,8 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
     MuiContainer: {
       styleOverrides: {
         root: {
-          '@media (min-width: 1200px)': {
-            maxWidth: 'min(1920px, calc(100vw - 64px))', // Never exceed viewport width
+          '@media (min-width: 600px)': {
+            maxWidth: 'min(1920px, 100%)', // Max 1920px but never exceed container width
             marginLeft: 'auto',
             marginRight: 'auto',
             paddingLeft: 0,
