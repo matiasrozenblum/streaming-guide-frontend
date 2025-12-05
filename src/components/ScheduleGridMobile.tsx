@@ -18,6 +18,7 @@ import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
+import Footer from './Footer';
 
 interface Props {
   channels: Channel[];
@@ -33,6 +34,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const [selectedDay, setSelectedDay] = useState(today);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
@@ -93,6 +95,19 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     };
   }, [checkNowIndicatorVisibility, selectedDay, today]);
 
+  // Get scrollable container width for footer
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (scrollRef.current) {
+        setContainerWidth(scrollRef.current.clientWidth);
+      }
+    };
+    
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, []);
+
   if (!channels.length || !schedules.length) {
     return (
       <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>
@@ -127,11 +142,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`,
+        position: 'relative',
+        width: '100%',
+        height: `calc(100vh - ${bottomNavHeight}px - env(safe-area-inset-bottom, 0px))`,
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
@@ -189,6 +202,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       {/* Contenedor scrollable */}
       <Box
         ref={scrollRef}
+        data-schedule-grid="mobile"
         sx={{
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
@@ -267,6 +281,29 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               isToday={isToday}
             />
           ))}
+          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
+          {containerWidth > 0 && (
+            <Box 
+              sx={{ 
+                width: `${containerWidth}px`,
+                position: 'sticky',
+                left: 0,
+                mt: 2,
+                pb: streamersEnabled 
+                  ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
+                  : 0,
+                zIndex: 10,
+                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
+                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Footer />
+              </Box>
+            </Box>
+          )}
         </Box>
       </Box>
 
@@ -289,7 +326,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           }}
           sx={{
             position: 'fixed',
-            bottom: '5vh',
+            bottom: streamersEnabled 
+              ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + 16px)`
+              : '5vh',
             left: '50%',
             transform: 'translateX(-50%)',
             backgroundColor: mode === 'light' ? '#2563eb' : '#3b82f6',

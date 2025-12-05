@@ -20,7 +20,8 @@ import {
   CalendarMonth,
   BarChart,
   Category as CategoryIcon,
-  Person as PersonIcon
+  Person as PersonIcon,
+  ViewCarousel
 } from '@mui/icons-material';
 import type { SessionWithToken } from '@/types/session';
 import UserMenu from '@/components/UserMenu';
@@ -53,6 +54,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     { text: 'Dashboard', icon: <Dashboard />, path: '/backoffice' },
     { text: 'Canales',   icon: <LiveTv />,     path: '/backoffice/channels' },
     { text: 'Streamers', icon: <PersonIcon />, path: '/backoffice/streamers' },
+    { text: 'Banners',   icon: <ViewCarousel />, path: '/backoffice/banners' },
     { text: 'Categorías', icon: <CategoryIcon />, path: '/backoffice/categories' },
     { text: 'Programas',  icon: <Movie />,   path: '/backoffice/programs' },
     { text: 'Panelistas', icon: <Mic />,     path: '/backoffice/panelists' },

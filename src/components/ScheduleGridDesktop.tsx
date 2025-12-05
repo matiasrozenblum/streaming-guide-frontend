@@ -19,6 +19,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import Footer from './Footer';
 
 dayjs.extend(weekday);
 
@@ -35,6 +36,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const today = dayjs().format('dddd').toLowerCase();
   const [selectedDay, setSelectedDay] = useState(today);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
+  const [containerWidth, setContainerWidth] = useState<number>(0);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
@@ -61,6 +63,19 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   useEffect(() => {
     if (isToday) scrollToNow();
   }, [isToday, scrollToNow]);
+
+  // Get scrollable container width for footer
+  useEffect(() => {
+    const updateContainerWidth = () => {
+      if (scrollRef.current) {
+        setContainerWidth(scrollRef.current.clientWidth);
+      }
+    };
+    
+    updateContainerWidth();
+    window.addEventListener('resize', updateContainerWidth);
+    return () => window.removeEventListener('resize', updateContainerWidth);
+  }, []);
 
   // Lógica de arrastre horizontal
   useEffect(() => {
@@ -131,28 +146,23 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   return (
     <Box
       sx={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
+        position: 'relative',
+        width: '100%',
+        height: '100%',
         display: 'flex',
         flexDirection: 'column',
         overflow: 'hidden',
       }}
     >
-      {/* Day selector & Live button */}
+      {/* Day selector & Live button - Fixed at top */}
       <Box
         display="flex"
         gap={1}
         py={2}
         alignItems="center"
         sx={{
-          /*background: mode === 'light'
-            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
-          backdropFilter: 'blur(8px)',*/
+          flexShrink: 0,
+          zIndex: 10,
         }}
       >
         {[
@@ -217,18 +227,21 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         )}
       </Box>
 
-      {/* Category tabs */}
+      {/* Category tabs - Fixed below day selector */}
       {categoriesEnabled && (
-        <CategoryTabs
-          selectedCategory={selectedCategory}
-          onCategoryChange={setSelectedCategory}
-          categories={categories}
-        />
+        <Box sx={{ flexShrink: 0, zIndex: 10 }}>
+          <CategoryTabs
+            selectedCategory={selectedCategory}
+            onCategoryChange={setSelectedCategory}
+            categories={categories}
+          />
+        </Box>
       )}
 
       {/* Grid scrollable area */}
       <Box
         ref={scrollRef}
+        data-schedule-grid="desktop"
         sx={{
           background: mode === 'light'
             ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
@@ -311,6 +324,26 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               isToday={isToday}
             />
           ))}
+          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
+          {containerWidth > 0 && (
+            <Box 
+              sx={{ 
+                width: `${containerWidth}px`,
+                position: 'sticky',
+                left: 0,
+                mt: 2,
+                zIndex: 10,
+                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
+                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                display: 'flex',
+                justifyContent: 'center',
+              }}
+            >
+              <Box sx={{ width: '100%' }}>
+                <Footer />
+              </Box>
+            </Box>
+          )}
         </Box>
       </Box>
     </Box>

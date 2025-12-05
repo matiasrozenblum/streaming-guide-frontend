@@ -303,7 +303,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           ) : (
             <Grid container spacing={3}>
               {streamers.map((streamer, index) => (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={streamer.id}>
+                <Grid size={{ xs: 6, sm: 3, lg: 3 }} key={streamer.id}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}

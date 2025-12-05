@@ -124,6 +124,12 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
         root: {
           '@media (min-width: 1200px)': {
             maxWidth: 1400,
+            marginLeft: 'auto',
+            marginRight: 'auto',
+            // Ensure consistent margins regardless of viewport width
+            // Use 16px as the standard margin (matches production)
+            paddingLeft: 0,
+            paddingRight: 0,
           },
         },
       },
