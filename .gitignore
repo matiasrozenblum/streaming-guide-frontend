@@ -41,8 +41,6 @@ yarn-error.log*
 next-env.d.ts
 
 # Scripts y binarios temporales
-scripts/*.tmp
-scripts/*.log
-scripts/*.sh~
+scripts/
 
 public/workbox-*.js

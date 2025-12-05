@@ -15,7 +15,7 @@ const Footer: React.FC = () => {
         position: 'relative',
         py: 2,
         px: 2,
-        mt: 'auto',
+        flexShrink: 0,
         backgroundColor: 'background.paper',
         borderTop: '1px solid',
         borderColor: 'divider',
