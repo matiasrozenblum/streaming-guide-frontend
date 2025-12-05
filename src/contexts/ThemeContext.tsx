@@ -123,15 +123,12 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
       styleOverrides: {
         root: {
           '@media (min-width: 1200px)': {
-            maxWidth: 1920, // Increased for ultra-wide screens
+            maxWidth: 'min(1920px, calc(100vw - 64px))', // Never exceed viewport width
             marginLeft: 'auto',
             marginRight: 'auto',
             paddingLeft: 0,
             paddingRight: 0,
-          },
-          '@media (min-width: 2560px)': {
-            // For ultra-wide screens (like 14" MacBook Pro), use percentage-based width with max constraint
-            maxWidth: '95%',
+            boxSizing: 'border-box',
           },
         },
       },
