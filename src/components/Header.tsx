@@ -74,9 +74,12 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
         mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
         maxWidth: { 
           xs: '100%', 
-          sm: 'min(1920px, 100%)' // Max 1920px but never exceed container width
+          sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
         },
-        width: '100%',
+        width: { 
+          xs: '100%', 
+          sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
+        },
         boxSizing: 'border-box',
         mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } 
       }}
