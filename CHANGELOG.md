@@ -17,6 +17,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.1] - 2025-12-06
+
+### Added
+- Added upload banner logic
+- Added fixed banner logic
+
+### Fixed
+- Fixed vulnerable dependencies
+
 ## [1.15.0] - 2025-12-03
 
 ### Added
