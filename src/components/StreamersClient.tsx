@@ -301,9 +301,9 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
               </CardContent>
             </MotionCard>
           ) : (
-            <Grid container spacing={3}>
+            <Grid container spacing={2}>
               {streamers.map((streamer, index) => (
-                <Grid size={{ xs: 6, sm: 4, md: 3, lg: 3 }} key={streamer.id}>
+                <Grid size={{ xs: 6, sm: 4, md: 2, lg: 2 }} key={streamer.id}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -344,19 +344,19 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                           <Box
                             sx={{
                               position: 'absolute',
-                              top: 8,
-                              right: 8,
+                              top: 6,
+                              right: 6,
                               backgroundColor: '#f44336',
                               color: 'white',
-                              fontSize: '0.65rem',
-                              padding: '4px 8px',
-                              borderRadius: '4px',
+                              fontSize: '0.6rem',
+                              padding: '3px 6px',
+                              borderRadius: '3px',
                               fontWeight: 'bold',
                               zIndex: 5,
                               display: 'flex',
                               alignItems: 'center',
                               gap: 0.5,
-                              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                             }}
                           >
                             LIVE
@@ -386,7 +386,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                           >
                             <Typography
                               sx={{
-                                fontSize: '3rem',
+                                fontSize: '2rem',
                                 fontWeight: 700,
                                 color: 'white',
                               }}
@@ -398,16 +398,17 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       </Box>
 
                       {/* Content Section */}
-                      <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                      <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                         {/* Name */}
                         <Typography 
-                          variant="h6" 
+                          variant="subtitle1" 
                           component="h3" 
                           fontWeight={600}
                           sx={{ 
-                            mb: streamer.categories && streamer.categories.length > 0 ? 1 : 2,
+                            mb: streamer.categories && streamer.categories.length > 0 ? 0.75 : 1,
                             textAlign: 'center',
-                            lineHeight: 1.3,
+                            lineHeight: 1.2,
+                            fontSize: '0.9rem',
                           }}
                         >
                           {streamer.name}
@@ -419,9 +420,9 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                             sx={{ 
                               display: 'flex', 
                               flexWrap: 'wrap', 
-                              gap: 0.75,
+                              gap: 0.5,
                               justifyContent: 'center',
-                              mb: 2,
+                              mb: 1.25,
                             }}
                           >
                             {streamer.categories.slice(0, 2).map((category) => (
@@ -430,8 +431,8 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                                 label={category.name}
                                 size="small"
                                 sx={{
-                                  fontSize: '0.7rem',
-                                  height: 24,
+                                  fontSize: '0.65rem',
+                                  height: 20,
                                   backgroundColor: category.color 
                                     ? `${category.color}20`
                                     : mode === 'light'
@@ -450,7 +451,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                           sx={{ 
                             display: 'flex', 
                             flexDirection: 'column', 
-                            gap: 1,
+                            gap: 0.75,
                             mt: 'auto',
                           }}
                         >
@@ -463,18 +464,19 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                                 <Button
                                   key={serviceIndex}
                                   variant="outlined"
-                                  size="medium"
+                                  size="small"
                                   fullWidth
                                   onClick={() => handleServiceClick(service.service, service.url)}
                                   sx={{
                                     justifyContent: 'center',
-                                    borderRadius: 2,
+                                    borderRadius: 1.5,
                                     borderColor: getServiceColor(service.service, mode),
                                     color: getServiceColor(service.service, mode),
                                     textTransform: 'none',
-                                    gap: 1.5,
-                                    py: 1.25,
-                                    px: 2,
+                                    gap: 1,
+                                    py: 0.75,
+                                    px: 1.5,
+                                    minHeight: 36,
                                     '&:hover': {
                                       borderColor: getServiceColor(service.service, mode),
                                       backgroundColor: mode === 'light'
@@ -489,13 +491,13 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                                       src={serviceIconUrl}
                                       alt={`${getServiceName(service.service)} icon`}
                                       sx={{
-                                        width: 20,
-                                        height: 20,
+                                        width: 16,
+                                        height: 16,
                                         objectFit: 'contain',
                                       }}
                                     />
                                   )}
-                                  <Typography variant="body2" fontWeight={500}>
+                                  <Typography variant="caption" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
                                     Ver en {getServiceName(service.service)}
                                   </Typography>
                                 </Button>
