@@ -78,6 +78,8 @@ interface StreamersClientProps {
 }
 
 export default function StreamersClient({ initialStreamers, initialCategories = [] }: StreamersClientProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _initialCategories = initialCategories; // Reserved for future category filtering feature
   const { mode } = useThemeContext();
   const { streamersEnabled } = useStreamersConfig();
   const { openVideo, openStream } = useYouTubePlayer();
