@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import StreamersClient from '@/components/StreamersClient';
 import { Streamer } from '@/types/streamer';
+import { Category } from '@/types/channel';
 
 export default async function StreamersPage() {
   // Check if streamers are enabled
@@ -42,6 +43,22 @@ export default async function StreamersPage() {
     // fallback to empty streamers
   }
 
-  return <StreamersClient initialStreamers={initialStreamers} />;
+  let categories: Category[] = [];
+  try {
+    const categoriesRes = await fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/categories`,
+      {
+        next: { revalidate: 3600 } // Categories change less frequently
+      }
+    );
+    if (categoriesRes.ok) {
+      const data = await categoriesRes.json();
+      categories = Array.isArray(data) ? data : [];
+    }
+  } catch {
+    // fallback to empty categories
+  }
+
+  return <StreamersClient initialStreamers={initialStreamers} initialCategories={categories} />;
 }
 
