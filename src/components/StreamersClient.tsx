@@ -12,17 +12,17 @@ import {
   Grid,
   CircularProgress,
   Chip,
+  alpha,
 } from '@mui/material';
 import {
-  ArrowBack,
   LiveTv,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
+import { Category } from '@/types/channel';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { getColorForChannel } from '@/utils/colors';
 import { useState, useEffect, useRef } from 'react';
@@ -74,10 +74,10 @@ const getServiceIconUrl = (service: StreamingService): string | null => {
 
 interface StreamersClientProps {
   initialStreamers?: Streamer[];
+  initialCategories?: Category[];
 }
 
-export default function StreamersClient({ initialStreamers }: StreamersClientProps) {
-  const router = useRouter();
+export default function StreamersClient({ initialStreamers, initialCategories = [] }: StreamersClientProps) {
   const { mode } = useThemeContext();
   const { streamersEnabled } = useStreamersConfig();
   const { openVideo, openStream } = useYouTubePlayer();
@@ -122,6 +122,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run once on mount, initialStreamers is from props
+
 
   // Listen for live status updates via SSE
   useEffect(() => {
@@ -231,44 +232,17 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Title section */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 4,
-            }}
-          >
-            <Box>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  fontWeight: 700,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 1,
-                }}
-              >
-                Streamers
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Descubre y sigue a tus streamers favoritos en diferentes plataformas
-              </Typography>
+
+          {/*{/* Category tabs 
+          {categories.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <CategoryTabs
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                categories={categories}
+              />
             </Box>
-            <Button
-              startIcon={<ArrowBack />}
-              onClick={() => router.push('/')}
-              variant="outlined"
-              size="large"
-              sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
-            >
-              Volver
-            </Button>
-          </Box>
+          )}*/}
 
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -302,8 +276,15 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
             </MotionCard>
           ) : (
             <Grid container spacing={2}>
-              {streamers.map((streamer, index) => (
-                <Grid size={{ xs: 6, sm: 4, md: 2, lg: 2 }} key={streamer.id}>
+              {streamers.map((streamer, index) => {
+                // Get the primary service color (prioritize Kick/Twitch, fallback to first service)
+                const primaryService = streamer.services.find(
+                  s => s.service === StreamingService.KICK || s.service === StreamingService.TWITCH
+                ) || streamer.services[0];
+                const serviceColor = primaryService ? getServiceColor(primaryService.service, mode) : null;
+                
+                return (
+                <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -317,18 +298,25 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                         : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
-                      border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                      border: serviceColor 
+                        ? `1px solid ${alpha(serviceColor, 0.4)}`
+                        : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
+                      boxShadow: serviceColor
+                        ? `0 0 10px ${serviceColor}40, 0 0 20px ${serviceColor}20`
+                        : 'none',
                       transition: 'all 0.3s ease-in-out',
                       overflow: 'hidden',
                       '&:hover': {
                         transform: 'translateY(-4px)',
-                        boxShadow: mode === 'light'
-                          ? '0 12px 24px rgba(0,0,0,0.15)'
-                          : '0 12px 24px rgba(0,0,0,0.4)',
+                        boxShadow: serviceColor
+                          ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                          : (mode === 'light'
+                            ? '0 12px 24px rgba(0,0,0,0.15)'
+                            : '0 12px 24px rgba(0,0,0,0.4)'),
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                    <CardContent sx={{ '&:last-child': { paddingBottom: 1 }, flexGrow: 1, p: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                       {/* Image Section - Square */}
                       <Box
                         sx={{
@@ -508,7 +496,8 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                     </CardContent>
                   </MotionCard>
                 </Grid>
-              ))}
+                );
+              })}
             </Grid>
           )}
         </MotionBox>
