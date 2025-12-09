@@ -10,8 +10,8 @@ import {
   CardContent,
   Button,
   Grid,
-  Avatar,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack,
@@ -303,7 +303,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           ) : (
             <Grid container spacing={3}>
               {streamers.map((streamer, index) => (
-                <Grid size={{ xs: 6, sm: 3, lg: 3 }} key={streamer.id}>
+                <Grid size={{ xs: 6, sm: 4, md: 3, lg: 3 }} key={streamer.id}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -319,6 +319,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       borderRadius: 3,
                       border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
                       transition: 'all 0.3s ease-in-out',
+                      overflow: 'hidden',
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: mode === 'light'
@@ -327,111 +328,179 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
-                      {/* LIVE Badge */}
-                      {streamer.is_live && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 12,
-                            right: 12,
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            fontSize: '0.65rem',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            zIndex: 5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                          }}
-                        >
-                          LIVE
-                        </Box>
-                      )}
-                      <Box display="flex" alignItems="center" mb={2}>
-                        {streamer.logo_url ? (
-                          <Avatar
-                            src={streamer.logo_url}
-                            alt={streamer.name}
-                            sx={{ width: 56, height: 56, mr: 2 }}
-                          />
-                        ) : (
-                          <Avatar 
-                            sx={{ 
-                              width: 56, 
-                              height: 56, 
-                              mr: 2,
-                              backgroundColor: getColorForChannel(index, mode),
-                              fontSize: '1.5rem',
-                              fontWeight: 600,
+                    <CardContent sx={{ flexGrow: 1, p: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                      {/* Image Section - Square */}
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          overflow: 'hidden',
+                          backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        {/* LIVE Badge */}
+                        {streamer.is_live && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 8,
+                              right: 8,
+                              backgroundColor: '#f44336',
                               color: 'white',
+                              fontSize: '0.65rem',
+                              padding: '4px 8px',
+                              borderRadius: '4px',
+                              fontWeight: 'bold',
+                              zIndex: 5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              boxShadow: '0 2px 8px rgba(0,0,0,0.3)',
                             }}
                           >
-                            {streamer.name.charAt(0)}
-                          </Avatar>
+                            LIVE
+                          </Box>
                         )}
-                        <Box flexGrow={1}>
-                          <Typography variant="h6" component="h3" fontWeight={600}>
-                            {streamer.name}
-                          </Typography>
-                        </Box>
+                        {streamer.logo_url ? (
+                          <Box
+                            component="img"
+                            src={streamer.logo_url}
+                            alt={streamer.name}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: getColorForChannel(index, mode),
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: '3rem',
+                                fontWeight: 700,
+                                color: 'white',
+                              }}
+                            >
+                              {streamer.name.charAt(0).toUpperCase()}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
 
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mb: 1.5 }}>
-                          Plataformas:
+                      {/* Content Section */}
+                      <Box sx={{ p: 2.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                        {/* Name */}
+                        <Typography 
+                          variant="h6" 
+                          component="h3" 
+                          fontWeight={600}
+                          sx={{ 
+                            mb: streamer.categories && streamer.categories.length > 0 ? 1 : 2,
+                            textAlign: 'center',
+                            lineHeight: 1.3,
+                          }}
+                        >
+                          {streamer.name}
                         </Typography>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          {streamer.services.map((service, serviceIndex) => {
-                            const serviceIconUrl = getServiceIconUrl(service.service);
-                            const isTwitchOrKick = service.service === StreamingService.TWITCH || service.service === StreamingService.KICK;
-                            
-                            return (
-                              <Button
-                                key={serviceIndex}
-                                variant="outlined"
-                                size={isTwitchOrKick ? "medium" : "small"}
-                                onClick={() => handleServiceClick(service.service, service.url)}
+
+                        {/* Categories */}
+                        {streamer.categories && streamer.categories.length > 0 && (
+                          <Box 
+                            sx={{ 
+                              display: 'flex', 
+                              flexWrap: 'wrap', 
+                              gap: 0.75,
+                              justifyContent: 'center',
+                              mb: 2,
+                            }}
+                          >
+                            {streamer.categories.slice(0, 2).map((category) => (
+                              <Chip
+                                key={category.id}
+                                label={category.name}
+                                size="small"
                                 sx={{
-                                  width: isTwitchOrKick ? 'fit-content' : 'auto',
-                                  minWidth: isTwitchOrKick ? 140 : 'auto',
-                                  justifyContent: 'flex-start',
-                                  borderRadius: 2,
-                                  borderColor: getServiceColor(service.service, mode),
-                                  color: getServiceColor(service.service, mode),
-                                  textTransform: 'none',
-                                  gap: 1.5,
-                                  py: isTwitchOrKick ? 1.25 : 0.75,
-                                  px: 2,
-                                  whiteSpace: 'nowrap',
-                                  '&:hover': {
-                                    borderColor: getServiceColor(service.service, mode),
-                                    backgroundColor: mode === 'light'
-                                      ? `${getServiceColor(service.service, mode)}15`
-                                      : `${getServiceColor(service.service, mode)}25`,
-                                  }
+                                  fontSize: '0.7rem',
+                                  height: 24,
+                                  backgroundColor: category.color 
+                                    ? `${category.color}20`
+                                    : mode === 'light'
+                                    ? 'rgba(0,0,0,0.08)'
+                                    : 'rgba(255,255,255,0.1)',
+                                  color: category.color || 'text.secondary',
+                                  border: category.color ? `1px solid ${category.color}40` : 'none',
                                 }}
-                              >
-                                {isTwitchOrKick && serviceIconUrl && (
-                                  <Box
-                                    component="img"
-                                    src={serviceIconUrl}
-                                    alt={`${getServiceName(service.service)} icon`}
-                                    sx={{
-                                      width: 20,
-                                      height: 20,
-                                      objectFit: 'contain',
-                                    }}
-                                  />
-                                )}
-                                <Typography variant="body2" fontWeight={500}>
-                                  {isTwitchOrKick ? `Ver en ${getServiceName(service.service)}` : getServiceName(service.service)}
-                                </Typography>
-                              </Button>
-                            );
-                          })}
+                              />
+                            ))}
+                          </Box>
+                        )}
+
+                        {/* Service Buttons */}
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: 1,
+                            mt: 'auto',
+                          }}
+                        >
+                          {streamer.services
+                            .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK)
+                            .map((service, serviceIndex) => {
+                              const serviceIconUrl = getServiceIconUrl(service.service);
+                              
+                              return (
+                                <Button
+                                  key={serviceIndex}
+                                  variant="outlined"
+                                  size="medium"
+                                  fullWidth
+                                  onClick={() => handleServiceClick(service.service, service.url)}
+                                  sx={{
+                                    justifyContent: 'center',
+                                    borderRadius: 2,
+                                    borderColor: getServiceColor(service.service, mode),
+                                    color: getServiceColor(service.service, mode),
+                                    textTransform: 'none',
+                                    gap: 1.5,
+                                    py: 1.25,
+                                    px: 2,
+                                    '&:hover': {
+                                      borderColor: getServiceColor(service.service, mode),
+                                      backgroundColor: mode === 'light'
+                                        ? `${getServiceColor(service.service, mode)}15`
+                                        : `${getServiceColor(service.service, mode)}25`,
+                                    }
+                                  }}
+                                >
+                                  {serviceIconUrl && (
+                                    <Box
+                                      component="img"
+                                      src={serviceIconUrl}
+                                      alt={`${getServiceName(service.service)} icon`}
+                                      sx={{
+                                        width: 20,
+                                        height: 20,
+                                        objectFit: 'contain',
+                                      }}
+                                    />
+                                  )}
+                                  <Typography variant="body2" fontWeight={500}>
+                                    Ver en {getServiceName(service.service)}
+                                  </Typography>
+                                </Button>
+                              );
+                            })}
                         </Box>
                       </Box>
                     </CardContent>
