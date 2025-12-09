@@ -398,7 +398,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                       </Box>
 
                       {/* Content Section */}
-                      <Box sx={{ p: 1.5, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                      <Box sx={{ pt: 1.5, px: 1.5, pb: 0, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
                         {/* Name */}
                         <Typography 
                           variant="subtitle1" 
