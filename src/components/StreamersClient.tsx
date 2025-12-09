@@ -75,13 +75,16 @@ const getServiceIconUrl = (service: StreamingService): string | null => {
 interface StreamersClientProps {
   initialStreamers?: Streamer[];
   initialCategories?: Category[];
+  streamersEnabled?: boolean;
 }
 
-export default function StreamersClient({ initialStreamers, initialCategories = [] }: StreamersClientProps) {
+export default function StreamersClient({ initialStreamers, initialCategories = [], streamersEnabled }: StreamersClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initialCategories = initialCategories; // Reserved for future category filtering feature
   const { mode } = useThemeContext();
-  const { streamersEnabled } = useStreamersConfig();
+  // Use prop if provided, otherwise fall back to hook for backward compatibility
+  const streamersConfigHook = useStreamersConfig();
+  const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
   const { openVideo, openStream } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   // Only show loading if we have no initial data at all (undefined/null, not empty array)
@@ -215,12 +218,12 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
         py: { xs: 1, sm: 2 },
         // Add bottom padding on mobile for bottom navigation + safe area inset (only if streamers enabled)
         pb: { 
-          xs: streamersEnabled ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 1, 
+          xs: finalStreamersEnabled ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 1, 
           sm: 2 
         },
       }}
     >
-      <Header />
+      <Header streamersEnabled={finalStreamersEnabled} />
       <Container 
         maxWidth="lg" 
         sx={{ 

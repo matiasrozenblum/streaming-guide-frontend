@@ -37,7 +37,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
-  const headerHeight = isMobile ? '9.75vh' : '13vh';
+  const headerHeight = isMobile ? '7.75vh' : '10vh';
 
   React.useEffect(() => {
     setIsHomePage(window.location.pathname === '/');

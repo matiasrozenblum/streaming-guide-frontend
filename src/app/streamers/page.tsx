@@ -59,6 +59,6 @@ export default async function StreamersPage() {
     // fallback to empty categories
   }
 
-  return <StreamersClient initialStreamers={initialStreamers} initialCategories={categories} />;
+  return <StreamersClient initialStreamers={initialStreamers} initialCategories={categories} streamersEnabled={streamersEnabled} />;
 }
 
