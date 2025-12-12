@@ -351,7 +351,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <Box
               sx={{
                 position: 'relative',
-                pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
+                pb: { xs: 1, sm: 0 }, // 12px bottom padding for mobile only
+                pt: { md: 2, lg: 2 }, // 16px top padding for desktop only
                 overflow: 'hidden',
                 transformOrigin: 'top',
                 animation: bannerVisible

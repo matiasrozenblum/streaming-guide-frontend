@@ -280,7 +280,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
               </CardContent>
             </MotionCard>
           ) : (
-            <Grid container spacing={2}>
+            <Grid container spacing={{ xs: 3, sm: 2, md: 2, lg: 2 }}>
               {streamers.map((streamer, index) => {
                 // Get the primary service color (prioritize Kick/Twitch, fallback to first service)
                 const primaryService = streamer.services.find(
