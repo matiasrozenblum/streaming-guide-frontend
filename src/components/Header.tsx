@@ -37,7 +37,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
-  const headerHeight = isMobile ? '9.75vh' : '13vh';
+  const headerHeight = isMobile ? '7.75vh' : '10vh';
 
   React.useEffect(() => {
     setIsHomePage(window.location.pathname === '/');
@@ -66,7 +66,24 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
   };
 
   return (
-    <Container maxWidth="xl" disableGutters sx={{ px: 0, mx: { xs: 0, sm: 2 }, mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } }}>
+    <Container 
+      maxWidth={false} 
+      disableGutters 
+      sx={{ 
+        px: 0, 
+        mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
+        maxWidth: { 
+          xs: '100%', 
+          sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
+        },
+        width: { 
+          xs: '100%', 
+          sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
+        },
+        boxSizing: 'border-box',
+        mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } 
+      }}
+    >
       <Box
         sx={{
           height: headerHeight,

@@ -110,6 +110,29 @@ export default function StreamersPage() {
     setSelectedCategories([]);
   };
 
+  // When editing, extract username from URL for Twitch/Kick if username is missing
+  useEffect(() => {
+    if (editingStreamer && formData.services && formData.services.length > 0) {
+      const updatedServices = formData.services.map(service => {
+        if ((service.service === StreamingService.TWITCH || service.service === StreamingService.KICK) && 
+            service.url && !service.username) {
+          // Extract username from URL for display
+          const urlMatch = service.url.match(/(?:twitch\.tv\/|kick\.com\/)([^/?]+)/);
+          if (urlMatch && urlMatch[1]) {
+            return { ...service, username: urlMatch[1] };
+          }
+        }
+        return service;
+      });
+      // Only update if there's a change to avoid infinite loop
+      const hasChanges = updatedServices.some((s, i) => s.username !== formData.services[i]?.username);
+      if (hasChanges) {
+        setFormData({ ...formData, services: updatedServices });
+      }
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [editingStreamer]); // Only run when editingStreamer changes
+
   const handleAddService = () => {
     setFormData({
       ...formData,
@@ -140,11 +163,18 @@ export default function StreamersPage() {
         return;
       }
 
-      // Validate all services have URLs
+      // Validate services have required fields
       for (const service of formData.services) {
-        if (!service.url.trim()) {
-          setError('Todos los servicios deben tener una URL');
-          return;
+        if (service.service === StreamingService.YOUTUBE) {
+          if (!service.url?.trim()) {
+            setError('YouTube requiere una URL');
+            return;
+          }
+        } else if (service.service === StreamingService.TWITCH || service.service === StreamingService.KICK) {
+          if (!service.username?.trim()) {
+            setError(`${service.service === StreamingService.TWITCH ? 'Twitch' : 'Kick'} requiere un username`);
+            return;
+          }
         }
       }
 
@@ -154,11 +184,21 @@ export default function StreamersPage() {
         name: formData.name,
         logo_url: formData.logo_url || undefined,
         is_visible: formData.is_visible,
-        services: formData.services.map(s => ({
-          service: s.service,
-          url: s.url,
-          username: s.username?.trim() || undefined,
-        })),
+        services: formData.services.map(s => {
+          // For Twitch/Kick, only send username (backend will generate URL)
+          // For YouTube, only send URL
+          if (s.service === StreamingService.YOUTUBE) {
+            return {
+              service: s.service,
+              url: s.url,
+            };
+          } else {
+            return {
+              service: s.service,
+              username: s.username?.trim(),
+            };
+          }
+        }),
         category_ids: selectedCategories.map(cat => cat.id),
       };
       const res = await fetch(url, {
@@ -349,35 +389,54 @@ export default function StreamersPage() {
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Servicios de Streaming
               </Typography>
-              {formData.services.map((service, index) => (
+              {formData.services.map((service, index) => {
+                const isTwitchOrKick = service.service === StreamingService.TWITCH || service.service === StreamingService.KICK;
+                const isYouTube = service.service === StreamingService.YOUTUBE;
+                
+                return (
                 <Box key={index} display="flex" gap={1} mb={2} alignItems="flex-start">
                   <FormControl sx={{ minWidth: 120 }}>
                     <InputLabel>Servicio</InputLabel>
                     <Select
                       value={service.service}
                       label="Servicio"
-                      onChange={(e) => handleServiceChange(index, 'service', e.target.value)}
+                      onChange={(e) => {
+                        const newService = e.target.value as StreamingService;
+                        // When changing service type, clear URL/username based on new service
+                        if (newService === StreamingService.YOUTUBE) {
+                          handleServiceChange(index, 'service', newService);
+                          handleServiceChange(index, 'username', '');
+                        } else {
+                          handleServiceChange(index, 'service', newService);
+                          handleServiceChange(index, 'url', '');
+                        }
+                      }}
                     >
                       <MenuItem value={StreamingService.TWITCH}>Twitch</MenuItem>
                       <MenuItem value={StreamingService.KICK}>Kick</MenuItem>
                       <MenuItem value={StreamingService.YOUTUBE}>YouTube</MenuItem>
                     </Select>
                   </FormControl>
-                  <TextField
-                    label="URL"
-                    value={service.url}
-                    onChange={e => handleServiceChange(index, 'url', e.target.value)}
-                    fullWidth
-                    required
-                    placeholder="https://twitch.tv/username"
-                  />
-                  <TextField
-                    label="Username (opcional)"
-                    value={service.username || ''}
-                    onChange={e => handleServiceChange(index, 'username', e.target.value)}
-                    sx={{ minWidth: 150 }}
-                    placeholder="username"
-                  />
+                  {isTwitchOrKick ? (
+                    <TextField
+                      label="Username"
+                      value={service.username || ''}
+                      onChange={e => handleServiceChange(index, 'username', e.target.value)}
+                      fullWidth
+                      required
+                      placeholder="username"
+                      helperText="La URL se generará automáticamente"
+                    />
+                  ) : isYouTube ? (
+                    <TextField
+                      label="URL"
+                      value={service.url || ''}
+                      onChange={e => handleServiceChange(index, 'url', e.target.value)}
+                      fullWidth
+                      required
+                      placeholder="https://www.youtube.com/@channelname"
+                    />
+                  ) : null}
                   <IconButton 
                     onClick={() => handleRemoveService(index)}
                     color="error"
@@ -386,7 +445,7 @@ export default function StreamersPage() {
                     <RemoveIcon />
                   </IconButton>
                 </Box>
-              ))}
+              )})}
               <Button
                 startIcon={<AddIcon />}
                 onClick={handleAddService}
