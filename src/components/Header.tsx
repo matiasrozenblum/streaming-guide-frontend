@@ -124,10 +124,12 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
         {!isMobile && finalStreamersEnabled && (
           <Box
             sx={{
+              position: 'absolute',
+              left: '50%',
+              transform: 'translateX(-50%)',
               display: 'flex',
               alignItems: 'center',
               gap: 4,
-              ml: 4,
             }}
           >
             <Typography
@@ -143,6 +145,8 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 cursor: 'pointer',
                 fontSize: '1.125rem',
                 fontWeight: isCanalesPage ? 600 : 400,
+                fontFamily: 'Oriya MN',
+                textTransform: 'uppercase',
                 color: isCanalesPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
                   : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
@@ -179,6 +183,8 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 cursor: 'pointer',
                 fontSize: '1.125rem',
                 fontWeight: isStreamersPage ? 600 : 400,
+                fontFamily: 'Oriya MN',
+                textTransform: 'uppercase',
                 color: isStreamersPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
                   : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
