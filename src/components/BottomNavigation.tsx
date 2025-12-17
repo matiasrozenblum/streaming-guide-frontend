@@ -91,7 +91,6 @@ export default function BottomNavigation() {
               color: mode === 'light' ? '#1976d2' : '#42a5f5',
             },
             '& .MuiBottomNavigationAction-label': {
-              fontFamily: 'Oriya MN',
               textTransform: 'uppercase',
             },
           },
