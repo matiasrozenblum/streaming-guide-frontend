@@ -145,7 +145,6 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 cursor: 'pointer',
                 fontSize: '1.125rem',
                 fontWeight: isCanalesPage ? 600 : 400,
-                fontFamily: 'Oriya MN',
                 textTransform: 'uppercase',
                 color: isCanalesPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
@@ -183,7 +182,6 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 cursor: 'pointer',
                 fontSize: '1.125rem',
                 fontWeight: isStreamersPage ? 600 : 400,
-                fontFamily: 'Oriya MN',
                 textTransform: 'uppercase',
                 color: isStreamersPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
