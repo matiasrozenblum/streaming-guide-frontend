@@ -53,6 +53,8 @@ export default function StreamersPage() {
     is_visible: true,
     services: [] as Array<{ service: StreamingService; url: string; username?: string }>,
   });
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -85,6 +87,7 @@ export default function StreamersPage() {
         services: streamer.services || [],
       });
       setSelectedCategories(streamer.categories || []);
+      setLogoPreview(streamer.logo_url || null);
     } else {
       setEditingStreamer(null);
       setFormData({ 
@@ -94,7 +97,9 @@ export default function StreamersPage() {
         services: [],
       });
       setSelectedCategories([]);
+      setLogoPreview(null);
     }
+    setUploadingLogo(false);
     setOpenDialog(true);
   };
 
@@ -108,6 +113,52 @@ export default function StreamersPage() {
       services: [],
     });
     setSelectedCategories([]);
+    setUploadingLogo(false);
+    setLogoPreview(null);
+  };
+
+  const handleLogoFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setError('Por favor selecciona un archivo de imagen');
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setError('El archivo es demasiado grande. Máximo 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/streamers/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Error al subir el logo');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, logo_url: data.url }));
+      setLogoPreview(data.url);
+      setSuccess('Logo subido correctamente');
+    } catch (err: unknown) {
+      console.error('Error uploading logo:', err);
+      setError(err instanceof Error ? err.message : 'Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
+    }
   };
 
   // When editing, extract username from URL for Twitch/Kick if username is missing
@@ -370,12 +421,60 @@ export default function StreamersPage() {
               fullWidth 
               required
             />
-            <TextField
-              label="URL del Logo"
-              value={formData.logo_url}
-              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
-              fullWidth
-            />
+            <Box>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="streamer-logo-upload"
+                type="file"
+                onChange={handleLogoFileSelect}
+                disabled={uploadingLogo}
+              />
+              <label htmlFor="streamer-logo-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  fullWidth
+                  disabled={uploadingLogo}
+                  sx={{ mb: 2 }}
+                >
+                  {uploadingLogo ? 'Subiendo...' : 'Subir Logo'}
+                </Button>
+              </label>
+
+              {logoPreview && (
+                <Box sx={{ mt: 1, mb: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>Vista previa:</Typography>
+                  <Box
+                    sx={{
+                      position: 'relative',
+                      width: 140,
+                      height: 140,
+                      borderRadius: 2,
+                      overflow: 'hidden',
+                      border: '1px solid',
+                      borderColor: 'divider',
+                      backgroundColor: 'background.paper',
+                    }}
+                  >
+                    <Image
+                      src={logoPreview}
+                      alt="Logo preview"
+                      fill
+                      style={{ objectFit: 'contain' }}
+                    />
+                  </Box>
+                </Box>
+              )}
+
+              <TextField
+                label="URL del Logo"
+                value={formData.logo_url}
+                onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
+                fullWidth
+                helperText="URL del logo en Supabase Storage (se llena automáticamente al subir)"
+              />
+            </Box>
             <Box display="flex" alignItems="center" gap={2}>
               <Typography>Visible</Typography>
               <Switch
