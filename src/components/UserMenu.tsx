@@ -111,7 +111,8 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
             sx={{
               color: 'text.primary',
               ml: 0.75,
-              fontWeight: 500,
+              fontWeight: 600,
+              fontFamily: '"Outfit", sans-serif',
               whiteSpace: 'nowrap',
             }}
           >

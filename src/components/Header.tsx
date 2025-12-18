@@ -23,7 +23,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
   const router = useRouter();
   const pathname = usePathname();
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
-  const logo = '/img/logo.png';
+
   const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
@@ -107,13 +107,11 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
             }
           }}
         >
-          <Box component="img" src={logo} alt="Logo" sx={{ height: logoHeight, width: 'auto' }} />
           <Box
             component="img"
             src={text}
-            alt="Texto"
+            alt="La Guía del Streaming"
             sx={{ 
-              pl: { xs: tokens.spacing.sm, sm: tokens.spacing.md }, 
               height: logoHeight, 
               width: 'auto' 
             }}
