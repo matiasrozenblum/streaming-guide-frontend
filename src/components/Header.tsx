@@ -144,9 +144,9 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
               sx={{
                 cursor: 'pointer',
                 fontSize: '1.125rem',
-                fontWeight: isCanalesPage ? 600 : 400,
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                fontFamily: '"Source Serif Pro", serif',
+                fontFamily: '"Outfit", sans-serif',
                 color: isCanalesPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
                   : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
@@ -182,9 +182,9 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
               sx={{
                 cursor: 'pointer',
                 fontSize: '1.125rem',
-                fontWeight: isStreamersPage ? 600 : 400,
+                fontWeight: 600,
                 textTransform: 'uppercase',
-                fontFamily: '"Source Serif Pro", serif',
+                fontFamily: '"Outfit", sans-serif',
                 color: isStreamersPage
                   ? (mode === 'light' ? '#1976d2' : '#ffffff')
                   : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
