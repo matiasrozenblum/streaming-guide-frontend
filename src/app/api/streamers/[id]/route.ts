@@ -10,6 +10,11 @@ export async function GET(
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
   const { id } = await params;
+  
+  // Prevent dynamic route from matching reserved paths
+  if (id === 'upload' || id === 'visible') {
+    return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+  }
   const backendUrl = `${process.env.NEXT_PUBLIC_API_URL}/streamers/${id}`;
   const res = await fetch(backendUrl, {
     headers: {
@@ -32,6 +37,11 @@ export async function PATCH(
 
     const body = await request.json();
     const { id } = await params;
+    
+    // Prevent dynamic route from matching reserved paths
+    if (id === 'upload' || id === 'visible') {
+      return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+    }
     
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/streamers/${id}`, {
       method: 'PATCH',
@@ -72,6 +82,11 @@ export async function DELETE(
     }
 
     const { id } = await params;
+    
+    // Prevent dynamic route from matching reserved paths
+    if (id === 'upload' || id === 'visible') {
+      return NextResponse.json({ error: 'Not Found' }, { status: 404 });
+    }
     const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/streamers/${id}`, {
       method: 'DELETE',
       headers: {
