@@ -92,6 +92,7 @@ export default function BottomNavigation() {
             },
             '& .MuiBottomNavigationAction-label': {
               textTransform: 'uppercase',
+              fontFamily: '"Source Serif Pro", serif',
             },
           },
         }}
