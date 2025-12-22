@@ -22,9 +22,11 @@ import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
+import { isBeforeInBuenosAires } from '@/utils/date';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
+const SeasonalDialog = dynamic(() => import('@/components/SeasonalDialog'), { ssr: false });
 
 interface HomeClientProps {
   initialData: {
@@ -48,6 +50,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
+  const [showSeasonal, setShowSeasonal] = useState(isBeforeInBuenosAires('2026-01-02'));
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const [bannerVisible, setBannerVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -248,7 +251,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   return (
     <>
-      {showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
+      {showSeasonal && <SeasonalDialog open onClose={() => setShowSeasonal(false)} />}
+      {!showSeasonal && showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
       <Box
         sx={{
