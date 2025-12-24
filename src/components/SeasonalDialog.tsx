@@ -66,7 +66,7 @@ const SeasonalDialog: React.FC<Props> = ({ open, onClose }) => {
         >
           ¡Felices Fiestas!<br/>
           Durante la temporada de fin de año,<br/>
-          las programación será reducida.
+          la programación será reducida.
         </Typography>
       </DialogContent>
     </Dialog>
