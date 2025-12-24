@@ -45,12 +45,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const streamersEnabled = initialData.streamersEnabled;
+  const isSeasonActive = isBeforeInBuenosAires('2026-01-02');
   
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
-  const [showSeasonal, setShowSeasonal] = useState(isBeforeInBuenosAires('2026-01-02'));
+  const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const [bannerVisible, setBannerVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -252,7 +253,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   return (
     <>
       {showSeasonal && <SeasonalDialog open onClose={() => setShowSeasonal(false)} />}
-      {!showSeasonal && showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
+      {!isSeasonActive && showHoliday && <HolidayDialog open onClose={() => setShowHoliday(false)} />}
 
       <Box
         sx={{
