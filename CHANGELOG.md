@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.15.1] - 2025-12-22
+## [1.15.1] - 2025-12-24
 
 ### Added
 - Added seasonal popup
