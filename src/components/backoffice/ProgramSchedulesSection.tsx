@@ -35,6 +35,7 @@ import {
   AddCircle,
   Schedule as ScheduleIcon,
   ExpandMore,
+  DeleteForever,
 } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
@@ -109,6 +110,32 @@ export function ProgramSchedulesSection({
       setSchedules(programSchedules);
     } catch (err) {
       console.error('Error fetching schedules:', err);
+    }
+  };
+
+  const handleDeleteAllSchedules = async () => {
+    if (!programId) return;
+    const confirmed = typeof window !== 'undefined'
+      ? window.confirm('¿Eliminar TODOS los horarios de este programa? Esta acción no se puede deshacer.')
+      : false;
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/schedules/program/${programId}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${typedSession?.accessToken || ''}`,
+        },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'No se pudieron eliminar los horarios');
+      }
+      await fetchSchedules();
+      setSuccess('Todos los horarios del programa fueron eliminados');
+    } catch (err) {
+      console.error('Error deleting all schedules:', err);
+      setError((err as Error).message || 'Error al eliminar todos los horarios');
     }
   };
 
@@ -363,7 +390,17 @@ export function ProgramSchedulesSection({
           {/* Current Schedules */}
           {programId && allSchedules.length > 0 && (
             <Box sx={{ mb: 3 }}>
-              <Typography variant="h6" sx={{ mb: 2 }}>Horarios Actuales</Typography>
+              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
+                <Typography variant="h6">Horarios Actuales</Typography>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<DeleteForever />}
+                  onClick={handleDeleteAllSchedules}
+                >
+                  Eliminar todos los horarios
+                </Button>
+              </Box>
               <TableContainer component={Paper}>
                 <Table size="small">
                   <TableHead>

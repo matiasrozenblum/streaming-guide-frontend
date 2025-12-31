@@ -14,4 +14,5 @@ export interface Program {
   updated_at: string;
   channel_name?: string;
   style_override?: string | null;
+  is_visible?: boolean;
 }
