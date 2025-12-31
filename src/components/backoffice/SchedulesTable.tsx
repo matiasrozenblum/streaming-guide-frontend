@@ -42,6 +42,7 @@ import {
   AddCircle,
   Schedule,
 } from '@mui/icons-material';
+import { DeleteForever } from '@mui/icons-material';
 import { api } from '@/services/api';
 import { Schedule as ScheduleType } from '@/types/schedule';
 import { Program } from '@/types/program';
@@ -221,6 +222,33 @@ export function SchedulesTable() {
     setBulkTimeRange({ startTime: '', endTime: '' });
     setOpenProgramDialog(true);
     setCurrentTab(0);
+  };
+
+  const handleDeleteAllSchedulesForSelectedProgram = async () => {
+    if (!selectedProgram) return;
+    const confirmed = typeof window !== 'undefined'
+      ? window.confirm('¿Eliminar TODOS los horarios de este programa? Esta acción no se puede deshacer.')
+      : false;
+    if (!confirmed) return;
+
+    try {
+      const res = await fetch(`/api/schedules/program/${selectedProgram.id}`, {
+        method: 'DELETE',
+        headers: {
+          Authorization: `Bearer ${typedSession?.accessToken || ''}`,
+        },
+      });
+      const data = await res.json().catch(() => null);
+      if (!res.ok) {
+        throw new Error(data?.error || 'No se pudieron eliminar los horarios');
+      }
+      setPrograms(prev => prev.map(p => p.id === selectedProgram.id ? { ...p, schedules: [] } : p));
+      setSelectedProgram(prev => prev ? { ...prev, schedules: [] } : prev);
+      setSuccess('Todos los horarios del programa fueron eliminados');
+    } catch (err) {
+      console.error('Error deleting all schedules:', err);
+      setError((err as Error).message || 'Error al eliminar todos los horarios');
+    }
   };
 
   const handleCloseProgramDialog = () => {
@@ -414,8 +442,8 @@ export function SchedulesTable() {
         <DialogContent>
           {selectedProgram && (
             <Box>
-              {/* Tabs */}
-              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
+              {/* Tabs + Delete-all button at same vertical level */}
+              <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
                 <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
                   <Tab 
                     label="Horarios Actuales" 
@@ -433,6 +461,15 @@ export function SchedulesTable() {
                     iconPosition="start"
                   />
                 </Tabs>
+                <Button
+                  variant="contained"
+                  color="error"
+                  startIcon={<DeleteForever />}
+                  onClick={handleDeleteAllSchedulesForSelectedProgram}
+                  disabled={!selectedProgram}
+                >
+                  Eliminar todos los horarios
+                </Button>
               </Box>
 
               {/* Current Schedules Tab */}

@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.2] - 2025-12-31
+
+### Added
+- Added is_visible field for program entities
+- Added delete all schedules button on schedule dialog
+
 ## [1.15.1] - 2025-12-24
 
 ### Added
