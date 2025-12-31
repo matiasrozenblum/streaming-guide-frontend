@@ -393,7 +393,7 @@ export function ProgramSchedulesSection({
               <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', mb: 2 }}>
                 <Typography variant="h6">Horarios Actuales</Typography>
                 <Button
-                  variant="outlined"
+                  variant="contained"
                   color="error"
                   startIcon={<DeleteForever />}
                   onClick={handleDeleteAllSchedules}
