@@ -21,6 +21,39 @@ interface BannerCarouselProps {
 
 const MotionBox = motion(Box);
 
+/**
+ * Banner Carousel Component
+ * 
+ * BANNER IMAGE SPECIFICATIONS:
+ * 
+ * The banner uses `object-fit: contain` to ensure the full image is always visible,
+ * preventing text from being cut off when the viewport resizes.
+ * 
+ * Recommended banner image dimensions:
+ * - Desktop: 1200x300px (4:1 aspect ratio) - optimal for most screen widths
+ * - Mobile: 800x200px (4:1 aspect ratio) - optimized for mobile devices
+ * 
+ * Safe Area Guidelines:
+ * Since the banner container has a fixed height but variable width:
+ * - Desktop: Container height is 200px, width varies (typically 800px - 1920px)
+ * - Mobile: Container height is 120px, width varies (typically 320px - 600px)
+ * 
+ * For a 4:1 aspect ratio image (1200x300px):
+ * - At container width 800px: Image fits perfectly (no letterboxing)
+ * - At container width > 800px: Image will have letterboxing on top/bottom
+ * - At container width < 800px: Image will have letterboxing on left/right
+ * 
+ * Safe Area Recommendations:
+ * - Keep important text/content within the CENTER 60-70% of the image width
+ * - Avoid placing critical text within 15% of the left/right edges
+ * - Avoid placing critical text within 10% of the top/bottom edges
+ * - This ensures text remains visible even when the banner scales
+ * 
+ * Example safe area for 1200x300px image:
+ * - Horizontal safe area: 180px from each side (15% margin)
+ * - Vertical safe area: 30px from top/bottom (10% margin)
+ * - Safe content area: 840x240px centered in the image
+ */
 export default function BannerCarousel({ 
   banners, 
   autoRotate = true, 
@@ -138,6 +171,9 @@ export default function BannerCarousel({
         height: bannerHeight,
         borderRadius,
         overflow: 'hidden',
+        backgroundColor: mode === 'light' 
+          ? 'rgba(0, 0, 0, 0.05)' 
+          : 'rgba(0, 0, 0, 0.2)', // Background color for letterboxing when using contain
         cursor: currentBanner.link_type !== LinkType.NONE ? 'pointer' : 'default',
         boxShadow: mode === 'light' 
           ? '0 4px 12px rgba(0, 0, 0, 0.1)' 
@@ -180,7 +216,8 @@ export default function BannerCarousel({
             alt={currentBanner.title}
             fill
             style={{
-              objectFit: 'cover',
+              objectFit: 'contain', // Changed from 'cover' to 'contain' - ensures full image is always visible
+              objectPosition: 'center', // Center the image within the container
             }}
             sizes={isMobile ? '100vw' : '1200px'}
             priority={true} // Always prioritize banner images for fast loading
