@@ -25,6 +25,8 @@ import {
   Select,
   FormControl,
   InputLabel,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -65,6 +67,7 @@ export default function ProgramsPage() {
     logo_url: '',
     youtube_url: '',
     style_override: '',
+    is_visible: true,
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -118,6 +121,7 @@ export default function ProgramsPage() {
         logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
         style_override: program.style_override || '',
+        is_visible: program.is_visible ?? true,
       });
     } else {
       setEditingProgram(null);
@@ -128,6 +132,7 @@ export default function ProgramsPage() {
         logo_url: '',
         youtube_url: '',
         style_override: '',
+        is_visible: true,
       });
     }
     setOpenDialog(true);
@@ -143,6 +148,7 @@ export default function ProgramsPage() {
       logo_url: '',
       youtube_url: '',
       style_override: '',
+      is_visible: true,
     });
     setPendingSchedules([]);
     setPendingPanelistIds([]);
@@ -365,6 +371,15 @@ export default function ProgramsPage() {
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
             <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={!!formData.is_visible}
+                  onChange={(e) => setFormData({ ...formData, is_visible: e.target.checked })}
+                />
+              }
+              label="Visible (mostrar en grilla)"
+            />
             
             {/* Schedule Management Section */}
             <ProgramSchedulesSection

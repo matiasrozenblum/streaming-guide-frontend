@@ -20,3 +20,18 @@ export function getBuenosAiresDayOfWeek() {
 export function formatDate(date: string | Date, format: string = 'YYYY-MM-DD') {
   return dayjs(date).tz(TIMEZONE).format(format);
 } 
+
+/**
+ * Returns true if the current time in Buenos Aires is strictly before the given
+ * target date/time expressed in Buenos Aires timezone.
+ *
+ * If a string in 'YYYY-MM-DD' is provided, it is interpreted at the start of that day
+ * in Buenos Aires timezone.
+ */
+export function isBeforeInBuenosAires(target: string | Date): boolean {
+  const nowBA = getBuenosAiresTime();
+  const targetBA = typeof target === 'string'
+    ? dayjs.tz(target, TIMEZONE).startOf('day')
+    : dayjs(target).tz(TIMEZONE);
+  return nowBA.isBefore(targetBA);
+}

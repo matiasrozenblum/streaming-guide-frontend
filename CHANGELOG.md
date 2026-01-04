@@ -17,7 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.15.1] - 2025-12-06
+## [1.15.2] - 2025-12-06
 
 ### Added
 - Added upload banner logic
@@ -25,6 +25,21 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 - Fixed vulnerable dependencies
+
+
+## [1.15.2] - 2025-12-31
+
+### Added
+- Added is_visible field for program entities
+- Added delete all schedules button on schedule dialog
+
+## [1.15.1] - 2025-12-24
+
+### Added
+- Added seasonal popup
+
+### Fixed
+- Upgraded next version
 
 ## [1.15.0] - 2025-12-03
 
