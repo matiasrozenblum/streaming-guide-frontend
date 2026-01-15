@@ -58,8 +58,12 @@ export default function BannersPage() {
     start_date: '',
     end_date: '',
     display_order: 0,
+    is_fixed: false,
+    priority: 0,
     banner_type: 'news' as BannerType,
   });
+  const [uploadingImage, setUploadingImage] = useState(false);
+  const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -112,8 +116,11 @@ export default function BannersPage() {
         start_date: banner.start_date || '',
         end_date: banner.end_date || '',
         display_order: banner.display_order,
+        is_fixed: banner.is_fixed,
+        priority: banner.priority,
         banner_type: banner.banner_type,
       });
+      setImagePreview(banner.image_url);
     } else {
       setEditingBanner(null);
       setFormData({
@@ -126,8 +133,11 @@ export default function BannersPage() {
         start_date: '',
         end_date: '',
         display_order: Math.max(...banners.map(b => b.display_order), 0) + 1,
+        is_fixed: false,
+        priority: Math.max(...banners.map(b => b.priority || 0), 0) + 1,
         banner_type: 'news' as BannerType,
       });
+      setImagePreview(null);
     }
     setOpenDialog(true);
   };
@@ -135,6 +145,78 @@ export default function BannersPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingBanner(null);
+    setImagePreview(null);
+    setUploadingImage(false);
+  };
+
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    // Validate file type
+    if (!file.type.startsWith('image/')) {
+      setSnackbar({
+        open: true,
+        message: 'Por favor selecciona un archivo de imagen',
+        severity: 'error',
+      });
+      return;
+    }
+
+    // Validate file size (5MB max)
+    if (file.size > 5 * 1024 * 1024) {
+      setSnackbar({
+        open: true,
+        message: 'El archivo es demasiado grande. Máximo 5MB',
+        severity: 'error',
+      });
+      return;
+    }
+
+    setUploadingImage(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/banners/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.error || 'Error al subir la imagen');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, image_url: data.url }));
+      setImagePreview(data.url);
+      setSnackbar({
+        open: true,
+        message: 'Imagen subida correctamente',
+        severity: 'success',
+      });
+    } catch (error: unknown) {
+      console.error('Error uploading image:', error);
+      const errorMessage = error instanceof Error ? error.message : 'Error al subir la imagen';
+      setSnackbar({
+        open: true,
+        message: errorMessage,
+        severity: 'error',
+      });
+    } finally {
+      setUploadingImage(false);
+    }
+  };
+
+  const handleFixedBannerChange = (checked: boolean) => {
+    setFormData(prev => ({
+      ...prev,
+      is_fixed: checked,
+      start_date: checked ? '' : prev.start_date,
+      end_date: checked ? '' : prev.end_date,
+    }));
   };
 
   const handleSave = async () => {
@@ -391,14 +473,105 @@ export default function BannersPage() {
                 multiline
                 rows={3}
               />
+              
+              {/* Banner Fijo Checkbox */}
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+                <Switch
+                  checked={formData.is_fixed || false}
+                  onChange={(e) => handleFixedBannerChange(e.target.checked)}
+                />
+                <Typography>Banner Fijo (siempre activo, sin fechas)</Typography>
+              </Box>
+
+              {/* Priority Field */}
               <TextField
-                label="URL de la imagen"
-                value={formData.image_url}
-                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                label="Prioridad"
+                type="number"
+                value={formData.priority || 0}
+                onChange={(e) => setFormData({ ...formData, priority: parseInt(e.target.value) || 0 })}
                 fullWidth
                 required
-                helperText="URL de la imagen en Supabase Storage"
+                helperText="Números menores tienen mayor prioridad. Los banners temporales siempre aparecen antes que los fijos."
               />
+
+              {/* Image Upload */}
+              <Box>
+                <input
+                  accept="image/*"
+                  style={{ display: 'none' }}
+                  id="banner-image-upload"
+                  type="file"
+                  onChange={handleFileSelect}
+                  disabled={uploadingImage}
+                />
+                <label htmlFor="banner-image-upload">
+                  <Button
+                    variant="outlined"
+                    component="span"
+                    fullWidth
+                    disabled={uploadingImage}
+                    sx={{ mb: 2 }}
+                  >
+                    {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
+                  </Button>
+                </label>
+                {imagePreview && (
+                  <Box sx={{ mt: 2, mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>Vista previa:</Typography>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: '100%',
+                        height: 200,
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Image
+                        src={imagePreview}
+                        alt="Preview"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+                {formData.image_url && !imagePreview && (
+                  <Box sx={{ mt: 2, mb: 2 }}>
+                    <Typography variant="body2" sx={{ mb: 1 }}>Imagen actual:</Typography>
+                    <Box
+                      sx={{
+                        position: 'relative',
+                        width: '100%',
+                        height: 200,
+                        borderRadius: 2,
+                        overflow: 'hidden',
+                        border: '1px solid',
+                        borderColor: 'divider',
+                      }}
+                    >
+                      <Image
+                        src={formData.image_url}
+                        alt="Current"
+                        fill
+                        style={{ objectFit: 'cover' }}
+                      />
+                    </Box>
+                  </Box>
+                )}
+                <TextField
+                  label="URL de la imagen"
+                  value={formData.image_url}
+                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                  fullWidth
+                  required
+                  helperText="URL de la imagen en Supabase Storage (se llena automáticamente al subir)"
+                  sx={{ mt: 2 }}
+                />
+              </Box>
+
               <FormControl fullWidth>
                 <InputLabel>Tipo de banner</InputLabel>
                 <Select
@@ -443,7 +616,7 @@ export default function BannersPage() {
                 value={formData.display_order}
                 onChange={(e) => setFormData({ ...formData, display_order: parseInt(e.target.value) || 0 })}
                 fullWidth
-                helperText="Números menores aparecen primero"
+                helperText="Números menores aparecen primero (legacy, usar prioridad)"
               />
               <Box sx={{ display: 'flex', gap: 2 }}>
                 <DateTimePicker
@@ -451,14 +624,21 @@ export default function BannersPage() {
                   value={formData.start_date ? dayjs(formData.start_date) : null}
                   onChange={(date) => setFormData({ ...formData, start_date: date?.toISOString() || '' })}
                   sx={{ flex: 1 }}
+                  disabled={formData.is_fixed}
                 />
                 <DateTimePicker
                   label="Fecha de fin"
                   value={formData.end_date ? dayjs(formData.end_date) : null}
                   onChange={(date) => setFormData({ ...formData, end_date: date?.toISOString() || '' })}
                   sx={{ flex: 1 }}
+                  disabled={formData.is_fixed}
                 />
               </Box>
+              {formData.is_fixed && (
+                <Alert severity="info">
+                  Los banners fijos no requieren fechas de inicio y fin, ya que están siempre activos.
+                </Alert>
+              )}
             </Box>
           </DialogContent>
           <DialogActions>
