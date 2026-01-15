@@ -90,6 +90,11 @@ export default function BottomNavigation() {
             '&.Mui-selected': {
               color: mode === 'light' ? '#1976d2' : '#42a5f5',
             },
+            '& .MuiBottomNavigationAction-label': {
+              textTransform: 'uppercase',
+              fontFamily: '"Outfit", sans-serif',
+              fontWeight: 600,
+            },
           },
         }}
       >

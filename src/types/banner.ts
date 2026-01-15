@@ -21,6 +21,8 @@ export interface Banner {
   start_date?: string | null; // ISO date string
   end_date?: string | null; // ISO date string
   display_order: number;
+  is_fixed: boolean;
+  priority: number;
   banner_type: BannerType;
   created_at: string; // ISO date string
   updated_at: string; // ISO date string
@@ -36,6 +38,8 @@ export interface CreateBannerDto {
   start_date?: string;
   end_date?: string;
   display_order?: number;
+  is_fixed?: boolean;
+  priority?: number;
   banner_type?: BannerType;
 }
 

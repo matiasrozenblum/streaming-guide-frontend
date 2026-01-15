@@ -271,7 +271,27 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container maxWidth="xl" disableGutters sx={{ px: 0, mx: { xs: 0, sm: 2 }, flex: 1, display: 'flex', flexDirection: 'column', minHeight: 0 }}>
+        <Container 
+          maxWidth={false} 
+          disableGutters 
+          sx={{ 
+            px: 0, 
+            mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
+            maxWidth: { 
+              xs: '100%', 
+              sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
+            },
+            width: { 
+              xs: '100%', 
+              sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
+            },
+            boxSizing: 'border-box',
+            flex: 1, 
+            display: 'flex', 
+            flexDirection: 'column', 
+            minHeight: 0 
+          }}
+        >
           {/* CSS Keyframes for banner and grid animations */}
           <Box
             component="style"
@@ -336,7 +356,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             <Box
               sx={{
                 position: 'relative',
-                pb: { xs: 1.5, sm: 0 }, // 12px bottom padding for mobile only
+                pb: { xs: 1, sm: 0 }, // 12px bottom padding for mobile only
+                pt: { md: 2, lg: 2 }, // 16px top padding for desktop only
                 overflow: 'hidden',
                 transformOrigin: 'top',
                 animation: bannerVisible

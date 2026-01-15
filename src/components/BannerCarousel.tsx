@@ -21,6 +21,50 @@ interface BannerCarouselProps {
 
 const MotionBox = motion(Box);
 
+/**
+ * Banner Carousel Component
+ * 
+ * BANNER IMAGE SPECIFICATIONS:
+ * 
+ * Standard banner image dimensions: 1920px × 400px (2:1 aspect ratio)
+ * 
+ * SAFE AREA CALCULATIONS:
+ * 
+ * The banner uses `object-fit: cover`, which means the image will scale to cover
+ * the entire container, potentially cropping edges when the container aspect ratio
+ * differs from the image's 2:1 ratio.
+ * 
+ * Container dimensions:
+ * - Desktop: Fixed height 200px, variable width (typically 800px - 1920px)
+ * - Mobile: Fixed height 120px, variable width (typically 320px - 600px)
+ * 
+ * When container is wider than 2:1 ratio (e.g., 1200px × 200px):
+ * - Image scales to fit height (200px) = 400px wide (maintaining 2:1 ratio)
+ * - Excess width is cropped: (1200 - 400) / 2 = 400px cropped from each side
+ * - Maximum crop: ~21% from each side on very wide screens
+ * 
+ * When container is narrower than 2:1 ratio (e.g., 600px × 200px):
+ * - Image scales to fit width (600px) = 300px tall (maintaining 2:1 ratio)
+ * - Excess height is cropped: (300 - 200) / 2 = 50px cropped from top/bottom
+ * - Maximum crop: ~12.5% from top/bottom on narrow screens
+ * 
+ * SAFE AREA RECOMMENDATIONS for 1920×400px banners:
+ * 
+ * Horizontal (left/right) safe area:
+ * - Keep critical content at least 400px (21%) from each side
+ * - Safe content width: 1120px centered (58% of total width)
+ * 
+ * Vertical (top/bottom) safe area:
+ * - Keep critical content at least 50px (12.5%) from top/bottom
+ * - Safe content height: 300px centered (75% of total height)
+ * 
+ * RECOMMENDED SAFE AREA:
+ * - Left margin: 400px (21%)
+ * - Right margin: 400px (21%)
+ * - Top margin: 50px (12.5%)
+ * - Bottom margin: 50px (12.5%)
+ * - Safe content zone: 1120px × 300px centered in the 1920×400px image
+ */
 export default function BannerCarousel({ 
   banners, 
   autoRotate = true, 
@@ -180,9 +224,10 @@ export default function BannerCarousel({
             alt={currentBanner.title}
             fill
             style={{
-              objectFit: 'cover',
+              objectFit: 'cover', // Cover the entire container, may crop edges
+              objectPosition: 'center', // Center the image within the container
             }}
-            sizes={isMobile ? '100vw' : '1200px'}
+            sizes={isMobile ? '100vw' : '1920px'}
             priority={true} // Always prioritize banner images for fast loading
             quality={85} // Optimize quality vs size
           />

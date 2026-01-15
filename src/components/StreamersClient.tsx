@@ -10,19 +10,19 @@ import {
   CardContent,
   Button,
   Grid,
-  Avatar,
   CircularProgress,
+  Chip,
+  alpha,
 } from '@mui/material';
 import {
-  ArrowBack,
   LiveTv,
 } from '@mui/icons-material';
-import { useRouter } from 'next/navigation';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
+import { Category } from '@/types/channel';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { getColorForChannel } from '@/utils/colors';
 import { useState, useEffect, useRef } from 'react';
@@ -74,12 +74,17 @@ const getServiceIconUrl = (service: StreamingService): string | null => {
 
 interface StreamersClientProps {
   initialStreamers?: Streamer[];
+  initialCategories?: Category[];
+  streamersEnabled?: boolean;
 }
 
-export default function StreamersClient({ initialStreamers }: StreamersClientProps) {
-  const router = useRouter();
+export default function StreamersClient({ initialStreamers, initialCategories = [], streamersEnabled }: StreamersClientProps) {
+  // eslint-disable-next-line @typescript-eslint/no-unused-vars
+  const _initialCategories = initialCategories; // Reserved for future category filtering feature
   const { mode } = useThemeContext();
-  const { streamersEnabled } = useStreamersConfig();
+  // Use prop if provided, otherwise fall back to hook for backward compatibility
+  const streamersConfigHook = useStreamersConfig();
+  const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
   const { openVideo, openStream } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   // Only show loading if we have no initial data at all (undefined/null, not empty array)
@@ -122,6 +127,7 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []); // Empty deps - only run once on mount, initialStreamers is from props
+
 
   // Listen for live status updates via SSE
   useEffect(() => {
@@ -212,12 +218,12 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
         py: { xs: 1, sm: 2 },
         // Add bottom padding on mobile for bottom navigation + safe area inset (only if streamers enabled)
         pb: { 
-          xs: streamersEnabled ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 1, 
+          xs: finalStreamersEnabled ? 'calc(72px + env(safe-area-inset-bottom, 0px))' : 1, 
           sm: 2 
         },
       }}
     >
-      <Header />
+      <Header streamersEnabled={finalStreamersEnabled} />
       <Container 
         maxWidth="lg" 
         sx={{ 
@@ -231,44 +237,17 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
         >
-          {/* Title section */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 4,
-            }}
-          >
-            <Box>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  fontWeight: 700,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 1,
-                }}
-              >
-                Streamers
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Descubre y sigue a tus streamers favoritos en diferentes plataformas
-              </Typography>
+
+          {/*{/* Category tabs 
+          {categories.length > 0 && (
+            <Box sx={{ mb: 3 }}>
+              <CategoryTabs
+                selectedCategory={selectedCategory}
+                onCategoryChange={setSelectedCategory}
+                categories={categories}
+              />
             </Box>
-            <Button
-              startIcon={<ArrowBack />}
-              onClick={() => router.push('/')}
-              variant="outlined"
-              size="large"
-              sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
-            >
-              Volver
-            </Button>
-          </Box>
+          )}*/}
 
           {loading ? (
             <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
@@ -301,9 +280,16 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
               </CardContent>
             </MotionCard>
           ) : (
-            <Grid container spacing={3}>
-              {streamers.map((streamer, index) => (
-                <Grid size={{ xs: 6, sm: 3, lg: 3 }} key={streamer.id}>
+            <Grid container spacing={{ xs: 3, sm: 2, md: 2, lg: 2 }}>
+              {streamers.map((streamer, index) => {
+                // Get the primary service color (prioritize Kick/Twitch, fallback to first service)
+                const primaryService = streamer.services.find(
+                  s => s.service === StreamingService.KICK || s.service === StreamingService.TWITCH
+                ) || streamer.services[0];
+                const serviceColor = primaryService ? getServiceColor(primaryService.service, mode) : null;
+                
+                return (
+                <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
                   <MotionCard
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
@@ -317,127 +303,206 @@ export default function StreamersClient({ initialStreamers }: StreamersClientPro
                         : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
-                      border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                      border: serviceColor 
+                        ? `1px solid ${alpha(serviceColor, 0.4)}`
+                        : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
+                      boxShadow: serviceColor
+                        ? `0 0 10px ${serviceColor}40, 0 0 20px ${serviceColor}20`
+                        : 'none',
                       transition: 'all 0.3s ease-in-out',
+                      overflow: 'hidden',
                       '&:hover': {
                         transform: 'translateY(-4px)',
-                        boxShadow: mode === 'light'
-                          ? '0 12px 24px rgba(0,0,0,0.15)'
-                          : '0 12px 24px rgba(0,0,0,0.4)',
+                        boxShadow: serviceColor
+                          ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                          : (mode === 'light'
+                            ? '0 12px 24px rgba(0,0,0,0.15)'
+                            : '0 12px 24px rgba(0,0,0,0.4)'),
                       }
                     }}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 3, position: 'relative' }}>
-                      {/* LIVE Badge */}
-                      {streamer.is_live && (
-                        <Box
-                          sx={{
-                            position: 'absolute',
-                            top: 12,
-                            right: 12,
-                            backgroundColor: '#f44336',
-                            color: 'white',
-                            fontSize: '0.65rem',
-                            padding: '2px 6px',
-                            borderRadius: '4px',
-                            fontWeight: 'bold',
-                            zIndex: 5,
-                            display: 'flex',
-                            alignItems: 'center',
-                            gap: 0.5,
-                          }}
-                        >
-                          LIVE
-                        </Box>
-                      )}
-                      <Box display="flex" alignItems="center" mb={2}>
-                        {streamer.logo_url ? (
-                          <Avatar
-                            src={streamer.logo_url}
-                            alt={streamer.name}
-                            sx={{ width: 56, height: 56, mr: 2 }}
-                          />
-                        ) : (
-                          <Avatar 
-                            sx={{ 
-                              width: 56, 
-                              height: 56, 
-                              mr: 2,
-                              backgroundColor: getColorForChannel(index, mode),
-                              fontSize: '1.5rem',
-                              fontWeight: 600,
+                    <CardContent sx={{ '&:last-child': { paddingBottom: 1 }, flexGrow: 1, p: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
+                      {/* Image Section - Square */}
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          aspectRatio: '1 / 1',
+                          overflow: 'hidden',
+                          backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                        }}
+                      >
+                        {/* LIVE Badge */}
+                        {streamer.is_live && (
+                          <Box
+                            sx={{
+                              position: 'absolute',
+                              top: 6,
+                              right: 6,
+                              backgroundColor: '#f44336',
                               color: 'white',
+                              fontSize: '0.6rem',
+                              padding: '3px 6px',
+                              borderRadius: '3px',
+                              fontWeight: 'bold',
+                              zIndex: 5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)',
                             }}
                           >
-                            {streamer.name.charAt(0)}
-                          </Avatar>
+                            LIVE
+                          </Box>
                         )}
-                        <Box flexGrow={1}>
-                          <Typography variant="h6" component="h3" fontWeight={600}>
-                            {streamer.name}
-                          </Typography>
-                        </Box>
+                        {streamer.logo_url ? (
+                          <Box
+                            component="img"
+                            src={streamer.logo_url}
+                            alt={streamer.name}
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              objectFit: 'cover',
+                            }}
+                          />
+                        ) : (
+                          <Box
+                            sx={{
+                              width: '100%',
+                              height: '100%',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              backgroundColor: getColorForChannel(index, mode),
+                            }}
+                          >
+                            <Typography
+                              sx={{
+                                fontSize: '2rem',
+                                fontWeight: 700,
+                                color: 'white',
+                              }}
+                            >
+                              {streamer.name.charAt(0).toUpperCase()}
+                            </Typography>
+                          </Box>
+                        )}
                       </Box>
 
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mb: 1.5 }}>
-                          Plataformas:
+                      {/* Content Section */}
+                      <Box sx={{ pt: 1.5, px: 1.5, pb: 0, display: 'flex', flexDirection: 'column', flexGrow: 1 }}>
+                        {/* Name */}
+                        <Typography 
+                          variant="subtitle1" 
+                          component="h3" 
+                          fontWeight={600}
+                          sx={{ 
+                            mb: streamer.categories && streamer.categories.length > 0 ? 0.75 : 1,
+                            textAlign: 'center',
+                            lineHeight: 1.2,
+                            fontSize: '0.9rem',
+                          }}
+                        >
+                          {streamer.name}
                         </Typography>
-                        <Box display="flex" flexDirection="column" gap={1}>
-                          {streamer.services.map((service, serviceIndex) => {
-                            const serviceIconUrl = getServiceIconUrl(service.service);
-                            const isTwitchOrKick = service.service === StreamingService.TWITCH || service.service === StreamingService.KICK;
-                            
-                            return (
-                              <Button
-                                key={serviceIndex}
-                                variant="outlined"
-                                size={isTwitchOrKick ? "medium" : "small"}
-                                onClick={() => handleServiceClick(service.service, service.url)}
+
+                        {/* Categories */}
+                        {streamer.categories && streamer.categories.length > 0 && (
+                          <Box 
+                            sx={{ 
+                              display: 'flex', 
+                              flexWrap: 'wrap', 
+                              gap: 0.5,
+                              justifyContent: 'center',
+                              mb: 1.25,
+                            }}
+                          >
+                            {streamer.categories.slice(0, 2).map((category) => (
+                              <Chip
+                                key={category.id}
+                                label={category.name}
+                                size="small"
                                 sx={{
-                                  width: isTwitchOrKick ? 'fit-content' : 'auto',
-                                  minWidth: isTwitchOrKick ? 140 : 'auto',
-                                  justifyContent: 'flex-start',
-                                  borderRadius: 2,
-                                  borderColor: getServiceColor(service.service, mode),
-                                  color: getServiceColor(service.service, mode),
-                                  textTransform: 'none',
-                                  gap: 1.5,
-                                  py: isTwitchOrKick ? 1.25 : 0.75,
-                                  px: 2,
-                                  whiteSpace: 'nowrap',
-                                  '&:hover': {
-                                    borderColor: getServiceColor(service.service, mode),
-                                    backgroundColor: mode === 'light'
-                                      ? `${getServiceColor(service.service, mode)}15`
-                                      : `${getServiceColor(service.service, mode)}25`,
-                                  }
+                                  fontSize: '0.65rem',
+                                  height: 20,
+                                  backgroundColor: category.color 
+                                    ? `${category.color}20`
+                                    : mode === 'light'
+                                    ? 'rgba(0,0,0,0.08)'
+                                    : 'rgba(255,255,255,0.1)',
+                                  color: category.color || 'text.secondary',
+                                  border: category.color ? `1px solid ${category.color}40` : 'none',
                                 }}
-                              >
-                                {isTwitchOrKick && serviceIconUrl && (
-                                  <Box
-                                    component="img"
-                                    src={serviceIconUrl}
-                                    alt={`${getServiceName(service.service)} icon`}
-                                    sx={{
-                                      width: 20,
-                                      height: 20,
-                                      objectFit: 'contain',
-                                    }}
-                                  />
-                                )}
-                                <Typography variant="body2" fontWeight={500}>
-                                  {isTwitchOrKick ? `Ver en ${getServiceName(service.service)}` : getServiceName(service.service)}
-                                </Typography>
-                              </Button>
-                            );
-                          })}
+                              />
+                            ))}
+                          </Box>
+                        )}
+
+                        {/* Service Buttons */}
+                        <Box 
+                          sx={{ 
+                            display: 'flex', 
+                            flexDirection: 'column', 
+                            gap: 0.75,
+                            mt: 'auto',
+                          }}
+                        >
+                          {streamer.services
+                            .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK)
+                            .map((service, serviceIndex) => {
+                              const serviceIconUrl = getServiceIconUrl(service.service);
+                              
+                              return (
+                                <Button
+                                  key={serviceIndex}
+                                  variant="outlined"
+                                  size="small"
+                                  fullWidth
+                                  onClick={() => handleServiceClick(service.service, service.url)}
+                                  sx={{
+                                    justifyContent: 'center',
+                                    borderRadius: 1.5,
+                                    borderColor: getServiceColor(service.service, mode),
+                                    color: getServiceColor(service.service, mode),
+                                    textTransform: 'none',
+                                    gap: 1,
+                                    py: 0.75,
+                                    px: 1.5,
+                                    minHeight: 36,
+                                    '&:hover': {
+                                      borderColor: getServiceColor(service.service, mode),
+                                      backgroundColor: mode === 'light'
+                                        ? `${getServiceColor(service.service, mode)}15`
+                                        : `${getServiceColor(service.service, mode)}25`,
+                                    }
+                                  }}
+                                >
+                                  {serviceIconUrl && (
+                                    <Box
+                                      component="img"
+                                      src={serviceIconUrl}
+                                      alt={`${getServiceName(service.service)} icon`}
+                                      sx={{
+                                        width: 16,
+                                        height: 16,
+                                        objectFit: 'contain',
+                                      }}
+                                    />
+                                  )}
+                                  <Typography variant="caption" fontWeight={500} sx={{ fontSize: '0.75rem' }}>
+                                    Ver en {getServiceName(service.service)}
+                                  </Typography>
+                                </Button>
+                              );
+                            })}
                         </Box>
                       </Box>
                     </CardContent>
                   </MotionCard>
                 </Grid>
-              ))}
+                );
+              })}
             </Grid>
           )}
         </MotionBox>
