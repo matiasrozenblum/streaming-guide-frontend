@@ -315,8 +315,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       background: isDual
                         ? `${cardInnerBg} padding-box, ${borderGradient} border-box`
                         : cardInnerBg,
-                      backgroundClip: isDual ? 'padding-box, border-box' : undefined,
-                      backgroundOrigin: isDual ? 'border-box' : undefined,
+                      /* Rely on background shorthand for per-layer clip/origin to keep inner background identical */
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
                       border: isDual
@@ -327,7 +326,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       // Glows
                       ...(isDual
                         ? {
-                            boxShadow: `0 0 10px ${twitchColor}30, 0 0 10px ${kickColor}30, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
+                            // Halved brightness per color to match total intensity of single-color shadow
+                            boxShadow: `0 0 10px ${twitchColor}20, 0 0 10px ${kickColor}20, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
                           }
                         : {
                         boxShadow: serviceColor
@@ -339,7 +339,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: isDual
-                          ? `0 0 15px ${twitchColor}50, 0 0 15px ${kickColor}50, 0 0 30px ${twitchColor}25, 0 0 30px ${kickColor}25, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                          ? `0 0 15px ${twitchColor}30, 0 0 15px ${kickColor}30, 0 0 30px ${twitchColor}15, 0 0 30px ${kickColor}15, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
                           : serviceColor
                             ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
                             : (mode === 'light'
