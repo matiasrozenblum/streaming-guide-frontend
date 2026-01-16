@@ -282,12 +282,20 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
           ) : (
             <Grid container spacing={{ xs: 3, sm: 2, md: 2, lg: 2 }}>
               {streamers.map((streamer, index) => {
-                // Get the primary service color (prioritize Kick/Twitch, fallback to first service)
-                const primaryService = streamer.services.find(
-                  s => s.service === StreamingService.KICK || s.service === StreamingService.TWITCH
-                ) || streamer.services[0];
-                const serviceColor = primaryService ? getServiceColor(primaryService.service, mode) : null;
-                
+                // Determine service colors for border/glow
+                const hasTwitch = streamer.services.some(s => s.service === StreamingService.TWITCH);
+                const hasKick = streamer.services.some(s => s.service === StreamingService.KICK);
+                const twitchColor = getServiceColor(StreamingService.TWITCH, mode);
+                const kickColor = getServiceColor(StreamingService.KICK, mode);
+                // Fallback to first service color if neither Twitch nor Kick exists
+                const fallbackService = streamer.services[0];
+                const fallbackColor = fallbackService ? getServiceColor(fallbackService.service, mode) : null;
+                const isDual = hasTwitch && hasKick;
+                const serviceColor = isDual ? null : (hasKick ? kickColor : hasTwitch ? twitchColor : fallbackColor);
+                const borderGradient = isDual
+                  ? `linear-gradient(to right, ${twitchColor} 0%, ${twitchColor} 50%, ${kickColor} 50%, ${kickColor} 100%)`
+                  : undefined;
+              
                 return (
                 <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
                   <MotionCard
@@ -303,21 +311,32 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                         : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
-                      border: serviceColor 
-                        ? `1px solid ${alpha(serviceColor, 0.4)}`
-                        : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
-                      boxShadow: serviceColor
-                        ? `0 0 10px ${serviceColor}40, 0 0 20px ${serviceColor}20`
-                        : 'none',
+                      border: isDual
+                        ? '1px solid transparent'
+                        : serviceColor 
+                          ? `1px solid ${alpha(serviceColor, 0.4)}`
+                          : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
+                      // Gradient split border when Twitch + Kick are present
+                      ...(isDual ? {
+                        borderImageSlice: 1,
+                        borderImageSource: borderGradient,
+                        boxShadow: `0 0 10px ${twitchColor}30, 0 0 10px ${kickColor}30, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
+                      } : {
+                        boxShadow: serviceColor
+                          ? `0 0 10px ${serviceColor}40, 0 0 20px ${serviceColor}20`
+                          : 'none',
+                      }),
                       transition: 'all 0.3s ease-in-out',
                       overflow: 'hidden',
                       '&:hover': {
                         transform: 'translateY(-4px)',
-                        boxShadow: serviceColor
-                          ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
-                          : (mode === 'light'
-                            ? '0 12px 24px rgba(0,0,0,0.15)'
-                            : '0 12px 24px rgba(0,0,0,0.4)'),
+                        boxShadow: isDual
+                          ? `0 0 15px ${twitchColor}50, 0 0 15px ${kickColor}50, 0 0 30px ${twitchColor}25, 0 0 30px ${kickColor}25, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                          : serviceColor
+                            ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                            : (mode === 'light'
+                              ? '0 12px 24px rgba(0,0,0,0.15)'
+                              : '0 12px 24px rgba(0,0,0,0.4)'),
                       }
                     }}
                   >
