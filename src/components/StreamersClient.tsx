@@ -411,13 +411,16 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                     <CardContent sx={{ '&:last-child': { paddingBottom: 1 }, flexGrow: 1, p: 0, display: 'flex', flexDirection: 'column', position: 'relative' }}>
                       {/* Image Section - Square */}
                       <Box
-                        sx={{
+                        sx={(theme) => ({
                           position: 'relative',
                           width: '100%',
                           aspectRatio: '1 / 1',
                           overflow: 'hidden',
+                          // Match the card's rounded corners at the top
+                          borderTopLeftRadius: theme.shape.borderRadius * 3,
+                          borderTopRightRadius: theme.shape.borderRadius * 3,
                           backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
-                        }}
+                        })}
                       >
                         {/* LIVE Badge */}
                         {streamer.is_live && (
