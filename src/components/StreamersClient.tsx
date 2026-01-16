@@ -292,9 +292,14 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                 const fallbackColor = fallbackService ? getServiceColor(fallbackService.service, mode) : null;
                 const isDual = hasTwitch && hasKick;
                 const serviceColor = isDual ? null : (hasKick ? kickColor : hasTwitch ? twitchColor : fallbackColor);
+                // Smooth blend between colors near the middle (48% -> 52%)
                 const borderGradient = isDual
-                  ? `linear-gradient(to right, ${twitchColor} 0%, ${twitchColor} 50%, ${kickColor} 50%, ${kickColor} 100%)`
+                  ? `linear-gradient(to right, ${twitchColor} 0%, ${twitchColor} 48%, ${kickColor} 52%, ${kickColor} 100%)`
                   : undefined;
+                const cardInnerBg =
+                  mode === 'light'
+                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
+                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)';
               
                 return (
                 <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
@@ -306,9 +311,12 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       height: '100%', 
                       display: 'flex', 
                       flexDirection: 'column',
-                      background: mode === 'light'
-                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                      // Use layered backgrounds to achieve gradient borders with rounded corners
+                      background: isDual
+                        ? `${cardInnerBg} padding-box, ${borderGradient} border-box`
+                        : cardInnerBg,
+                      backgroundClip: isDual ? 'padding-box, border-box' : undefined,
+                      backgroundOrigin: isDual ? 'border-box' : undefined,
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
                       border: isDual
@@ -316,16 +324,16 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                         : serviceColor 
                           ? `1px solid ${alpha(serviceColor, 0.4)}`
                           : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
-                      // Gradient split border when Twitch + Kick are present
-                      ...(isDual ? {
-                        borderImageSlice: 1,
-                        borderImageSource: borderGradient,
-                        boxShadow: `0 0 10px ${twitchColor}30, 0 0 10px ${kickColor}30, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
-                      } : {
+                      // Glows
+                      ...(isDual
+                        ? {
+                            boxShadow: `0 0 10px ${twitchColor}30, 0 0 10px ${kickColor}30, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
+                          }
+                        : {
                         boxShadow: serviceColor
                           ? `0 0 10px ${serviceColor}40, 0 0 20px ${serviceColor}20`
                           : 'none',
-                      }),
+                        }),
                       transition: 'all 0.3s ease-in-out',
                       overflow: 'hidden',
                       '&:hover': {
