@@ -292,9 +292,11 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                 const fallbackColor = fallbackService ? getServiceColor(fallbackService.service, mode) : null;
                 const isDual = hasTwitch && hasKick;
                 const serviceColor = isDual ? null : (hasKick ? kickColor : hasTwitch ? twitchColor : fallbackColor);
-                // Smooth blend between colors near the middle (48% -> 52%)
+                // Smooth blend between colors near the middle (48% -> 52%) with same opacity as single-color border
+                const twitchBorder = alpha(twitchColor, 0.4);
+                const kickBorder = alpha(kickColor, 0.4);
                 const borderGradient = isDual
-                  ? `linear-gradient(to right, ${twitchColor} 0%, ${twitchColor} 48%, ${kickColor} 52%, ${kickColor} 100%)`
+                  ? `linear-gradient(to right, ${twitchBorder} 0%, ${twitchBorder} 48%, ${kickBorder} 52%, ${kickBorder} 100%)`
                   : undefined;
                 const cardInnerBg =
                   mode === 'light'
@@ -311,11 +313,9 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       height: '100%', 
                       display: 'flex', 
                       flexDirection: 'column',
-                      // Use layered backgrounds to achieve gradient borders with rounded corners
-                      background: isDual
-                        ? `${cardInnerBg} padding-box, ${borderGradient} border-box`
-                        : cardInnerBg,
-                      /* Rely on background shorthand for per-layer clip/origin to keep inner background identical */
+                      position: 'relative',
+                      // Keep the same inner background for all cards
+                      background: cardInnerBg,
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
                       border: isDual
@@ -323,11 +323,57 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                         : serviceColor 
                           ? `1px solid ${alpha(serviceColor, 0.4)}`
                           : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
+                      // Gradient split border created via pseudo-element to preserve rounded corners and inner bg
+                      ...(isDual
+                        ? {
+                            '&::before': {
+                              content: '""',
+                              position: 'absolute',
+                              inset: 0,
+                              borderRadius: 'inherit',
+                              padding: '1px',
+                              background: borderGradient,
+                              // Create 1px border effect by masking out the center
+                              WebkitMask:
+                                'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                              WebkitMaskComposite: 'xor',
+                              maskComposite: 'exclude',
+                              zIndex: 1, // Ensure border sits above image/content
+                              pointerEvents: 'none',
+                            },
+                            // Outer gradient glow that matches the half/half split
+                            '&::after': {
+                              content: '""',
+                              position: 'absolute',
+                              inset: 0,
+                              borderRadius: 'inherit',
+                              padding: '1px',
+                              background: `linear-gradient(to right, ${alpha(twitchColor, 0.25)} 0%, ${alpha(
+                                twitchColor,
+                                0.25
+                              )} 48%, ${alpha(kickColor, 0.25)} 52%, ${alpha(kickColor, 0.25)} 100%)`,
+                              // Blur the thin ring outward to create the outer glow without tinting inside
+                              filter: 'blur(18px)',
+                              // Mask out the inner content just like the border layer
+                              WebkitMask:
+                                'linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0)',
+                              WebkitMaskComposite: 'xor',
+                              maskComposite: 'exclude',
+                              zIndex: 0,
+                              pointerEvents: 'none',
+                            },
+                          }
+                        : {}),
                       // Glows
                       ...(isDual
                         ? {
-                            // Halved brightness per color to match total intensity of single-color shadow
-                            boxShadow: `0 0 10px ${twitchColor}20, 0 0 10px ${kickColor}20, 0 0 20px ${twitchColor}10, 0 0 20px ${kickColor}10`,
+                            // Split intensity per color so the sum matches single-color glow (0.4/0.2)
+                            boxShadow: `
+                              0 0 10px ${alpha(twitchColor, 0.2)},
+                              0 0 10px ${alpha(kickColor, 0.2)},
+                              0 0 20px ${alpha(twitchColor, 0.1)},
+                              0 0 20px ${alpha(kickColor, 0.1)}
+                            `,
                           }
                         : {
                         boxShadow: serviceColor
@@ -335,16 +381,30 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                           : 'none',
                         }),
                       transition: 'all 0.3s ease-in-out',
-                      overflow: 'hidden',
+                      overflow: 'visible',
                       '&:hover': {
                         transform: 'translateY(-4px)',
                         boxShadow: isDual
-                          ? `0 0 15px ${twitchColor}30, 0 0 15px ${kickColor}30, 0 0 30px ${twitchColor}15, 0 0 30px ${kickColor}15, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
+                          ? `
+                              0 0 15px ${alpha(twitchColor, 0.3)},
+                              0 0 15px ${alpha(kickColor, 0.3)},
+                              0 0 30px ${alpha(twitchColor, 0.15)},
+                              0 0 30px ${alpha(kickColor, 0.15)},
+                              0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})
+                            `
                           : serviceColor
                             ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
                             : (mode === 'light'
                               ? '0 12px 24px rgba(0,0,0,0.15)'
                               : '0 12px 24px rgba(0,0,0,0.4)'),
+                        ...(isDual
+                          ? {
+                              '&::after': {
+                                filter: 'blur(22px)',
+                              },
+                            }
+                          : {}),
+                        // Do not brighten ::before on hover (single-color cards don't)
                       }
                     }}
                   >
