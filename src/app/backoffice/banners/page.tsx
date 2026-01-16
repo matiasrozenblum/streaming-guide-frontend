@@ -52,6 +52,8 @@ export default function BannersPage() {
     title: '',
     description: '',
     image_url: '',
+    image_url_desktop: '',
+    image_url_mobile: '',
     link_type: 'none' as LinkType,
     link_url: '',
     is_enabled: true,
@@ -62,8 +64,10 @@ export default function BannersPage() {
     priority: 0,
     banner_type: 'news' as BannerType,
   });
-  const [uploadingImage, setUploadingImage] = useState(false);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  const [uploadingDesktop, setUploadingDesktop] = useState(false);
+  const [uploadingMobile, setUploadingMobile] = useState(false);
+  const [imagePreviewDesktop, setImagePreviewDesktop] = useState<string | null>(null);
+  const [imagePreviewMobile, setImagePreviewMobile] = useState<string | null>(null);
   const [snackbar, setSnackbar] = useState<{ open: boolean; message: string; severity: 'success' | 'error' }>({
     open: false,
     message: '',
@@ -110,6 +114,8 @@ export default function BannersPage() {
         title: banner.title,
         description: banner.description || '',
         image_url: banner.image_url,
+        image_url_desktop: banner.image_url_desktop || banner.image_url,
+        image_url_mobile: banner.image_url_mobile || banner.image_url,
         link_type: banner.link_type,
         link_url: banner.link_url || '',
         is_enabled: banner.is_enabled,
@@ -120,13 +126,16 @@ export default function BannersPage() {
         priority: banner.priority,
         banner_type: banner.banner_type,
       });
-      setImagePreview(banner.image_url);
+      setImagePreviewDesktop(banner.image_url_desktop || banner.image_url);
+      setImagePreviewMobile(banner.image_url_mobile || banner.image_url);
     } else {
       setEditingBanner(null);
       setFormData({
         title: '',
         description: '',
         image_url: '',
+        image_url_desktop: '',
+        image_url_mobile: '',
         link_type: 'none' as LinkType,
         link_url: '',
         is_enabled: true,
@@ -137,7 +146,8 @@ export default function BannersPage() {
         priority: Math.max(...banners.map(b => b.priority || 0), 0) + 1,
         banner_type: 'news' as BannerType,
       });
-      setImagePreview(null);
+      setImagePreviewDesktop(null);
+      setImagePreviewMobile(null);
     }
     setOpenDialog(true);
   };
@@ -145,11 +155,13 @@ export default function BannersPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingBanner(null);
-    setImagePreview(null);
-    setUploadingImage(false);
+    setImagePreviewDesktop(null);
+    setImagePreviewMobile(null);
+    setUploadingDesktop(false);
+    setUploadingMobile(false);
   };
 
-  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileSelect = async (event: React.ChangeEvent<HTMLInputElement>, target: 'desktop' | 'mobile') => {
     const file = event.target.files?.[0];
     if (!file) return;
 
@@ -173,7 +185,9 @@ export default function BannersPage() {
       return;
     }
 
-    setUploadingImage(true);
+    const setUploading = target === 'desktop' ? setUploadingDesktop : setUploadingMobile;
+    const setPreview = target === 'desktop' ? setImagePreviewDesktop : setImagePreviewMobile;
+    setUploading(true);
 
     try {
       const uploadFormData = new FormData();
@@ -190,8 +204,12 @@ export default function BannersPage() {
       }
 
       const data = await response.json();
-      setFormData(prev => ({ ...prev, image_url: data.url }));
-      setImagePreview(data.url);
+      setFormData(prev => (
+        target === 'desktop'
+          ? { ...prev, image_url_desktop: data.url }
+          : { ...prev, image_url_mobile: data.url }
+      ));
+      setPreview(data.url);
       setSnackbar({
         open: true,
         message: 'Imagen subida correctamente',
@@ -206,7 +224,7 @@ export default function BannersPage() {
         severity: 'error',
       });
     } finally {
-      setUploadingImage(false);
+      setUploading(false);
     }
   };
 
@@ -367,7 +385,7 @@ export default function BannersPage() {
                       sx={{ height: 140, position: 'relative' }}
                     >
                       <Image
-                        src={banner.image_url}
+                        src={banner.image_url_desktop || banner.image_url}
                         alt={banner.title}
                         fill
                         style={{ objectFit: 'cover' }}
@@ -494,83 +512,126 @@ export default function BannersPage() {
                 helperText="Números menores tienen mayor prioridad. Los banners temporales siempre aparecen antes que los fijos."
               />
 
-              {/* Image Upload */}
-              <Box>
-                <input
-                  accept="image/*"
-                  style={{ display: 'none' }}
-                  id="banner-image-upload"
-                  type="file"
-                  onChange={handleFileSelect}
-                  disabled={uploadingImage}
-                />
-                <label htmlFor="banner-image-upload">
-                  <Button
-                    variant="outlined"
-                    component="span"
+              {/* Images Upload (Desktop + Mobile) */}
+              <Box sx={{ display: 'grid', gridTemplateColumns: { xs: '1fr', md: '1fr 1fr' }, gap: 2 }}>
+                {/* Desktop image */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>Imagen Desktop (recomendada 1920×400)</Typography>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="banner-image-upload-desktop"
+                    type="file"
+                    onChange={(e) => handleFileSelect(e, 'desktop')}
+                    disabled={uploadingDesktop}
+                  />
+                  <label htmlFor="banner-image-upload-desktop">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      fullWidth
+                      disabled={uploadingDesktop}
+                      sx={{ mb: 2 }}
+                    >
+                      {uploadingDesktop ? 'Subiendo...' : 'Subir Imagen Desktop'}
+                    </Button>
+                  </label>
+                  {(imagePreviewDesktop || formData.image_url_desktop) && (
+                    <Box sx={{ mt: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          height: 200,
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Image
+                          src={imagePreviewDesktop || formData.image_url_desktop || ''}
+                          alt="Desktop Preview"
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </Box>
+                    </Box>
+                  )}
+                  <TextField
+                    label="URL imagen Desktop"
+                    value={formData.image_url_desktop || ''}
+                    onChange={(e) => setFormData({ ...formData, image_url_desktop: e.target.value })}
                     fullWidth
-                    disabled={uploadingImage}
-                    sx={{ mb: 2 }}
-                  >
-                    {uploadingImage ? 'Subiendo...' : 'Subir Imagen'}
-                  </Button>
-                </label>
-                {imagePreview && (
-                  <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Vista previa:</Typography>
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        width: '100%',
-                        height: 200,
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
+                    required
+                    helperText="URL de la imagen (usada en pantallas grandes)"
+                  />
+                </Box>
+
+                {/* Mobile image */}
+                <Box>
+                  <Typography variant="subtitle1" sx={{ mb: 1 }}>Imagen Mobile (recomendada 1200×400)</Typography>
+                  <input
+                    accept="image/*"
+                    style={{ display: 'none' }}
+                    id="banner-image-upload-mobile"
+                    type="file"
+                    onChange={(e) => handleFileSelect(e, 'mobile')}
+                    disabled={uploadingMobile}
+                  />
+                  <label htmlFor="banner-image-upload-mobile">
+                    <Button
+                      variant="outlined"
+                      component="span"
+                      fullWidth
+                      disabled={uploadingMobile}
+                      sx={{ mb: 2 }}
                     >
-                      <Image
-                        src={imagePreview}
-                        alt="Preview"
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
+                      {uploadingMobile ? 'Subiendo...' : 'Subir Imagen Mobile'}
+                    </Button>
+                  </label>
+                  {(imagePreviewMobile || formData.image_url_mobile) && (
+                    <Box sx={{ mt: 1, mb: 2 }}>
+                      <Box
+                        sx={{
+                          position: 'relative',
+                          width: '100%',
+                          height: 200,
+                          borderRadius: 2,
+                          overflow: 'hidden',
+                          border: '1px solid',
+                          borderColor: 'divider',
+                        }}
+                      >
+                        <Image
+                          src={imagePreviewMobile || formData.image_url_mobile || ''}
+                          alt="Mobile Preview"
+                          fill
+                          style={{ objectFit: 'cover' }}
+                        />
+                      </Box>
                     </Box>
-                  </Box>
-                )}
-                {formData.image_url && !imagePreview && (
-                  <Box sx={{ mt: 2, mb: 2 }}>
-                    <Typography variant="body2" sx={{ mb: 1 }}>Imagen actual:</Typography>
-                    <Box
-                      sx={{
-                        position: 'relative',
-                        width: '100%',
-                        height: 200,
-                        borderRadius: 2,
-                        overflow: 'hidden',
-                        border: '1px solid',
-                        borderColor: 'divider',
-                      }}
-                    >
-                      <Image
-                        src={formData.image_url}
-                        alt="Current"
-                        fill
-                        style={{ objectFit: 'cover' }}
-                      />
-                    </Box>
-                  </Box>
-                )}
-                <TextField
-                  label="URL de la imagen"
-                  value={formData.image_url}
-                  onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                  fullWidth
-                  required
-                  helperText="URL de la imagen en Supabase Storage (se llena automáticamente al subir)"
-                  sx={{ mt: 2 }}
-                />
+                  )}
+                  <TextField
+                    label="URL imagen Mobile"
+                    value={formData.image_url_mobile || ''}
+                    onChange={(e) => setFormData({ ...formData, image_url_mobile: e.target.value })}
+                    fullWidth
+                    required
+                    helperText="URL de la imagen (usada en pantallas pequeñas)"
+                  />
+                </Box>
               </Box>
+
+              {/* Legacy fallback image URL */}
+              <TextField
+                label="URL de la imagen (fallback)"
+                value={formData.image_url}
+                onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                fullWidth
+                helperText="Se usará si falta Desktop/Mobile. Recomendado cargar ambas imágenes."
+                sx={{ mt: 2 }}
+              />
 
               <FormControl fullWidth>
                 <InputLabel>Tipo de banner</InputLabel>
