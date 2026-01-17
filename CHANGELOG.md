@@ -17,7 +17,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.15.2] - 2025-01-14
+## [1.15.4] - 2025-01-17
+
+### Changed
+- Now we have two banner images, web and mobile
+- Dual border color for streamers with multiple services
+
+### Fixed
+- Fixed service selector for streamers in backoffice
+
+## [1.15.3] - 2025-01-14
 
 ### Added
 - Added upload banner logic
