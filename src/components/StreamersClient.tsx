@@ -452,22 +452,21 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                               position: 'absolute',
                               top: 6,
                               right: 6,
-                              backgroundColor: mode === 'light' ? '#E5E7EB' : '#1F2937',
-                              color: mode === 'light' ? '#374151' : '#E5E7EB',
-                              fontSize: '0.6rem',
-                              padding: '3px 8px',
-                              borderRadius: '999px',
-                              fontWeight: 600,
+                              backgroundColor: '#6B7280', // neutral-500 to keep white text readable
+                              color: 'white',
+                              fontSize: '0.6rem', // match LIVE
+                              padding: '3px 6px', // match LIVE
+                              borderRadius: '3px', // match LIVE
+                              fontWeight: 'bold', // match LIVE
                               zIndex: 5,
                               display: 'flex',
                               alignItems: 'center',
                               gap: 0.5,
-                              border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)'}`,
-                              boxShadow: mode === 'light' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
-                              userSelect: 'none',
+                              boxShadow: '0 2px 6px rgba(0,0,0,0.3)', // match LIVE
+                              userSelect: 'none'
                             }}
                           >
-                            Offline
+                            OFFLINE
                           </Box>
                         )}
                         {streamer.logo_url ? (
