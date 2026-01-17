@@ -445,6 +445,31 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                             LIVE
                           </Box>
                         )}
+                        {!streamer.is_live && (
+                          <Box
+                            aria-label="Offline"
+                            sx={{
+                              position: 'absolute',
+                              top: 6,
+                              right: 6,
+                              backgroundColor: mode === 'light' ? '#E5E7EB' : '#1F2937',
+                              color: mode === 'light' ? '#374151' : '#E5E7EB',
+                              fontSize: '0.6rem',
+                              padding: '3px 8px',
+                              borderRadius: '999px',
+                              fontWeight: 600,
+                              zIndex: 5,
+                              display: 'flex',
+                              alignItems: 'center',
+                              gap: 0.5,
+                              border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)'}`,
+                              boxShadow: mode === 'light' ? '0 1px 2px rgba(0,0,0,0.06)' : 'none',
+                              userSelect: 'none',
+                            }}
+                          >
+                            Offline
+                          </Box>
+                        )}
                         {streamer.logo_url ? (
                           <Box
                             component="img"
