@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.5] - 2025-01-17
+
+### Added
+- Added offline badge for streamers to better differentiate from LIVE status
+
 ## [1.15.4] - 2025-01-17
 
 ### Changed
