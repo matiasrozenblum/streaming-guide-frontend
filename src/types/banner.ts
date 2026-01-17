@@ -15,6 +15,8 @@ export interface Banner {
   title: string;
   description?: string | null;
   image_url: string;
+  image_url_desktop?: string | null;
+  image_url_mobile?: string | null;
   link_type: LinkType;
   link_url?: string | null;
   is_enabled: boolean;
@@ -32,6 +34,8 @@ export interface CreateBannerDto {
   title: string;
   description?: string;
   image_url: string;
+  image_url_desktop?: string;
+  image_url_mobile?: string;
   link_type?: LinkType;
   link_url?: string;
   is_enabled?: boolean;
