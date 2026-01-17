@@ -319,7 +319,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
                       border: isDual
-                        ? '1px solid transparent'
+                        ? 'none'
                         : serviceColor 
                           ? `1px solid ${alpha(serviceColor, 0.4)}`
                           : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
