@@ -26,7 +26,9 @@ const MotionBox = motion(Box);
  * 
  * BANNER IMAGE SPECIFICATIONS:
  * 
- * Standard banner image dimensions: 1920px × 400px (2:1 aspect ratio)
+ * Recommended banner image dimensions:
+ * - Desktop: 1920×400 (wide banner)
+ * - Mobile: 1200×400 (3:1), tighter composition
  * 
  * SAFE AREA CALCULATIONS:
  * 
@@ -168,6 +170,9 @@ export default function BannerCarousel({
   }
 
   const currentBanner = banners[currentIndex];
+  const imageSrc = isMobile
+    ? (currentBanner.image_url_mobile || currentBanner.image_url)
+    : (currentBanner.image_url_desktop || currentBanner.image_url);
   const hasMultipleBanners = banners.length > 1;
 
   // Responsive dimensions
@@ -220,14 +225,14 @@ export default function BannerCarousel({
         >
           {/* Background Image */}
           <Image
-            src={currentBanner.image_url}
+            src={imageSrc}
             alt={currentBanner.title}
             fill
             style={{
               objectFit: 'cover', // Cover the entire container, may crop edges
               objectPosition: 'center', // Center the image within the container
             }}
-            sizes={isMobile ? '100vw' : '1920px'}
+            sizes={isMobile ? '100vw' : '100vw'}
             priority={true} // Always prioritize banner images for fast loading
             quality={85} // Optimize quality vs size
           />

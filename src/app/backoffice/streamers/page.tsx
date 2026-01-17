@@ -198,13 +198,30 @@ export default function StreamersPage() {
     });
   };
 
+  // Use functional updates to avoid stale state when multiple updates happen back-to-back
   const handleServiceChange = (index: number, field: 'service' | 'url' | 'username', value: string) => {
-    const updatedServices = [...formData.services];
-    updatedServices[index] = {
-      ...updatedServices[index],
-      [field]: field === 'service' ? value as StreamingService : value,
-    };
-    setFormData({ ...formData, services: updatedServices });
+    setFormData(prev => {
+      const updatedServices = [...prev.services];
+      updatedServices[index] = {
+        ...updatedServices[index],
+        [field]: field === 'service' ? (value as StreamingService) : value,
+      };
+      return { ...prev, services: updatedServices };
+    });
+  };
+
+  // Dedicated handler to change service type and clear fields atomically
+  const handleServiceTypeChange = (index: number, newService: StreamingService) => {
+    setFormData(prev => {
+      const updatedServices = [...prev.services];
+      const current = updatedServices[index] ?? { service: newService, url: '', username: '' };
+      const cleared =
+        newService === StreamingService.YOUTUBE
+          ? { ...current, service: newService, url: '', username: '' }
+          : { ...current, service: newService, username: '', url: '' };
+      updatedServices[index] = cleared;
+      return { ...prev, services: updatedServices };
+    });
   };
 
   const handleSubmit = async () => {
@@ -499,17 +516,7 @@ export default function StreamersPage() {
                     <Select
                       value={service.service}
                       label="Servicio"
-                      onChange={(e) => {
-                        const newService = e.target.value as StreamingService;
-                        // When changing service type, clear URL/username based on new service
-                        if (newService === StreamingService.YOUTUBE) {
-                          handleServiceChange(index, 'service', newService);
-                          handleServiceChange(index, 'username', '');
-                        } else {
-                          handleServiceChange(index, 'service', newService);
-                          handleServiceChange(index, 'url', '');
-                        }
-                      }}
+                      onChange={(e) => handleServiceTypeChange(index, e.target.value as StreamingService)}
                     >
                       <MenuItem value={StreamingService.TWITCH}>Twitch</MenuItem>
                       <MenuItem value={StreamingService.KICK}>Kick</MenuItem>
