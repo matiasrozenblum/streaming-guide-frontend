@@ -44,7 +44,9 @@ export default function StreamersPage() {
   const { status } = useSessionContext();
 
   const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [originalStreamers, setOriginalStreamers] = useState<Streamer[]>([]);
   const [dragIndex, setDragIndex] = useState<number | null>(null);
+  const [dragOver, setDragOver] = useState<{ index: number; position: 'above' | 'below' } | null>(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingStreamer, setEditingStreamer] = useState<Streamer | null>(null);
@@ -71,6 +73,7 @@ export default function StreamersPage() {
       if (!response.ok) throw new Error('Failed to fetch streamers');
       const data = await response.json();
       setStreamers(data);
+      setOriginalStreamers(data);
     } catch (err: unknown) {
       console.error('Error fetching streamers:', err);
       setError(err instanceof Error ? err.message : 'Error al cargar los streamers');
@@ -327,6 +330,11 @@ export default function StreamersPage() {
     setSuccess(null);
   };
 
+  const hasOrderChanges =
+    streamers.length > 0 &&
+    originalStreamers.length === streamers.length &&
+    streamers.map(s => s.id).join(',') !== originalStreamers.map(s => s.id).join(',');
+
   const handleMoveUp = (index: number) => {
     if (index === 0) return;
     const arr = [...streamers];
@@ -355,6 +363,7 @@ export default function StreamersPage() {
         throw new Error(body?.details || 'Error al guardar el orden');
       }
       setSuccess('Orden de streamers guardado correctamente');
+      setOriginalStreamers(streamers);
     } catch (err: unknown) {
       console.error('Error saving order:', err);
       setError(err instanceof Error ? err.message : 'Error al guardar el orden');
@@ -367,19 +376,32 @@ export default function StreamersPage() {
     setDragIndex(index);
   };
 
-  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>, index: number) => {
     e.preventDefault();
+    const rect = e.currentTarget.getBoundingClientRect();
+    const offset = e.clientY - rect.top;
+    const position: 'above' | 'below' = offset < rect.height / 2 ? 'above' : 'below';
+    setDragOver({ index, position });
   };
 
   const handleDrop = (dropIndex: number) => {
-    if (dragIndex === null || dragIndex === dropIndex) return;
+    if (dragIndex === null || dragOver === null) return;
+    const insertionIndex = dragOver.position === 'above' ? dropIndex : dropIndex + 1;
     setStreamers((prev) => {
       const updated = [...prev];
       const [moved] = updated.splice(dragIndex, 1);
-      updated.splice(dropIndex, 0, moved);
+      let insertAt = insertionIndex;
+      if (dragIndex < insertionIndex) insertAt = insertionIndex - 1;
+      updated.splice(insertAt, 0, moved);
       return updated;
     });
     setDragIndex(null);
+    setDragOver(null);
+  };
+
+  const handleDragEnd = () => {
+    setDragIndex(null);
+    setDragOver(null);
   };
 
   const getServiceName = (service: StreamingService): string => {
@@ -412,15 +434,6 @@ export default function StreamersPage() {
         </Button>
       </Box>
 
-      <Button
-        variant="contained"
-        onClick={handleSaveOrder}
-        disabled={savingOrder}
-        sx={{ mb: 2 }}
-      >
-        {savingOrder ? 'Guardando...' : 'Guardar Orden'}
-      </Button>
-
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -440,9 +453,21 @@ export default function StreamersPage() {
                 key={streamer.id}
                 draggable
                 onDragStart={() => handleDragStart(idx)}
-                onDragOver={handleDragOver}
+                onDragOver={(e) => handleDragOver(e, idx)}
                 onDrop={() => handleDrop(idx)}
-                sx={{ cursor: 'grab' }}
+                onDragEnd={handleDragEnd}
+                sx={{
+                  cursor: 'grab',
+                  transition: 'transform 120ms ease, opacity 120ms ease, border-color 120ms ease',
+                  opacity: dragIndex === idx ? 0.85 : 1,
+                  transform: dragIndex === idx ? 'scale(0.995)' : 'none',
+                  ...(dragOver && dragOver.index === idx && dragOver.position === 'above'
+                    ? { borderTop: '2px dashed', borderTopColor: 'primary.main' }
+                    : {}),
+                  ...(dragOver && dragOver.index === idx && dragOver.position === 'below'
+                    ? { borderBottom: '2px dashed', borderBottomColor: 'primary.main' }
+                    : {}),
+                }}
               >
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
@@ -667,6 +692,40 @@ export default function StreamersPage() {
           {error || success}
         </Alert>
       </Snackbar>
+
+      {hasOrderChanges && (
+        <Paper
+          elevation={6}
+          sx={{
+            position: 'fixed',
+            left: '50%',
+            transform: 'translateX(-50%)',
+            bottom: 16,
+            zIndex: 1200,
+            px: 2,
+            py: 1,
+            borderRadius: 3,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 1.5,
+          }}
+        >
+          <Button
+            variant="text"
+            color="inherit"
+            onClick={() => setStreamers(originalStreamers)}
+          >
+            Descartar cambios
+          </Button>
+          <Button
+            variant="contained"
+            onClick={handleSaveOrder}
+            disabled={savingOrder}
+          >
+            {savingOrder ? 'Guardando...' : 'Confirmar orden'}
+          </Button>
+        </Paper>
+      )}
     </Box>
   );
 }
