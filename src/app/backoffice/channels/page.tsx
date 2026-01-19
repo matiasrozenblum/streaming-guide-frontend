@@ -42,6 +42,7 @@ export default function ChannelsPage() {
   const { status } = useSessionContext();
 
   const [channels, setChannels] = useState<Channel[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingChannel, setEditingChannel] = useState<Channel | null>(null);
@@ -69,6 +70,25 @@ export default function ChannelsPage() {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    setChannels((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(dragIndex, 1);
+      updated.splice(dropIndex, 0, moved);
+      return updated;
+    });
+    setDragIndex(null);
   };
 
   const handleMoveUp = (index: number) => {
@@ -278,7 +298,14 @@ export default function ChannelsPage() {
           </TableHead>
           <TableBody>
             {channels.map((channel, idx) => (
-              <TableRow key={channel.id}>
+              <TableRow
+                key={channel.id}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(idx)}
+                sx={{ cursor: 'grab' }}
+              >
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}

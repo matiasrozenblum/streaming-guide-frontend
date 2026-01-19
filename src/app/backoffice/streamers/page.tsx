@@ -44,6 +44,7 @@ export default function StreamersPage() {
   const { status } = useSessionContext();
 
   const [streamers, setStreamers] = useState<Streamer[]>([]);
+  const [dragIndex, setDragIndex] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingStreamer, setEditingStreamer] = useState<Streamer | null>(null);
@@ -58,6 +59,7 @@ export default function StreamersPage() {
   const [selectedCategories, setSelectedCategories] = useState<Category[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
+  const [savingOrder, setSavingOrder] = useState(false);
 
   useEffect(() => {
     if (status === 'authenticated') fetchStreamers();
@@ -325,6 +327,61 @@ export default function StreamersPage() {
     setSuccess(null);
   };
 
+  const handleMoveUp = (index: number) => {
+    if (index === 0) return;
+    const arr = [...streamers];
+    [arr[index - 1], arr[index]] = [arr[index], arr[index - 1]];
+    setStreamers(arr);
+  };
+
+  const handleMoveDown = (index: number) => {
+    if (index === streamers.length - 1) return;
+    const arr = [...streamers];
+    [arr[index], arr[index + 1]] = [arr[index + 1], arr[index]];
+    setStreamers(arr);
+  };
+
+  const handleSaveOrder = async () => {
+    try {
+      setSavingOrder(true);
+      const ids = streamers.map(s => s.id);
+      const res = await fetch('/api/streamers/reorder', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ids }),
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || 'Error al guardar el orden');
+      }
+      setSuccess('Orden de streamers guardado correctamente');
+    } catch (err: unknown) {
+      console.error('Error saving order:', err);
+      setError(err instanceof Error ? err.message : 'Error al guardar el orden');
+    } finally {
+      setSavingOrder(false);
+    }
+  };
+
+  const handleDragStart = (index: number) => {
+    setDragIndex(index);
+  };
+
+  const handleDragOver = (e: React.DragEvent<HTMLTableRowElement>) => {
+    e.preventDefault();
+  };
+
+  const handleDrop = (dropIndex: number) => {
+    if (dragIndex === null || dragIndex === dropIndex) return;
+    setStreamers((prev) => {
+      const updated = [...prev];
+      const [moved] = updated.splice(dragIndex, 1);
+      updated.splice(dropIndex, 0, moved);
+      return updated;
+    });
+    setDragIndex(null);
+  };
+
   const getServiceName = (service: StreamingService): string => {
     switch (service) {
       case StreamingService.TWITCH:
@@ -355,10 +412,20 @@ export default function StreamersPage() {
         </Button>
       </Box>
 
+      <Button
+        variant="contained"
+        onClick={handleSaveOrder}
+        disabled={savingOrder}
+        sx={{ mb: 2 }}
+      >
+        {savingOrder ? 'Guardando...' : 'Guardar Orden'}
+      </Button>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
             <TableRow>
+              <TableCell>Orden</TableCell>
               <TableCell>Logo</TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Servicios</TableCell>
@@ -368,8 +435,27 @@ export default function StreamersPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {streamers.map((streamer) => (
-              <TableRow key={streamer.id}>
+            {streamers.map((streamer, idx) => (
+              <TableRow
+                key={streamer.id}
+                draggable
+                onDragStart={() => handleDragStart(idx)}
+                onDragOver={handleDragOver}
+                onDrop={() => handleDrop(idx)}
+                sx={{ cursor: 'grab' }}
+              >
+                <TableCell>
+                  <Box display="flex" alignItems="center" gap={1}>
+                    #{idx + 1}
+                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                      {/* using a simple caret by unicode to avoid extra imports */}
+                      <span style={{ fontSize: 14 }}>▲</span>
+                    </IconButton>
+                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
+                      <span style={{ fontSize: 14 }}>▼</span>
+                    </IconButton>
+                  </Box>
+                </TableCell>
                 <TableCell>
                   {streamer.logo_url ? (
                     <Image src={streamer.logo_url} alt={streamer.name} width={50} height={50} style={{ objectFit: 'contain' }} />
