@@ -15,6 +15,7 @@ export interface Streamer {
   name: string;
   logo_url?: string | null;
   is_visible?: boolean;
+  order?: number | null;
   services: StreamerService[];
   categories?: Array<{
     id: number;

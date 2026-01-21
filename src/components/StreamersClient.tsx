@@ -91,6 +91,16 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
   const [loading, setLoading] = useState(!initialStreamers);
   const hasFetchedRef = useRef(false); // Track if we've already fetched to prevent double-fetch
 
+  // Sync refreshed server props into local state (e.g., after SSE router.refresh)
+  useEffect(() => {
+    if (initialStreamers !== undefined && initialStreamers !== null) {
+      setStreamers(initialStreamers);
+      setLoading(false);
+      hasFetchedRef.current = true;
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [initialStreamers]);
+
   const fetchStreamers = async (showLoading = true) => {
     try {
       if (showLoading) {

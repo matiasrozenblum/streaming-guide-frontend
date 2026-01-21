@@ -28,12 +28,19 @@ export default function LiveStatusListener() {
               'category_created',
               'category_updated',
               'category_deleted',
+              'categories_reordered',
               
               // Channels
               'channel_created',
               'channel_updated',
               'channel_deleted',
               'channels_reordered',
+              
+              // Streamers
+              'streamer_created',
+              'streamer_updated',
+              'streamer_deleted',
+              'streamers_reordered',
               
               // Programs
               'program_created',
@@ -47,6 +54,7 @@ export default function LiveStatusListener() {
               'schedule_updated',
               'schedule_deleted',
               'schedules_bulk_created',
+              'schedules_bulk_deleted',
               
               // Panelists
               'panelist_created',
@@ -66,6 +74,7 @@ export default function LiveStatusListener() {
               'live_status_changed',
               'streamer_went_live',
               'streamer_went_offline',
+              'live', // backend live event key
             ];
             
             console.log('[SSE] Received event:', data.type);
