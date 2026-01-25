@@ -89,16 +89,12 @@ export default function BottomNavigation() {
             color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
             '&.Mui-selected': {
               color: mode === 'light' ? '#1976d2' : '#42a5f5',
+              backgroundColor: 'transparent',
             },
             '& .MuiBottomNavigationAction-label': {
               textTransform: 'uppercase',
               fontFamily: '"Outfit", sans-serif',
               fontWeight: 600,
-            },
-            // Simply remove background color on selected items to avoid the 'blocky' look
-            '&.Mui-selected': {
-              backgroundColor: 'transparent',
-              color: mode === 'light' ? '#1976d2' : '#42a5f5',
             },
           },
         }}
