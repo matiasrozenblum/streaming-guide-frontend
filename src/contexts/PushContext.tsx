@@ -164,6 +164,11 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       PushNotifications.addListener('registrationError', (error) => {
         console.error('Error on registration: ' + JSON.stringify(error));
       });
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('🔔 Push Received:', notification);
+        // Optional: Show an alert if you want to be 100% sure the user sees it while testing
+        // alert(`Notificación: ${notification.title}\n${notification.body}`);
+      });
     }
 
     // Cleanup interval and event listeners
