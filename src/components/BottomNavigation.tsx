@@ -37,7 +37,7 @@ export default function BottomNavigation() {
 
   // Only show on main pages (not on subscriptions, profile, etc.)
   const showOnPage = pathname === '/' || pathname === '/streamers';
-  
+
   if (!showOnPage) {
     return null;
   }
@@ -71,8 +71,8 @@ export default function BottomNavigation() {
         right: 0,
         zIndex: 1000,
         borderTop: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
-        backgroundColor: mode === 'light' 
-          ? 'rgba(255,255,255,0.95)' 
+        backgroundColor: mode === 'light'
+          ? 'rgba(255,255,255,0.95)'
           : 'rgba(30,41,59,0.95)',
         backdropFilter: 'blur(8px)',
         // Use safe area insets to avoid overlapping with system navigation bars
@@ -94,6 +94,19 @@ export default function BottomNavigation() {
               textTransform: 'uppercase',
               fontFamily: '"Outfit", sans-serif',
               fontWeight: 600,
+            },
+            // Fix sticky hover on mobile - only apply hover on devices that support it
+            '@media (hover: hover)': {
+              '&:hover': {
+                backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+              },
+            },
+            // Remove the default background color change on focus/touch
+            '&.Mui-focusVisible': {
+              backgroundColor: 'transparent',
+            },
+            '&:active': {
+              backgroundColor: 'transparent',
             },
           },
         }}
