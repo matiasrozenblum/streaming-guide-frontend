@@ -280,22 +280,29 @@ export const ProgramBlock: React.FC<Props> = ({
       }
 
       // Enhanced validation with detailed debugging
-      const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
+      // Enhanced validation: for native push, we only need endpoint. For web push, we need everything.
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isNative = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
+      const isValidPush = !!(pushSubscription && endpoint && (isNative || (p256dh && auth)));
 
       if (!isValidPush) {
-        const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
+        // Detailed reason for validation failure
+        const reason = pushErrorReason ||
+          (!pushSubscription ? 'No subscription object' :
+            !endpoint ? 'Missing endpoint (token)' :
+              (!isNative && (!p256dh || !auth) ? 'Missing Web Push keys' : 'Unknown invalid state'));
+
         console.warn('Not sending invalid push subscription:', reason);
         gaEvent({
           action: 'push_subscription_invalid',
           params: {
             program_id: id,
             program_name: name,
-            channel_name: channelName,
             reason,
             endpoint: endpoint || 'empty',
             p256dh: p256dh || 'empty',
             auth: auth || 'empty',
-            has_push: !!pushSubscription,
+            is_native: isNative,
           },
           userData: typedSession?.user
         });
