@@ -2,7 +2,7 @@ import type { CapacitorConfig } from '@capacitor/cli';
 
 const config: CapacitorConfig = {
   appId: 'com.laguiadelstreaming.app',
-  appName: 'La Guía del Streaming',
+  appName: 'La Guía',
   webDir: 'out',
   server: {
     // Replace with your local IP for testing on physical device (e.g., 'http://192.168.1.5:3000')

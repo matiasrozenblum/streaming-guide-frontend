@@ -12,16 +12,17 @@ import { TooltipProvider } from '@/contexts/TooltipContext';
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
-import { 
-  ConditionalTrackingLoader, 
-  ConditionalClarityLoader, 
-  ConditionalHotjarLoader 
+import {
+  ConditionalTrackingLoader,
+  ConditionalClarityLoader,
+  ConditionalHotjarLoader
 } from '@/components/ConditionalTrackingLoader';
 import PageviewTracker from '@/components/PageviewTracker';
 import LiveStatusListener from '@/components/LiveStatusListener';
 import PageRefreshListener from '@/components/PageRefreshListener';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
+import StatusBarManager from '@/components/StatusBarManager';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -67,6 +68,7 @@ export default function RootLayout({
             <PushProvider enabled={true} installPrompt={null}>
               <TooltipProvider>
                 <CustomThemeProvider>
+                  <StatusBarManager />
                   <YouTubePlayerProvider>
                     <ConditionalLayoutWrapper>
                       <PageviewTracker />
@@ -79,7 +81,7 @@ export default function RootLayout({
                     <SpeedInsights />
                     <Analytics />
                   </YouTubePlayerProvider>
-                  
+
                   {/* Cookie Consent Components */}
                   <CookieConsentBanner />
                   <CookiePreferencesModal />
@@ -87,7 +89,7 @@ export default function RootLayout({
               </TooltipProvider>
             </PushProvider>
           </SessionProviderWrapper>
-          
+
           {/* Conditional Tracking Scripts */}
           <ConditionalTrackingLoader />
           <ConditionalClarityLoader />
