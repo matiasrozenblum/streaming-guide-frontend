@@ -95,18 +95,10 @@ export default function BottomNavigation() {
               fontFamily: '"Outfit", sans-serif',
               fontWeight: 600,
             },
-            // Fix sticky hover on mobile - only apply hover on devices that support it
-            '@media (hover: hover)': {
-              '&:hover': {
-                backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
-              },
-            },
-            // Remove the default background color change on focus/touch
-            '&.Mui-focusVisible': {
+            // Simply remove background color on selected items to avoid the 'blocky' look
+            '&.Mui-selected': {
               backgroundColor: 'transparent',
-            },
-            '&:active': {
-              backgroundColor: 'transparent',
+              color: mode === 'light' ? '#1976d2' : '#42a5f5',
             },
           },
         }}
