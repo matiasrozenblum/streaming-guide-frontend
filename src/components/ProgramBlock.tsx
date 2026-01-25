@@ -78,7 +78,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const typedSession = session as SessionWithToken | null;
   const isLive = is_live || false;
   const streamUrl = stream_url;
-  
+
   // Simplified approach - no complex stream matching needed
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
@@ -100,7 +100,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const anchorRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  
+
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
@@ -114,12 +114,12 @@ export const ProgramBlock: React.FC<Props> = ({
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
   const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  
+
   // Handle multiple streams positioning
   let widthPx = duration * pixelsPerMinute - 1;
   let topOffset = 0;
   let height = '100%';
-  
+
   if (totalMultipleStreams && totalMultipleStreams > 1) {
     // Keep full width for each program, but stack them vertically
     widthPx = duration * pixelsPerMinute - 1;
@@ -204,7 +204,7 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const handleBellClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
+
     if (!typedSession?.accessToken) {
       setLoginOpen(true);
       return;
@@ -239,17 +239,22 @@ export const ProgramBlock: React.FC<Props> = ({
           pushSubscription = await subscribeAndRegister();
           if (pushSubscription) {
             endpoint = pushSubscription.endpoint;
-            
+
             // Enhanced cross-platform key extraction with detailed logging
             try {
-              const p256dhKey = pushSubscription.getKey('p256dh');
-              const authKey = pushSubscription.getKey('auth');
-              
-              if (p256dhKey && authKey) {
-                p256dh = arrayBufferToBase64(p256dhKey);
-                auth = arrayBufferToBase64(authKey);
+              // Check if it's a standard Web Push subscription with getKey method
+              if ('getKey' in pushSubscription && typeof pushSubscription.getKey === 'function') {
+                const p256dhKey = pushSubscription.getKey('p256dh');
+                const authKey = pushSubscription.getKey('auth');
+
+                if (p256dhKey && authKey) {
+                  p256dh = arrayBufferToBase64(p256dhKey);
+                  auth = arrayBufferToBase64(authKey);
+                } else {
+                  console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+                }
               } else {
-                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
+                console.log('Native push subscription detected (no keys needed)');
               }
             } catch (keyError) {
               console.error('Failed to extract push subscription keys:', keyError);
@@ -261,10 +266,10 @@ export const ProgramBlock: React.FC<Props> = ({
         } catch (error) {
           pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
           console.warn('Failed to get push subscription:', error);
-          
+
           // For critical errors, still show setup dialog
-          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
-              error.message.includes('home screen')) {
+          if (isIOSDevice && !isPWAInstalled && error instanceof Error &&
+            error.message.includes('home screen')) {
             setIsOn(prevIsOn); // Revert UI
             setIsLoading(false);
             globalCloseTooltip(tooltipId); // Close tooltip before opening modal
@@ -276,7 +281,7 @@ export const ProgramBlock: React.FC<Props> = ({
 
       // Enhanced validation with detailed debugging
       const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
-      
+
       if (!isValidPush) {
         const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
         console.warn('Not sending invalid push subscription:', reason);
@@ -288,17 +293,17 @@ export const ProgramBlock: React.FC<Props> = ({
             channel_name: channelName,
             reason,
             endpoint: endpoint || 'empty',
-            p256dh: p256dh || 'empty', 
+            p256dh: p256dh || 'empty',
             auth: auth || 'empty',
             has_push: !!pushSubscription,
           },
           userData: typedSession?.user
         });
       }
-      
+
       await api.post(
         `/programs/${id}/subscribe`,
-        { 
+        {
           notificationMethod,
           endpoint: isValidPush ? endpoint : undefined,
           p256dh: isValidPush ? p256dh : undefined,
@@ -308,14 +313,14 @@ export const ProgramBlock: React.FC<Props> = ({
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         }
       );
-      
+
       // Show helpful message for iOS users who subscribed via email
       if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
         setTimeout(() => {
           setShowIOSPushSnackbar(true);
         }, 1000);
       }
-      
+
       // Track subscription event
       gaEvent({
         action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
@@ -331,7 +336,7 @@ export const ProgramBlock: React.FC<Props> = ({
     } catch (error) {
       // Revert UI on error
       setIsOn(prevIsOn);
-      
+
       // Provide user-friendly error messages
       let errorMessage = 'Error updating subscription. Please try again.';
       if (error instanceof Error) {
@@ -341,10 +346,10 @@ export const ProgramBlock: React.FC<Props> = ({
           errorMessage = error.message;
         }
       }
-      
+
       alert(errorMessage);
       console.error('Error updating subscription:', error);
-      
+
       // Track subscription error
       gaEvent({
         action: 'subscription_error',
@@ -393,7 +398,7 @@ export const ProgramBlock: React.FC<Props> = ({
   //     setMousePosition({ x: event.clientX, y: event.clientY });
   //   }
   // };
-  const handleMouseMove = () => {};
+  const handleMouseMove = () => { };
 
   // Apertura inmediata al hacer click
   const handleTooltipClick = (event: React.MouseEvent) => {
@@ -450,7 +455,7 @@ export const ProgramBlock: React.FC<Props> = ({
       anchorRef.current.style.width = '0';
       anchorRef.current.style.height = '0';
       anchorRef.current.style.pointerEvents = 'none';
-      
+
       if (!isMobile && mousePosition) {
         // Desktop: position at cursor X
         const blockRect = blockRef.current.getBoundingClientRect();
@@ -471,7 +476,7 @@ export const ProgramBlock: React.FC<Props> = ({
   let pillPy = 0.1;
   let pillTop = 6;
   let pillLeft = 6;
-  
+
   // Determine pill label based on program type and whether it's actually today
   let pillLabel: string;
   if (overrideType === 'cancel') {
@@ -482,7 +487,7 @@ export const ProgramBlock: React.FC<Props> = ({
   } else {
     pillLabel = '¡Hoy!';
   }
-  
+
   if (blockWidth !== null) {
     if (blockWidth < 90) {
       pillFontSize = '0.7rem';
@@ -859,14 +864,14 @@ export const ProgramBlock: React.FC<Props> = ({
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-        <IOSNotificationSetup 
-          open={iosSetupOpen} 
-          onClose={() => setIOSSetupOpen(false)} 
+        <IOSNotificationSetup
+          open={iosSetupOpen}
+          onClose={() => setIOSSetupOpen(false)}
           onComplete={() => {
             setIOSSetupOpen(false);
             // Optionally trigger the subscription again after setup
             if (isPWAInstalled) {
-              handleBellClick({ stopPropagation: () => {} } as React.MouseEvent);
+              handleBellClick({ stopPropagation: () => { } } as React.MouseEvent);
             }
           }}
         />
@@ -877,19 +882,19 @@ export const ProgramBlock: React.FC<Props> = ({
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           sx={{ zIndex: 9999 }}
         >
-          <Alert 
-            severity="info" 
+          <Alert
+            severity="info"
             onClose={() => setShowIOSPushSnackbar(false)}
-            sx={{ 
+            sx={{
               minWidth: 280,
             }}
           >
             Para recibir notificaciones push en iOS, dirígete a{' '}
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               href="/subscriptions"
-              sx={{ 
+              sx={{
                 textDecoration: 'underline',
                 p: 0,
                 minWidth: 'auto',

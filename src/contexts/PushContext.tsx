@@ -35,7 +35,7 @@ interface BeforeInstallPromptEvent extends Event {
 }
 
 interface PushContextValue {
-  subscribeAndRegister: () => Promise<PushSubscription | any | null>; // Updated return type
+  subscribeAndRegister: () => Promise<PushSubscription | { endpoint: string; keys: undefined } | null>; // Updated return type
   scheduleForProgram: (programId: string, title: string, minutesBefore: number) => Promise<void>;
   promptInstall: () => Promise<void>;
   isIOSDevice: boolean;
@@ -199,7 +199,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
     return permission;
   };
 
-  const subscribeAndRegister = async (): Promise<any | null> => {
+  const subscribeAndRegister = async (): Promise<PushSubscription | { endpoint: string; keys: undefined } | null> => {
     if (!enabled) {
       console.warn('Push disabled: subscribeAndRegister no-op');
       return null;
