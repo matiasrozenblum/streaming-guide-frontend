@@ -8,6 +8,7 @@ import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import { PushProvider } from '@/contexts/PushContext';
+import { PushTokenSync } from '@/components/PushTokenSync';
 import { TooltipProvider } from '@/contexts/TooltipContext';
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 import { CookieConsentBanner } from '@/components/CookieConsentBanner';
@@ -66,6 +67,7 @@ export default function RootLayout({
         <CookieConsentProvider>
           <SessionProviderWrapper>
             <PushProvider enabled={true} installPrompt={null}>
+              <PushTokenSync />
               <TooltipProvider>
                 <CustomThemeProvider>
                   <StatusBarManager />
