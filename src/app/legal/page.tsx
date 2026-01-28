@@ -17,7 +17,7 @@ interface InitialData {
 }
 
 export default async function Page() {
-  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+  const url = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
   // Fetch today's schedules, week's schedules, categories, and categories enabled status in parallel
   let todaySchedules: ChannelWithSchedules[] = [];
@@ -76,7 +76,7 @@ export default async function Page() {
     } else {
       console.warn('Categories enabled fetch failed with status', categoriesEnabledRes.status);
     }
- 
+
     if (streamersEnabledRes.ok) {
       const streamersEnabledData = await streamersEnabledRes.text();
       streamersEnabled = streamersEnabledData === 'true';

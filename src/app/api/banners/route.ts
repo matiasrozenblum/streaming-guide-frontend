@@ -2,12 +2,12 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -23,7 +23,7 @@ export async function GET() {
       const errorText = await response.text();
       console.error('Backend API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to fetch banners' }, 
+        { error: 'Failed to fetch banners' },
         { status: response.status }
       );
     }
@@ -33,7 +33,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching banners:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }
@@ -42,7 +42,7 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -62,7 +62,7 @@ export async function POST(request: NextRequest) {
       const errorText = await response.text();
       console.error('Backend API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to create banner' }, 
+        { error: 'Failed to create banner' },
         { status: response.status }
       );
     }
@@ -72,7 +72,7 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Error creating banner:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

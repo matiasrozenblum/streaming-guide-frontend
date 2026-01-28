@@ -2,12 +2,12 @@ import { NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function GET() {
   try {
     const session = await getServerSession(authOptions);
-    
+
     if (!session?.accessToken) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
@@ -23,7 +23,7 @@ export async function GET() {
       const errorText = await response.text();
       console.error('Backend API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to fetch banner stats' }, 
+        { error: 'Failed to fetch banner stats' },
         { status: response.status }
       );
     }
@@ -33,7 +33,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching banner stats:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

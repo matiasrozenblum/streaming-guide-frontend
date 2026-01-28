@@ -37,7 +37,7 @@ export default function BottomNavigation() {
 
   // Only show on main pages (not on subscriptions, profile, etc.)
   const showOnPage = pathname === '/' || pathname === '/streamers';
-  
+
   if (!showOnPage) {
     return null;
   }
@@ -71,8 +71,8 @@ export default function BottomNavigation() {
         right: 0,
         zIndex: 1000,
         borderTop: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
-        backgroundColor: mode === 'light' 
-          ? 'rgba(255,255,255,0.95)' 
+        backgroundColor: mode === 'light'
+          ? 'rgba(255,255,255,0.95)'
           : 'rgba(30,41,59,0.95)',
         backdropFilter: 'blur(8px)',
         // Use safe area insets to avoid overlapping with system navigation bars
@@ -89,6 +89,7 @@ export default function BottomNavigation() {
             color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
             '&.Mui-selected': {
               color: mode === 'light' ? '#1976d2' : '#42a5f5',
+              backgroundColor: 'transparent',
             },
             '& .MuiBottomNavigationAction-label': {
               textTransform: 'uppercase',

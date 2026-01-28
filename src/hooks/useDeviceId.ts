@@ -4,6 +4,7 @@ import { useEffect, useState, useCallback, useRef } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
+import { v4 as uuidv4 } from 'uuid';
 
 // Global device registration state to prevent multiple registrations across components
 const globalDeviceRegistrationState = new Map<string, boolean>();
@@ -25,7 +26,7 @@ export function useDeviceId() {
     if (isLegacyUser) return;
 
     const registrationKey = getRegistrationKey(typedSession.user.id, deviceId);
-    
+
     // Check if already registered in localStorage
     if (localStorage.getItem(registrationKey) === 'true') {
       return;
@@ -58,7 +59,7 @@ export function useDeviceId() {
         const checkResponse = await api.get('/subscriptions/device', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
         });
-        
+
         // If device exists, mark as registered
         if (checkResponse.data && checkResponse.data.deviceId) {
           localStorage.setItem(registrationKey, 'true');
@@ -71,7 +72,7 @@ export function useDeviceId() {
       }
 
       // Create the device
-      await api.post('/subscriptions/device', 
+      await api.post('/subscriptions/device',
         { deviceId },
         {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
@@ -90,9 +91,11 @@ export function useDeviceId() {
   }, [typedSession?.accessToken, typedSession?.user?.id]);
 
   useEffect(() => {
+
+
     let id = localStorage.getItem('device_id');
     if (!id) {
-      id = crypto.randomUUID();
+      id = uuidv4();
       localStorage.setItem('device_id', id);
     }
     setDeviceId(id);
@@ -101,14 +104,14 @@ export function useDeviceId() {
     if (typedSession?.accessToken && id && typedSession.user.id && !isNaN(Number(typedSession.user.id))) {
       const registrationKey = getRegistrationKey(typedSession.user.id, id);
       const alreadyRegistered = localStorage.getItem(registrationKey) === 'true';
-      
+
       if (!alreadyRegistered && !isRegistering.current && !globalDeviceRegistrationState.get(registrationKey)) {
         // Add a small delay to allow backend device creation to complete first
         // This prevents race conditions during signup
         const timeoutId = setTimeout(() => {
           registerDevice(id);
         }, 1000); // 1 second delay
-        
+
         return () => clearTimeout(timeoutId);
       }
     }
