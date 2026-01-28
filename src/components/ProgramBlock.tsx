@@ -225,8 +225,13 @@ export const ProgramBlock: React.FC<Props> = ({
       let pushErrorReason = '';
       let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
 
-      // For iOS users without PWA, use email-only subscription to reduce friction
-      if (isIOSDevice && !isPWAInstalled) {
+      // Check if running as native app (Capacitor)
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const isNativeApp = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform?.();
+
+      // For iOS Safari users without PWA, use email-only subscription to reduce friction
+      // Native iOS apps (Capacitor) should NOT use this fallback - they can receive native push
+      if (isIOSDevice && !isPWAInstalled && !isNativeApp) {
         if (willSubscribe) {
           notificationMethod = 'email';
         } else {
@@ -267,8 +272,8 @@ export const ProgramBlock: React.FC<Props> = ({
           pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
           console.warn('Failed to get push subscription:', error);
 
-          // For critical errors, still show setup dialog
-          if (isIOSDevice && !isPWAInstalled && error instanceof Error &&
+          // For critical errors, still show setup dialog (only for iOS Safari, not native apps)
+          if (isIOSDevice && !isPWAInstalled && !isNativeApp && error instanceof Error &&
             error.message.includes('home screen')) {
             setIsOn(prevIsOn); // Revert UI
             setIsLoading(false);
@@ -321,8 +326,8 @@ export const ProgramBlock: React.FC<Props> = ({
         }
       );
 
-      // Show helpful message for iOS users who subscribed via email
-      if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
+      // Show helpful message for iOS Safari users who subscribed via email (not native apps)
+      if (isIOSDevice && !isPWAInstalled && !isNativeApp && willSubscribe && notificationMethod === 'email') {
         setTimeout(() => {
           setShowIOSPushSnackbar(true);
         }, 1000);
