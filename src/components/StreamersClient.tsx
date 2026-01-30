@@ -345,7 +345,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                     : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)';
 
                 return (
-                  <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
+                  <Grid size={{ xs: 6, sm: 4, md: 2, lg: 2 }} key={streamer.id}>
                     <MotionCard
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
