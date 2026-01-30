@@ -67,10 +67,10 @@ const MotionBox = motion(Box);
  * - Bottom margin: 50px (12.5%)
  * - Safe content zone: 1120px × 300px centered in the 1920×400px image
  */
-export default function BannerCarousel({ 
-  banners, 
-  autoRotate = true, 
-  autoRotateInterval = 5000 
+export default function BannerCarousel({
+  banners,
+  autoRotate = true,
+  autoRotateInterval = 5000
 }: BannerCarouselProps) {
   const { mode } = useThemeContext();
   const { session } = useSessionContext();
@@ -78,7 +78,7 @@ export default function BannerCarousel({
   const router = useRouter();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
-  
+
   const [currentIndex, setCurrentIndex] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
@@ -92,7 +92,7 @@ export default function BannerCarousel({
     if (!autoRotate || banners.length <= 1 || isPaused) return;
 
     const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) => 
+      setCurrentIndex((prevIndex) =>
         prevIndex === banners.length - 1 ? 0 : prevIndex + 1
       );
     }, autoRotateInterval);
@@ -101,13 +101,13 @@ export default function BannerCarousel({
   }, [autoRotate, autoRotateInterval, banners.length, isPaused]);
 
   const goToNext = useCallback(() => {
-    setCurrentIndex((prevIndex) => 
+    setCurrentIndex((prevIndex) =>
       prevIndex === banners.length - 1 ? 0 : prevIndex + 1
     );
   }, [banners.length]);
 
   const goToPrevious = useCallback(() => {
-    setCurrentIndex((prevIndex) => 
+    setCurrentIndex((prevIndex) =>
       prevIndex === 0 ? banners.length - 1 : prevIndex - 1
     );
   }, [banners.length]);
@@ -130,7 +130,7 @@ export default function BannerCarousel({
 
   const onTouchEnd = () => {
     if (!touchStart || !touchEnd) return;
-    
+
     const distance = touchStart - touchEnd;
     const isLeftSwipe = distance > minSwipeDistance;
     const isRightSwipe = distance < -minSwipeDistance;
@@ -188,12 +188,12 @@ export default function BannerCarousel({
         borderRadius,
         overflow: 'hidden',
         cursor: currentBanner.link_type !== LinkType.NONE ? 'pointer' : 'default',
-        boxShadow: mode === 'light' 
-          ? '0 4px 12px rgba(0, 0, 0, 0.1)' 
+        boxShadow: mode === 'light'
+          ? '0 4px 12px rgba(0, 0, 0, 0.1)'
           : '0 4px 12px rgba(0, 0, 0, 0.3)',
         '&:hover': {
-          boxShadow: mode === 'light' 
-            ? '0 6px 20px rgba(0, 0, 0, 0.15)' 
+          boxShadow: mode === 'light'
+            ? '0 6px 20px rgba(0, 0, 0, 0.15)'
             : '0 6px 20px rgba(0, 0, 0, 0.4)',
         },
       }}
@@ -237,44 +237,32 @@ export default function BannerCarousel({
             quality={85} // Optimize quality vs size
           />
 
-          {/* Overlay for better text readability */}
-          <Box
-            sx={{
-              position: 'absolute',
-              top: 0,
-              left: 0,
-              right: 0,
-              bottom: 0,
-              background: 'linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(0,0,0,0.1) 100%)',
-            }}
-          />
-
-          {/* Content Overlay */}
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 0,
-              left: 0,
-              right: 0,
-              p: isMobile ? 2 : 3,
-              background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
-            }}
-          >
-            <Typography
-              variant={isMobile ? 'h6' : 'h5'}
-              component="h3"
+          {/* Content Overlay - Only show when description is set (text baked into image otherwise) */}
+          {currentBanner.description && (
+            <Box
               sx={{
-                color: 'white',
-                fontWeight: 'bold',
-                textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                mb: currentBanner.description ? 0.5 : 0,
-                lineHeight: 1.2,
+                position: 'absolute',
+                bottom: 0,
+                left: 0,
+                right: 0,
+                p: isMobile ? 2 : 3,
+                background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
               }}
             >
-              {currentBanner.title}
-            </Typography>
-            
-            {currentBanner.description && (
+              <Typography
+                variant={isMobile ? 'h6' : 'h5'}
+                component="h3"
+                sx={{
+                  color: 'white',
+                  fontWeight: 'bold',
+                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                  mb: 0.5,
+                  lineHeight: 1.2,
+                }}
+              >
+                {currentBanner.title}
+              </Typography>
+
               <Typography
                 variant={isMobile ? 'body2' : 'body1'}
                 sx={{
@@ -288,8 +276,8 @@ export default function BannerCarousel({
               >
                 {currentBanner.description}
               </Typography>
-            )}
-          </Box>
+            </Box>
+          )}
         </MotionBox>
       </AnimatePresence>
 
@@ -366,8 +354,8 @@ export default function BannerCarousel({
                   width: isMobile ? 6 : 8,
                   height: isMobile ? 6 : 8,
                   borderRadius: '50%',
-                  backgroundColor: index === currentIndex 
-                    ? 'rgba(255,255,255,0.9)' 
+                  backgroundColor: index === currentIndex
+                    ? 'rgba(255,255,255,0.9)'
                     : 'rgba(255,255,255,0.4)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
