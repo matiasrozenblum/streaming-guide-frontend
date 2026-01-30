@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.9] - 2026-01-30
+
+### Added
+- Added manual sync for streamers live status
+
 ## [1.15.8] - 2026-01-30
 
 ### Added
