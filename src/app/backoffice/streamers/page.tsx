@@ -50,9 +50,9 @@ export default function StreamersPage() {
   const [loading, setLoading] = useState(true);
   const [openDialog, setOpenDialog] = useState(false);
   const [editingStreamer, setEditingStreamer] = useState<Streamer | null>(null);
-  const [formData, setFormData] = useState({ 
-    name: '', 
-    logo_url: '', 
+  const [formData, setFormData] = useState({
+    name: '',
+    logo_url: '',
     is_visible: true,
     services: [] as Array<{ service: StreamingService; url: string; username?: string }>,
   });
@@ -62,6 +62,7 @@ export default function StreamersPage() {
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [savingOrder, setSavingOrder] = useState(false);
+  const [syncingService, setSyncingService] = useState<{ streamerId: number; service: string } | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated') fetchStreamers();
@@ -85,9 +86,9 @@ export default function StreamersPage() {
   const handleOpenDialog = (streamer?: Streamer) => {
     if (streamer) {
       setEditingStreamer(streamer);
-      setFormData({ 
-        name: streamer.name, 
-        logo_url: streamer.logo_url || '', 
+      setFormData({
+        name: streamer.name,
+        logo_url: streamer.logo_url || '',
         is_visible: streamer.is_visible ?? true,
         services: streamer.services || [],
       });
@@ -95,9 +96,9 @@ export default function StreamersPage() {
       setLogoPreview(streamer.logo_url || null);
     } else {
       setEditingStreamer(null);
-      setFormData({ 
-        name: '', 
-        logo_url: '', 
+      setFormData({
+        name: '',
+        logo_url: '',
         is_visible: true,
         services: [],
       });
@@ -111,9 +112,9 @@ export default function StreamersPage() {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingStreamer(null);
-    setFormData({ 
-      name: '', 
-      logo_url: '', 
+    setFormData({
+      name: '',
+      logo_url: '',
       is_visible: true,
       services: [],
     });
@@ -170,8 +171,8 @@ export default function StreamersPage() {
   useEffect(() => {
     if (editingStreamer && formData.services && formData.services.length > 0) {
       const updatedServices = formData.services.map(service => {
-        if ((service.service === StreamingService.TWITCH || service.service === StreamingService.KICK) && 
-            service.url && !service.username) {
+        if ((service.service === StreamingService.TWITCH || service.service === StreamingService.KICK) &&
+          service.url && !service.username) {
           // Extract username from URL for display
           const urlMatch = service.url.match(/(?:twitch\.tv\/|kick\.com\/)([^/?]+)/);
           if (urlMatch && urlMatch[1]) {
@@ -417,6 +418,35 @@ export default function StreamersPage() {
     }
   };
 
+  const handleSyncLiveStatus = async (streamerId: number, service: 'kick' | 'twitch') => {
+    try {
+      setSyncingService({ streamerId, service });
+      const res = await fetch(`/api/streamers/${streamerId}/sync-live-status`, {
+        method: 'POST',
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.details || `Error al sincronizar estado de ${service}`);
+      }
+      const data = await res.json();
+      const result = data.results?.find((r: { service: string }) => r.service === service);
+      if (result?.success) {
+        setSuccess(`Estado de ${service} sincronizado: ${result.isLive ? 'EN VIVO' : 'OFFLINE'}`);
+      } else {
+        setError(result?.error || `No se pudo sincronizar el estado de ${service}`);
+      }
+    } catch (err: unknown) {
+      console.error('Error syncing live status:', err);
+      setError(err instanceof Error ? err.message : 'Error al sincronizar estado');
+    } finally {
+      setSyncingService(null);
+    }
+  };
+
+  const hasService = (streamer: Streamer, service: StreamingService): boolean => {
+    return streamer.services.some(s => s.service === service);
+  };
+
   if (loading) {
     return (
       <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
@@ -444,6 +474,7 @@ export default function StreamersPage() {
               <TableCell>Servicios</TableCell>
               <TableCell>Categorías</TableCell>
               <TableCell>Visible</TableCell>
+              <TableCell>Sync</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -527,6 +558,46 @@ export default function StreamersPage() {
                   />
                 </TableCell>
                 <TableCell>
+                  <Box display="flex" gap={0.5}>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSyncLiveStatus(streamer.id, 'kick')}
+                      disabled={!hasService(streamer, StreamingService.KICK) || syncingService?.streamerId === streamer.id}
+                      title={hasService(streamer, StreamingService.KICK) ? 'Sync Kick' : 'No tiene Kick'}
+                      sx={{
+                        backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.1)' : undefined,
+                        '&:hover': {
+                          backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.2)' : undefined,
+                        },
+                      }}
+                    >
+                      {syncingService?.streamerId === streamer.id && syncingService?.service === 'kick' ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <Typography variant="caption" fontWeight="bold" sx={{ color: hasService(streamer, StreamingService.KICK) ? '#53fc18' : 'text.disabled' }}>K</Typography>
+                      )}
+                    </IconButton>
+                    <IconButton
+                      size="small"
+                      onClick={() => handleSyncLiveStatus(streamer.id, 'twitch')}
+                      disabled={!hasService(streamer, StreamingService.TWITCH) || syncingService?.streamerId === streamer.id}
+                      title={hasService(streamer, StreamingService.TWITCH) ? 'Sync Twitch' : 'No tiene Twitch'}
+                      sx={{
+                        backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.1)' : undefined,
+                        '&:hover': {
+                          backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.2)' : undefined,
+                        },
+                      }}
+                    >
+                      {syncingService?.streamerId === streamer.id && syncingService?.service === 'twitch' ? (
+                        <CircularProgress size={18} />
+                      ) : (
+                        <Typography variant="caption" fontWeight="bold" sx={{ color: hasService(streamer, StreamingService.TWITCH) ? '#9146FF' : 'text.disabled' }}>T</Typography>
+                      )}
+                    </IconButton>
+                  </Box>
+                </TableCell>
+                <TableCell>
                   <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
                   <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
                 </TableCell>
@@ -537,7 +608,7 @@ export default function StreamersPage() {
       </TableContainer>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
-        <DialogTitle sx={{ fontWeight:'bold', fontSize:'1.5rem' }}>
+        <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
           {editingStreamer ? 'Editar Streamer' : 'Nuevo Streamer'}
         </DialogTitle>
         <DialogContent>
@@ -546,7 +617,7 @@ export default function StreamersPage() {
               label="Nombre"
               value={formData.name}
               onChange={e => setFormData({ ...formData, name: e.target.value })}
-              fullWidth 
+              fullWidth
               required
             />
             <Box>
@@ -611,7 +682,7 @@ export default function StreamersPage() {
                 color="primary"
               />
             </Box>
-            
+
             <Box>
               <Typography variant="subtitle2" sx={{ mb: 1 }}>
                 Servicios de Streaming
@@ -619,50 +690,51 @@ export default function StreamersPage() {
               {formData.services.map((service, index) => {
                 const isTwitchOrKick = service.service === StreamingService.TWITCH || service.service === StreamingService.KICK;
                 const isYouTube = service.service === StreamingService.YOUTUBE;
-                
+
                 return (
-                <Box key={index} display="flex" gap={1} mb={2} alignItems="flex-start">
-                  <FormControl sx={{ minWidth: 120 }}>
-                    <InputLabel>Servicio</InputLabel>
-                    <Select
-                      value={service.service}
-                      label="Servicio"
-                      onChange={(e) => handleServiceTypeChange(index, e.target.value as StreamingService)}
+                  <Box key={index} display="flex" gap={1} mb={2} alignItems="flex-start">
+                    <FormControl sx={{ minWidth: 120 }}>
+                      <InputLabel>Servicio</InputLabel>
+                      <Select
+                        value={service.service}
+                        label="Servicio"
+                        onChange={(e) => handleServiceTypeChange(index, e.target.value as StreamingService)}
+                      >
+                        <MenuItem value={StreamingService.TWITCH}>Twitch</MenuItem>
+                        <MenuItem value={StreamingService.KICK}>Kick</MenuItem>
+                        <MenuItem value={StreamingService.YOUTUBE}>YouTube</MenuItem>
+                      </Select>
+                    </FormControl>
+                    {isTwitchOrKick ? (
+                      <TextField
+                        label="Username"
+                        value={service.username || ''}
+                        onChange={e => handleServiceChange(index, 'username', e.target.value)}
+                        fullWidth
+                        required
+                        placeholder="username"
+                        helperText="La URL se generará automáticamente"
+                      />
+                    ) : isYouTube ? (
+                      <TextField
+                        label="URL"
+                        value={service.url || ''}
+                        onChange={e => handleServiceChange(index, 'url', e.target.value)}
+                        fullWidth
+                        required
+                        placeholder="https://www.youtube.com/@channelname"
+                      />
+                    ) : null}
+                    <IconButton
+                      onClick={() => handleRemoveService(index)}
+                      color="error"
+                      sx={{ mt: 1 }}
                     >
-                      <MenuItem value={StreamingService.TWITCH}>Twitch</MenuItem>
-                      <MenuItem value={StreamingService.KICK}>Kick</MenuItem>
-                      <MenuItem value={StreamingService.YOUTUBE}>YouTube</MenuItem>
-                    </Select>
-                  </FormControl>
-                  {isTwitchOrKick ? (
-                    <TextField
-                      label="Username"
-                      value={service.username || ''}
-                      onChange={e => handleServiceChange(index, 'username', e.target.value)}
-                      fullWidth
-                      required
-                      placeholder="username"
-                      helperText="La URL se generará automáticamente"
-                    />
-                  ) : isYouTube ? (
-                    <TextField
-                      label="URL"
-                      value={service.url || ''}
-                      onChange={e => handleServiceChange(index, 'url', e.target.value)}
-                      fullWidth
-                      required
-                      placeholder="https://www.youtube.com/@channelname"
-                    />
-                  ) : null}
-                  <IconButton 
-                    onClick={() => handleRemoveService(index)}
-                    color="error"
-                    sx={{ mt: 1 }}
-                  >
-                    <RemoveIcon />
-                  </IconButton>
-                </Box>
-              )})}
+                      <RemoveIcon />
+                    </IconButton>
+                  </Box>
+                )
+              })}
               <Button
                 startIcon={<AddIcon />}
                 onClick={handleAddService}
@@ -679,7 +751,7 @@ export default function StreamersPage() {
             />
           </Box>
         </DialogContent>
-        <DialogActions sx={{ p:2 }}>
+        <DialogActions sx={{ p: 2 }}>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
           <Button onClick={handleSubmit} variant="contained" disabled={formData.services.length === 0}>
             {editingStreamer ? 'Guardar' : 'Crear'}
@@ -688,7 +760,7 @@ export default function StreamersPage() {
       </Dialog>
 
       <Snackbar open={!!error || !!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity={error ? 'error' : 'success'} sx={{ width:'100%' }}>
+        <Alert onClose={handleCloseSnackbar} severity={error ? 'error' : 'success'} sx={{ width: '100%' }}>
           {error || success}
         </Alert>
       </Snackbar>
