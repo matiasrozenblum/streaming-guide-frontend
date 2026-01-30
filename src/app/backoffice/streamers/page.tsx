@@ -40,6 +40,12 @@ import { Category } from '@/types/channel';
 import Image from 'next/image';
 import CategorySelector from '@/components/backoffice/CategorySelector';
 
+// Service icon URLs from Supabase storage
+const SERVICE_ICONS: Record<string, string> = {
+  twitch: 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/twitch_glitch_flat_purple.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvdHdpdGNoX2dsaXRjaF9mbGF0X3B1cnBsZS5wbmciLCJpYXQiOjE3NjM1MjA4NTUsImV4cCI6MTc5NTA1Njg1NX0.9nqfLHXQIsExihVdeGIaAnhWqlW9zRnx0FPFqHarVpA',
+  kick: 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/Kick%20Icon%20(Green).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvS2ljayBJY29uIChHcmVlbikucG5nIiwiaWF0IjoxNzYzNTIwODQyLCJleHAiOjE3OTUwNTY4NDJ9.3cqNHCk9mYT4k6E7mUiIDIA8CWXWIKTUQK1iThtSrmo',
+};
+
 export default function StreamersPage() {
   const { status } = useSessionContext();
 
@@ -569,12 +575,19 @@ export default function StreamersPage() {
                         '&:hover': {
                           backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.2)' : undefined,
                         },
+                        opacity: hasService(streamer, StreamingService.KICK) ? 1 : 0.3,
                       }}
                     >
                       {syncingService?.streamerId === streamer.id && syncingService?.service === 'kick' ? (
                         <CircularProgress size={18} />
                       ) : (
-                        <Typography variant="caption" fontWeight="bold" sx={{ color: hasService(streamer, StreamingService.KICK) ? '#53fc18' : 'text.disabled' }}>K</Typography>
+                        <Image
+                          src={SERVICE_ICONS.kick}
+                          alt="Kick"
+                          width={18}
+                          height={18}
+                          style={{ objectFit: 'contain' }}
+                        />
                       )}
                     </IconButton>
                     <IconButton
@@ -587,12 +600,19 @@ export default function StreamersPage() {
                         '&:hover': {
                           backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.2)' : undefined,
                         },
+                        opacity: hasService(streamer, StreamingService.TWITCH) ? 1 : 0.3,
                       }}
                     >
                       {syncingService?.streamerId === streamer.id && syncingService?.service === 'twitch' ? (
                         <CircularProgress size={18} />
                       ) : (
-                        <Typography variant="caption" fontWeight="bold" sx={{ color: hasService(streamer, StreamingService.TWITCH) ? '#9146FF' : 'text.disabled' }}>T</Typography>
+                        <Image
+                          src={SERVICE_ICONS.twitch}
+                          alt="Twitch"
+                          width={18}
+                          height={18}
+                          style={{ objectFit: 'contain' }}
+                        />
                       )}
                     </IconButton>
                   </Box>
