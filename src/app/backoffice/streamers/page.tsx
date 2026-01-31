@@ -197,9 +197,14 @@ export default function StreamersPage() {
   }, [editingStreamer]); // Only run when editingStreamer changes
 
   const handleAddService = () => {
+    // Find the first service that isn't already used
+    const usedServices = formData.services.map(s => s.service);
+    const allServices = [StreamingService.TWITCH, StreamingService.KICK, StreamingService.YOUTUBE];
+    const availableService = allServices.find(s => !usedServices.includes(s)) || StreamingService.TWITCH;
+
     setFormData({
       ...formData,
-      services: [...formData.services, { service: StreamingService.TWITCH, url: '', username: '' }],
+      services: [...formData.services, { service: availableService, url: '', username: '' }],
     });
   };
 
@@ -720,9 +725,16 @@ export default function StreamersPage() {
                         label="Servicio"
                         onChange={(e) => handleServiceTypeChange(index, e.target.value as StreamingService)}
                       >
-                        <MenuItem value={StreamingService.TWITCH}>Twitch</MenuItem>
-                        <MenuItem value={StreamingService.KICK}>Kick</MenuItem>
-                        <MenuItem value={StreamingService.YOUTUBE}>YouTube</MenuItem>
+                        {/* Only show services not already used by other rows */}
+                        {[StreamingService.TWITCH, StreamingService.KICK, StreamingService.YOUTUBE].map((svc) => {
+                          const isUsedByOther = formData.services.some((s, i) => i !== index && s.service === svc);
+                          return (
+                            <MenuItem key={svc} value={svc} disabled={isUsedByOther}>
+                              {svc === StreamingService.TWITCH ? 'Twitch' : svc === StreamingService.KICK ? 'Kick' : 'YouTube'}
+                              {isUsedByOther && ' (ya agregado)'}
+                            </MenuItem>
+                          );
+                        })}
                       </Select>
                     </FormControl>
                     {isTwitchOrKick ? (
@@ -760,6 +772,7 @@ export default function StreamersPage() {
                 onClick={handleAddService}
                 variant="outlined"
                 size="small"
+                disabled={formData.services.length >= 3}
               >
                 Agregar Servicio
               </Button>
