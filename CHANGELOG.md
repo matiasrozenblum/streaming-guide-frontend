@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.15.11] - 2026-02-01
+
+### Changed
+- Removed theme toggle
+- Removed light mode
+
 ## [1.15.10] - 2026-01-31
 
 ### Added
