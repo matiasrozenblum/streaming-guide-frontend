@@ -6,7 +6,6 @@ import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { event as gaEvent } from '@/lib/gtag';
 import type { Banner } from '@/types/banner';
@@ -72,7 +71,6 @@ export default function BannerCarousel({
   autoRotate = true,
   autoRotateInterval = 5000
 }: BannerCarouselProps) {
-  const { mode } = useThemeContext();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
@@ -188,13 +186,9 @@ export default function BannerCarousel({
         borderRadius,
         overflow: 'hidden',
         cursor: currentBanner.link_type !== LinkType.NONE ? 'pointer' : 'default',
-        boxShadow: mode === 'light'
-          ? '0 4px 12px rgba(0, 0, 0, 0.1)'
-          : '0 4px 12px rgba(0, 0, 0, 0.3)',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.3)',
         '&:hover': {
-          boxShadow: mode === 'light'
-            ? '0 6px 20px rgba(0, 0, 0, 0.15)'
-            : '0 6px 20px rgba(0, 0, 0, 0.4)',
+          boxShadow: '0 6px 20px rgba(0, 0, 0, 0.4)',
         },
       }}
       onMouseEnter={() => {

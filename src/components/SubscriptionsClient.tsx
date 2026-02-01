@@ -33,7 +33,7 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
 import { useRouter } from 'next/navigation';
-import { useThemeContext } from '@/contexts/ThemeContext';
+
 import Header from '@/components/Header';
 import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
@@ -75,7 +75,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
-  const { mode } = useThemeContext();
+
   const { isIOSDevice, isPWAInstalled } = usePush();
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
   const [loading, setLoading] = useState(false);
@@ -98,12 +98,12 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
     if (!typedSession?.accessToken) return;
     try {
       setLoading(true);
-      await api.put(`/subscriptions/${subscriptionId}`, 
+      await api.put(`/subscriptions/${subscriptionId}`,
         { notificationMethod },
         { headers: { Authorization: `Bearer ${typedSession.accessToken}` } }
       );
-      setSubscriptions(prev => prev.map(sub => 
-        sub.id === subscriptionId 
+      setSubscriptions(prev => prev.map(sub =>
+        sub.id === subscriptionId
           ? { ...sub, notificationMethod }
           : sub
       ));
@@ -204,9 +204,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
       <Box
         sx={{
           minHeight: '100dvh',
-          background: mode === 'light'
-            ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-            : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           py: { xs: 1, sm: 2 },
         }}
       >
@@ -224,17 +222,15 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
       }}
     >
       <Header />
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          mt: 4, 
+      <Container
+        maxWidth="lg"
+        sx={{
+          mt: 4,
           mb: 6,
           px: { xs: 2, sm: 3 },
         }}
@@ -254,13 +250,11 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
             }}
           >
             <Box>
-              <Typography 
-                variant="h4" 
-                sx={{ 
+              <Typography
+                variant="h4"
+                sx={{
                   fontWeight: 700,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                  background: 'linear-gradient(to right, #90caf9, #42a5f5)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                   mb: 1,
@@ -284,7 +278,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           </Box>
           {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
           {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-          
+
           {/* iOS Push Guide - only shown for iOS users */}
           <IOSPushGuide />
           {subscriptions.length === 0 ? (
@@ -292,15 +286,13 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              sx={{ 
-                textAlign: 'center', 
+              sx={{
+                textAlign: 'center',
                 py: 8,
-                background: mode === 'light'
-                  ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                  : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                 backdropFilter: 'blur(8px)',
                 borderRadius: 3,
-                border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
               <CardContent>
@@ -311,11 +303,11 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                 <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
                   Suscríbete a tus programas favoritos haciendo clic en el ícono de campanita en la grilla de programación
                 </Typography>
-                <Button 
-                  variant="contained" 
-                  onClick={() => router.push('/')} 
+                <Button
+                  variant="contained"
+                  onClick={() => router.push('/')}
                   size="large"
-                  sx={{ 
+                  sx={{
                     borderRadius: 2,
                     px: 4,
                     py: 1.5,
@@ -335,22 +327,18 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                     initial={{ opacity: 0, y: 20 }}
                     animate={{ opacity: 1, y: 0 }}
                     transition={{ duration: 0.5, delay: index * 0.1 }}
-                    sx={{ 
-                      height: '100%', 
-                      display: 'flex', 
+                    sx={{
+                      height: '100%',
+                      display: 'flex',
                       flexDirection: 'column',
-                      background: mode === 'light'
-                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                      background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                       backdropFilter: 'blur(8px)',
                       borderRadius: 3,
-                      border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                      border: '1px solid rgba(255,255,255,0.1)',
                       transition: 'all 0.3s ease-in-out',
                       '&:hover': {
                         transform: 'translateY(-4px)',
-                        boxShadow: mode === 'light'
-                          ? '0 12px 24px rgba(0,0,0,0.15)'
-                          : '0 12px 24px rgba(0,0,0,0.4)',
+                        boxShadow: '0 12px 24px rgba(0,0,0,0.4)',
                       }
                     }}
                   >
@@ -363,12 +351,12 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                             sx={{ width: 56, height: 56, mr: 2 }}
                           />
                         ) : (
-                          <Avatar 
-                            sx={{ 
-                              width: 56, 
-                              height: 56, 
+                          <Avatar
+                            sx={{
+                              width: 56,
+                              height: 56,
                               mr: 2,
-                              backgroundColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                              backgroundColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1),
                               fontSize: '1.5rem',
                               fontWeight: 600,
                               color: 'white',
@@ -385,21 +373,21 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                             label={subscription.program.channel.name}
                             size="small"
                             variant="outlined"
-                            sx={{ 
+                            sx={{
                               borderRadius: 1.5,
                               fontWeight: 500,
-                              borderColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
-                              color: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                              borderColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1),
+                              color: getColorForChannel((subscription.program.channel.order ?? 1) - 1),
                             }}
                           />
                         </Box>
                       </Box>
 
                       {subscription.program.description && (
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary" 
-                          sx={{ 
+                        <Typography
+                          variant="body2"
+                          color="text.secondary"
+                          sx={{
                             mb: 3,
                             overflow: 'hidden',
                             textOverflow: 'ellipsis',
@@ -421,10 +409,10 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                           <Select
                             value={subscription.notificationMethod}
                             onChange={(e) => updateNotificationMethod(
-                              subscription.id, 
+                              subscription.id,
                               e.target.value as NotificationMethod
                             )}
-                            sx={{ 
+                            sx={{
                               borderRadius: 2,
                               '& .MuiSelect-select': {
                                 display: 'flex',
@@ -434,7 +422,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                             }}
                           >
                             {/* Always show all options first, then add restrictions for iOS without PWA */}
-                            <MenuItem 
+                            <MenuItem
                               value={NotificationMethod.BOTH}
                               disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.BOTH}
                             >
@@ -443,7 +431,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
                                 Push y Email
                               </Box>
                             </MenuItem>
-                            <MenuItem 
+                            <MenuItem
                               value={NotificationMethod.PUSH}
                               disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.PUSH}
                             >

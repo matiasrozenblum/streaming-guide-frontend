@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { signIn } from 'next-auth/react';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { motion } from 'framer-motion';
 import {
@@ -26,7 +25,7 @@ import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import dayjs, { Dayjs } from 'dayjs';
 import 'dayjs/locale/es';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import Header from './Header';
+import Header from '@/components/Header';
 import { event as gaEvent } from '@/lib/gtag';
 
 interface ProfileCompletionFormProps {
@@ -45,7 +44,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const { session, status } = useSessionContext();
   const typedSession = session as { user?: { id?: string; gender?: string; birthDate?: string; role?: string } };
   const router = useRouter();
-  const { mode } = useThemeContext();
   const deviceId = useDeviceId();
 
   // Form state
@@ -94,17 +92,17 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       e.preventDefault();
       e.returnValue = '';
     };
-    
+
     const handlePopState = (e: PopStateEvent) => {
       e.preventDefault();
       window.history.pushState(null, '', '/profile-completion');
       setErrorMessage('Por favor completa tu perfil antes de salir');
     };
-    
+
     window.addEventListener('beforeunload', handleBeforeUnload);
     window.addEventListener('popstate', handlePopState);
     window.history.pushState(null, '', '/profile-completion');
-    
+
     return () => {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('popstate', handlePopState);
@@ -114,7 +112,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   // Complete profile with all data
   const completeProfile = async () => {
     if (!registrationToken) return;
-    
+
     // Validate required fields
     if (!firstName || !lastName || !birthDate || !gender) {
       setErrorMessage('Todos los campos son obligatorios');
@@ -144,16 +142,16 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       }
 
       const data = await res.json();
-      
+
       // Update the session with the new tokens
-      await signIn('credentials', { 
-        redirect: false, 
+      await signIn('credentials', {
+        redirect: false,
         accessToken: data.access_token,
-        refreshToken: data.refresh_token 
+        refreshToken: data.refresh_token
       });
-      
+
       setSuccessMessage('Perfil completado correctamente');
-      
+
       // Track successful profile completion
       gaEvent({
         action: 'profile_completed_all',
@@ -174,7 +172,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     } catch (error) {
       console.error('Profile completion error:', error);
       setErrorMessage(error instanceof Error ? error.message : 'Error al completar el perfil');
-      
+
       // Track profile completion error
       gaEvent({
         action: 'profile_completion_error',
@@ -195,16 +193,14 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
       }}
     >
       <Header />
-      <Container 
-        maxWidth="md" 
-        sx={{ 
-          mt: 4, 
+      <Container
+        maxWidth="md"
+        sx={{
+          mt: 4,
           mb: 6,
           px: { xs: 2, sm: 3 },
           display: 'flex',
@@ -232,117 +228,115 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
               </Typography>
             </Box>
 
-          <Paper
-            elevation={0}
-            sx={{
-              p: 3,
-              mb: 3,
-              border: '2px solid',
-              borderColor: 'warning.main',
-              borderRadius: 2,
-              background: (theme) => theme.palette.mode === 'light'
-                ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-              backdropFilter: 'blur(8px)',
-            }}
-          >
-            <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
-              Datos personales
-            </Typography>
-            
-            <Box
-              component="form"
-              onSubmit={evt => {
-                evt.preventDefault();
-                completeProfile();
+            <Paper
+              elevation={0}
+              sx={{
+                p: 3,
+                mb: 3,
+                border: '2px solid',
+                borderColor: 'warning.main',
+                borderRadius: 2,
+                background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                backdropFilter: 'blur(8px)',
               }}
             >
-              <Grid container spacing={2}>
-                <Grid component="div" size={6}>
-                  <TextField
-                    label="Nombre"
-                    fullWidth
-                    value={firstName}
-                    onChange={e => setFirstName(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    required
-                  />
-                </Grid>
-                <Grid component="div" size={6}>
-                  <TextField
-                    label="Apellido"
-                    fullWidth
-                    value={lastName}
-                    onChange={e => setLastName(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    required
-                  />
-                </Grid>
-                <Grid component="div" size={6}>
-                  <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-                    <DatePicker
-                      label="Fecha de nacimiento"
-                      value={birthDate}
-                      onChange={(value) => setBirthDate(value)}
-                      format="DD/MM/YYYY"
-                      slotProps={{
-                        textField: {
-                          fullWidth: true,
-                          variant: 'outlined',
-                          size: 'small',
-                          required: true,
-                          placeholder: dayjs().format('DD/MM/YYYY'),
-                          InputLabelProps: {
-                            shrink: true,
-                          },
-                        },
-                      }}
-                    />
-                  </LocalizationProvider>
-                </Grid>
-                <Grid component="div" size={6}>
-                  <TextField
-                    label="Género"
-                    select
-                    fullWidth
-                    value={gender}
-                    onChange={e => setGender(e.target.value)}
-                    variant="outlined"
-                    size="small"
-                    required
-                  >
-                    <MenuItem value="male">Masculino</MenuItem>
-                    <MenuItem value="female">Femenino</MenuItem>
-                    <MenuItem value="non_binary">No binario</MenuItem>
-                    <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
-                  </TextField>
-                </Grid>
-              </Grid>
+              <Typography variant="h6" sx={{ mb: 3, fontWeight: 600 }}>
+                Datos personales
+              </Typography>
 
-              <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
-                <Button 
-                  onClick={() => {
-                    setErrorMessage('Por favor completa tu perfil antes de salir');
-                  }}
-                  variant="outlined"
-                  size="small"
-                >
-                  Cancelar
-                </Button>
-                <Button 
-                  type="submit" 
-                  variant="contained"
-                  size="small"
-                  disabled={isLoading}
-                >
-                  {isLoading ? 'Guardando...' : 'Guardar'}
-                </Button>
+              <Box
+                component="form"
+                onSubmit={evt => {
+                  evt.preventDefault();
+                  completeProfile();
+                }}
+              >
+                <Grid container spacing={2}>
+                  <Grid component="div" size={6}>
+                    <TextField
+                      label="Nombre"
+                      fullWidth
+                      value={firstName}
+                      onChange={e => setFirstName(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      required
+                    />
+                  </Grid>
+                  <Grid component="div" size={6}>
+                    <TextField
+                      label="Apellido"
+                      fullWidth
+                      value={lastName}
+                      onChange={e => setLastName(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      required
+                    />
+                  </Grid>
+                  <Grid component="div" size={6}>
+                    <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
+                      <DatePicker
+                        label="Fecha de nacimiento"
+                        value={birthDate}
+                        onChange={(value) => setBirthDate(value)}
+                        format="DD/MM/YYYY"
+                        slotProps={{
+                          textField: {
+                            fullWidth: true,
+                            variant: 'outlined',
+                            size: 'small',
+                            required: true,
+                            placeholder: dayjs().format('DD/MM/YYYY'),
+                            InputLabelProps: {
+                              shrink: true,
+                            },
+                          },
+                        }}
+                      />
+                    </LocalizationProvider>
+                  </Grid>
+                  <Grid component="div" size={6}>
+                    <TextField
+                      label="Género"
+                      select
+                      fullWidth
+                      value={gender}
+                      onChange={e => setGender(e.target.value)}
+                      variant="outlined"
+                      size="small"
+                      required
+                    >
+                      <MenuItem value="male">Masculino</MenuItem>
+                      <MenuItem value="female">Femenino</MenuItem>
+                      <MenuItem value="non_binary">No binario</MenuItem>
+                      <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
+                    </TextField>
+                  </Grid>
+                </Grid>
+
+                <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 3 }}>
+                  <Button
+                    onClick={() => {
+                      setErrorMessage('Por favor completa tu perfil antes de salir');
+                    }}
+                    variant="outlined"
+                    size="small"
+                  >
+                    Cancelar
+                  </Button>
+                  <Button
+                    type="submit"
+                    variant="contained"
+                    size="small"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Guardando...' : 'Guardar'}
+                  </Button>
+                </Box>
               </Box>
-            </Box>
-          </Paper>
-        </motion.div>
+            </Paper>
+          </motion.div>
         </Box>
       </Container>
 
@@ -369,4 +363,4 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
       </Snackbar>
     </Box>
   );
-} 
+}

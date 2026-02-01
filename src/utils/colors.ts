@@ -1,17 +1,5 @@
-// Light theme colors (darker/more saturated for better contrast on light backgrounds)
-const lightThemeChannelColors = [
-  '#1565C0', // Blue
-  '#2E7D32', // Green
-  '#C62828', // Red
-  '#7B1FA2', // Purple
-  '#EF6C00', // Orange
-  '#00838F', // Cyan
-  '#AD1457', // Pink
-  '#D84315', // Salmon/Red-Orange
-];
-
 // Dark theme colors (brighter/more vibrant for better contrast on dark backgrounds)
-const darkThemeChannelColors = [
+const channelColors = [
   '#2196F3', // Blue
   '#00C853', // Green
   '#FF1744', // Red
@@ -22,7 +10,6 @@ const darkThemeChannelColors = [
   '#FA8072', // Salmon
 ];
 
-export const getColorForChannel = (index: number, mode: 'light' | 'dark'): string => {
-  const colors = mode === 'light' ? lightThemeChannelColors : darkThemeChannelColors;
-  return colors[index % colors.length];
+export const getColorForChannel = (index: number): string => {
+  return channelColors[index % channelColors.length];
 };

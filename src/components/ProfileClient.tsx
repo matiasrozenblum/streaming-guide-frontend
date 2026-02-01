@@ -25,19 +25,15 @@ import {
   Collapse,
   Snackbar,
 } from '@mui/material';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
-import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
 import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
 import dayjs from 'dayjs';
 import MuiAlert from '@mui/material/Alert';
@@ -66,17 +62,13 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
     sx={{
       p: 2.5,
       mb: 2,
-      background: (theme) => theme.palette.mode === 'light'
-        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+      background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
       backdropFilter: 'blur(8px)',
       borderRadius: 2,
       transition: 'all 0.2s ease-in-out',
       '&:hover': {
         transform: 'translateY(-2px)',
-        boxShadow: (theme) => theme.palette.mode === 'light'
-          ? '0 8px 16px rgba(0,0,0,0.1)'
-          : '0 8px 16px rgba(0,0,0,0.3)',
+        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
       }
     }}
   >
@@ -119,7 +111,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
-  const { mode } = useThemeContext();
   const { consent, openPreferences } = useCookieConsent();
 
   // Track profile page visit
@@ -390,17 +381,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        py: { xs: 1, sm: 2 },
       }}
     >
       <Header />
-      <Container 
-        maxWidth="md" 
-        sx={{ 
-          mt: 4, 
+      <Container
+        maxWidth="md"
+        sx={{
+          mt: 4,
           mb: 6,
           px: { xs: 2, sm: 3 },
           display: 'flex',
@@ -422,13 +411,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 mb: 4,
               }}
             >
-              <Typography 
-                variant="h4" 
-                sx={{ 
+              <Typography
+                variant="h4"
+                sx={{
                   fontWeight: 700,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                  background: 'linear-gradient(to right, #90caf9, #42a5f5)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
@@ -552,15 +539,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         )}
                         <Grid component="div" size={12}>
                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                            <Button 
+                            <Button
                               onClick={() => setEditSection('none')}
                               variant="outlined"
                               size="small"
                             >
                               Cancelar
                             </Button>
-                            <Button 
-                              type="submit" 
+                            <Button
+                              type="submit"
                               variant="contained"
                               size="small"
                             >
@@ -668,7 +655,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 }
                 onEdit={() => setEditSection('password')}
               />
-              
+
               <ProfileSection
                 title="Preferencias de Cookies"
                 value={
@@ -748,8 +735,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           </MotionBox>
         </Box>
       </Container>
-      <Dialog 
-        open={editSection === 'phone'} 
+      <Dialog
+        open={editSection === 'phone'}
         onClose={() => setEditSection('none')}
         PaperProps={{
           sx: {
@@ -789,8 +776,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 sx={{ mt: 3 }}
                 variant="outlined"
               />
-              <Button 
-                sx={{ mt: 2 }} 
+              <Button
+                sx={{ mt: 2 }}
                 onClick={() => verifyAndUpdate('phone')}
                 variant="contained"
                 fullWidth
@@ -800,22 +787,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </>
           )}
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setEditSection('none')} variant="outlined">
-            Cerrar
-          </Button>
+        <DialogActions>
+          <Button onClick={() => setEditSection('none')}>Cerrar</Button>
         </DialogActions>
       </Dialog>
-      <Dialog 
-        open={editSection === 'password'} 
-        onClose={() => {
-          setEditSection('none');
-          setPasswordStep('verify');
-          setPasswordCode('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setCodeSent(prev => ({ ...prev, password: false }));
-        }}
+      <Dialog
+        open={editSection === 'password'}
+        onClose={() => setEditSection('none')}
         PaperProps={{
           sx: {
             borderRadius: 2,
@@ -823,173 +801,142 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           }
         }}
       >
-        <DialogTitle>
-          {passwordStep === 'verify' ? 'Verificar identidad' : 'Cambiar contraseña'}
-        </DialogTitle>
+        <DialogTitle>Cambiar contraseña</DialogTitle>
         <DialogContent>
           {passwordStep === 'verify' ? (
             <>
               <DialogContentText sx={{ mb: 3 }}>
-                Envía un código para verificar tu identidad antes de cambiar la contraseña.
+                Para tu seguridad, primero ingresá el código de verificación que acabamos de enviar a tu email.
               </DialogContentText>
               <Button
                 variant="contained"
-                disabled={codeSent.password}
-                onClick={() => sendCode('password')}
                 fullWidth
+                onClick={() => sendCode('password')}
+                disabled={codeSent.password}
+                sx={{ mb: 3 }}
               >
-                {codeSent.password ? 'Reenviar código' : 'Enviar código'}
+                {codeSent.password ? 'Código enviado' : 'Enviar código'}
               </Button>
               {codeSent.password && (
-                <TextField
-                  label="Código de verificación"
-                  fullWidth
-                  value={passwordCode}
-                  onChange={e => setPasswordCode(e.target.value)}
-                  sx={{ mt: 3 }}
-                  variant="outlined"
-                  InputProps={{
-                    startAdornment: (
-                      <InputAdornment position="start">
-                        <VpnKeyIcon fontSize="small" />
-                      </InputAdornment>
-                    )
-                  }}
-                />
+                <>
+                  <TextField
+                    label="Código de verificación"
+                    fullWidth
+                    value={passwordCode}
+                    onChange={(e) => setPasswordCode(e.target.value)}
+                    variant="outlined"
+                  />
+                  <Button
+                    variant="contained"
+                    fullWidth
+                    sx={{ mt: 2 }}
+                    onClick={() => verifyAndUpdate('password')}
+                  >
+                    Verificar
+                  </Button>
+                </>
               )}
             </>
           ) : (
-            <Stack spacing={2} sx={{ mt: 2 }}>
+            <>
+              <DialogContentText sx={{ mb: 3 }}>
+                Ingresá tu nueva contraseña. Debe tener al menos 8 caracteres, una mayúscula, un número y un símbolo.
+              </DialogContentText>
+
               <TextField
                 label="Nueva contraseña"
                 type={showPassword ? 'text' : 'password'}
                 fullWidth
                 value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
                 variant="outlined"
+                sx={{ mb: 2 }}
                 InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlinedIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(s => !s)}>
-                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      <IconButton
+                        onClick={() => setShowPassword(!showPassword)}
+                        edge="end"
+                      >
+                        {showPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
+
               {newPassword && (
-                <>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={(getPasswordStrength(newPassword)/4)*100} 
-                    color={getPasswordStrengthColor(newPassword)} 
+                <Box sx={{ width: '100%', mb: 2 }}>
+                  <LinearProgress
+                    variant="determinate"
+                    value={(getPasswordStrength(newPassword) / 4) * 100}
+                    color={getPasswordStrengthColor(newPassword)}
+                    sx={{ height: 8, borderRadius: 1 }}
                   />
-                  <Typography variant="caption">
-                    Fuerza: {['Muy débil','Débil','Media','Fuerte','Muy fuerte'][getPasswordStrength(newPassword)]}
+                  <Typography variant="caption" sx={{ mt: 0.5, display: 'block', textAlign: 'right' }}>
+                    Fortaleza: {['Débil', 'Regular', 'Media', 'Fuerte', 'Muy fuerte'][getPasswordStrength(newPassword)]}
                   </Typography>
-                </>
+                </Box>
               )}
+
               <TextField
                 label="Confirmar contraseña"
                 type={showConfirmPassword ? 'text' : 'password'}
                 fullWidth
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 variant="outlined"
-                error={confirmPassword !== '' && newPassword !== confirmPassword}
-                helperText={confirmPassword !== '' && newPassword !== confirmPassword ? 'Las contraseñas no coinciden' : ''}
+                sx={{ mb: 3 }}
                 InputProps={{
-                  startAdornment: (
-                    <InputAdornment position="start">
-                      <LockOutlinedIcon fontSize="small" />
-                    </InputAdornment>
-                  ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowConfirmPassword(s => !s)}>
-                        {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                      <IconButton
+                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        edge="end"
+                      >
+                        {showConfirmPassword ? <VisibilityOffIcon /> : <VisibilityIcon />}
                       </IconButton>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
-            </Stack>
-          )}
-        </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          {passwordStep === 'verify' ? (
-            <>
-              <Button onClick={() => setEditSection('none')} variant="outlined">
-                Cancelar
-              </Button>
+
               <Button
-                onClick={() => verifyAndUpdate('password')}
                 variant="contained"
-                disabled={!passwordCode}
-              >
-                Verificar
-              </Button>
-            </>
-          ) : (
-            <>
-              <Button 
-                onClick={() => setPasswordStep('verify')} 
-                variant="outlined"
-              >
-                Volver
-              </Button>
-              <Button 
+                fullWidth
                 onClick={() => verifyAndUpdate('password')}
-                variant="contained"
-                disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || getPasswordStrength(newPassword) < 2}
+                disabled={!newPassword || !confirmPassword || getPasswordStrength(newPassword) < 3}
               >
                 Cambiar contraseña
               </Button>
             </>
           )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setEditSection('none')}>Cerrar</Button>
         </DialogActions>
       </Dialog>
-      <Dialog 
-        open={openCancel} 
+      <Dialog
+        open={openCancel}
         onClose={() => setOpenCancel(false)}
-        PaperProps={{
-          sx: {
-            borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
-          }
-        }}
       >
-        <DialogTitle>Confirmar cancelación</DialogTitle>
+        <DialogTitle>¿Estás seguro?</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro que deseas cancelar tu usuario? Esta acción es irreversible.
+            Esta acción eliminará tu cuenta y todos tus datos (incluyendo historial de notificaciones y suscripciones). Esta acción es irreversible.
           </DialogContentText>
         </DialogContent>
-        <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setOpenCancel(false)} variant="outlined">
-            Volver
-          </Button>
-          <Button 
-            onClick={cancelAccount}
-            variant="contained"
-            color="error"
-          >
-            Sí, cancelar
+        <DialogActions>
+          <Button onClick={() => setOpenCancel(false)}>No cancelar</Button>
+          <Button onClick={() => { setOpenCancel(false); cancelAccount(); }} color="error" autoFocus>
+            Sí, eliminar mi cuenta
           </Button>
         </DialogActions>
       </Dialog>
-      
-      {/* Cookie Preferences Modal */}
-      <CookiePreferencesModal />
-      {/* Snackbar for success and error messages */}
+
       <Snackbar
         open={!!successMessage}
-        autoHideDuration={4000}
+        autoHideDuration={6000}
         onClose={() => setSuccessMessage(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
@@ -997,9 +944,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           {successMessage}
         </MuiAlert>
       </Snackbar>
+
       <Snackbar
         open={!!errorMessage}
-        autoHideDuration={5000}
+        autoHideDuration={6000}
         onClose={() => setErrorMessage(null)}
         anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
       >
@@ -1009,4 +957,4 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
       </Snackbar>
     </Box>
   );
-} 
+}

@@ -4,7 +4,6 @@ import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Box, BottomNavigation as MuiBottomNavigation, BottomNavigationAction, useTheme, useMediaQuery } from '@mui/material';
 import { Schedule, LiveTv } from '@mui/icons-material';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
@@ -13,7 +12,7 @@ import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 export default function BottomNavigation() {
   const router = useRouter();
   const pathname = usePathname();
-  const { mode } = useThemeContext();
+  // const { mode } = useThemeContext();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const theme = useTheme();
@@ -37,7 +36,7 @@ export default function BottomNavigation() {
 
   // Only show on main pages (not on subscriptions, profile, etc.)
   const showOnPage = pathname === '/' || pathname === '/streamers';
-  
+
   if (!showOnPage) {
     return null;
   }
@@ -70,10 +69,8 @@ export default function BottomNavigation() {
         left: 0,
         right: 0,
         zIndex: 1000,
-        borderTop: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.12)' : 'rgba(255,255,255,0.12)'}`,
-        backgroundColor: mode === 'light' 
-          ? 'rgba(255,255,255,0.95)' 
-          : 'rgba(30,41,59,0.95)',
+        borderTop: '1px solid rgba(255,255,255,0.12)',
+        backgroundColor: 'rgba(30,41,59,0.95)',
         backdropFilter: 'blur(8px)',
         // Use safe area insets to avoid overlapping with system navigation bars
         paddingBottom: 'env(safe-area-inset-bottom, 0px)',
@@ -86,9 +83,9 @@ export default function BottomNavigation() {
         sx={{
           backgroundColor: 'transparent',
           '& .MuiBottomNavigationAction-root': {
-            color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)',
+            color: 'rgba(255,255,255,0.6)',
             '&.Mui-selected': {
-              color: mode === 'light' ? '#1976d2' : '#42a5f5',
+              color: '#42a5f5',
             },
             '& .MuiBottomNavigationAction-label': {
               textTransform: 'uppercase',

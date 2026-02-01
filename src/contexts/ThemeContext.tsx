@@ -3,13 +3,9 @@
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
 import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, CircularProgress, Components } from '@mui/material';
 import type { ThemeOptions } from '@mui/material/styles';
-import { event as gaEvent } from '@/lib/gtag';
-
-type ThemeMode = 'light' | 'dark';
 
 interface ThemeContextType {
-  mode: ThemeMode;
-  toggleTheme: () => void;
+  mode: 'dark';
   theme: Theme;
 }
 
@@ -23,26 +19,26 @@ export const useThemeContext = () => {
   return context;
 };
 
-const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
+const getDesignTokens = (): ThemeOptions => ({
   palette: {
-    mode,
+    mode: 'dark',
     primary: {
-      main: mode === 'light' ? '#2563eb' : '#3b82f6',
-      light: mode === 'light' ? '#3b82f6' : '#60a5fa',
-      dark: mode === 'light' ? '#1d4ed8' : '#2563eb',
+      main: '#3b82f6',
+      light: '#60a5fa',
+      dark: '#2563eb',
     },
     secondary: {
-      main: mode === 'light' ? '#059669' : '#10b981',
-      light: mode === 'light' ? '#10b981' : '#34d399',
-      dark: mode === 'light' ? '#047857' : '#059669',
+      main: '#10b981',
+      light: '#34d399',
+      dark: '#059669',
     },
     background: {
-      default: mode === 'light' ? '#f8fafc' : '#0f172a',
-      paper: mode === 'light' ? '#ffffff' : '#1e293b',
+      default: '#0f172a',
+      paper: '#1e293b',
     },
     text: {
-      primary: mode === 'light' ? '#111827' : '#f1f5f9',
-      secondary: mode === 'light' ? '#4B5563' : '#cbd5e1',
+      primary: '#f1f5f9',
+      secondary: '#cbd5e1',
     },
   },
   typography: {
@@ -77,29 +73,23 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
           transition: 'all 0.2s ease-in-out',
           '&:hover': {
             transform: 'translateY(-1px)',
-            boxShadow: mode === 'light'
-              ? '0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1)'
-              : '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
+            boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.3), 0 2px 4px -2px rgb(0 0 0 / 0.3)',
           },
         },
         contained: {
-          background: mode === 'light'
-            ? 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)'
-            : 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+          background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
           color: '#ffffff',
           '&:hover': {
-            background: mode === 'light'
-              ? 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)'
-              : 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
+            background: 'linear-gradient(135deg, #60a5fa 0%, #3b82f6 100%)',
           },
         },
         outlined: {
-          borderColor: mode === 'light' ? '#e2e8f0' : '#334155',
-          color: mode === 'light' ? '#64748b' : '#94a3b8',
-          backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
+          borderColor: '#334155',
+          color: '#94a3b8',
+          backgroundColor: '#1e293b',
           '&:hover': {
-            borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
-            backgroundColor: mode === 'light' ? '#f8fafc' : '#334155',
+            borderColor: '#475569',
+            backgroundColor: '#334155',
           },
         },
       },
@@ -107,7 +97,7 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
     MuiTooltip: {
       styleOverrides: {
         tooltip: {
-          backgroundColor: mode === 'light' ? '#1e293b' : '#0f172a',
+          backgroundColor: '#0f172a',
           padding: '12px 16px',
           maxWidth: 320,
           fontSize: '0.875rem',
@@ -115,7 +105,7 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
           borderRadius: 8,
         },
         arrow: {
-          color: mode === 'light' ? '#1e293b' : '#0f172a',
+          color: '#0f172a',
         },
       },
     },
@@ -138,48 +128,23 @@ const getDesignTokens = (mode: ThemeMode): ThemeOptions => ({
 
 export const CustomThemeProvider = ({ children }: { children: React.ReactNode }) => {
   const [mounted, setMounted] = useState(false);
-  const [mode, setMode] = useState<ThemeMode>('dark');
 
   useEffect(() => {
-    const savedMode = localStorage.getItem('themeMode') as ThemeMode;
-    if (savedMode && (savedMode === 'light' || savedMode === 'dark')) {
-      setMode(savedMode);
-    } else if (window.matchMedia('(prefers-color-scheme: dark)').matches) {
-      setMode('dark');
-    }
+    document.documentElement.setAttribute('data-theme', 'dark');
     setMounted(true);
   }, []);
 
-  useEffect(() => {
-    document.documentElement.setAttribute('data-theme', mode);
-  }, [mode]);
-
-  const toggleTheme = () => {
-    setMode((prevMode) => {
-      const newMode = prevMode === 'light' ? 'dark' : 'light';
-      localStorage.setItem('themeMode', newMode);
-      gaEvent({
-        action: 'theme_change',
-        params: {
-          new_mode: newMode,
-          old_mode: prevMode,
-        }
-      });
-      return newMode;
-    });
-  };
-
-  const theme = useMemo(() => createTheme(getDesignTokens(mode)), [mode]);
-  const contextValue = useMemo(() => ({ mode, toggleTheme, theme }), [mode, theme]);
+  const theme = useMemo(() => createTheme(getDesignTokens()), []);
+  const contextValue = useMemo(() => ({ mode: 'dark' as const, theme }), [theme]);
 
   if (!mounted) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
         minHeight="100dvh"
-        sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#0f172a' }}
+        sx={{ backgroundColor: '#0f172a' }}
       >
         <CircularProgress />
       </Box>

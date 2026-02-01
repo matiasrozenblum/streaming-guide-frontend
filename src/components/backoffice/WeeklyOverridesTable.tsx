@@ -53,7 +53,6 @@ import type { Schedule as ScheduleType } from '@/types/schedule';
 import type { WeeklyOverride } from '@/types/schedule';
 import type { Program } from '@/types/program';
 import type { Panelist } from '@/types/panelist';
-import { useTheme } from '@mui/material/styles';
 
 // Types
 interface WeeklyStats {
@@ -87,7 +86,6 @@ const OVERRIDE_TYPES = [
 export function WeeklyOverridesTable() {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const theme = useTheme();
 
   // State
   const [currentTab, setCurrentTab] = useState(0);
@@ -131,7 +129,7 @@ export function WeeklyOverridesTable() {
 
     try {
       setLoading(true);
-      
+
       const [overridesRes, schedulesRes, programsRes, panelistsRes, statsRes] = await Promise.all([
         fetch('/api/weekly-overrides', {
           headers: { Authorization: `Bearer ${typedSession.accessToken}` },
@@ -163,7 +161,7 @@ export function WeeklyOverridesTable() {
         setSchedules(schedulesData || []);
       } else {
         console.error('Failed to fetch schedules:', schedulesRes.status, await schedulesRes.text());
-    }
+      }
 
       if (programsRes.ok) {
         const programsData = await programsRes.json();
@@ -339,12 +337,12 @@ export function WeeklyOverridesTable() {
         createdBy: typedSession?.user?.name || 'Admin',
       };
 
-      const url = isEditMode && editingOverride 
+      const url = isEditMode && editingOverride
         ? `/api/weekly-overrides/${editingOverride.id}`
         : '/api/weekly-overrides';
-      
+
       const method = isEditMode ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -392,7 +390,7 @@ export function WeeklyOverridesTable() {
   const handleEdit = (override: WeeklyOverride) => {
     setEditingOverride(override);
     setIsEditMode(true);
-    
+
     // Populate form with existing data
     setFormData({
       targetWeek: override.weekStartDate === getWeekStartDate('current') ? 'current' : 'next',
@@ -416,7 +414,7 @@ export function WeeklyOverridesTable() {
         stream_url: '',
       },
     });
-    
+
     setOpenDialog(true);
   };
 
@@ -488,7 +486,7 @@ export function WeeklyOverridesTable() {
     const now = new Date();
     const currentDay = now.getDay();
     const daysToMonday = currentDay === 0 ? 6 : currentDay - 1; // Sunday = 0, Monday = 1
-    
+
     if (targetWeek === 'current') {
       const monday = new Date(now);
       monday.setDate(now.getDate() - daysToMonday);
@@ -563,24 +561,24 @@ export function WeeklyOverridesTable() {
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
         <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
-          <Tab 
-            label={`Semana Actual (${currentWeekOverrides.length} cambios)`} 
+          <Tab
+            label={`Semana Actual (${currentWeekOverrides.length} cambios)`}
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
-          <Tab 
-            label={`Próxima Semana (${nextWeekOverrides.length} cambios)`} 
+          <Tab
+            label={`Próxima Semana (${nextWeekOverrides.length} cambios)`}
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
-          <Tab 
-            label="Crear Cambios" 
+          <Tab
+            label="Crear Cambios"
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
-          <Tab 
-            label="Cambios por Programa" 
+          <Tab
+            label="Cambios por Programa"
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
-          <Tab 
-            label="Programas Especiales" 
+          <Tab
+            label="Programas Especiales"
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
         </Tabs>
@@ -606,12 +604,12 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
                   <TableRow key={override.id}>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
-                        {override.overrideType === 'create' 
+                        {override.overrideType === 'create'
                           ? override.specialProgram?.name || 'Programa especial'
                           : program?.name || schedule?.program.name || 'Programa desconocido'
                         }
@@ -635,7 +633,7 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2">
                         {override.overrideType === 'create'
                           ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
-                          : schedule 
+                          : schedule
                             ? `${getDayLabel(schedule.day_of_week)} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`
                             : 'Programa completo'
                         }
@@ -709,12 +707,12 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
                   <TableRow key={override.id}>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
-                        {override.overrideType === 'create' 
+                        {override.overrideType === 'create'
                           ? override.specialProgram?.name || 'Programa especial'
                           : program?.name || schedule?.program.name || 'Programa desconocido'
                         }
@@ -738,7 +736,7 @@ export function WeeklyOverridesTable() {
                       <Typography variant="body2">
                         {override.overrideType === 'create'
                           ? `${getDayLabel(override.newDayOfWeek || '')} ${formatTime(override.newStartTime || '')}-${formatTime(override.newEndTime || '')}`
-                          : schedule 
+                          : schedule
                             ? `${getDayLabel(schedule.day_of_week)} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`
                             : 'Programa completo'
                         }
@@ -798,7 +796,7 @@ export function WeeklyOverridesTable() {
           <Typography variant="h6" gutterBottom sx={{ color: 'text.primary', fontWeight: 600 }}>
             Selecciona un horario para crear un cambio semanal
           </Typography>
-          
+
           {/* Search Box */}
           <Box sx={{ mb: 3 }}>
             <TextField
@@ -926,7 +924,7 @@ export function WeeklyOverridesTable() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Selecciona un programa para crear un cambio que afecte a todos sus horarios semanales. Esto es útil para cancelar o modificar un programa completo.
           </Typography>
-          
+
           {/* Search Box */}
           <Box sx={{ mb: 3 }}>
             <TextField
@@ -1062,7 +1060,7 @@ export function WeeklyOverridesTable() {
           <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
             Crea un programa especial que no existe en la base de datos. Este programa aparecerá en el horario con el indicador de &quot;cambio semanal&quot;.
           </Typography>
-          
+
           <Button
             variant="contained"
             startIcon={<AddCircle />}
@@ -1097,7 +1095,7 @@ export function WeeklyOverridesTable() {
           <Typography variant="h6" gutterBottom sx={{ mt: 4, color: 'text.primary', fontWeight: 600 }}>
             Programas Especiales Activos
           </Typography>
-          
+
           <TableContainer>
             <Table>
               <TableHead>
@@ -1183,14 +1181,14 @@ export function WeeklyOverridesTable() {
       )}
 
       {/* Create Override Dialog */}
-      <Dialog 
-        open={openDialog} 
-        onClose={handleCloseDialog} 
-        maxWidth="md" 
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="md"
         fullWidth
         PaperProps={{
           sx: {
-            backgroundColor: theme.palette.background.paper,
+            backgroundColor: 'background.paper',
           }
         }}
       >
@@ -1199,7 +1197,7 @@ export function WeeklyOverridesTable() {
             {isEditMode ? 'Editar Cambio Semanal' : 'Crear Cambio Semanal'}
           </Typography>
           {selectedSchedule && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+            <Box sx={{ mt: 1, p: 2, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 1 }}>
               <Typography variant="body1" fontWeight="bold" color="text.primary">
                 {selectedSchedule.program.name}
               </Typography>
@@ -1212,7 +1210,7 @@ export function WeeklyOverridesTable() {
             </Box>
           )}
           {selectedProgram && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+            <Box sx={{ mt: 1, p: 2, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 1 }}>
               <Typography variant="body1" fontWeight="bold" color="text.primary">
                 {selectedProgram.name}
               </Typography>
@@ -1323,7 +1321,7 @@ export function WeeklyOverridesTable() {
                             if (!createResponse.ok) throw new Error('Failed to create panelist');
 
                             const newPanelist = await createResponse.json();
-                            
+
                             // Update state
                             setPanelists([...panelists, newPanelist]);
                             setFormData({ ...formData, panelistIds: [...formData.panelistIds, newPanelist.id] });
@@ -1341,7 +1339,7 @@ export function WeeklyOverridesTable() {
                     </Button>
                   )}
                 </Box>
-                
+
                 {/* Selected Panelists */}
                 <Box sx={{ mt: 2 }}>
                   <Typography variant="subtitle2" gutterBottom>
@@ -1354,9 +1352,9 @@ export function WeeklyOverridesTable() {
                         <Chip
                           key={panelistId}
                           label={panelist.name}
-                          onDelete={() => setFormData({ 
-                            ...formData, 
-                            panelistIds: formData.panelistIds.filter(id => id !== panelistId) 
+                          onDelete={() => setFormData({
+                            ...formData,
+                            panelistIds: formData.panelistIds.filter(id => id !== panelistId)
                           })}
                         />
                       ) : null;
@@ -1372,7 +1370,7 @@ export function WeeklyOverridesTable() {
                 <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
                   Información del Programa Especial
                 </Typography>
-                
+
                 <TextField
                   label="Nombre del programa"
                   value={formData.specialProgram.name}
@@ -1383,7 +1381,7 @@ export function WeeklyOverridesTable() {
                   fullWidth
                   required
                 />
-                
+
                 <TextField
                   label="Descripción (opcional)"
                   value={formData.specialProgram.description}
@@ -1395,7 +1393,7 @@ export function WeeklyOverridesTable() {
                   multiline
                   rows={2}
                 />
-                
+
                 {/* Channel selection dropdown */}
                 <FormControl fullWidth required>
                   <InputLabel id="special-program-channel-label">Canal</InputLabel>
@@ -1416,7 +1414,7 @@ export function WeeklyOverridesTable() {
                     Selecciona el canal donde se emitirá el programa
                   </Typography>
                 </FormControl>
-                
+
                 <TextField
                   label="URL de imagen (opcional)"
                   value={formData.specialProgram.imageUrl}
@@ -1427,7 +1425,7 @@ export function WeeklyOverridesTable() {
                   fullWidth
                   placeholder="https://example.com/image.jpg"
                 />
-                
+
                 <TextField
                   label="URL de stream/playlist (opcional)"
                   value={formData.specialProgram.stream_url}
@@ -1518,14 +1516,14 @@ export function WeeklyOverridesTable() {
           <Button onClick={handleCloseDialog} variant="outlined">
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
             startIcon={isEditMode ? <Edit /> : <Add />}
             disabled={
-              formData.overrideType !== 'cancel' && 
-              (!formData.newStartTime || !formData.newEndTime || 
-               (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
+              formData.overrideType !== 'cancel' &&
+              (!formData.newStartTime || !formData.newEndTime ||
+                (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
             }
           >
             {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
@@ -1548,4 +1546,4 @@ export function WeeklyOverridesTable() {
       </Snackbar>
     </Box>
   );
-} 
+}

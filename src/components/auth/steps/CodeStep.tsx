@@ -1,75 +1,135 @@
-import React, { useState, useEffect } from 'react';
-import {
-  Box,
-  TextField,
-  Button,
-  Alert,
-  AlertTitle,
-  Typography,
-  useTheme
-} from '@mui/material';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
+
+import React, { useRef, useEffect } from 'react';
+/* eslint-disable @typescript-eslint/no-explicit-any */
+/* eslint-disable @typescript-eslint/no-unused-vars */
+/* eslint-disable react-hooks/exhaustive-deps */
+import { Box, Typography, Button, TextField, Link } from '@mui/material';
+import { useTheme } from '@mui/material/styles';
 
 interface CodeStepProps {
-  email: string;
-  initialCode?: string;
-  onSubmit: (code: string) => void;
-  onBack: () => void;
+  code: string;
+  setCode: (value: string) => void;
+  onSubmit: () => void;
+  onResend: () => void;
   isLoading: boolean;
-  error?: string;
+  error: string;
+  identifier: string;
+  onBack: () => void;
+  codeSent: boolean;
 }
 
-// OtpInput component
-interface OtpInputProps {
-  value: string;
-  onChange: (val: string) => void;
-  length?: number;
-  disabled?: boolean;
-}
-function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputProps) {
+export default function CodeStep({
+  code,
+  setCode,
+  onSubmit,
+  onResend,
+  isLoading,
+  error,
+  identifier,
+  onBack,
+  codeSent
+}: CodeStepProps) {
   const theme = useTheme();
-  const inputs = React.useRef<(HTMLInputElement | null)[]>([]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
-    const val = e.target.value.replace(/[^0-9]/g, ''); // Only numbers
-    if (!val) return;
+  return (
+    <Box>
+      <Typography variant="h6" align="center" gutterBottom>
+        Verifica tu cuenta
+      </Typography>
+      <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
+        Ingresa el código de 6 dígitos enviado a <strong>{identifier}</strong>.
+      </Typography>
+
+      <Box sx={{ display: 'flex', justifyContent: 'center', gap: 1, mb: 3 }}>
+        <OtpInput
+          value={code}
+          onChange={setCode}
+          numInputs={6}
+          isLoading={isLoading}
+          error={!!error}
+        />
+      </Box>
+
+      {error && (
+        <Typography color="error" variant="caption" align="center" display="block" sx={{ mb: 2 }}>
+          {error}
+        </Typography>
+      )}
+
+      <Button
+        fullWidth
+        variant="contained"
+        size="large"
+        onClick={onSubmit}
+        disabled={isLoading || code.length !== 6}
+        sx={{ mb: 2 }}
+      >
+        {isLoading ? 'Verificando...' : 'Verificar'}
+      </Button>
+
+      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Button onClick={onBack} disabled={isLoading} size="small" sx={{ textTransform: 'none' }}>
+          Cambiar destino
+        </Button>
+        <Link
+          component="button"
+          variant="body2"
+          onClick={onResend}
+          disabled={isLoading}
+          sx={{ textTransform: 'none', cursor: 'pointer' }}
+        >
+          {codeSent ? 'Reenviar código' : 'Enviar código'}
+        </Link>
+      </Box>
+    </Box>
+  );
+}
+
+// Simple OTP Input component
+const OtpInput = ({ value, onChange, numInputs, isLoading, error }: any) => {
+  const theme = useTheme();
+  const inputsRef = useRef<(HTMLInputElement | null)[]>([]);
+
+  useEffect(() => {
+    if (value.length === 0 && inputsRef.current[0]) {
+      inputsRef.current[0]?.focus();
+    }
+  }, []);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>, index: number) => {
+    const val = e.target.value;
+    if (!/^\d*$/.test(val)) return;
+
     const newValue = value.split('');
-    newValue[idx] = val[val.length - 1]; // Only last digit if pasted multiple
-    onChange(newValue.join(''));
-    // Move to next input
-    if (idx < length - 1 && val) {
-      inputs.current[idx + 1]?.focus();
+    newValue[index] = val.substring(val.length - 1);
+    const nextValue = newValue.join('');
+
+    onChange(nextValue);
+
+    if (val && index < numInputs - 1) {
+      inputsRef.current[index + 1]?.focus();
     }
   };
 
-  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
-    if (e.key === 'Backspace' && !value[idx] && idx > 0) {
-      const newValue = value.split('');
-      newValue[idx - 1] = '';
-      onChange(newValue.join(''));
-      inputs.current[idx - 1]?.focus();
-      e.preventDefault();
-    }
-  };
-
-  const handlePaste = (e: React.ClipboardEvent<HTMLDivElement>) => {
-    const paste = e.clipboardData.getData('text').replace(/[^0-9]/g, '').slice(0, length);
-    if (paste.length === length) {
-      onChange(paste);
-      inputs.current[length - 1]?.focus();
-      e.preventDefault();
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === 'Backspace' && !value[index] && index > 0) {
+      inputsRef.current[index - 1]?.focus();
     }
   };
 
   return (
-    <Box display="flex" gap={2} justifyContent="center" onPaste={handlePaste} mb={1}>
-      {Array.from({ length }).map((_, idx) => (
+    <>
+      {Array.from({ length: numInputs }).map((_, i) => (
         <TextField
-          key={idx}
-          inputRef={el => inputs.current[idx] = el}
-          value={value[idx] || ''}
-          onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e, idx)}
-          onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)}
+          key={i}
+          inputRef={(el) => (inputsRef.current[i] = el)}
+          value={value[i] || ''}
+          onChange={(e) => handleChange(e as any, i)}
+          onKeyDown={(e) => handleKeyDown(e as any, i)}
+          disabled={isLoading}
+          error={error}
+          variant="outlined"
+          size="small"
           inputProps={{
             maxLength: 1,
             style: {
@@ -77,118 +137,27 @@ function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputPro
               fontSize: 20,
               width: 12,
               height: 20,
-              background: theme.palette.mode === 'dark' ? '#16213A' : '#fff',
-              color: theme.palette.mode === 'dark' ? '#fff' : '#111',
+              background: '#16213A', // Hardcoded dark mode background
+              color: '#fff', // Hardcoded dark mode text
               borderRadius: 8,
-            },
-            inputMode: 'numeric',
-            pattern: '[0-9]*',
+            }
           }}
-          disabled={disabled}
+          sx={{
+            '& .MuiOutlinedInput-root': {
+              borderRadius: 2,
+              '& fieldset': {
+                borderColor: 'rgba(255,255,255,0.1)',
+              },
+              '&:hover fieldset': {
+                borderColor: 'primary.main',
+              },
+              '&.Mui-focused fieldset': {
+                borderColor: 'primary.main',
+              },
+            }
+          }}
         />
       ))}
-    </Box>
+    </>
   );
-}
-
-export default function CodeStep({
-  email,
-  initialCode = '',
-  onSubmit,
-  onBack,
-  isLoading,
-  error
-}: CodeStepProps) {
-  const [code, setCode] = useState(initialCode.padEnd(6, ''));
-  const [localErr, setLocalErr] = useState('');
-  const [countdown, setCountdown] = useState(30);
-  const [canResend, setCanResend] = useState(false);
-
-  useEffect(() => {
-    if (countdown > 0 && !canResend) {
-      const t = setTimeout(() => setCountdown(c => c - 1), 1000);
-      return () => clearTimeout(t);
-    }
-    if (countdown === 0) {
-      setCanResend(true);
-    }
-  }, [countdown, canResend]);
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!code || code.length < 6) {
-      setLocalErr('El código debe tener 6 dígitos');
-      return;
-    }
-    setLocalErr('');
-    onSubmit(code.trim());
-  };
-
-  const handleResend = async () => {
-    setCanResend(false);
-    setCountdown(30);
-    
-    try {
-      const res = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier: email }),
-      });
-
-      if (!res.ok) {
-        const error = await res.json();
-        throw new Error(error.message || 'Error al reenviar el código');
-      }
-      
-      console.log('✅ Código reenviado exitosamente');
-    } catch (error) {
-      console.error('❌ Error al reenviar código:', error);
-      setLocalErr(error instanceof Error ? error.message : 'Error al reenviar el código');
-    }
-  };
-
-  return (
-    <Box component="form" onSubmit={handleSubmit} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-      <Typography variant="body2" textAlign="center">
-        Ingresá el código que recibiste en <strong>{email}</strong>
-      </Typography>
-      <OtpInput value={code} onChange={setCode} length={6} disabled={isLoading} />
-      {(localErr || error) && (
-        <Alert severity="error">
-          <AlertTitle>Error</AlertTitle>
-          {localErr || error}
-        </Alert>
-      )}
-      <Box textAlign="center">
-        <Button
-          variant="text"
-          disabled={!canResend}
-          onClick={handleResend}
-        >
-          {canResend
-            ? 'Reenviar código'
-            : `Reenviar en ${countdown}s`}
-        </Button>
-      </Box>
-      <Box sx={{ display: 'flex', gap: 1, flexDirection: 'column' }}>
-        <Button
-          type="submit"
-          variant="contained"
-          fullWidth
-          disabled={isLoading}
-        >
-          Verificar
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          disabled={isLoading}
-          onClick={onBack}
-        >
-          Volver
-        </Button>
-      </Box>
-    </Box>
-  );
-}
+};

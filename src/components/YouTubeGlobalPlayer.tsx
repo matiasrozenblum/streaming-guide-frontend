@@ -5,12 +5,10 @@ import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useEffect, useRef, useState, useCallback } from 'react';
-import { useTheme } from '@mui/material/styles';
 
 export const YouTubeGlobalPlayer = () => {
   const { playerData, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
   const isMobile = useMediaQuery('(max-width:600px)');
-  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
@@ -21,27 +19,27 @@ export const YouTubeGlobalPlayer = () => {
   const margin = 20;
   const paddingCompensation = 32;
 
-  const buttonBgColor = theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5';
+  const buttonBgColor = '#1e293b';
 
   const moveTo = useCallback((clientX: number, clientY: number) => {
     if (!dragging) return;
-    
+
     const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
     const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
-    
+
     setPosition({ x: clampedX, y: clampedY });
   }, [dragging, minimizedWidth, minimizedHeight]);
-  
+
   const handleMouseUp = useCallback(() => {
     if (dragging) {
       setDragging(false);
     }
   }, [dragging]);
-  
+
   const handleMouseMove = useCallback((e: MouseEvent) => {
     moveTo(e.clientX, e.clientY);
   }, [moveTo]);
-  
+
   const handleTouchMove = useCallback((e: TouchEvent) => {
     if (!dragging) return;
     e.preventDefault();
@@ -106,11 +104,11 @@ export const YouTubeGlobalPlayer = () => {
     const handleTouchMove = (e: TouchEvent) => {
       e.preventDefault();
     };
-  
+
     if (dragging) {
       document.addEventListener('touchmove', handleTouchMove, { passive: false });
     }
-  
+
     return () => {
       document.removeEventListener('touchmove', handleTouchMove);
     };
@@ -135,7 +133,7 @@ export const YouTubeGlobalPlayer = () => {
 
   // Determine if this is a streaming service (Twitch/Kick) that benefits from larger mobile popup
   const isStreamingService = playerData.service === 'twitch' || playerData.service === 'kick';
-  
+
   // Calculate responsive dimensions
   const getPopupDimensions = () => {
     if (minimized) {
@@ -144,7 +142,7 @@ export const YouTubeGlobalPlayer = () => {
         height: minimizedHeight,
       };
     }
-    
+
     if (isMobile) {
       // Mobile: 95% width, height calculated to maintain ~16:9 aspect ratio
       // Account for padding (8px top + 8px bottom = 16px) and controls (~40px)
@@ -156,7 +154,7 @@ export const YouTubeGlobalPlayer = () => {
         height: isStreamingService ? '54vh' : '52vh',
       };
     }
-    
+
     // Desktop: keep current dimensions
     return {
       width: '80%',
@@ -170,21 +168,21 @@ export const YouTubeGlobalPlayer = () => {
   return (
     <>
       {minimized && dragging && (
-         <Box
-         onTouchStart={(e) => e.preventDefault()}
-         onTouchMove={(e) => e.preventDefault()}
-         onTouchEnd={(e) => e.preventDefault()}
-         onMouseDown={(e) => e.preventDefault()}
-         sx={{
-           position: 'fixed',
-           top: 0,
-           left: 0,
-           width: '100vw',
-           height: '100dvh',
-           backgroundColor: 'rgba(0, 0, 0, 0.2)',
-           zIndex: 1999,
-         }}
-       />
+        <Box
+          onTouchStart={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+          onTouchEnd={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100dvh',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            zIndex: 1999,
+          }}
+        />
       )}
 
       <Box
@@ -212,10 +210,10 @@ export const YouTubeGlobalPlayer = () => {
           transition: 'all 0.3s ease',
         }}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          mb: isMobile && !minimized ? 0.5 : 1, 
+        <Box sx={{
+          display: 'flex',
+          justifyContent: 'flex-end',
+          mb: isMobile && !minimized ? 0.5 : 1,
           gap: 1,
           flexShrink: 0,
         }}>
@@ -233,10 +231,10 @@ export const YouTubeGlobalPlayer = () => {
           </IconButton>
         </Box>
 
-        <Box sx={{ 
-          flexGrow: 1, 
-          width: '100%', 
-          borderRadius: 2, 
+        <Box sx={{
+          flexGrow: 1,
+          width: '100%',
+          borderRadius: 2,
           overflow: 'hidden',
           minHeight: 0, // Important for flex children to shrink properly
         }}>

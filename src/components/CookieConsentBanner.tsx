@@ -11,11 +11,10 @@ import {
 } from '@mui/material';
 
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
-import { useThemeContext } from '@/contexts/ThemeContext';
 
 export function CookieConsentBanner() {
   const theme = useTheme();
-  const { mode } = useThemeContext();
+  // const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const { showBanner, showPreferences, acceptAll, openPreferences } = useCookieConsent();
 
@@ -40,101 +39,99 @@ export function CookieConsentBanner() {
         sx={{
           p: { xs: 1, sm: 2.5 },
           borderRadius: 3,
-          backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-          border: `1px solid ${mode === 'light' ? '#e2e8f0' : '#374155'}`,
+          backgroundColor: '#1e293b',
+          border: '1px solid #374155',
           backdropFilter: 'blur(10px)',
-          boxShadow: mode === 'light' 
-            ? '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)'
-            : '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
+          boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2)',
         }}
       >
-          <Stack 
-            direction={isMobile ? 'column' : 'row'} 
-            spacing={isMobile ? 0.25 : 2} 
-            alignItems={isMobile ? 'flex-start' : 'center'}
-            justifyContent="space-between"
-          >
-            {/* Compact text section */}
-            <Box sx={{ flex: 1, minWidth: 0 }}>
-              <Typography 
-                variant="body2" 
-                sx={{ 
-                  fontSize: { xs: '0.8rem', sm: '0.875rem' },
-                  lineHeight: isMobile ? 0.5 : 1.5,
-                  color: mode === 'light' ? '#111827' : '#f1f5f9',
-                }}
-              >
-                Usamos cookies para mejorar tu experiencia.{' '}
-                <br />
-                Descubrí{' '}
-                <Button
-                  variant="text"
-                  size="small"
-                  sx={{ 
-                    p: 0, 
-                    minWidth: 'auto', 
-                    textDecoration: 'underline',
-                    fontSize: 'inherit',
-                    lineHeight: 'inherit',
-                    verticalAlign: 'baseline',
-                    color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                    textTransform: 'none',
-                    '&:hover': {
-                      backgroundColor: 'transparent',
-                      textDecoration: 'underline',
-                    }
-                  }}
-                  onClick={() => window.open('/legal/politica-de-privacidad', '_blank')}
-                >
-                 más información
-                </Button>
-                .
-              </Typography>
-            </Box>
-
-            {/* Compact buttons */}
-            <Stack 
-              direction={isMobile ? 'column' : 'row'} 
-              spacing={isMobile ? 0.25 : 1}
-              sx={{ 
-                flexShrink: 0,
-                width: isMobile ? '100%' : 'auto'
+        <Stack
+          direction={isMobile ? 'column' : 'row'}
+          spacing={isMobile ? 0.25 : 2}
+          alignItems={isMobile ? 'flex-start' : 'center'}
+          justifyContent="space-between"
+        >
+          {/* Compact text section */}
+          <Box sx={{ flex: 1, minWidth: 0 }}>
+            <Typography
+              variant="body2"
+              sx={{
+                fontSize: { xs: '0.8rem', sm: '0.875rem' },
+                lineHeight: isMobile ? 0.5 : 1.5,
+                color: '#f1f5f9',
               }}
             >
-              {!isMobile && (
-                <Button
-                  variant="text"
-                  size="small"
-                  onClick={openPreferences}
-                  sx={{ 
-                    fontSize: '0.8rem',
-                    p: { xs: '4px 8px', sm: '4px 8px' },
-                    minWidth: 'auto',
-                    color: mode === 'light' ? '#2563eb' : '#3b82f6',
-                    '&:hover': {
-                      backgroundColor: mode === 'light' ? 'rgba(37, 99, 235, 0.04)' : 'rgba(59, 130, 246, 0.08)',
-                    }
-                  }}
-                >
-                  Configurar cookies
-                </Button>
-              )}
-              
+              Usamos cookies para mejorar tu experiencia.{' '}
+              <br />
+              Descubrí{' '}
               <Button
-                variant="contained"
+                variant="text"
                 size="small"
-                onClick={acceptAll}
+                sx={{
+                  p: 0,
+                  minWidth: 'auto',
+                  textDecoration: 'underline',
+                  fontSize: 'inherit',
+                  lineHeight: 'inherit',
+                  verticalAlign: 'baseline',
+                  color: '#3b82f6',
+                  textTransform: 'none',
+                  '&:hover': {
+                    backgroundColor: 'transparent',
+                    textDecoration: 'underline',
+                  }
+                }}
+                onClick={() => window.open('/legal/politica-de-privacidad', '_blank')}
+              >
+                más información
+              </Button>
+              .
+            </Typography>
+          </Box>
+
+          {/* Compact buttons */}
+          <Stack
+            direction={isMobile ? 'column' : 'row'}
+            spacing={isMobile ? 0.25 : 1}
+            sx={{
+              flexShrink: 0,
+              width: isMobile ? '100%' : 'auto'
+            }}
+          >
+            {!isMobile && (
+              <Button
+                variant="text"
+                size="small"
+                onClick={openPreferences}
                 sx={{
                   fontSize: '0.8rem',
-                  p: { xs: '4px 12px', sm: '4px 12px' },
+                  p: { xs: '4px 8px', sm: '4px 8px' },
                   minWidth: 'auto',
+                  color: '#3b82f6',
+                  '&:hover': {
+                    backgroundColor: 'rgba(59, 130, 246, 0.08)',
+                  }
                 }}
               >
-                Aceptar cookies
+                Configurar cookies
               </Button>
-            </Stack>
+            )}
+
+            <Button
+              variant="contained"
+              size="small"
+              onClick={acceptAll}
+              sx={{
+                fontSize: '0.8rem',
+                p: { xs: '4px 12px', sm: '4px 12px' },
+                minWidth: 'auto',
+              }}
+            >
+              Aceptar cookies
+            </Button>
           </Stack>
-        </Paper>
-      </Box>
+        </Stack>
+      </Paper>
+    </Box>
   );
 } 

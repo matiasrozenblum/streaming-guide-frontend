@@ -1,4 +1,5 @@
 'use client';
+/* eslint-disable @typescript-eslint/no-unused-vars */
 
 import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
@@ -17,31 +18,31 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     const [hours, minutes] = timeStr.split(':').map(Number);
     return hours * 60 + minutes;
   };
-  
+
   const formatTime = (minutes: number) => {
     const hours = Math.floor(minutes / 60);
     const mins = minutes % 60;
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
-  
+
   const startMinutes = parseTime(program.start_time);
   const endMinutes = parseTime(program.end_time);
   const duration = endMinutes - startMinutes;
-  
+
   // Define thresholds and max block duration based on device
   const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
   const maxBlockDuration = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
-  
+
   // Check if program needs to be split
   if (duration > threshold) {
     const blocks: Program[] = [];
     const numBlocks = Math.ceil(duration / maxBlockDuration);
     const actualBlockDuration = Math.ceil(duration / numBlocks);
-    
+
     for (let i = 0; i < numBlocks; i++) {
       const blockStart = startMinutes + (i * actualBlockDuration);
       const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
-      
+
       blocks.push({
         ...program,
         id: `${program.id}-block-${i}`, // Unique ID for each block
@@ -51,10 +52,10 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
         is_live: program.is_live,
       });
     }
-    
+
     return blocks;
   }
-  
+
   return [program]; // Return original program if doesn't need splitting
 };
 
@@ -84,16 +85,16 @@ interface Props {
   isToday?: boolean;
 }
 
-export const ScheduleRow = ({ 
-  channelName, 
-  channelLogo, 
+export const ScheduleRow = ({
+  channelName,
+  channelLogo,
   channelBackgroundColor,
-  programs, 
-  color, 
+  programs,
+  color,
   isToday,
 }: Props) => {
   const theme = useTheme();
-  const { mode } = useThemeContext();
+
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
@@ -109,19 +110,17 @@ export const ScheduleRow = ({
       justifyContent="center"
       position="sticky"
       left={0}
-      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      bgcolor={'#1e293b'}
       height="100%"
       zIndex={6}
-      sx={{ 
-        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-        boxShadow: mode === 'light' 
-          ? '2px 0 4px rgba(0,0,0,0.05)'
-          : '2px 0 4px rgba(0,0,0,0.2)',
+      sx={{
+        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '2px 0 4px rgba(0,0,0,0.2)',
       }}
     >
       {channelLogo ? (
-        <Avatar 
-          src={channelLogo} 
+        <Avatar
+          src={channelLogo}
           alt={channelName}
           variant="rounded"
           draggable={false}
@@ -129,9 +128,7 @@ export const ScheduleRow = ({
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
             background: channelBackgroundColor || '#ffffff', // fallback to white
-            boxShadow: mode === 'light'
-              ? '0 2px 4px rgba(0,0,0,0.1)'
-              : '0 2px 4px rgba(0,0,0,0.2)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             '& img': {
               objectFit: 'contain',
               width: '100%',
@@ -145,7 +142,7 @@ export const ScheduleRow = ({
           sx={{
             fontWeight: 600,
             fontSize: isMobile ? '0.875rem' : '1rem',
-            color: mode === 'light' ? '#374151' : '#f1f5f9',
+            color: '#f1f5f9',
             textAlign: 'center',
           }}
         >
@@ -164,14 +161,12 @@ export const ScheduleRow = ({
       justifyContent="center"
       position="sticky"
       left={0}
-      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      bgcolor={'#1e293b'}
       height="100%"
       zIndex={6}
-      sx={{ 
-        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-        boxShadow: mode === 'light' 
-          ? '2px 0 4px rgba(0,0,0,0.05)'
-          : '2px 0 4px rgba(0,0,0,0.2)',
+      sx={{
+        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '2px 0 4px rgba(0,0,0,0.2)',
       }}
     >
       {/* Blurred Logo Background */}
@@ -216,7 +211,7 @@ export const ScheduleRow = ({
             fontWeight: 700,
             fontSize: isMobile ? '0.875rem' : '1rem',
             lineHeight: 1.2,
-            color: mode === 'light' ? '#1e293b' : '#f1f5f9',
+            color: '#f1f5f9',
             textAlign: 'center',
             letterSpacing: '0.02em',
             textTransform: 'uppercase',
@@ -231,17 +226,15 @@ export const ScheduleRow = ({
 
   return (
     <>
-      <Box 
-        display="flex" 
-        alignItems="center" 
-        borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
+      <Box
+        display="flex"
+        alignItems="center"
+        borderBottom="1px solid rgba(255, 255, 255, 0.12)"
         position="relative"
         height={`${rowHeight}px`}
         sx={{
           '&:hover': {
-            backgroundColor: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.02)' 
-              : 'rgba(255, 255, 255, 0.02)',
+            backgroundColor: 'rgba(255, 255, 255, 0.02)',
           },
         }}
       >
@@ -254,43 +247,43 @@ export const ScheduleRow = ({
             // Always prioritize program's is_live field if it's explicitly set
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
-            
+
             // Check for time overlap with other programs
             const hasTimeOverlap = programs.some(otherProg => {
               if (otherProg.id === p.id) return false; // Don't compare with self
-              
+
               // Convert time strings to minutes for comparison
               const parseTime = (timeStr: string) => {
                 const [hours, minutes] = timeStr.split(':').map(Number);
                 return hours * 60 + minutes;
               };
-              
+
               const pStart = parseTime(p.start_time);
               const pEnd = parseTime(p.end_time);
               const otherStart = parseTime(otherProg.start_time);
               const otherEnd = parseTime(otherProg.end_time);
-              
+
               // Check for overlap: two time ranges overlap if one starts before the other ends
               return pStart < otherEnd && otherStart < pEnd;
             });
-            
+
             // Count overlapping programs (including self)
             const overlappingPrograms = programs.filter(prog => {
               if (prog.id === p.id) return true; // Include self
-              
+
               const parseTime = (timeStr: string) => {
                 const [hours, minutes] = timeStr.split(':').map(Number);
                 return hours * 60 + minutes;
               };
-              
+
               const pStart = parseTime(p.start_time);
               const pEnd = parseTime(p.end_time);
               const progStart = parseTime(prog.start_time);
               const progEnd = parseTime(prog.end_time);
-              
+
               return pStart < progEnd && progStart < pEnd;
             });
-            
+
             // Apply multiple streams layout if there's time overlap
             if (hasTimeOverlap) {
               return (

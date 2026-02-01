@@ -10,7 +10,6 @@ import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
 import { bannersApi } from '@/services/banners';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import BannerCarousel from '@/components/BannerCarousel';
@@ -46,7 +45,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const typedSession = session as SessionWithToken | null;
   const streamersEnabled = initialData.streamersEnabled;
   const isSeasonActive = isBeforeInBuenosAires('2026-01-02');
-  
+
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
@@ -56,7 +55,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [bannerVisible, setBannerVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
 
-  const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
 
   // Populate live status context with initial data synchronously
@@ -74,7 +72,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     return map;
   }, [initialData.weekSchedules]);
-  
+
   // Set initial live statuses immediately
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
@@ -105,9 +103,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const handleGridScroll = () => {
       const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
       if (!scheduleGrid) return;
-      
+
       const currentScrollY = scheduleGrid.scrollTop;
-      
+
       if (currentScrollY < 10) {
         // Show banner when at the very top
         setBannerVisible(true);
@@ -115,7 +113,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         // Hide banner on any scroll
         setBannerVisible(false);
       }
-      
+
       setLastScrollY(currentScrollY);
     };
 
@@ -123,7 +121,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     const scheduleGrid = document.querySelector('[data-schedule-grid]');
     if (scheduleGrid) {
       scheduleGrid.addEventListener('scroll', handleGridScroll, { passive: true });
-      
+
       // Cleanup
       return () => scheduleGrid.removeEventListener('scroll', handleGridScroll);
     }
@@ -146,7 +144,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         // Prevent default page scroll
         e.preventDefault();
-        
+
         // Forward the scroll to the grid
         scheduleGrid.scrollTop += e.deltaY;
       }
@@ -259,10 +257,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         sx={{
           height: '100%',
           maxWidth: '100vw',
-          background:
-            mode === 'light'
-              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
@@ -271,25 +266,25 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container 
-          maxWidth={false} 
-          disableGutters 
-          sx={{ 
-            px: 0, 
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{
+            px: 0,
             mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
-            maxWidth: { 
-              xs: '100%', 
+            maxWidth: {
+              xs: '100%',
               sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
             },
-            width: { 
-              xs: '100%', 
+            width: {
+              xs: '100%',
               sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
             },
             boxSizing: 'border-box',
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            minHeight: 0 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0
           }}
         >
           {/* CSS Keyframes for banner and grid animations */}

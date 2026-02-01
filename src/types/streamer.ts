@@ -25,6 +25,8 @@ export interface Streamer {
     order?: number;
   }>;
   is_live?: boolean; // Live status from backend
+  description?: string;
+  banner_url?: string;
 }
 
 // Frontend display interface (for compatibility with existing components)

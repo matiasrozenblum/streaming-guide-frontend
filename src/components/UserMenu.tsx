@@ -87,9 +87,7 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
           backdropFilter: 'blur(8px)',
           color: 'text.primary',
           '&:hover': {
-            backgroundColor: theme.palette.mode === 'light'
-              ? 'rgba(255,255,255,0.95)'
-              : 'rgba(50,61,79,0.95)',
+            backgroundColor: 'rgba(50,61,79,0.95)',
           },
           transition: 'background-color 0.3s ease, border 0.3s ease',
         }}
@@ -135,14 +133,14 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
             overflow: 'visible',
             mt: 1,
             borderRadius: '8px',
-            border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.15)'}`,
-            backgroundColor: theme.palette.mode === 'light' ? 'rgba(248,249,250,0.9)' : 'rgba(30,41,59,0.95)', // Adjusted for distinct menu appearance
+            border: '1px solid rgba(255,255,255,0.15)',
+            backgroundColor: 'rgba(30,41,59,0.95)', // Adjusted for distinct menu appearance
             backdropFilter: 'blur(8px)',
             '& .MuiMenuItem-root': {
               fontSize: '1rem',
               padding: '10px 16px',
               '&:hover': {
-                backgroundColor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.04)' : 'rgba(255,255,255,0.08)',
+                backgroundColor: 'rgba(255,255,255,0.08)',
               },
             },
             '& .MuiListItemIcon-root': { // Style for icons in menu items
@@ -177,7 +175,7 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
           </ListItemIcon>
           Favoritos
         </MenuItem>
-        <Divider sx={{ my: 0.5, borderColor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.08)' : 'rgba(255,255,255,0.12)' }} />
+        <Divider sx={{ my: 0.5, borderColor: 'rgba(255,255,255,0.12)' }} />
         {showHomeOption ? (
           <MenuItem
             onClick={() => {

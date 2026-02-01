@@ -1,9 +1,7 @@
 import React from 'react';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { Box, Container, useTheme, useMediaQuery, Typography } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
 import UserMenu from './UserMenu';
-import { ThemeToggle } from './ThemeToggle';
 import { tokens } from '@/design-system/tokens';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -19,19 +17,17 @@ interface HeaderProps {
 export default function Header({ streamersEnabled }: HeaderProps = {}) {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const { mode } = useThemeContext();
   const router = useRouter();
   const pathname = usePathname();
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
 
-  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
   // Use prop if provided, otherwise fall back to hook for backward compatibility
   const streamersConfigHook = useStreamersConfig();
   const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
-  
+
   const isCanalesPage = pathname === '/';
   const isStreamersPage = pathname === '/streamers';
 
@@ -66,22 +62,22 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
   };
 
   return (
-    <Container 
-      maxWidth={false} 
-      disableGutters 
-      sx={{ 
-        px: 0, 
+    <Container
+      maxWidth={false}
+      disableGutters
+      sx={{
+        px: 0,
         mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
-        maxWidth: { 
-          xs: '100%', 
+        maxWidth: {
+          xs: '100%',
           sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
         },
-        width: { 
-          xs: '100%', 
+        width: {
+          xs: '100%',
           sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
         },
         boxSizing: 'border-box',
-        mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md } 
+        mb: { xs: tokens.spacing.sm, sm: tokens.spacing.md }
       }}
     >
       <Box
@@ -109,15 +105,15 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
         >
           <Box
             component="img"
-            src={text}
+            src="/img/text-white.png"
             alt="La Guía del Streaming"
-            sx={{ 
-              height: logoHeight, 
-              width: 'auto' 
+            sx={{
+              height: logoHeight,
+              width: 'auto'
             }}
           />
         </Box>
-        
+
         {/* Desktop Navigation Tabs - only show if streamers are enabled (need at least 2 sections to navigate) */}
         {!isMobile && finalStreamersEnabled && (
           <Box
@@ -145,14 +141,10 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 fontFamily: '"Outfit", sans-serif',
-                color: isCanalesPage
-                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                color: isCanalesPage ? '#ffffff' : 'rgba(255,255,255,0.6)',
                 transition: 'color 0.2s ease-in-out',
                 '&:hover': {
-                  color: isCanalesPage
-                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                  color: isCanalesPage ? '#ffffff' : 'rgba(255,255,255,0.9)',
                 },
                 position: 'relative',
                 '&::after': isCanalesPage ? {
@@ -162,7 +154,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                   left: 0,
                   right: 0,
                   height: '2px',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  backgroundColor: '#42a5f5',
                 } : {},
               }}
             >
@@ -183,14 +175,10 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 fontFamily: '"Outfit", sans-serif',
-                color: isStreamersPage
-                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                color: isStreamersPage ? '#ffffff' : 'rgba(255,255,255,0.6)',
                 transition: 'color 0.2s ease-in-out',
                 '&:hover': {
-                  color: isStreamersPage
-                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                  color: isStreamersPage ? '#ffffff' : 'rgba(255,255,255,0.9)',
                 },
                 position: 'relative',
                 '&::after': isStreamersPage ? {
@@ -200,7 +188,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                   left: 0,
                   right: 0,
                   height: '2px',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  backgroundColor: '#42a5f5',
                 } : {},
               }}
             >
@@ -215,7 +203,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
             position: 'absolute',
             top: '50%',
             right: 0,
-            pr: { xs: tokens.spacing.sm, sm: tokens.spacing.md }, 
+            pr: { xs: tokens.spacing.sm, sm: tokens.spacing.md },
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
@@ -224,12 +212,11 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
         >
           {!isAuth ? (
             <>
-            <UserButton />
+              <UserButton />
             </>
           ) : (
             <UserMenu onLogout={handleLogout} />
           )}
-          <ThemeToggle />
         </Box>
       </Box>
     </Container>

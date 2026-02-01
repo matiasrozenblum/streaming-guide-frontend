@@ -9,7 +9,6 @@ import {
   Paper,
   Snackbar,
   Alert,
-  useTheme,
   CircularProgress,
   Button,
   Card,
@@ -31,8 +30,8 @@ export default function DashboardPage() {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
 
-  const theme = useTheme();
-  const isDark = theme.palette.mode === 'dark';
+  // const theme = useTheme();
+  // const isDark = theme.palette.mode === 'dark';
   const [stats, setStats] = useState<DashboardStats>({
     channels: 0,
     programs: 0,
@@ -79,11 +78,11 @@ export default function DashboardPage() {
       const response = await fetch('/api/youtube/fetch-live-ids', {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to fetch YouTube live IDs');
       }
-      
+
       const data = await response.json();
       setSuccess(data.message || 'YouTube live IDs fetched successfully');
     } catch (err) {
@@ -101,11 +100,11 @@ export default function DashboardPage() {
       const response = await fetch('/api/cache/clear-schedules', {
         method: 'POST',
       });
-      
+
       if (!response.ok) {
         throw new Error('Failed to clear schedule cache');
       }
-      
+
       const data = await response.json();
       setSuccess(data.message || 'Schedule cache cleared successfully');
     } catch (err) {
@@ -169,10 +168,10 @@ export default function DashboardPage() {
                 display: 'flex',
                 flexDirection: 'column',
                 height: 140,
-                bgcolor: isDark ? 'grey.800' : 'grey.100',
+                bgcolor: 'grey.800',
                 cursor: label === 'Horarios' ? 'pointer' : 'default',
                 '&:hover': label === 'Horarios'
-                  ? { bgcolor: isDark ? 'grey.700' : 'grey.200' }
+                  ? { bgcolor: 'grey.700' }
                   : undefined,
               }}
             >
