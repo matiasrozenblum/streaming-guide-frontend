@@ -257,7 +257,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         sx={{
           height: '100%',
           maxWidth: '100vw',
-          background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+          background: '#0f172a',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',
