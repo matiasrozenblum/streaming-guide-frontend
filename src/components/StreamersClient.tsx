@@ -19,6 +19,9 @@ import {
 } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
+import { useSessionContext } from '@/contexts/SessionContext';
+import { event as gaEvent } from '@/lib/gtag';
+import type { SessionWithToken } from '@/types/session';
 import Header from '@/components/Header';
 import BottomNavigation from '@/components/BottomNavigation';
 import { Streamer, StreamingService } from '@/types/streamer';
@@ -82,6 +85,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initialCategories = initialCategories; // Reserved for future category filtering feature
   const { mode } = useThemeContext();
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
   // Use prop if provided, otherwise fall back to hook for backward compatibility
   const streamersConfigHook = useStreamersConfig();
   const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
@@ -194,7 +199,33 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
     };
   }, []);
 
-  const handleServiceClick = (service: StreamingService, url: string) => {
+  const handleServiceClick = (streamer: Streamer, service: StreamingService, url: string) => {
+    const isLive = streamer.is_live || false;
+
+    // Track the click event
+    gaEvent({
+      action: isLive ? 'click_streamer_live' : 'click_streamer_offline',
+      params: {
+        category: 'streamer',
+        streamer_name: streamer.name,
+        streamer_id: streamer.id,
+        platform: service, // 'twitch', 'kick', 'youtube'
+      },
+      userData: typedSession?.user
+    });
+
+    // Safe Clarity calls - only if Clarity is loaded
+    if (typeof window !== 'undefined' && 'clarity' in window) {
+      try {
+        const clarityWindow = window as Window & { clarity: (action: string, ...args: unknown[]) => void };
+        clarityWindow.clarity('set', 'streamer_name', streamer.name);
+        clarityWindow.clarity('set', 'platform', service);
+        clarityWindow.clarity('event', isLive ? 'click_streamer_live' : 'click_streamer_offline');
+      } catch (error) {
+        console.warn('Clarity tracking failed:', error);
+      }
+    }
+
     if (service === StreamingService.YOUTUBE) {
       // For YouTube, extract video ID and use openVideo
       // Note: YouTube only supports embedding videos, not channel pages
@@ -314,7 +345,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                     : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)';
 
                 return (
-                  <Grid size={{ xs: 6, sm: 4, md: 2, lg: 1.75 }} key={streamer.id}>
+                  <Grid size={{ xs: 6, sm: 4, md: 2, lg: 2 }} key={streamer.id}>
                     <MotionCard
                       initial={{ opacity: 0, y: 20 }}
                       animate={{ opacity: 1, y: 0 }}
@@ -583,7 +614,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                     variant="outlined"
                                     size="small"
                                     fullWidth
-                                    onClick={() => handleServiceClick(service.service, service.url)}
+                                    onClick={() => handleServiceClick(streamer, service.service, service.url)}
                                     sx={{
                                       justifyContent: 'center',
                                       borderRadius: 1.5,

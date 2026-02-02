@@ -22,7 +22,27 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 - Added native app support
 
-## [1.15.6] - 2025-01-21
+## [1.15.10] - 2026-01-31
+
+### Added
+- Added live streamer order and service filter for backoffice
+
+## [1.15.9] - 2026-01-30
+
+### Added
+- Added manual sync for streamers live status
+
+## [1.15.8] - 2026-01-30
+
+### Added
+- Added streamer click tracking 
+
+## [1.15.7] - 2026-01-28
+
+### Fixed
+- Removed banner darkening
+
+## [1.15.6] - 2026-01-21
 
 ### Added
 - Added order for streamers
@@ -33,12 +53,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 - Fixed SSE events being deleted when backoffice detected them and not updating frontend
 
-## [1.15.5] - 2025-01-17
+## [1.15.5] - 2026-01-17
 
 ### Added
 - Added offline badge for streamers to better differentiate from LIVE status
 
-## [1.15.4] - 2025-01-17
+## [1.15.4] - 2026-01-17
 
 ### Changed
 - Now we have two banner images, web and mobile
@@ -47,7 +67,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Fixed
 - Fixed service selector for streamers in backoffice
 
-## [1.15.3] - 2025-01-14
+## [1.15.3] - 2026-01-14
 
 ### Added
 - Added upload banner logic
