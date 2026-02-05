@@ -217,9 +217,20 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       try {
         const permission = await PushNotifications.requestPermissions();
         if (permission.receive === 'granted') {
+          // Check if we already have a cached token from global listener
+          if (nativeTokenRef.current) {
+            console.log('[subscribeAndRegister] Using cached native token');
+            return { endpoint: nativeTokenRef.current, keys: undefined };
+          }
+
           // Wrap registration in a promise to return the token
           return new Promise((resolve, reject) => {
+            const timeoutId = setTimeout(() => {
+              reject(new Error('Push registration timed out'));
+            }, 10000);
+
             PushNotifications.addListener('registration', (token) => {
+              clearTimeout(timeoutId);
               // Return structure compatible with Backend DTO (endpoint = token)
               resolve({
                 endpoint: token.value,
@@ -227,6 +238,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
               });
             });
             PushNotifications.addListener('registrationError', (err) => {
+              clearTimeout(timeoutId);
               reject(err);
             });
 
@@ -276,7 +288,8 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
         try {
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+            // eslint-disable-next-line @typescript-eslint/no-explicit-any
+            applicationServerKey: urlBase64ToUint8Array(vapidKey) as any,
           });
         } catch (subscribeError) {
           throw subscribeError;
@@ -404,8 +417,10 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
         const p256dh = subscription.getKey('p256dh');
         const auth = subscription.getKey('auth');
         const endpoint = subscription.endpoint;
-        const p256dhBase64 = p256dh ? arrayBufferToBase64(p256dh) : undefined;
-        const authBase64 = auth ? arrayBufferToBase64(auth) : undefined;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const p256dhBase64 = p256dh ? arrayBufferToBase64(p256dh as any) : undefined;
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const authBase64 = auth ? arrayBufferToBase64(auth as any) : undefined;
 
         await sendTokenToBackend(endpoint, { p256dh: p256dhBase64, auth: authBase64 });
       }
