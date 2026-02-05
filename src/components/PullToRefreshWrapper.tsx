@@ -47,6 +47,7 @@ export default function PullToRefreshWrapper({ children, scrollRef }: PullToRefr
 
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const onPan = (_: any, info: PanInfo) => {
+        // console.log('PTR Pan:', info.delta.y);
         if (isRefreshing) return;
 
         // Check if we are at the top of the scroll container
@@ -121,7 +122,7 @@ export default function PullToRefreshWrapper({ children, scrollRef }: PullToRefr
                 onPanEnd={onPanEnd}
                 animate={controls}
                 transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                style={{ height: '100%', display: 'flex', flexDirection: 'column' }}
+                style={{ height: '100%', display: 'flex', flexDirection: 'column', touchAction: 'pan-y' }}
             >
                 {children}
             </motion.div>
