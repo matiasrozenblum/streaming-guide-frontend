@@ -8,20 +8,22 @@ import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
 import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
 import SessionProviderWrapper from '@/components/SessionProviderWrapper';
 import { PushProvider } from '@/contexts/PushContext';
+import { PushTokenSync } from '@/components/PushTokenSync';
 import { TooltipProvider } from '@/contexts/TooltipContext';
 import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
 import { CookieConsentBanner } from '@/components/CookieConsentBanner';
 import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
-import { 
-  ConditionalTrackingLoader, 
-  ConditionalClarityLoader, 
-  ConditionalHotjarLoader 
+import {
+  ConditionalTrackingLoader,
+  ConditionalClarityLoader,
+  ConditionalHotjarLoader
 } from '@/components/ConditionalTrackingLoader';
 import PageviewTracker from '@/components/PageviewTracker';
 import LiveStatusListener from '@/components/LiveStatusListener';
 import PageRefreshListener from '@/components/PageRefreshListener';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { Analytics } from '@vercel/analytics/react';
+import StatusBarManager from '@/components/StatusBarManager';
 
 const inter = Inter({ subsets: ['latin'] });
 
@@ -65,8 +67,10 @@ export default function RootLayout({
         <CookieConsentProvider>
           <SessionProviderWrapper>
             <PushProvider enabled={true} installPrompt={null}>
+              <PushTokenSync />
               <TooltipProvider>
                 <CustomThemeProvider>
+                  <StatusBarManager />
                   <YouTubePlayerProvider>
                     <ConditionalLayoutWrapper>
                       <PageviewTracker />
@@ -79,7 +83,7 @@ export default function RootLayout({
                     <SpeedInsights />
                     <Analytics />
                   </YouTubePlayerProvider>
-                  
+
                   {/* Cookie Consent Components */}
                   <CookieConsentBanner />
                   <CookiePreferencesModal />
@@ -87,7 +91,7 @@ export default function RootLayout({
               </TooltipProvider>
             </PushProvider>
           </SessionProviderWrapper>
-          
+
           {/* Conditional Tracking Scripts */}
           <ConditionalTrackingLoader />
           <ConditionalClarityLoader />

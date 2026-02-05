@@ -10,6 +10,8 @@ import React, {
   useRef,
 } from 'react';
 import { useDeviceId } from '@/hooks/useDeviceId';
+import { Capacitor } from '@capacitor/core';
+import { PushNotifications } from '@capacitor/push-notifications';
 
 // Base64 conversion utility
 function urlBase64ToUint8Array(base64String: string): Uint8Array {
@@ -28,23 +30,24 @@ function urlBase64ToUint8Array(base64String: string): Uint8Array {
 }
 
 interface BeforeInstallPromptEvent extends Event {
-    prompt(): Promise<void>;
-    userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
-  }
+  prompt(): Promise<void>;
+  userChoice: Promise<{ outcome: 'accepted' | 'dismissed'; platform: string }>;
+}
 
 interface PushContextValue {
-    subscribeAndRegister: () => Promise<PushSubscription | null>;
-    scheduleForProgram: (programId: string, title: string, minutesBefore: number) => Promise<void>;
-    promptInstall: () => Promise<void>;
-    isIOSDevice: boolean;
-    isPWAInstalled: boolean;
-    notificationPermission: NotificationPermission | null;
+  subscribeAndRegister: () => Promise<PushSubscription | { endpoint: string; keys: undefined } | null>; // Updated return type
+  syncPushToken: () => Promise<void>; // Silent sync without prompting
+  scheduleForProgram: (programId: string, title: string, minutesBefore: number) => Promise<void>;
+  promptInstall: () => Promise<void>;
+  isIOSDevice: boolean;
+  isPWAInstalled: boolean;
+  notificationPermission: NotificationPermission | null;
 }
 
 interface PushProviderProps {
-    children: ReactNode;
-    enabled?: boolean;
-    installPrompt: BeforeInstallPromptEvent | null;
+  children: ReactNode;
+  enabled?: boolean;
+  installPrompt: BeforeInstallPromptEvent | null;
 }
 
 // Contexto para Push API
@@ -53,32 +56,32 @@ const PushContext = createContext<PushContextValue | undefined>(undefined);
 // iOS detection utility
 const isIOSDevice = () => {
   if (typeof window === 'undefined' || typeof navigator === 'undefined') return false;
-  return /iPad|iPhone|iPod/.test(navigator.userAgent) || 
-         (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  return /iPad|iPhone|iPod/.test(navigator.userAgent) ||
+    (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
 };
 
 // PWA installation detection
 const isPWAInstalled = () => {
   if (typeof window === 'undefined') return false;
-  
+
   const isIOSDeviceCheck = isIOSDevice();
-  
+
   // Primary detection methods (most reliable)
   const isIOSStandalone = (window.navigator as { standalone?: boolean }).standalone === true;
   const isStandalone = window.matchMedia('(display-mode: standalone)').matches;
-  
+
   // URL parameter detection (set by manifest start_url when launching from home screen)
   const urlParams = new URLSearchParams(window.location.search);
   const isPWAFromURL = urlParams.get('pwa') === 'true';
   const isManualPWATest = urlParams.get('manual_pwa') === 'true';
-  
+
   // Additional display modes
   const isMinimalUI = window.matchMedia('(display-mode: minimal-ui)').matches;
   const isFullscreen = window.matchMedia('(display-mode: fullscreen)').matches;
-  
+
   // For iOS: Only consider it a PWA if we have strong indicators
   let result = false;
-  
+
   if (isIOSDeviceCheck) {
     // For iOS, be strict: require either standalone mode OR URL parameter from manifest
     result = isIOSStandalone || isPWAFromURL || isManualPWATest;
@@ -86,7 +89,7 @@ const isPWAInstalled = () => {
     // For other platforms, use standard PWA detection
     result = isStandalone || isMinimalUI || isFullscreen || isPWAFromURL || isManualPWATest;
   }
-  
+
   return result;
 };
 
@@ -94,6 +97,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
   const deviceId = useDeviceId();
   const [vapidKey, setVapidKey] = useState<string | null>(null);
   const [notificationPermission, setNotificationPermission] = useState<NotificationPermission | null>(null);
+  const nativeTokenRef = useRef<string | null>(null); // Store native FCM token when received
   const hasSubscribedRef = useRef(false);
 
   const [isIOS, setIsIOS] = useState(false);
@@ -153,11 +157,30 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       setNotificationPermission(Notification.permission);
     }
 
+    // 4) Native Push Listeners
+    if (Capacitor.isNativePlatform()) {
+      PushNotifications.addListener('registration', (token) => {
+        console.log('🔥 Native Push Token:', token.value);
+        nativeTokenRef.current = token.value; // Store for later use in syncPushToken
+      });
+      PushNotifications.addListener('registrationError', (error) => {
+        console.error('Error on registration: ' + JSON.stringify(error));
+      });
+      PushNotifications.addListener('pushNotificationReceived', (notification) => {
+        console.log('🔔 Push Received:', notification);
+        // Optional: Show an alert if you want to be 100% sure the user sees it while testing
+        // alert(`Notificación: ${notification.title}\n${notification.body}`);
+      });
+    }
+
     // Cleanup interval and event listeners
     return () => {
       clearInterval(interval);
       if (typeof document !== 'undefined') {
         document.removeEventListener('visibilitychange', handleVisibilityChange);
+      }
+      if (Capacitor.isNativePlatform()) {
+        PushNotifications.removeAllListeners();
       }
     };
   }, [enabled]);
@@ -169,27 +192,56 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
 
     // For iOS, we need to request permission explicitly
     let permission = Notification.permission;
-    
+
     if (permission === 'default') {
       permission = await Notification.requestPermission();
     }
-    
+
     setNotificationPermission(permission);
-    
+
     if (permission !== 'granted') {
       throw new Error(`Notification permission ${permission}`);
     }
-    
+
     return permission;
   };
 
-  const subscribeAndRegister = async (): Promise<PushSubscription | null> => {
+  const subscribeAndRegister = async (): Promise<PushSubscription | { endpoint: string; keys: undefined } | null> => {
     if (!enabled) {
       console.warn('Push disabled: subscribeAndRegister no-op');
       return null;
     }
 
-    // iOS Safari requires PWA installation for push notifications
+    // Native Platform Logic
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permission = await PushNotifications.requestPermissions();
+        if (permission.receive === 'granted') {
+          // Wrap registration in a promise to return the token
+          return new Promise((resolve, reject) => {
+            PushNotifications.addListener('registration', (token) => {
+              // Return structure compatible with Backend DTO (endpoint = token)
+              resolve({
+                endpoint: token.value,
+                keys: undefined, // Optional in DTO now
+              });
+            });
+            PushNotifications.addListener('registrationError', (err) => {
+              reject(err);
+            });
+
+            PushNotifications.register();
+          });
+        } else {
+          throw new Error('Permission not granted for push notifications');
+        }
+      } catch (e) {
+        console.error('Native push registration failed', e);
+        throw e;
+      }
+    }
+
+    // iOS Safari Web requires PWA installation for push notifications
     if (isIOS && !isPWA) {
       throw new Error('iOS requires app to be installed to home screen for push notifications');
     }
@@ -198,7 +250,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       console.warn('VAPID key not loaded yet');
       return null;
     }
-    
+
     if (hasSubscribedRef.current) {
       const registration = await navigator.serviceWorker.ready;
       const existingSubscription = await registration.pushManager.getSubscription();
@@ -218,7 +270,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
 
       // 3) Mirar si ya hay una subscripción
       let subscription = await registration.pushManager.getSubscription();
-      
+
       if (!subscription) {
         // 4) Si no, crearla
         try {
@@ -232,10 +284,10 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
       }
 
       hasSubscribedRef.current = true;
-      
+
       return subscription;
     } catch (error) {
-      
+
       // Provide user-friendly error messages
       if (error instanceof Error) {
         if (error.message.includes('home screen')) {
@@ -244,7 +296,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
           throw new Error('Debes permitir las notificaciones para suscribirte');
         }
       }
-      
+
       throw error;
     }
   };
@@ -265,13 +317,145 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
     });
   };
 
+  /**
+   * Silently sync push token to backend if permission was already granted.
+   * This is called on app launch to ensure the current device's token is registered.
+   * Does NOT prompt for permission - only syncs if already granted.
+   */
+  const syncPushToken = async (): Promise<void> => {
+    if (!enabled || !deviceId) {
+      console.log('[syncPushToken] Skipping: push not enabled or no deviceId');
+      return;
+    }
+
+    // Native Platform
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const permissionStatus = await PushNotifications.checkPermissions();
+        if (permissionStatus.receive !== 'granted') {
+          console.log('[syncPushToken] Native permission not granted, skipping');
+          return;
+        }
+
+        // If we already have a token cached, use it
+        if (nativeTokenRef.current) {
+          console.log('[syncPushToken] Using cached native token');
+          await sendTokenToBackend(nativeTokenRef.current, undefined);
+          return;
+        }
+
+        // Otherwise, register to get the token (this won't prompt since permission is granted)
+        return new Promise<void>((resolve) => {
+          const onRegistration = async (token: { value: string }) => {
+            nativeTokenRef.current = token.value;
+            await sendTokenToBackend(token.value, undefined);
+            resolve();
+          };
+
+          PushNotifications.addListener('registration', onRegistration);
+          PushNotifications.register();
+
+          // Timeout after 5 seconds
+          setTimeout(() => {
+            console.warn('[syncPushToken] Native token registration timeout');
+            resolve();
+          }, 5000);
+        });
+      } catch (error) {
+        console.error('[syncPushToken] Native error:', error);
+        return;
+      }
+    }
+
+    // Web Push (PWA)
+    if (typeof window === 'undefined' || !('Notification' in window)) {
+      return;
+    }
+
+    if (Notification.permission !== 'granted') {
+      console.log('[syncPushToken] Web notification permission not granted, skipping');
+      return;
+    }
+
+    // iOS Safari Web requires PWA installation
+    if (isIOS && !isPWA) {
+      console.log('[syncPushToken] iOS without PWA, skipping');
+      return;
+    }
+
+    if (!vapidKey) {
+      console.log('[syncPushToken] VAPID key not loaded, skipping');
+      return;
+    }
+
+    try {
+      const registration = await navigator.serviceWorker.ready;
+      let subscription = await registration.pushManager.getSubscription();
+
+      if (!subscription) {
+        // Create subscription since permission is already granted
+        subscription = await registration.pushManager.subscribe({
+          userVisibleOnly: true,
+          applicationServerKey: urlBase64ToUint8Array(vapidKey),
+        });
+      }
+
+      if (subscription) {
+        const p256dh = subscription.getKey('p256dh');
+        const auth = subscription.getKey('auth');
+        const endpoint = subscription.endpoint;
+        const p256dhBase64 = p256dh ? arrayBufferToBase64(p256dh) : undefined;
+        const authBase64 = auth ? arrayBufferToBase64(auth) : undefined;
+
+        await sendTokenToBackend(endpoint, { p256dh: p256dhBase64, auth: authBase64 });
+      }
+    } catch (error) {
+      console.error('[syncPushToken] Web push error:', error);
+    }
+  };
+
+  /**
+   * Helper to send push token to backend
+   */
+  const sendTokenToBackend = async (
+    endpoint: string,
+    keys: { p256dh?: string; auth?: string } | undefined
+  ): Promise<void> => {
+    try {
+      await fetch(`${process.env.NEXT_PUBLIC_API_URL}/push/subscribe`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          deviceId,
+          subscription: {
+            endpoint,
+            keys: keys?.p256dh && keys?.auth ? keys : undefined,
+          },
+        }),
+      });
+      console.log('[syncPushToken] Token synced to backend successfully');
+    } catch (error) {
+      console.error('[syncPushToken] Failed to sync token:', error);
+    }
+  };
+
+  // Helper function for base64 encoding (used by syncPushToken)
+  function arrayBufferToBase64(buffer: ArrayBuffer): string {
+    const bytes = new Uint8Array(buffer);
+    let binary = '';
+    for (let i = 0; i < bytes.byteLength; i++) {
+      binary += String.fromCharCode(bytes[i]);
+    }
+    return btoa(binary);
+  }
+
   const promptInstall = async () => {
     if (installPrompt) {
       installPrompt.prompt();
       await installPrompt.userChoice;
       return;
     }
-    
+
     // iOS-specific installation instructions
     if (isIOS) {
       alert(
@@ -291,9 +475,10 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
   };
 
   return (
-    <PushContext.Provider value={{ 
-      subscribeAndRegister, 
-      scheduleForProgram, 
+    <PushContext.Provider value={{
+      subscribeAndRegister,
+      syncPushToken,
+      scheduleForProgram,
       promptInstall,
       isIOSDevice: isIOS,
       isPWAInstalled: isPWA,

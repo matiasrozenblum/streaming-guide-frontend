@@ -8,7 +8,7 @@ const withPWA = require('next-pwa')({
   // Let next-pwa generate the service worker automatically
   runtimeCaching: [
     {
-      urlPattern: /^https?.*/, 
+      urlPattern: /^https?.*/,
       handler: 'NetworkFirst',
       options: {
         cacheName: 'offlineCache',
@@ -24,25 +24,10 @@ const withPWA = require('next-pwa')({
 /** @type {import('next').NextConfig} */
 const nextConfig = {
   reactStrictMode: true,
-  // appDir is now stable in Next.js 15, no need for experimental flag
-  async headers() {
-    return [
-      {
-        source: '/:path*',
-        headers: [
-          {
-            key: 'X-Frame-Options',
-            value: 'DENY',
-          },
-          {
-            key: 'Content-Security-Policy',
-            value: "frame-ancestors 'none'",
-          },
-        ],
-      },
-    ];
-  },
+
+
   images: {
+    unoptimized: true,
     remotePatterns: [
       {
         protocol: 'https',
