@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server';
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3001';
 
 export async function GET() {
   try {
@@ -15,7 +15,7 @@ export async function GET() {
       const errorText = await response.text();
       console.error('Backend API error:', response.status, errorText);
       return NextResponse.json(
-        { error: 'Failed to fetch active banners' }, 
+        { error: 'Failed to fetch active banners' },
         { status: response.status }
       );
     }
@@ -25,7 +25,7 @@ export async function GET() {
   } catch (error) {
     console.error('Error fetching active banners:', error);
     return NextResponse.json(
-      { error: 'Internal server error' }, 
+      { error: 'Internal server error' },
       { status: 500 }
     );
   }

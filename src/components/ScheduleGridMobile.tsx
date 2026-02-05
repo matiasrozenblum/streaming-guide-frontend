@@ -19,6 +19,7 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import Footer from './Footer';
+import PullToRefreshWrapper from './PullToRefreshWrapper';
 
 interface Props {
   channels: Channel[];
@@ -102,7 +103,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         setContainerWidth(scrollRef.current.clientWidth);
       }
     };
-    
+
     updateContainerWidth();
     window.addEventListener('resize', updateContainerWidth);
     return () => window.removeEventListener('resize', updateContainerWidth);
@@ -200,111 +201,115 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       )}
 
       {/* Contenedor scrollable */}
-      <Box
-        ref={scrollRef}
-        data-schedule-grid="mobile"
-        sx={{
-          borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
-          borderTopRightRadius: categoriesEnabled ? 0 : '12px',
-          borderBottomLeftRadius: '12px', // Round bottom corners
-          borderBottomRightRadius: '12px',
-          flex: 1,
-          minHeight: 0,
-          overflowX: 'auto',
-          overflowY: 'auto',
-          WebkitOverflowScrolling: 'touch',
-          position: 'relative',
-          userSelect: 'none',
-          WebkitUserDrag: 'none',
-          cursor: 'grab',
-          '&.dragging': {
-            cursor: 'grabbing',
-          },
-          // Custom scrollbar styling
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-            borderRadius: '4px',
-          },
-          '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.2)' 
-              : 'rgba(255, 255, 255, 0.2)',
-            borderRadius: '4px',
-            border: '1px solid transparent',
-            backgroundClip: 'content-box',
-            '&:hover': {
-              background: mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.3)' 
-                : 'rgba(255, 255, 255, 0.3)',
-            },
-          },
-          '&::-webkit-scrollbar-corner': {
-            background: 'transparent',
-          },
-          // Firefox scrollbar styling
-          scrollbarWidth: 'thin',
-          scrollbarColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.2) transparent' 
-            : 'rgba(255, 255, 255, 0.2) transparent',
-        }}
-      >
-        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
-          <TimeHeader isMobile={true} />
-          {isToday && <NowIndicator ref={nowIndicatorRef} />}
-          {visibleChannels.map((channel, idx) => (
-            <ScheduleRow
-              key={channel.id}
-              channelName={channel.name}
-              channelLogo={channel.logo_url || undefined}
-              channelBackgroundColor={channel.background_color}
-              programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.program.id.toString(),
-                scheduleId: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                subscribed: s.subscribed,
-                description: s.program.description || undefined,
-                panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
-                logo_url: s.program.logo_url || undefined,
-                is_live: s.program.is_live,
-                stream_url: s.program.stream_url || undefined,
-                isWeeklyOverride: s.isWeeklyOverride,
-                overrideType: s.overrideType,
-                style_override: s.program.style_override,
-              }))}
-              color={getColorForChannel(idx, mode)}
-              isToday={isToday}
-            />
-          ))}
-          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
-          {containerWidth > 0 && (
-            <Box 
-              sx={{ 
-                width: `${containerWidth}px`,
-                position: 'sticky',
-                left: 0,
-                mt: 2,
-                pb: streamersEnabled 
-                  ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
-                  : 0,
-                zIndex: 10,
-                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
-                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-                display: 'flex',
-                justifyContent: 'center',
-              }}
-            >
-              <Box sx={{ width: '100%' }}>
-                <Footer />
-              </Box>
+      <Box sx={{ flex: 1, minHeight: 0, position: 'relative' }}>
+        <PullToRefreshWrapper scrollRef={scrollRef}>
+          <Box
+            ref={scrollRef}
+            data-schedule-grid="mobile"
+            sx={{
+              borderTopLeftRadius: categoriesEnabled ? 0 : '12px',
+              borderTopRightRadius: categoriesEnabled ? 0 : '12px',
+              borderBottomLeftRadius: '12px',
+              borderBottomRightRadius: '12px',
+              height: '100%', // Changed from flex: 1 since parent handles flexible sizing now
+              width: '100%',
+              overflowX: 'auto',
+              overflowY: 'auto',
+              WebkitOverflowScrolling: 'touch',
+              position: 'relative',
+              userSelect: 'none',
+              WebkitUserDrag: 'none',
+              cursor: 'grab',
+              '&.dragging': {
+                cursor: 'grabbing',
+              },
+              // Custom scrollbar styling
+              '&::-webkit-scrollbar': {
+                width: '8px',
+                height: '8px',
+              },
+              '&::-webkit-scrollbar-track': {
+                background: 'transparent',
+                borderRadius: '4px',
+              },
+              '&::-webkit-scrollbar-thumb': {
+                background: mode === 'light'
+                  ? 'rgba(0, 0, 0, 0.2)'
+                  : 'rgba(255, 255, 255, 0.2)',
+                borderRadius: '4px',
+                border: '1px solid transparent',
+                backgroundClip: 'content-box',
+                '&:hover': {
+                  background: mode === 'light'
+                    ? 'rgba(0, 0, 0, 0.3)'
+                    : 'rgba(255, 255, 255, 0.3)',
+                },
+              },
+              '&::-webkit-scrollbar-corner': {
+                background: 'transparent',
+              },
+              // Firefox scrollbar styling
+              scrollbarWidth: 'thin',
+              scrollbarColor: mode === 'light'
+                ? 'rgba(0, 0, 0, 0.2) transparent'
+                : 'rgba(255, 255, 255, 0.2) transparent',
+            }}
+          >
+            <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
+              <TimeHeader isMobile={true} />
+              {isToday && <NowIndicator ref={nowIndicatorRef} />}
+              {visibleChannels.map((channel, idx) => (
+                <ScheduleRow
+                  key={channel.id}
+                  channelName={channel.name}
+                  channelLogo={channel.logo_url || undefined}
+                  channelBackgroundColor={channel.background_color}
+                  programs={getSchedulesForChannel(channel.id).map(s => ({
+                    id: s.program.id.toString(),
+                    scheduleId: s.id.toString(),
+                    name: s.program.name,
+                    start_time: s.start_time.slice(0, 5),
+                    end_time: s.end_time.slice(0, 5),
+                    subscribed: s.subscribed,
+                    description: s.program.description || undefined,
+                    panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
+                    logo_url: s.program.logo_url || undefined,
+                    is_live: s.program.is_live,
+                    stream_url: s.program.stream_url || undefined,
+                    isWeeklyOverride: s.isWeeklyOverride,
+                    overrideType: s.overrideType,
+                    style_override: s.program.style_override,
+                  }))}
+                  color={getColorForChannel(idx, mode)}
+                  isToday={isToday}
+                />
+              ))}
+              {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
+              {containerWidth > 0 && (
+                <Box
+                  sx={{
+                    width: `${containerWidth}px`,
+                    position: 'sticky',
+                    left: 0,
+                    mt: 2,
+                    pb: streamersEnabled
+                      ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
+                      : 0,
+                    zIndex: 10,
+                    backgroundColor: mode === 'light' ? 'white' : '#1e293b',
+                    borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                    display: 'flex',
+                    justifyContent: 'center',
+                  }}
+                >
+                  <Box sx={{ width: '100%' }}>
+                    <Footer />
+                  </Box>
+                </Box>
+              )}
             </Box>
-          )}
-        </Box>
+          </Box>
+        </PullToRefreshWrapper>
       </Box>
 
       {/* Botón flotante */}
@@ -326,7 +331,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           }}
           sx={{
             position: 'fixed',
-            bottom: streamersEnabled 
+            bottom: streamersEnabled
               ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + 16px)`
               : '5vh',
             left: '50%',

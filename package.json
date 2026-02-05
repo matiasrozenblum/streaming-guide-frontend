@@ -5,10 +5,17 @@
   "scripts": {
     "dev": "next dev",
     "build": "next build",
+    "build:mobile": "next build && npx cap sync",
     "start": "next start",
     "lint": "next lint"
   },
   "dependencies": {
+    "@capacitor/android": "^8.0.1",
+    "@capacitor/cli": "^8.0.1",
+    "@capacitor/core": "^8.0.1",
+    "@capacitor/ios": "^8.0.1",
+    "@capacitor/push-notifications": "^8.0.0",
+    "@capacitor/status-bar": "^8.0.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.0",
     "@microsoft/clarity": "^1.0.0",
@@ -39,9 +46,11 @@
     "react-intersection-observer": "^9.16.0",
     "react-virtualized-auto-sizer": "^1.0.26",
     "react-window": "^1.8.11",
-    "ua-parser-js": "^2.0.3"
+    "ua-parser-js": "^2.0.3",
+    "uuid": "^13.0.0"
   },
   "devDependencies": {
+    "@capacitor/assets": "^3.0.5",
     "@eslint/eslintrc": "^3",
     "@tailwindcss/postcss": "^4",
     "@types/file-saver": "^2.0.7",
@@ -49,6 +58,7 @@
     "@types/react": "^19.1.4",
     "@types/react-dom": "^19.1.5",
     "@types/react-window": "^1.8.8",
+    "@types/uuid": "^10.0.0",
     "autoprefixer": "^10.4.18",
     "eslint": "^9",
     "eslint-config-next": "15.2.4",

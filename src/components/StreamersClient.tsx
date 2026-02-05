@@ -103,7 +103,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       setLoading(false);
       hasFetchedRef.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
+
   }, [initialStreamers]);
 
   const fetchStreamers = async (showLoading = true) => {
