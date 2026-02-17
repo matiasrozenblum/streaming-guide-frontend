@@ -16,7 +16,7 @@ export async function DELETE(
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-backend-production.up.railway.app';
 
     try {
-        const res = await fetch(`${backendUrl}/api/streamers/${id}/unsubscribe`, {
+        const res = await fetch(`${backendUrl}/streamers/${id}/unsubscribe`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',

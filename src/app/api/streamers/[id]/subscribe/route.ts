@@ -16,7 +16,7 @@ export async function POST(
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-backend-production.up.railway.app';
 
     try {
-        const res = await fetch(`${backendUrl}/api/streamers/${id}/subscribe`, {
+        const res = await fetch(`${backendUrl}/streamers/${id}/subscribe`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
