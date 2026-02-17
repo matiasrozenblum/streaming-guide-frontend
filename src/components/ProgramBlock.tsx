@@ -48,11 +48,7 @@ interface Props {
   totalMultipleStreams?: number;
 }
 
-// Helper to encode ArrayBuffer to base64
-function arrayBufferToBase64(buffer: ArrayBuffer | null): string {
-  if (!buffer) return '';
-  return btoa(String.fromCharCode.apply(null, Array.from(new Uint8Array(buffer))));
-}
+
 
 export const ProgramBlock: React.FC<Props> = ({
   id,
@@ -88,7 +84,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
   const { openVideo, openPlaylist } = useYouTubePlayer();
-  const { subscribeAndRegister, isIOSDevice, isPWAInstalled } = usePush();
+  const { subscribeAndRegister, isPWAInstalled } = usePush();
   const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
   // Removed showSecondaryStreams - no longer needed
   const openTimeoutRef = useRef<NodeJS.Timeout | null>(null);
@@ -224,8 +220,8 @@ export const ProgramBlock: React.FC<Props> = ({
     }
 
     try {
-      const pushResult: any = await (willSubscribe ? subscribeAndRegister() : Promise.resolve({ endpoint: '', p256dh: '', auth: '', isSupported: false }));
-      const { endpoint, p256dh, auth, isSupported } = pushResult;
+      const pushResult = await (willSubscribe ? subscribeAndRegister() : Promise.resolve({ endpoint: '', p256dh: '', auth: '', isSupported: false }));
+      const { endpoint, p256dh, auth, isSupported } = pushResult as { endpoint: string; p256dh: string; auth: string; isSupported: boolean };
 
       const isValidPush = isSupported && endpoint && p256dh && auth;
 
@@ -275,14 +271,14 @@ export const ProgramBlock: React.FC<Props> = ({
 
       // Provide user-friendly error messages
       let errorMessage = 'Error updating subscription. Please try again.';
-      if ((error as any)?.message?.includes('pantalla de inicio') || (error as any)?.message?.includes('home screen')) {
+      if (error instanceof Error && (error.message.includes('pantalla de inicio') || error.message.includes('home screen'))) {
         // needs PWA
-      } else if ((error as any)?.message?.includes('permission') || (error as any)?.message?.includes('notificaciones')) {
-        errorMessage = (error as any).message;
+      } else if (error instanceof Error && (error.message.includes('permission') || error.message.includes('notificaciones'))) {
+        errorMessage = error.message;
       }
 
       // Only show alert for actionable errors
-      if (!(error as any)?.message?.includes('home screen')) {
+      if (error instanceof Error && !error.message.includes('home screen')) {
         alert(errorMessage);
       }
 
@@ -294,7 +290,7 @@ export const ProgramBlock: React.FC<Props> = ({
           program_id: id,
           program_name: name,
           channel_name: channelName,
-          error: error instanceof Error ? error.message : (error as any)?.message || 'Unknown error',
+          error: error instanceof Error ? error.message : 'Unknown error',
         },
         userData: typedSession?.user
       });

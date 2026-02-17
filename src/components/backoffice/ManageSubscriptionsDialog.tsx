@@ -19,9 +19,9 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { Delete, Edit, Save, Cancel, Add } from '@mui/icons-material';
+import { Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
-import { UserSubscription } from '@/types/user-subscription';
+
 import { Program } from '@/types/program';
 import { SessionWithToken } from '@/types/session';
 import { useState, useEffect } from 'react';
@@ -59,22 +59,14 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
 
   if (!user) return null;
 
-  const handleUpdate = async (sub: UserSubscription) => {
-    // Update logic would typically go here if there were other fields to update
-    // For now, since notificationMethod was the only field, we might not need this
-    // But let's keep it assuming future extensibility or if there are other fields
-    // Actually, looking at the code, it only updated notificationMethod. 
-    // If there's nothing else to update, this function might be redundant or needs to be changed to toggle active status?
-    // The previous code only sent { notificationMethod: newMethod }.
-    // If I remove that, what does this endpoint do?
-    // Let's assume for now we just remove the field from the payload or remove the update capability if it's solely for that.
-    // Given the context, I'll comment it out or remove the editable part.
-    // But wait, the dialog allows editing. If I remove the only editable field, the edit button becomes useless.
-    // Let's remove the edit functionality for now since there's nothing to edit.
+  // Let's assume for now we just remove the field from the payload or remove the update capability if it's solely for that.
+  // Given the context, I'll comment it out or remove the editable part.
+  // But wait, the dialog allows editing. If I remove the only editable field, the edit button becomes useless.
+  // Let's remove the edit functionality for now since there's nothing to edit.
 
-    // Changing approach: The dialog allows deleting and "editing". 
-    // Since "editing" was only for notification method, I will remove the edit button and the handleUpdate function.
-  };
+  // Changing approach: The dialog allows deleting and "editing". 
+  // Since "editing" was only for notification method, I will remove the edit button and the handleUpdate function.
+
 
   const handleDelete = async (subId: string) => {
     if (!confirm('Are you sure?')) return;

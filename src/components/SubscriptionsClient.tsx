@@ -11,28 +11,20 @@ import {
   Button,
   Grid,
   Chip,
-  Avatar,
-  Alert,
-  CircularProgress,
-  FormControl,
-  Select,
-  MenuItem,
   IconButton,
   Tooltip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
   Delete,
   NotificationsActive,
-  Notifications,
-  Email,
-  NotificationsOff,
   ArrowBack,
   LiveTv,
 } from '@mui/icons-material';
 import { Streamer, StreamingService } from '@/types/streamer';
-import { extractTwitchChannel, extractKickChannel } from '@/utils/extractStreamChannel';
-import { extractVideoId } from '@/utils/extractVideoId';
-import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
+
+
 import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
@@ -42,7 +34,7 @@ import Header from '@/components/Header';
 import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
 import { event as gaEvent } from '@/lib/gtag';
-import { usePush } from '@/contexts/PushContext';
+
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -115,7 +107,8 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
-  const { openVideo, openStream } = useYouTubePlayer(); // isIOSDevice, isPWAInstalled removed as they were only used for notification method logic
+
+  // isIOSDevice, isPWAInstalled removed as they were only used for notification method logic
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
   const [streamerSubscriptions, setStreamerSubscriptions] = useState<Streamer[]>(initialStreamerSubscriptions);
   const [loading, setLoading] = useState(false);
