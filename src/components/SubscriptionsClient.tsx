@@ -18,9 +18,7 @@ import {
 } from '@mui/material';
 import {
   Delete,
-  NotificationsActive,
   ArrowBack,
-  LiveTv,
 } from '@mui/icons-material';
 import { Streamer, StreamingService } from '@/types/streamer';
 
