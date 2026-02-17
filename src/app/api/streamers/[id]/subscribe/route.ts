@@ -15,6 +15,14 @@ export async function POST(
     const { id } = await params;
     const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-backend-production.up.railway.app';
 
+    // Parse body from request if present, or default to generic object
+    let body = {};
+    try {
+        body = await request.json();
+    } catch {
+        // Ignore JSON parse error if body is empty
+    }
+
     try {
         const res = await fetch(`${backendUrl}/streamers/${id}/subscribe`, {
             method: 'POST',
@@ -22,7 +30,7 @@ export async function POST(
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${session.accessToken}`,
             },
-            // Pass-through body if needed, but here it's empty
+            body: JSON.stringify(body),
         });
 
         if (!res.ok) {
