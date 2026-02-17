@@ -234,7 +234,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
 
 
   return (
-    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default' }}>
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
       <Box component="main" sx={{ pt: 10, pb: 4 }}>
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 3 } }}>
@@ -279,7 +279,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                 {/* Programs Column */}
                 <Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="h5" component="h2" gutterBottom fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <NotificationsActive color="primary" /> Programas
+                    Programas
                   </Typography>
 
                   {subscriptions.length > 0 ? (
@@ -366,7 +366,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                 {/* Streamers Column */}
                 < Grid size={{ xs: 12, md: 6 }}>
                   <Typography variant="h5" component="h2" gutterBottom fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
-                    <LiveTv color="primary" /> Streamers
+                    Streamers
                   </Typography>
 
                   {
