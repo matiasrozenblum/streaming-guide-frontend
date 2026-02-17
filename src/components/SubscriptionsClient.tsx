@@ -89,6 +89,7 @@ export interface UserSubscription {
       id: number;
       name: string;
       order?: number;
+      logo_url?: string;
     };
   };
   isActive: boolean;
@@ -309,31 +310,60 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                           >
                             <CardContent sx={{ flexGrow: 1, p: 2 }}>
                               <Box display="flex" flexDirection="column" gap={1}>
-                                <Box display="flex" alignItems="center" gap={1}>
-                                  <Box
-                                    sx={{
-                                      width: 24,
-                                      height: 24,
-                                      borderRadius: '50%',
-                                      bgcolor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      fontSize: '0.75rem',
-                                      fontWeight: 'bold',
-                                      color: 'white'
-                                    }}
-                                  >
-                                    {subscription.program.channel.name.charAt(0)}
-                                  </Box>
-                                  <Typography variant="caption" color="text.secondary" fontWeight={600}>
-                                    {subscription.program.channel.name}
-                                  </Typography>
-                                </Box>
 
                                 <Typography variant="subtitle1" component="h3" fontWeight={700} lineHeight={1.2}>
                                   {subscription.program.name}
                                 </Typography>
+
+                                <Box display="flex" alignItems="center" gap={1} mt={1}>
+                                  <Typography variant="body2" color="text.secondary">
+                                    en
+                                  </Typography>
+                                  <Box
+                                    sx={{
+                                      width: 80,
+                                      height: 36,
+                                      borderRadius: 1,
+                                      bgcolor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                                      display: 'flex',
+                                      alignItems: 'center',
+                                      justifyContent: 'center',
+                                      overflow: 'hidden',
+                                      position: 'relative',
+                                      boxShadow: mode === 'light'
+                                        ? '0 1px 2px rgba(0,0,0,0.1)'
+                                        : '0 1px 2px rgba(0,0,0,0.2)',
+                                    }}
+                                  >
+                                    {subscription.program.channel.logo_url ? (
+                                      <Box
+                                        component="img"
+                                        src={subscription.program.channel.logo_url}
+                                        alt={subscription.program.channel.name}
+                                        sx={{
+                                          width: '100%',
+                                          height: '100%',
+                                          objectFit: 'contain',
+                                          p: 0.5
+                                        }}
+                                      />
+                                    ) : (
+                                      <Typography
+                                        variant="caption"
+                                        sx={{
+                                          fontWeight: 700,
+                                          color: 'white',
+                                          fontSize: '0.7rem',
+                                          textAlign: 'center',
+                                          lineHeight: 1.1,
+                                          px: 0.5
+                                        }}
+                                      >
+                                        {subscription.program.channel.name}
+                                      </Typography>
+                                    )}
+                                  </Box>
+                                </Box>
                               </Box>
 
                               <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
@@ -400,7 +430,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                 <Box
                                   sx={{
                                     width: '100%',
-                                    aspectRatio: '16/9',
+                                    height: 80,
                                     backgroundColor: getColorForChannel((streamer.order ?? 1) - 1, mode),
                                     display: 'flex',
                                     alignItems: 'center',
