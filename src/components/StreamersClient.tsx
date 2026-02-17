@@ -319,7 +319,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
           'Authorization': `Bearer ${typedSession.accessToken}`,
           'Content-Type': 'application/json',
         },
-        body: !isSubscribed ? JSON.stringify({ notificationMethod: 'both' }) : undefined, // Body for subscribe
+        body: !isSubscribed ? JSON.stringify({}) : undefined,
       });
 
       if (!res.ok) {

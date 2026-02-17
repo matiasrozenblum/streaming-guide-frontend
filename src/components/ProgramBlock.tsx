@@ -78,7 +78,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const typedSession = session as SessionWithToken | null;
   const isLive = is_live || false;
   const streamUrl = stream_url;
-  
+
   // Simplified approach - no complex stream matching needed
   const { pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
@@ -100,7 +100,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const anchorRef = useRef<HTMLDivElement>(null);
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
-  
+
   const tooltipId = `program-${id}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
@@ -114,12 +114,12 @@ export const ProgramBlock: React.FC<Props> = ({
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
   const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
-  
+
   // Handle multiple streams positioning
   let widthPx = duration * pixelsPerMinute - 1;
   let topOffset = 0;
   let height = '100%';
-  
+
   if (totalMultipleStreams && totalMultipleStreams > 1) {
     // Keep full width for each program, but stack them vertically
     widthPx = duration * pixelsPerMinute - 1;
@@ -204,118 +204,58 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const handleBellClick = async (e: React.MouseEvent) => {
     e.stopPropagation();
-    
-    if (!typedSession?.accessToken) {
-      setLoginOpen(true);
+
+    // Optimistic UI update
+    const previousIsOn = isOn;
+    const newStatus = !isOn;
+    const willSubscribe = newStatus;
+
+    setIsOn(newStatus);
+    setIsLoading(true);
+
+    if (!typedSession?.user) {
+      if (confirm('Debes iniciar sesión para suscribirte. ¿Deseas iniciar sesión?')) {
+        const currentPath = window.location.pathname;
+        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
+      }
+      setIsOn(previousIsOn); // Revert optimistic update
+      setIsLoading(false);
       return;
     }
 
-    const prevIsOn = isOn;
-    const willSubscribe = !isOn;
-
-    // Optimistically update UI
-    setIsOn(willSubscribe);
-    setIsLoading(true);
-
     try {
-      let pushSubscription = null;
-      let endpoint = '';
-      let p256dh = '';
-      let auth = '';
-      let pushErrorReason = '';
-      let notificationMethod = 'both'; // Default for non-iOS or iOS with PWA
+      const pushResult: any = await (willSubscribe ? subscribeAndRegister() : Promise.resolve({ endpoint: '', p256dh: '', auth: '', isSupported: false }));
+      const { endpoint, p256dh, auth, isSupported } = pushResult;
 
-      // For iOS users without PWA, use email-only subscription to reduce friction
-      if (isIOSDevice && !isPWAInstalled) {
-        if (willSubscribe) {
-          notificationMethod = 'email';
-        } else {
-          notificationMethod = 'email'; // Keep it simple for unsubscription
-        }
-        // Skip push subscription setup entirely for iOS without PWA
-      } else {
-        // Normal push subscription flow for other platforms or iOS with PWA
-        try {
-          pushSubscription = await subscribeAndRegister();
-          if (pushSubscription) {
-            endpoint = pushSubscription.endpoint;
-            
-            // Enhanced cross-platform key extraction with detailed logging
-            try {
-              const p256dhKey = pushSubscription.getKey('p256dh');
-              const authKey = pushSubscription.getKey('auth');
-              
-              if (p256dhKey && authKey) {
-                p256dh = arrayBufferToBase64(p256dhKey);
-                auth = arrayBufferToBase64(authKey);
-              } else {
-                console.warn('Missing push subscription keys:', { p256dhKey: !!p256dhKey, authKey: !!authKey });
-              }
-            } catch (keyError) {
-              console.error('Failed to extract push subscription keys:', keyError);
-              pushErrorReason = `Key extraction failed: ${keyError instanceof Error ? keyError.message : 'Unknown'}`;
-            }
-          } else {
-            console.warn('Push subscription is null');
-          }
-        } catch (error) {
-          pushErrorReason = error instanceof Error ? error.message : 'Unknown error';
-          console.warn('Failed to get push subscription:', error);
-          
-          // For critical errors, still show setup dialog
-          if (isIOSDevice && !isPWAInstalled && error instanceof Error && 
-              error.message.includes('home screen')) {
-            setIsOn(prevIsOn); // Revert UI
-            setIsLoading(false);
-            globalCloseTooltip(tooltipId); // Close tooltip before opening modal
-            setIOSSetupOpen(true);
-            return;
-          }
-        }
-      }
+      const isValidPush = isSupported && endpoint && p256dh && auth;
 
-      // Enhanced validation with detailed debugging
-      const isValidPush = !!(pushSubscription && endpoint && p256dh && auth);
-      
-      if (!isValidPush) {
-        const reason = pushErrorReason || (!pushSubscription ? 'No subscription object' : 'Missing endpoint/keys');
-        console.warn('Not sending invalid push subscription:', reason);
-        gaEvent({
-          action: 'push_subscription_invalid',
-          params: {
-            program_id: id,
-            program_name: name,
-            channel_name: channelName,
-            reason,
-            endpoint: endpoint || 'empty',
-            p256dh: p256dh || 'empty', 
-            auth: auth || 'empty',
-            has_push: !!pushSubscription,
+      if (willSubscribe) {
+        // Subscribe
+        // Even if we don't have push details (e.g. strict privacy or unsupported), subscribe anyway.
+        // We'll pass undefined for endpoint if not supported.
+        await api.post(
+          `/programs/${id}/subscribe`,
+          {
+            endpoint: isValidPush ? endpoint : undefined,
+            p256dh: isValidPush ? p256dh : undefined,
+            auth: isValidPush ? auth : undefined
           },
-          userData: typedSession?.user
+          {
+            headers: {
+              Authorization: `Bearer ${(session as SessionWithToken).accessToken}`
+            }
+          }
+        );
+      } else {
+        // Unsubscribe
+        // Use the backend's DELETE endpoint which finds subscription by program ID
+        await api.delete(`/programs/${id}/subscribe`, {
+          headers: {
+            Authorization: `Bearer ${(session as SessionWithToken).accessToken}`
+          }
         });
       }
-      
-      await api.post(
-        `/programs/${id}/subscribe`,
-        { 
-          notificationMethod,
-          endpoint: isValidPush ? endpoint : undefined,
-          p256dh: isValidPush ? p256dh : undefined,
-          auth: isValidPush ? auth : undefined
-        },
-        {
-          headers: { Authorization: `Bearer ${typedSession.accessToken}` },
-        }
-      );
-      
-      // Show helpful message for iOS users who subscribed via email
-      if (isIOSDevice && !isPWAInstalled && willSubscribe && notificationMethod === 'email') {
-        setTimeout(() => {
-          setShowIOSPushSnackbar(true);
-        }, 1000);
-      }
-      
+
       // Track subscription event
       gaEvent({
         action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
@@ -323,28 +263,29 @@ export const ProgramBlock: React.FC<Props> = ({
           program_id: id,
           program_name: name,
           channel_name: channelName,
-          notification_method: notificationMethod,
-          has_push: !!pushSubscription,
+          has_push: isValidPush,
         },
         userData: typedSession?.user
       });
+
     } catch (error) {
-      // Revert UI on error
-      setIsOn(prevIsOn);
-      
+      console.error('Error toggling subscription:', error);
+      // Revert optimistic update
+      setIsOn(previousIsOn);
+
       // Provide user-friendly error messages
       let errorMessage = 'Error updating subscription. Please try again.';
-      if (error instanceof Error) {
-        if (error.message.includes('pantalla de inicio') || error.message.includes('home screen')) {
-          errorMessage = error.message;
-        } else if (error.message.includes('permission') || error.message.includes('notificaciones')) {
-          errorMessage = error.message;
-        }
+      if ((error as any)?.message?.includes('pantalla de inicio') || (error as any)?.message?.includes('home screen')) {
+        // needs PWA
+      } else if ((error as any)?.message?.includes('permission') || (error as any)?.message?.includes('notificaciones')) {
+        errorMessage = (error as any).message;
       }
-      
-      alert(errorMessage);
-      console.error('Error updating subscription:', error);
-      
+
+      // Only show alert for actionable errors
+      if (!(error as any)?.message?.includes('home screen')) {
+        alert(errorMessage);
+      }
+
       // Track subscription error
       gaEvent({
         action: 'subscription_error',
@@ -353,7 +294,7 @@ export const ProgramBlock: React.FC<Props> = ({
           program_id: id,
           program_name: name,
           channel_name: channelName,
-          error: error instanceof Error ? error.message : 'Unknown error',
+          error: error instanceof Error ? error.message : (error as any)?.message || 'Unknown error',
         },
         userData: typedSession?.user
       });
@@ -393,7 +334,7 @@ export const ProgramBlock: React.FC<Props> = ({
   //     setMousePosition({ x: event.clientX, y: event.clientY });
   //   }
   // };
-  const handleMouseMove = () => {};
+  const handleMouseMove = () => { };
 
   // Apertura inmediata al hacer click
   const handleTooltipClick = (event: React.MouseEvent) => {
@@ -450,7 +391,7 @@ export const ProgramBlock: React.FC<Props> = ({
       anchorRef.current.style.width = '0';
       anchorRef.current.style.height = '0';
       anchorRef.current.style.pointerEvents = 'none';
-      
+
       if (!isMobile && mousePosition) {
         // Desktop: position at cursor X
         const blockRect = blockRef.current.getBoundingClientRect();
@@ -471,7 +412,7 @@ export const ProgramBlock: React.FC<Props> = ({
   let pillPy = 0.1;
   let pillTop = 6;
   let pillLeft = 6;
-  
+
   // Determine pill label based on program type and whether it's actually today
   let pillLabel: string;
   if (overrideType === 'cancel') {
@@ -482,7 +423,7 @@ export const ProgramBlock: React.FC<Props> = ({
   } else {
     pillLabel = '¡Hoy!';
   }
-  
+
   if (blockWidth !== null) {
     if (blockWidth < 90) {
       pillFontSize = '0.7rem';
@@ -859,14 +800,14 @@ export const ProgramBlock: React.FC<Props> = ({
           </Box>
         </Tooltip>
         <LoginModal open={loginOpen} onClose={() => setLoginOpen(false)} />
-        <IOSNotificationSetup 
-          open={iosSetupOpen} 
-          onClose={() => setIOSSetupOpen(false)} 
+        <IOSNotificationSetup
+          open={iosSetupOpen}
+          onClose={() => setIOSSetupOpen(false)}
           onComplete={() => {
             setIOSSetupOpen(false);
             // Optionally trigger the subscription again after setup
             if (isPWAInstalled) {
-              handleBellClick({ stopPropagation: () => {} } as React.MouseEvent);
+              handleBellClick({ stopPropagation: () => { } } as React.MouseEvent);
             }
           }}
         />
@@ -877,19 +818,19 @@ export const ProgramBlock: React.FC<Props> = ({
           anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
           sx={{ zIndex: 9999 }}
         >
-          <Alert 
-            severity="info" 
+          <Alert
+            severity="info"
             onClose={() => setShowIOSPushSnackbar(false)}
-            sx={{ 
+            sx={{
               minWidth: 280,
             }}
           >
             Para recibir notificaciones push en iOS, dirígete a{' '}
-            <Button 
-              color="inherit" 
-              size="small" 
+            <Button
+              color="inherit"
+              size="small"
               href="/subscriptions"
-              sx={{ 
+              sx={{
                 textDecoration: 'underline',
                 p: 0,
                 minWidth: 'auto',
