@@ -7,8 +7,7 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
-  Button,
+
   Grid,
   Chip,
   IconButton,
@@ -17,7 +16,6 @@ import {
   CircularProgress,
 } from '@mui/material';
 import {
-  Delete,
   ArrowBack,
 } from '@mui/icons-material';
 import { Streamer, StreamingService } from '@/types/streamer';
@@ -37,18 +35,7 @@ import { event as gaEvent } from '@/lib/gtag';
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
 
-const getServiceColor = (service: StreamingService, mode: 'light' | 'dark'): string => {
-  switch (service) {
-    case StreamingService.TWITCH:
-      return mode === 'light' ? '#9146FF' : '#A970FF';
-    case StreamingService.KICK:
-      return mode === 'light' ? '#53FC18' : '#6AFF3A';
-    case StreamingService.YOUTUBE:
-      return mode === 'light' ? '#FF0000' : '#FF4444';
-    default:
-      return mode === 'light' ? '#1976d2' : '#42a5f5';
-  }
-};
+
 
 const getServiceName = (service: StreamingService): string => {
   switch (service) {
@@ -233,6 +220,174 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   }, [subscriptions, streamerSubscriptions, typedSession]);
 
 
+
+  // Reusable Tile Component
+  const SubscriptionTile = ({
+    title,
+    subtitle,
+    imageUrl,
+    imageColor,
+    isLive,
+    onDelete,
+    deleteTooltip,
+    onClick,
+    services,
+    onServiceClick
+  }: {
+    title: string,
+    subtitle?: React.ReactNode,
+    imageUrl?: string,
+    imageColor?: string,
+    isLive?: boolean,
+    onDelete: (e: React.MouseEvent) => void,
+    deleteTooltip: string,
+    onClick?: () => void,
+    services?: { service: StreamingService, url: string }[],
+    onServiceClick?: (service: StreamingService, url: string) => void
+  }) => (
+    <MotionCard
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      onClick={onClick}
+      sx={{
+        height: 80, // Compact fixed height
+        display: 'flex',
+        alignItems: 'center',
+        background: mode === 'light' ? '#ffffff' : '#1e293b', // Darker surface
+        borderRadius: 2,
+        border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
+        overflow: 'hidden',
+        cursor: onClick ? 'pointer' : 'default',
+        position: 'relative',
+        transition: 'all 0.2s',
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+          '& .delete-btn': { opacity: 1 }
+        }
+      }}
+    >
+      {/* Visual / Avatar Area */}
+      <Box
+        sx={{
+          width: 80,
+          height: 80,
+          flexShrink: 0,
+          background: imageColor || (mode === 'light' ? '#f1f5f9' : '#0f172a'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative'
+        }}
+      >
+        {imageUrl ? (
+          <Box
+            component="img"
+            src={imageUrl}
+            alt={title}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: 'contain', // Ensure logos fit properly
+              p: 1
+            }}
+          />
+        ) : (
+          <Typography fontWeight={700} sx={{ color: '#fff', fontSize: '1.5rem' }}>
+            {title.charAt(0).toUpperCase()}
+          </Typography>
+        )}
+
+        {isLive && (
+          <Box
+            sx={{
+              position: 'absolute',
+              bottom: 6,
+              right: 6,
+              width: 12,
+              height: 12,
+              borderRadius: '50%',
+              bgcolor: '#ef4444',
+              border: '2px solid white',
+              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+            }}
+          />
+        )}
+      </Box>
+
+      {/* Content Area */}
+      <Box sx={{ flexGrow: 1, px: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="subtitle1" fontWeight={600} noWrap title={title}>
+            {title}
+          </Typography>
+          {isLive && (
+            <Chip label="LIVE" size="small" color="error" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 800 }} />
+          )}
+        </Box>
+
+        {subtitle && (
+          <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+            {subtitle}
+          </Box>
+        )}
+
+        {/* Small Service Icons for Streamers */}
+        {services && services.length > 0 && (
+          <Box display="flex" gap={1} mt={0.5}>
+            {services.map((s, idx) => {
+              const icon = getServiceIconUrl(s.service);
+              if (!icon) return null;
+              return (
+                <Tooltip key={idx} title={`Watch on ${getServiceName(s.service)}`}>
+                  <Box
+                    component="img"
+                    src={icon}
+                    sx={{ width: 14, height: 14, opacity: 0.7, '&:hover': { opacity: 1, cursor: 'pointer' } }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onServiceClick?.(s.service, s.url);
+                    }}
+                  />
+                </Tooltip>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
+
+      {/* Action Area (Hover Reveal) */}
+      <Box
+        className="delete-btn"
+        sx={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          opacity: 0, // Hidden by default
+          transition: 'opacity 0.2s'
+        }}
+      >
+        <Tooltip title={deleteTooltip}>
+          <IconButton
+            size="small"
+            onClick={onDelete}
+            sx={{
+              color: 'text.secondary',
+              '&:hover': { color: 'error.main', bgcolor: 'error.lighter' }
+            }}
+          >
+            <Box component="svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </Box>
+          </IconButton>
+        </Tooltip>
+      </Box>
+    </MotionCard>
+  );
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
@@ -276,114 +431,28 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
 
             {!loading && (
               <Grid container spacing={4}>
-                {/* Programs Column */}
+                {/* Programs Sections */}
                 <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="h5" component="h2" gutterBottom fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                  <Typography variant="h6" component="h2" gutterBottom fontWeight={600} color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                     Programas
                   </Typography>
 
                   {subscriptions.length > 0 ? (
                     <Grid container spacing={2}>
-                      {subscriptions.map((subscription, index) => (
+                      {subscriptions.map((subscription) => (
                         <Grid size={{ xs: 12, sm: 6 }} key={subscription.id}>
-                          <MotionCard
-                            initial={{ opacity: 0, y: 20 }}
-                            animate={{ opacity: 1, y: 0 }}
-                            transition={{ duration: 0.5, delay: index * 0.1 }}
-                            sx={{
-                              height: '100%',
-                              display: 'flex',
-                              flexDirection: 'column',
-                              background: mode === 'light'
-                                ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                                : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                              backdropFilter: 'blur(8px)',
-                              borderRadius: 3,
-                              border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
-                              transition: 'all 0.3s ease-in-out',
-                              '&:hover': {
-                                transform: 'translateY(-4px)',
-                                boxShadow: mode === 'light'
-                                  ? '0 12px 24px rgba(0,0,0,0.15)'
-                                  : '0 12px 24px rgba(0,0,0,0.4)',
-                              }
-                            }}
-                          >
-                            <CardContent sx={{ flexGrow: 1, p: 2 }}>
-                              <Box display="flex" flexDirection="column" gap={1}>
-
-                                <Typography variant="subtitle1" component="h3" fontWeight={700} lineHeight={1.2}>
-                                  {subscription.program.name}
-                                </Typography>
-
-                                <Box display="flex" alignItems="center" gap={1} mt={1}>
-                                  <Typography variant="body2" color="text.secondary">
-                                    en
-                                  </Typography>
-                                  <Box
-                                    sx={{
-                                      width: 80,
-                                      height: 36,
-                                      borderRadius: 1,
-                                      bgcolor: subscription.program.channel.background_color || '#ffffff',
-                                      display: 'flex',
-                                      alignItems: 'center',
-                                      justifyContent: 'center',
-                                      overflow: 'hidden',
-                                      position: 'relative',
-                                      boxShadow: mode === 'light'
-                                        ? '0 1px 2px rgba(0,0,0,0.1)'
-                                        : '0 1px 2px rgba(0,0,0,0.2)',
-                                    }}
-                                  >
-                                    {subscription.program.channel.logo_url ? (
-                                      <Box
-                                        component="img"
-                                        src={subscription.program.channel.logo_url}
-                                        alt={subscription.program.channel.name}
-                                        sx={{
-                                          width: '100%',
-                                          height: '100%',
-                                          objectFit: 'contain',
-                                          p: 0.5
-                                        }}
-                                      />
-                                    ) : (
-                                      <Typography
-                                        variant="caption"
-                                        sx={{
-                                          fontWeight: 700,
-                                          color: 'white',
-                                          fontSize: '0.7rem',
-                                          textAlign: 'center',
-                                          lineHeight: 1.1,
-                                          px: 0.5
-                                        }}
-                                      >
-                                        {subscription.program.channel.name}
-                                      </Typography>
-                                    )}
-                                  </Box>
-                                </Box>
-                              </Box>
-
-                              <Box display="flex" justifyContent="space-between" alignItems="center" mt={2}>
-                                <Typography variant="caption" color="text.secondary" fontWeight={500} sx={{ fontSize: '0.7rem' }}>
-                                  Desde {new Date(subscription.createdAt).toLocaleDateString('es-ES', { day: 'numeric', month: 'short' })}
-                                </Typography>
-                                <Tooltip title="Cancelar suscripción">
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => removeSubscription(subscription.id)}
-                                    sx={{ p: 0.5 }}
-                                  >
-                                    <Delete fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              </Box>
-                            </CardContent>
-                          </MotionCard>
+                          <SubscriptionTile
+                            title={subscription.program.name}
+                            subtitle={
+                              <Typography variant="caption" color="text.secondary">
+                                en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name}</Box>
+                              </Typography>
+                            }
+                            imageUrl={subscription.program.channel.logo_url}
+                            imageColor={subscription.program.channel.background_color || '#ffffff'}
+                            onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
+                            deleteTooltip="Cancelar suscripción"
+                          />
                         </Grid>
                       ))}
                     </Grid>
@@ -392,184 +461,39 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                   )}
                 </Grid>
 
-                {/* Streamers Column */}
-                < Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="h5" component="h2" gutterBottom fontWeight={600} sx={{ mb: 3, display: 'flex', alignItems: 'center', gap: 1 }}>
+                {/* Streamers Section */}
+                <Grid size={{ xs: 12, md: 6 }}>
+                  <Typography variant="h6" component="h2" gutterBottom fontWeight={600} color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                     Streamers
                   </Typography>
 
-                  {
-                    streamerSubscriptions.length > 0 ? (
-                      <Grid container spacing={2}>
-                        {streamerSubscriptions.map((streamer, index) => (
-                          <Grid size={{ xs: 12, sm: 6 }} key={streamer.id}>
-                            <MotionCard
-                              initial={{ opacity: 0, y: 20 }}
-                              animate={{ opacity: 1, y: 0 }}
-                              transition={{ duration: 0.5, delay: index * 0.1 }}
-                              sx={{
-                                height: '100%',
-                                display: 'flex',
-                                flexDirection: 'column',
-                                background: mode === 'light'
-                                  ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                                  : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                                backdropFilter: 'blur(8px)',
-                                borderRadius: 3,
-                                border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
-                                transition: 'all 0.3s ease-in-out',
-                                '&:hover': {
-                                  transform: 'translateY(-4px)',
-                                  boxShadow: mode === 'light'
-                                    ? '0 12px 24px rgba(0,0,0,0.15)'
-                                    : '0 12px 24px rgba(0,0,0,0.4)',
-                                }
-                              }}
-                            >
-                              <CardContent sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, position: 'relative' }}>
-                                {/* ID Photo Style Image */}
-                                <Box
-                                  sx={{
-                                    width: 70,
-                                    height: 70,
-                                    borderRadius: 3,
-                                    backgroundColor: getColorForChannel((streamer.order ?? 1) - 1, mode),
-                                    display: 'flex',
-                                    alignItems: 'center',
-                                    justifyContent: 'center',
-                                    overflow: 'hidden',
-                                    flexShrink: 0,
-                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
-                                    position: 'relative'
-                                  }}
-                                >
-                                  {streamer.logo_url ? (
-                                    <Box
-                                      component="img"
-                                      src={streamer.logo_url}
-                                      alt={streamer.name}
-                                      sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
-                                    />
-                                  ) : (
-                                    <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>
-                                      {streamer.name.charAt(0).toUpperCase()}
-                                    </Typography>
-                                  )}
-
-                                  {/* Live dot for ID style */}
-                                  {streamer.is_live && (
-                                    <Box
-                                      sx={{
-                                        position: 'absolute',
-                                        bottom: 4,
-                                        right: 4,
-                                        width: 12,
-                                        height: 12,
-                                        borderRadius: '50%',
-                                        backgroundColor: '#f44336',
-                                        border: '2px solid white',
-                                      }}
-                                    />
-                                  )}
-                                </Box>
-
-                                {/* Info */}
-                                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
-                                  <Box display="flex" alignItems="center" gap={1}>
-                                    <Typography variant="h6" component="h3" fontWeight={700} noWrap lineHeight={1.2}>
-                                      {streamer.name}
-                                    </Typography>
-                                    {streamer.is_live && (
-                                      <Chip
-                                        label="LIVE"
-                                        size="small"
-                                        color="error"
-                                        sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold' }}
-                                      />
-                                    )}
-                                  </Box>
-
-                                  {streamer.categories && streamer.categories.length > 0 && (
-                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
-                                      {streamer.categories.slice(0, 2).map(cat => (
-                                        <Chip
-                                          key={cat.id}
-                                          label={cat.name}
-                                          size="small"
-                                          variant="outlined"
-                                          sx={{ height: 18, fontSize: '0.65rem', borderRadius: 1, borderColor: cat.color ? `${cat.color}60` : undefined, color: cat.color }}
-                                        />
-                                      ))}
-                                    </Box>
-                                  )}
-                                </Box>
-
-                                {/* Trash Button */}
-                                <Tooltip title="Dejar de seguir">
-                                  <IconButton
-                                    size="small"
-                                    color="error"
-                                    onClick={() => removeStreamerSubscription(streamer.id)}
-                                    sx={{
-                                      alignSelf: 'flex-start',
-                                      mt: -0.5,
-                                      mr: -0.5,
-                                      opacity: 0.7,
-                                      '&:hover': { opacity: 1, bgcolor: 'error.lighter' }
-                                    }}
-                                  >
-                                    <Delete fontSize="small" />
-                                  </IconButton>
-                                </Tooltip>
-                              </CardContent>
-
-                              {/* Service Buttons - Compact Row at bottom */}
-                              <Box sx={{ px: 2, pb: 2, pt: 0, display: 'flex', gap: 1 }}>
-                                {streamer.services
-                                  .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK || service.service === StreamingService.YOUTUBE)
-                                  .map((service, serviceIndex) => {
-                                    const serviceIconUrl = getServiceIconUrl(service.service);
-                                    return (
-                                      <Button
-                                        key={serviceIndex}
-                                        variant="outlined"
-                                        size="small"
-                                        fullWidth
-                                        onClick={() => handleServiceClick(streamer, service.service, service.url)}
-                                        sx={{
-                                          justifyContent: 'center',
-                                          borderRadius: 2,
-                                          borderColor: getServiceColor(service.service, mode),
-                                          color: getServiceColor(service.service, mode),
-                                          textTransform: 'none',
-                                          gap: 0.5,
-                                          py: 0.25,
-                                          minHeight: 28,
-                                          fontSize: '0.75rem',
-                                          flex: 1,
-                                          '&:hover': {
-                                            borderColor: getServiceColor(service.service, mode),
-                                            backgroundColor: mode === 'light'
-                                              ? `${getServiceColor(service.service, mode)}15`
-                                              : `${getServiceColor(service.service, mode)}25`,
-                                          }
-                                        }}
-                                      >
-                                        {serviceIconUrl && (
-                                          <Box component="img" src={serviceIconUrl} alt="" sx={{ width: 14, height: 14, objectFit: 'contain' }} />
-                                        )}
-                                        {getServiceName(service.service)}
-                                      </Button>
-                                    );
-                                  })}
-                              </Box>
-                            </MotionCard>
-                          </Grid>
-                        ))}
-                      </Grid>
-                    ) : (
-                      <Typography variant="body2" color="text.secondary">No sigues a ningún streamer.</Typography>
-                    )
+                  {streamerSubscriptions.length > 0 ? (
+                    <Grid container spacing={2}>
+                      {streamerSubscriptions.map((streamer) => (
+                        <Grid size={{ xs: 12, sm: 6 }} key={streamer.id}>
+                          <SubscriptionTile
+                            title={streamer.name}
+                            imageUrl={streamer.logo_url || undefined}
+                            imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
+                            isLive={streamer.is_live}
+                            onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
+                            deleteTooltip="Dejar de seguir"
+                            services={streamer.services.filter(s => s.service === StreamingService.TWITCH || s.service === StreamingService.KICK)}
+                            onServiceClick={(service, url) => handleServiceClick(streamer, service, url)}
+                            subtitle={
+                              streamer.categories && streamer.categories.length > 0 ? (
+                                <Typography variant="caption" color="text.secondary" noWrap>
+                                  {streamer.categories.map(c => c.name).join(', ')}
+                                </Typography>
+                              ) : undefined
+                            }
+                          />
+                        </Grid>
+                      ))}
+                    </Grid>
+                  ) : (
+                    <Typography variant="body2" color="text.secondary">No sigues a ningún streamer.</Typography>
+                  )
                   }
                 </Grid >
               </Grid >
