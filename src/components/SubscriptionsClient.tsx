@@ -425,18 +425,21 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                 }
                               }}
                             >
-                              <CardContent sx={{ p: 0, position: 'relative' }}>
-                                {/* Streamer Header Image/Bg */}
+                              <CardContent sx={{ p: 2, display: 'flex', alignItems: 'center', gap: 2, position: 'relative' }}>
+                                {/* ID Photo Style Image */}
                                 <Box
                                   sx={{
-                                    width: '100%',
-                                    height: 80,
+                                    width: 70,
+                                    height: 70,
+                                    borderRadius: 3,
                                     backgroundColor: getColorForChannel((streamer.order ?? 1) - 1, mode),
                                     display: 'flex',
                                     alignItems: 'center',
                                     justifyContent: 'center',
-                                    position: 'relative',
                                     overflow: 'hidden',
+                                    flexShrink: 0,
+                                    boxShadow: '0 4px 6px rgba(0,0,0,0.1)',
+                                    position: 'relative'
                                   }}
                                 >
                                   {streamer.logo_url ? (
@@ -447,106 +450,118 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                       sx={{ width: '100%', height: '100%', objectFit: 'cover' }}
                                     />
                                   ) : (
-                                    <Typography sx={{ fontSize: '2rem', fontWeight: 700, color: 'white' }}>
+                                    <Typography sx={{ fontSize: '1.5rem', fontWeight: 700, color: 'white' }}>
                                       {streamer.name.charAt(0).toUpperCase()}
                                     </Typography>
                                   )}
 
-                                  {/* Live Badge */}
+                                  {/* Live dot for ID style */}
                                   {streamer.is_live && (
                                     <Box
                                       sx={{
                                         position: 'absolute',
-                                        top: 8,
-                                        right: 8,
+                                        bottom: 4,
+                                        right: 4,
+                                        width: 12,
+                                        height: 12,
+                                        borderRadius: '50%',
                                         backgroundColor: '#f44336',
-                                        color: 'white',
-                                        fontSize: '0.65rem',
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        fontWeight: 'bold',
-                                        boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
+                                        border: '2px solid white',
                                       }}
-                                    >
-                                      LIVE
+                                    />
+                                  )}
+                                </Box>
+
+                                {/* Info */}
+                                <Box sx={{ flexGrow: 1, minWidth: 0 }}>
+                                  <Box display="flex" alignItems="center" gap={1}>
+                                    <Typography variant="h6" component="h3" fontWeight={700} noWrap lineHeight={1.2}>
+                                      {streamer.name}
+                                    </Typography>
+                                    {streamer.is_live && (
+                                      <Chip
+                                        label="LIVE"
+                                        size="small"
+                                        color="error"
+                                        sx={{ height: 16, fontSize: '0.6rem', fontWeight: 'bold' }}
+                                      />
+                                    )}
+                                  </Box>
+
+                                  {streamer.categories && streamer.categories.length > 0 && (
+                                    <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mt: 0.5 }}>
+                                      {streamer.categories.slice(0, 2).map(cat => (
+                                        <Chip
+                                          key={cat.id}
+                                          label={cat.name}
+                                          size="small"
+                                          variant="outlined"
+                                          sx={{ height: 18, fontSize: '0.65rem', borderRadius: 1, borderColor: cat.color ? `${cat.color}60` : undefined, color: cat.color }}
+                                        />
+                                      ))}
                                     </Box>
                                   )}
                                 </Box>
+
+                                {/* Trash Button */}
+                                <Tooltip title="Dejar de seguir">
+                                  <IconButton
+                                    size="small"
+                                    color="error"
+                                    onClick={() => removeStreamerSubscription(streamer.id)}
+                                    sx={{
+                                      alignSelf: 'flex-start',
+                                      mt: -0.5,
+                                      mr: -0.5,
+                                      opacity: 0.7,
+                                      '&:hover': { opacity: 1, bgcolor: 'error.lighter' }
+                                    }}
+                                  >
+                                    <Delete fontSize="small" />
+                                  </IconButton>
+                                </Tooltip>
                               </CardContent>
 
-                              <CardContent sx={{ flexGrow: 1, p: 2, '&:last-child': { pb: 2 } }}>
-                                <Box display="flex" justifyContent="space-between" alignItems="start">
-                                  <Box>
-                                    <Typography variant="subtitle1" component="h3" fontWeight={600} sx={{ mb: 0.5, lineHeight: 1.2 }}>
-                                      {streamer.name}
-                                    </Typography>
-                                    {streamer.categories && streamer.categories.length > 0 && (
-                                      <Box sx={{ display: 'flex', gap: 0.5, flexWrap: 'wrap', mb: 1 }}>
-                                        {streamer.categories.slice(0, 2).map(cat => (
-                                          <Chip
-                                            key={cat.id}
-                                            label={cat.name}
-                                            size="small"
-                                            variant="outlined"
-                                            sx={{ height: 18, fontSize: '0.65rem', borderRadius: 1, borderColor: cat.color ? `${cat.color}60` : undefined, color: cat.color }}
-                                          />
-                                        ))}
-                                      </Box>
-                                    )}
-                                  </Box>
-                                  <Tooltip title="Dejar de seguir">
-                                    <IconButton
-                                      size="small"
-                                      color="error"
-                                      onClick={() => removeStreamerSubscription(streamer.id)}
-                                      sx={{ p: 0.5, mt: -0.5, mr: -0.5 }}
-                                    >
-                                      <Delete fontSize="small" />
-                                    </IconButton>
-                                  </Tooltip>
-                                </Box>
-
-                                {/* Service Buttons */}
-                                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 0.5, mt: 1.5 }}>
-                                  {streamer.services
-                                    .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK || service.service === StreamingService.YOUTUBE)
-                                    .map((service, serviceIndex) => {
-                                      const serviceIconUrl = getServiceIconUrl(service.service);
-                                      return (
-                                        <Button
-                                          key={serviceIndex}
-                                          variant="outlined"
-                                          size="small"
-                                          fullWidth
-                                          onClick={() => handleServiceClick(streamer, service.service, service.url)}
-                                          sx={{
-                                            justifyContent: 'center',
-                                            borderRadius: 1.5,
+                              {/* Service Buttons - Compact Row at bottom */}
+                              <Box sx={{ px: 2, pb: 2, pt: 0, display: 'flex', gap: 1 }}>
+                                {streamer.services
+                                  .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK || service.service === StreamingService.YOUTUBE)
+                                  .map((service, serviceIndex) => {
+                                    const serviceIconUrl = getServiceIconUrl(service.service);
+                                    return (
+                                      <Button
+                                        key={serviceIndex}
+                                        variant="outlined"
+                                        size="small"
+                                        fullWidth
+                                        onClick={() => handleServiceClick(streamer, service.service, service.url)}
+                                        sx={{
+                                          justifyContent: 'center',
+                                          borderRadius: 2,
+                                          borderColor: getServiceColor(service.service, mode),
+                                          color: getServiceColor(service.service, mode),
+                                          textTransform: 'none',
+                                          gap: 0.5,
+                                          py: 0.25,
+                                          minHeight: 28,
+                                          fontSize: '0.75rem',
+                                          flex: 1,
+                                          '&:hover': {
                                             borderColor: getServiceColor(service.service, mode),
-                                            color: getServiceColor(service.service, mode),
-                                            textTransform: 'none',
-                                            gap: 1,
-                                            py: 0.5,
-                                            px: 1,
-                                            minHeight: 28,
-                                            fontSize: '0.75rem',
-                                            '&:hover': {
-                                              borderColor: getServiceColor(service.service, mode),
-                                              backgroundColor: mode === 'light'
-                                                ? `${getServiceColor(service.service, mode)}15`
-                                                : `${getServiceColor(service.service, mode)}25`,
-                                            }
-                                          }}
-                                        >
-                                          {serviceIconUrl && (
-                                            <Box component="img" src={serviceIconUrl} alt="" sx={{ width: 14, height: 14, objectFit: 'contain' }} />
-                                          )}
-                                          Ver en {getServiceName(service.service)}
-                                        </Button>
-                                      );
-                                    })}
-                                </Box>
-                              </CardContent>
+                                            backgroundColor: mode === 'light'
+                                              ? `${getServiceColor(service.service, mode)}15`
+                                              : `${getServiceColor(service.service, mode)}25`,
+                                          }
+                                        }}
+                                      >
+                                        {serviceIconUrl && (
+                                          <Box component="img" src={serviceIconUrl} alt="" sx={{ width: 14, height: 14, objectFit: 'contain' }} />
+                                        )}
+                                        {getServiceName(service.service)}
+                                      </Button>
+                                    );
+                                  })}
+                              </Box>
                             </MotionCard>
                           </Grid>
                         ))}
