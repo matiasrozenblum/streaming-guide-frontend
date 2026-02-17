@@ -13,7 +13,7 @@ export async function POST(
     }
 
     const { id } = await params;
-    const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:3001';
+    const backendUrl = process.env.NEXT_PUBLIC_API_URL || 'https://streaming-guide-backend-production.up.railway.app';
 
     try {
         const res = await fetch(`${backendUrl}/api/streamers/${id}/subscribe`, {
