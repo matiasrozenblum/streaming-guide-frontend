@@ -90,6 +90,7 @@ export interface UserSubscription {
       name: string;
       order?: number;
       logo_url?: string;
+      background_color?: string;
     };
   };
   isActive: boolean;
@@ -324,7 +325,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                       width: 80,
                                       height: 36,
                                       borderRadius: 1,
-                                      bgcolor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                                      bgcolor: subscription.program.channel.background_color || getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
