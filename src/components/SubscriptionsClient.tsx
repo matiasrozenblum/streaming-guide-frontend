@@ -236,7 +236,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
-      <Box component="main" sx={{ pt: 10, pb: 4 }}>
+      <Box component="main" sx={{ pt: 4, pb: 4 }}>
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 3 } }}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
@@ -325,7 +325,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                       width: 80,
                                       height: 36,
                                       borderRadius: 1,
-                                      bgcolor: subscription.program.channel.background_color || getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
+                                      bgcolor: subscription.program.channel.background_color || '#ffffff',
                                       display: 'flex',
                                       alignItems: 'center',
                                       justifyContent: 'center',
