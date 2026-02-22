@@ -227,7 +227,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
     subtitle,
     imageUrl,
     imageColor,
-    isLive,
+    isStreamer,
     onDelete,
     deleteTooltip,
     onClick,
@@ -238,7 +238,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
     subtitle?: React.ReactNode,
     imageUrl?: string,
     imageColor?: string,
-    isLive?: boolean,
+    isStreamer?: boolean,
     onDelete: (e: React.MouseEvent) => void,
     deleteTooltip: string,
     onClick?: () => void,
@@ -290,8 +290,8 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
             sx={{
               width: '100%',
               height: '100%',
-              objectFit: 'contain', // Ensure logos fit properly
-              p: 1
+              objectFit: isStreamer ? 'cover' : 'contain', // Streamers use cover, Programs use contain
+              p: isStreamer ? 0 : 0.5 // Streamers have no padding, channels have 4px padding
             }}
           />
         ) : (
@@ -299,33 +299,14 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
             {title.charAt(0).toUpperCase()}
           </Typography>
         )}
-
-        {isLive && (
-          <Box
-            sx={{
-              position: 'absolute',
-              bottom: 6,
-              right: 6,
-              width: 12,
-              height: 12,
-              borderRadius: '50%',
-              bgcolor: '#ef4444',
-              border: '2px solid white',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
-            }}
-          />
-        )}
       </Box>
 
       {/* Content Area */}
       <Box sx={{ flexGrow: 1, px: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
         <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="subtitle1" fontWeight={600} noWrap title={title}>
+          <Typography variant="subtitle1" fontWeight={600} noWrap title={title} sx={{ fontSize: '1.1rem' }}>
             {title}
           </Typography>
-          {isLive && (
-            <Chip label="LIVE" size="small" color="error" sx={{ height: 16, fontSize: '0.6rem', fontWeight: 800 }} />
-          )}
         </Box>
 
         {subtitle && (
@@ -336,7 +317,10 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
 
         {/* Small Service Icons for Streamers */}
         {services && services.length > 0 && (
-          <Box display="flex" gap={1} mt={0.5}>
+          <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
+              EN
+            </Typography>
             {services.map((s, idx) => {
               const icon = getServiceIconUrl(s.service);
               if (!icon) return null;
@@ -444,8 +428,8 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                           <SubscriptionTile
                             title={subscription.program.name}
                             subtitle={
-                              <Typography variant="caption" color="text.secondary">
-                                en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name}</Box>
+                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
                               </Typography>
                             }
                             imageUrl={subscription.program.channel.logo_url}
@@ -475,7 +459,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                             title={streamer.name}
                             imageUrl={streamer.logo_url || undefined}
                             imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
-                            isLive={streamer.is_live}
+                            isStreamer={true}
                             onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
                             deleteTooltip="Dejar de seguir"
                             services={streamer.services.filter(s => s.service === StreamingService.TWITCH || s.service === StreamingService.KICK)}

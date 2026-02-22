@@ -2,6 +2,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
 import GoogleProvider from 'next-auth/providers/google';
+import AppleProvider from 'next-auth/providers/apple';
 // import FacebookProvider from 'next-auth/providers/facebook'; // Temporarily disabled - requires app review
 
 interface ExtendedSession extends Session {
@@ -83,6 +84,19 @@ export const authOptions: AuthOptions = {
         };
       },
     }),
+    AppleProvider({
+      clientId: process.env.APPLE_ID!,
+      clientSecret: process.env.APPLE_PRIVATE_KEY!,
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ? `${profile.name.firstName} ${profile.name.lastName}` : '',
+          email: profile.email || '',
+          firstName: profile.name?.firstName || '',
+          lastName: profile.name?.lastName || '',
+        };
+      },
+    }),
     // FacebookProvider temporarily disabled - requires app review
     /*
     FacebookProvider({
@@ -141,7 +155,7 @@ export const authOptions: AuthOptions = {
               email: token.email,
               firstName: token.firstName || token.name?.split(' ')[0] || '',
               lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
-              origin: account.provider === 'google' ? 'google' : account.provider === 'facebook' ? 'facebook' : 'traditional',
+              origin: account.provider === 'google' ? 'google' : account.provider === 'apple' ? 'apple' : account.provider === 'facebook' ? 'facebook' : 'traditional',
             }),
           });
 
@@ -160,7 +174,7 @@ export const authOptions: AuthOptions = {
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
               token.profileIncomplete = false;
-              
+
               // Update token with backend user data (including role)
               if (data.user) {
                 token.role = data.user.role || token.role;
@@ -218,7 +232,7 @@ export const authOptions: AuthOptions = {
         (session as ExtendedSession).refreshToken = token.refreshToken as string;
         (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
         (session as ExtendedSession).registrationToken = token.registrationToken as string;
-        
+
         console.log('[NextAuth Session] Tokens set:', {
           accessToken: !!(session as ExtendedSession).accessToken,
           refreshToken: !!(session as ExtendedSession).refreshToken,
@@ -265,4 +279,5 @@ export const authOptions: AuthOptions = {
 // Required ENV variables:
 // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 // FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET
+// APPLE_ID, APPLE_TEAM_ID, APPLE_PRIVATE_KEY, APPLE_KEY_ID
 //
