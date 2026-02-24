@@ -87,6 +87,7 @@ export const authOptions: AuthOptions = {
     AppleProvider({
       clientId: process.env.APPLE_ID!,
       clientSecret: process.env.APPLE_PRIVATE_KEY!,
+      checks: ['state'], // Bypass PKCE to fix SameSite=lax cookie drop on Apple's form_post callback
       profile(profile) {
         return {
           id: profile.sub,
