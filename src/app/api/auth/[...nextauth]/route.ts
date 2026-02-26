@@ -8,8 +8,15 @@ const generateAppleClientSecret = async () => {
         const teamId = process.env.APPLE_TEAM_ID!;
         const clientId = process.env.APPLE_ID!;
         const keyId = process.env.APPLE_KEY_ID!;
-        // Normalize escaped newlines from environment variables
-        const privateKey = process.env.APPLE_PRIVATE_KEY.replace(/\\n/g, '\n');
+        let privateKey = process.env.APPLE_PRIVATE_KEY;
+        // Try to extract just the base64 content
+        const matches = privateKey.match(/-----BEGIN PRIVATE KEY-----([\s\S]+?)-----END PRIVATE KEY-----/);
+        let base64 = matches ? matches[1] : privateKey;
+        // Remove all whitespace (including newlines, tabs, and spaces)
+        base64 = base64.replace(/\s+/g, '');
+        // Reconstruct the proper PEM (64 chars per line)
+        const formattedBase64 = base64.match(/.{1,64}/g)?.join('\n') || '';
+        privateKey = `-----BEGIN PRIVATE KEY-----\n${formattedBase64}\n-----END PRIVATE KEY-----`;
 
         const secretKey = await importPKCS8(privateKey, 'ES256');
 
