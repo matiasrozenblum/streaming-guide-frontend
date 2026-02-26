@@ -44,7 +44,10 @@ const handler = async (req: Request, ctx: any) => {
                 if (provider.id === 'apple') {
                     return {
                         ...provider,
-                        clientSecret: await generateAppleClientSecret(),
+                        options: {
+                            ...provider.options,
+                            clientSecret: await generateAppleClientSecret()
+                        },
                     };
                 }
                 return provider;
