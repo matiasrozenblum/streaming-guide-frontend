@@ -5,16 +5,15 @@ import { SignJWT, importPKCS8 } from 'jose';
 const generateAppleClientSecret = async () => {
     if (!process.env.APPLE_PRIVATE_KEY) return '';
     try {
-        const teamId = process.env.APPLE_TEAM_ID!;
-        const clientId = process.env.APPLE_ID!;
-        const keyId = process.env.APPLE_KEY_ID!;
-        let privateKey = process.env.APPLE_PRIVATE_KEY;
-        // Try to extract just the base64 content
+        const teamId = (process.env.APPLE_TEAM_ID || '').trim();
+        const clientId = (process.env.APPLE_ID || '').trim();
+        const keyId = (process.env.APPLE_KEY_ID || '').trim();
+
+        const envKey = process.env.APPLE_PRIVATE_KEY || '';
+        let privateKey = envKey.replace(/\\n/g, '\n');
         const matches = privateKey.match(/-----BEGIN PRIVATE KEY-----([\s\S]+?)-----END PRIVATE KEY-----/);
         let base64 = matches ? matches[1] : privateKey;
-        // Remove all whitespace (including newlines, tabs, and spaces)
         base64 = base64.replace(/\s+/g, '');
-        // Reconstruct the proper PEM (64 chars per line)
         const formattedBase64 = base64.match(/.{1,64}/g)?.join('\n') || '';
         privateKey = `-----BEGIN PRIVATE KEY-----\n${formattedBase64}\n-----END PRIVATE KEY-----`;
 
@@ -36,7 +35,6 @@ const generateAppleClientSecret = async () => {
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const handler = async (req: Request, ctx: any) => {
-    // Dynamically inject the Apple clientSecret JWT at request time
     const options = { ...authOptions };
 
     if (options.providers) {

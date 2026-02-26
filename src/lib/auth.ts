@@ -76,22 +76,50 @@ export const authOptions: AuthOptions = {
       id: 'credentials',
       name: 'Credentials',
       credentials: {
-        accessToken: { label: 'Access Token', type: 'text' },
-        refreshToken: { label: 'Refresh Token', type: 'text' },
+        email: { label: 'Email', type: 'email' },
+        password: { label: 'Password', type: 'password' },
       },
       async authorize(credentials) {
-        if (!credentials?.accessToken) return null;
-        const decoded = jwtDecode<DecodedJWT>(credentials.accessToken);
-        return {
-          id: decoded.sub?.toString() || '',
-          name: decoded.name || '',
-          email: decoded.email || '',
-          role: decoded.role || 'user',
-          accessToken: credentials.accessToken,
-          refreshToken: credentials.refreshToken || '',
-          gender: decoded.gender,
-          birthDate: decoded.birthDate,
-        } as JWTUser;
+        if (!credentials?.email || !credentials?.password) {
+          throw new Error('Please enter an email and password');
+        }
+
+        try {
+          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              email: credentials.email,
+              password: credentials.password,
+            }),
+          });
+
+          if (!res.ok) {
+            const error = await res.json();
+            throw new Error(error.message || 'Authentication failed');
+          }
+
+          const data = await res.json();
+          const decoded = jwtDecode<DecodedJWT>(data.accessToken);
+
+          return {
+            id: decoded.sub?.toString() || '',
+            name: decoded.name || '',
+            email: decoded.email || '',
+            role: decoded.role || 'user',
+            accessToken: data.accessToken,
+            refreshToken: data.refreshToken,
+            gender: decoded.gender,
+            birthDate: decoded.birthDate,
+          };
+        } catch (error) {
+          if (error instanceof Error) {
+            throw new Error(error.message);
+          }
+          throw new Error('Authentication failed');
+        }
       },
     }),
     GoogleProvider({
@@ -101,7 +129,8 @@ export const authOptions: AuthOptions = {
         params: {
           prompt: "consent",
           access_type: "offline",
-          response_type: "code"
+          response_type: "code",
+          scope: 'openid email profile',
         }
       },
       profile(profile) {
@@ -118,8 +147,8 @@ export const authOptions: AuthOptions = {
       },
     }),
     AppleProvider({
-      clientId: process.env.APPLE_ID!,
-      clientSecret: process.env.APPLE_PRIVATE_KEY!,
+      clientId: (process.env.APPLE_ID || '').trim(),
+      clientSecret: (process.env.APPLE_PRIVATE_KEY || '').trim(),
       checks: ['state'], // Bypass PKCE to fix SameSite=lax cookie drop on Apple's form_post callback
       profile(profile) {
         return {
