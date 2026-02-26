@@ -26,7 +26,7 @@ const generateAppleClientSecret = async () => {
             .setIssuer(teamId)
             .setAudience('https://appleid.apple.com')
             .setSubject(clientId)
-            .setExpirationTime('180d')
+            .setExpirationTime(Math.round(Date.now() / 1000) + 86400 * 30) // 30 days
             .sign(secretKey);
     } catch (error) {
         console.error('Failed to generate Apple client secret:', error);
