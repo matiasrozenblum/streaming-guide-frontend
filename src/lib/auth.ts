@@ -76,49 +76,27 @@ export const authOptions: AuthOptions = {
       id: 'credentials',
       name: 'Credentials',
       credentials: {
-        email: { label: 'Email', type: 'email' },
-        password: { label: 'Password', type: 'password' },
+        accessToken: { label: 'Access Token', type: 'text' },
+        refreshToken: { label: 'Refresh Token', type: 'text' },
       },
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) {
-          throw new Error('Please enter an email and password');
-        }
+        if (!credentials?.accessToken) return null;
 
         try {
-          const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/auth/login`, {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-            },
-            body: JSON.stringify({
-              email: credentials.email,
-              password: credentials.password,
-            }),
-          });
-
-          if (!res.ok) {
-            const error = await res.json();
-            throw new Error(error.message || 'Authentication failed');
-          }
-
-          const data = await res.json();
-          const decoded = jwtDecode<DecodedJWT>(data.accessToken);
-
+          const decoded = jwtDecode<DecodedJWT>(credentials.accessToken);
           return {
             id: decoded.sub?.toString() || '',
             name: decoded.name || '',
             email: decoded.email || '',
             role: decoded.role || 'user',
-            accessToken: data.accessToken,
-            refreshToken: data.refreshToken,
+            accessToken: credentials.accessToken,
+            refreshToken: credentials.refreshToken || '',
             gender: decoded.gender,
             birthDate: decoded.birthDate,
-          };
+          } as JWTUser;
         } catch (error) {
-          if (error instanceof Error) {
-            throw new Error(error.message);
-          }
-          throw new Error('Authentication failed');
+          console.error('[auth.ts] Error decoding provided access token:', error);
+          return null;
         }
       },
     }),
