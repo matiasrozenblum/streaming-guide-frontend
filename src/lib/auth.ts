@@ -290,23 +290,26 @@ export const authOptions: AuthOptions = {
       }
 
       // Set backend tokens and profile status
-      if (token.accessToken && token.refreshToken) {
+      if (token.accessToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
-        (session as ExtendedSession).refreshToken = token.refreshToken as string;
-        (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
-        (session as ExtendedSession).registrationToken = token.registrationToken as string;
-
-        console.log('[NextAuth Session] Tokens set:', {
-          accessToken: !!(session as ExtendedSession).accessToken,
-          refreshToken: !!(session as ExtendedSession).refreshToken,
-          profileIncomplete: (session as ExtendedSession).profileIncomplete
-        });
-      } else {
-        console.log('[NextAuth Session] No tokens available:', {
-          hasAccessToken: !!(token as Record<string, unknown>)?.accessToken,
-          hasRefreshToken: !!(token as Record<string, unknown>)?.refreshToken
-        });
       }
+      if (token.refreshToken) {
+        (session as ExtendedSession).refreshToken = token.refreshToken as string;
+      }
+
+      if (typeof token.profileIncomplete === 'boolean') {
+        (session as ExtendedSession).profileIncomplete = token.profileIncomplete;
+      }
+
+      if (token.registrationToken) {
+        (session as ExtendedSession).registrationToken = token.registrationToken as string;
+      }
+
+      console.log('[NextAuth Session] Tokens and flags set:', {
+        accessToken: !!(session as ExtendedSession).accessToken,
+        refreshToken: !!(session as ExtendedSession).refreshToken,
+        profileIncomplete: (session as ExtendedSession).profileIncomplete
+      });
 
       // Use JWT token expiration instead of NextAuth's calculated expiration
       if (token.accessToken) {
