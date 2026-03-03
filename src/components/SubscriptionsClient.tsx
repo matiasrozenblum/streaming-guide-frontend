@@ -424,9 +424,9 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                   <ArrowBack />
                 </IconButton>
                 <Typography
-                  variant="h4"
+                  variant="h5"
                   sx={{
-                    fontWeight: 700,
+                    fontWeight: 600,
                     background: mode === 'light'
                       ? 'linear-gradient(to right, #1a237e, #0d47a1)'
                       : 'linear-gradient(to right, #90caf9, #42a5f5)',

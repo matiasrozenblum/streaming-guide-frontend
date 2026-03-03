@@ -393,14 +393,14 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         background: mode === 'light'
           ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
           : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
+        py: { xs: 1, sm: 2 },
       }}
     >
       <Header />
-      <Container 
-        maxWidth="md" 
-        sx={{ 
-          mt: 4, 
+      <Container
+        maxWidth="md"
+        sx={{
+          mt: 4,
           mb: 6,
           px: { xs: 2, sm: 3 },
           display: 'flex',
@@ -422,10 +422,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 mb: 4,
               }}
             >
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  fontWeight: 700,
+              <Typography
+                variant="h5"
+                sx={{
+                  fontWeight: 600,
                   background: mode === 'light'
                     ? 'linear-gradient(to right, #1a237e, #0d47a1)'
                     : 'linear-gradient(to right, #90caf9, #42a5f5)',
@@ -552,15 +552,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         )}
                         <Grid component="div" size={12}>
                           <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
-                            <Button 
+                            <Button
                               onClick={() => setEditSection('none')}
                               variant="outlined"
                               size="small"
                             >
                               Cancelar
                             </Button>
-                            <Button 
-                              type="submit" 
+                            <Button
+                              type="submit"
                               variant="contained"
                               size="small"
                             >
@@ -668,7 +668,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 }
                 onEdit={() => setEditSection('password')}
               />
-              
+
               <ProfileSection
                 title="Preferencias de Cookies"
                 value={
@@ -748,8 +748,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           </MotionBox>
         </Box>
       </Container>
-      <Dialog 
-        open={editSection === 'phone'} 
+      <Dialog
+        open={editSection === 'phone'}
         onClose={() => setEditSection('none')}
         PaperProps={{
           sx: {
@@ -789,8 +789,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 sx={{ mt: 3 }}
                 variant="outlined"
               />
-              <Button 
-                sx={{ mt: 2 }} 
+              <Button
+                sx={{ mt: 2 }}
                 onClick={() => verifyAndUpdate('phone')}
                 variant="contained"
                 fullWidth
@@ -806,8 +806,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           </Button>
         </DialogActions>
       </Dialog>
-      <Dialog 
-        open={editSection === 'password'} 
+      <Dialog
+        open={editSection === 'password'}
         onClose={() => {
           setEditSection('none');
           setPasswordStep('verify');
@@ -884,13 +884,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               />
               {newPassword && (
                 <>
-                  <LinearProgress 
-                    variant="determinate" 
-                    value={(getPasswordStrength(newPassword)/4)*100} 
-                    color={getPasswordStrengthColor(newPassword)} 
+                  <LinearProgress
+                    variant="determinate"
+                    value={(getPasswordStrength(newPassword) / 4) * 100}
+                    color={getPasswordStrengthColor(newPassword)}
                   />
                   <Typography variant="caption">
-                    Fuerza: {['Muy débil','Débil','Media','Fuerte','Muy fuerte'][getPasswordStrength(newPassword)]}
+                    Fuerza: {['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte'][getPasswordStrength(newPassword)]}
                   </Typography>
                 </>
               )}
@@ -937,13 +937,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             </>
           ) : (
             <>
-              <Button 
-                onClick={() => setPasswordStep('verify')} 
+              <Button
+                onClick={() => setPasswordStep('verify')}
                 variant="outlined"
               >
                 Volver
               </Button>
-              <Button 
+              <Button
                 onClick={() => verifyAndUpdate('password')}
                 variant="contained"
                 disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || getPasswordStrength(newPassword) < 2}
@@ -954,8 +954,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           )}
         </DialogActions>
       </Dialog>
-      <Dialog 
-        open={openCancel} 
+      <Dialog
+        open={openCancel}
         onClose={() => setOpenCancel(false)}
         PaperProps={{
           sx: {
@@ -974,7 +974,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           <Button onClick={() => setOpenCancel(false)} variant="outlined">
             Volver
           </Button>
-          <Button 
+          <Button
             onClick={cancelAccount}
             variant="contained"
             color="error"
@@ -983,7 +983,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           </Button>
         </DialogActions>
       </Dialog>
-      
+
       {/* Cookie Preferences Modal */}
       <CookiePreferencesModal />
       {/* Snackbar for success and error messages */}
