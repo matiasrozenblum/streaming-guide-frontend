@@ -423,7 +423,16 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                 <IconButton onClick={() => router.back()} color="inherit">
                   <ArrowBack />
                 </IconButton>
-                <Typography variant="h4" component="h1" fontWeight={700}>
+                <Typography
+                  variant="h4"
+                  sx={{
+                    fontWeight: 700,
+                    background: mode === 'light'
+                      ? 'linear-gradient(to right, #1a237e, #0d47a1)'
+                      : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                    WebkitBackgroundClip: 'text',
+                    WebkitTextFillColor: 'transparent',
+                  }}>
                   Mis Suscripciones
                 </Typography>
               </Box>
