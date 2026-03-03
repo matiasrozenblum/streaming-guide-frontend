@@ -124,6 +124,9 @@ const SubscriptionTile = ({
         if (onClick) onClick();
         else onToggleDelete(id);
       }}
+      onMouseLeave={() => {
+        if (showDelete) onToggleDelete(id);
+      }}
       sx={{
         height: 80, // Compact fixed height
         display: 'flex',
@@ -235,13 +238,15 @@ const SubscriptionTile = ({
             size="small"
             onClick={onDelete}
             sx={{
-              color: '#ffffff',
-              bgcolor: '#ef4444',
-              boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
-              '&:hover': { color: '#ffffff', bgcolor: '#dc2626' }
+              color: '#ef4444', // Literal red cross
+              bgcolor: 'transparent', // No background circle
+              padding: '6px', // Compact
+              '&:hover': {
+                bgcolor: mode === 'light' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)'
+              }
             }}
           >
-            <Box component="svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <Box component="svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
             </Box>
