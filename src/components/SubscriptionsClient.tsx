@@ -138,13 +138,13 @@ const SubscriptionTile = ({
         cursor: 'pointer',
         position: 'relative',
         transition: 'all 0.2s',
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover .delete-btn': { opacity: '1 !important' }
+        },
         '&:hover': {
           transform: 'translateY(-2px)',
           borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          '@media (hover: hover) and (pointer: fine)': {
-            '& .delete-btn': { opacity: 1 }
-          }
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }
       }}
     >
@@ -234,23 +234,26 @@ const SubscriptionTile = ({
         }}
       >
         <Tooltip title={deleteTooltip}>
-          <IconButton
-            size="small"
+          <Box
             onClick={onDelete}
             sx={{
               color: '#ef4444', // Literal red cross
-              bgcolor: 'transparent', // No background circle
-              padding: '6px', // Compact
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+              cursor: 'pointer',
+              transition: 'transform 0.1s ease-in-out',
               '&:hover': {
-                bgcolor: mode === 'light' ? 'rgba(239, 68, 68, 0.1)' : 'rgba(239, 68, 68, 0.2)'
+                transform: 'scale(1.15)'
               }
             }}
           >
-            <Box component="svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <line x1="18" y1="6" x2="6" y2="18"></line>
               <line x1="6" y1="6" x2="18" y2="18"></line>
-            </Box>
-          </IconButton>
+            </svg>
+          </Box>
         </Tooltip>
       </Box>
     </MotionCard>
