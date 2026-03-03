@@ -433,7 +433,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>
-                  Mis Suscripciones
+                  Mis Favoritos
                 </Typography>
               </Box>
             </Box>
