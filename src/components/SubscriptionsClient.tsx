@@ -464,7 +464,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     onClick={() => setIsProgramsExpanded(!isProgramsExpanded)}
                   >
                     <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
-                      Programas ({subscriptions.length})
+                      Programas
                     </Typography>
                     <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
                       <Box
@@ -539,7 +539,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     onClick={() => setIsStreamersExpanded(!isStreamersExpanded)}
                   >
                     <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
-                      Streamers ({streamerSubscriptions.length})
+                      Streamers
                     </Typography>
                     <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
                       <Box
