@@ -410,7 +410,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
-      <Box component="main" sx={{ pt: 4, pb: 4 }}>
+      <Box component="main" sx={{ pt: 2, pb: 4 }}>
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 3 } }}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
@@ -418,7 +418,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
             transition={{ duration: 0.5 }}
             sx={{ maxWidth: '100%' }}
           >
-            <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
               <Box display="flex" alignItems="center" gap={2}>
                 <IconButton onClick={() => router.back()} color="inherit">
                   <ArrowBack />
