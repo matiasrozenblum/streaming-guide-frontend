@@ -221,157 +221,175 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
 
   // Reusable Tile Component
   const SubscriptionTile = ({
+    id,
     title,
     subtitle,
     imageUrl,
     imageColor,
     isStreamer,
+    activeDeleteId,
+    onToggleDelete,
     onDelete,
     deleteTooltip,
     onClick,
     services,
     onServiceClick
   }: {
+    id: string | number,
     title: string,
     subtitle?: React.ReactNode,
     imageUrl?: string,
     imageColor?: string,
     isStreamer?: boolean,
+    activeDeleteId: string | number | null,
+    onToggleDelete: (id: string | number) => void,
     onDelete: (e: React.MouseEvent) => void,
     deleteTooltip: string,
     onClick?: () => void,
     services?: { service: StreamingService, url: string }[],
     onServiceClick?: (service: StreamingService, url: string) => void
-  }) => (
-    <MotionCard
-      initial={{ opacity: 0, scale: 0.95 }}
-      animate={{ opacity: 1, scale: 1 }}
-      transition={{ duration: 0.2 }}
-      onClick={onClick}
-      sx={{
-        height: 80, // Compact fixed height
-        display: 'flex',
-        alignItems: 'center',
-        background: mode === 'light' ? '#ffffff' : '#1e293b', // Darker surface
-        borderRadius: 2,
-        border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
-        overflow: 'hidden',
-        cursor: onClick ? 'pointer' : 'default',
-        position: 'relative',
-        transition: 'all 0.2s',
-        '&:hover': {
-          transform: 'translateY(-2px)',
-          borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
-          boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
-          '& .delete-btn': { opacity: 1 }
-        }
-      }}
-    >
-      {/* Visual / Avatar Area */}
-      <Box
+  }) => {
+    const showDelete = activeDeleteId === id;
+
+    return (
+      <MotionCard
+        initial={{ opacity: 0, scale: 0.95 }}
+        animate={{ opacity: 1, scale: 1 }}
+        transition={{ duration: 0.2 }}
+        onClick={() => {
+          if (onClick) onClick();
+          else onToggleDelete(id);
+        }}
         sx={{
-          width: 80,
-          height: 80,
-          flexShrink: 0,
-          background: imageColor || (mode === 'light' ? '#f1f5f9' : '#0f172a'),
+          height: 80, // Compact fixed height
           display: 'flex',
           alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative'
+          background: mode === 'light' ? '#ffffff' : '#1e293b', // Darker surface
+          borderRadius: 2,
+          border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
+          overflow: 'hidden',
+          cursor: 'pointer',
+          position: 'relative',
+          transition: 'all 0.2s',
+          '&:hover': {
+            transform: 'translateY(-2px)',
+            borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)',
+            '@media (hover: hover) and (pointer: fine)': {
+              '& .delete-btn': { opacity: 1 }
+            }
+          }
         }}
       >
-        {imageUrl ? (
-          <Box
-            component="img"
-            src={imageUrl}
-            alt={title}
-            sx={{
-              width: '100%',
-              height: '100%',
-              objectFit: isStreamer ? 'cover' : 'contain', // Streamers use cover, Programs use contain
-              p: isStreamer ? 0 : 0.5 // Streamers have no padding, channels have 4px padding
-            }}
-          />
-        ) : (
-          <Typography fontWeight={700} sx={{ color: '#fff', fontSize: '1.5rem' }}>
-            {title.charAt(0).toUpperCase()}
-          </Typography>
-        )}
-      </Box>
-
-      {/* Content Area */}
-      <Box sx={{ flexGrow: 1, px: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
-        <Box display="flex" alignItems="center" gap={1}>
-          <Typography variant="subtitle1" fontWeight={600} noWrap title={title} sx={{ fontSize: '1.1rem' }}>
-            {title}
-          </Typography>
+        {/* Visual / Avatar Area */}
+        <Box
+          sx={{
+            width: 80,
+            height: 80,
+            flexShrink: 0,
+            background: imageColor || (mode === 'light' ? '#f1f5f9' : '#0f172a'),
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            position: 'relative'
+          }}
+        >
+          {imageUrl ? (
+            <Box
+              component="img"
+              src={imageUrl}
+              alt={title}
+              sx={{
+                width: '100%',
+                height: '100%',
+                objectFit: isStreamer ? 'cover' : 'contain', // Streamers use cover, Programs use contain
+                p: isStreamer ? 0 : 0.5 // Streamers have no padding, channels have 4px padding
+              }}
+            />
+          ) : (
+            <Typography fontWeight={700} sx={{ color: '#fff', fontSize: '1.5rem' }}>
+              {title.charAt(0).toUpperCase()}
+            </Typography>
+          )}
         </Box>
 
-        {subtitle && (
-          <Box display="flex" alignItems="center" gap={1} overflow="hidden">
-            {subtitle}
-          </Box>
-        )}
-
-        {/* Small Service Icons for Streamers */}
-        {services && services.length > 0 && (
-          <Box display="flex" alignItems="center" gap={1} mt={0.5}>
-            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
-              EN
+        {/* Content Area */}
+        <Box sx={{ flexGrow: 1, px: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+          <Box display="flex" alignItems="center" gap={1}>
+            <Typography variant="subtitle1" fontWeight={600} noWrap title={title} sx={{ fontSize: '1.1rem' }}>
+              {title}
             </Typography>
-            {services.map((s, idx) => {
-              const icon = getServiceIconUrl(s.service);
-              if (!icon) return null;
-              return (
-                <Tooltip key={idx} title={`Watch on ${getServiceName(s.service)}`}>
-                  <Box
-                    component="img"
-                    src={icon}
-                    sx={{ width: 14, height: 14, opacity: 0.7, '&:hover': { opacity: 1, cursor: 'pointer' } }}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      onServiceClick?.(s.service, s.url);
-                    }}
-                  />
-                </Tooltip>
-              );
-            })}
           </Box>
-        )}
-      </Box>
 
-      {/* Action Area (Hover Reveal) */}
-      <Box
-        className="delete-btn"
-        sx={{
-          position: 'absolute',
-          top: 4,
-          right: 4,
-          opacity: 0, // Hidden by default
-          transition: 'opacity 0.2s'
-        }}
-      >
-        <Tooltip title={deleteTooltip}>
-          <IconButton
-            size="small"
-            onClick={onDelete}
-            sx={{
-              color: 'text.secondary',
-              '&:hover': { color: 'error.main', bgcolor: 'error.lighter' }
-            }}
-          >
-            <Box component="svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
+          {subtitle && (
+            <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+              {subtitle}
             </Box>
-          </IconButton>
-        </Tooltip>
-      </Box>
-    </MotionCard>
-  );
+          )}
+
+          {/* Small Service Icons for Streamers */}
+          {services && services.length > 0 && (
+            <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
+                EN
+              </Typography>
+              {services.map((s, idx) => {
+                const icon = getServiceIconUrl(s.service);
+                if (!icon) return null;
+                return (
+                  <Tooltip key={idx} title={`Watch on ${getServiceName(s.service)}`}>
+                    <Box
+                      component="img"
+                      src={icon}
+                      sx={{ width: 14, height: 14, opacity: 0.7, '&:hover': { opacity: 1, cursor: 'pointer' } }}
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        onServiceClick?.(s.service, s.url);
+                      }}
+                    />
+                  </Tooltip>
+                );
+              })}
+            </Box>
+          )}
+        </Box>
+
+        {/* Action Area (Hover Reveal) */}
+        <Box
+          className="delete-btn"
+          sx={{
+            position: 'absolute',
+            top: 4,
+            right: 4,
+            opacity: showDelete ? 1 : 0, // Visible if active
+            transition: 'opacity 0.2s',
+            zIndex: 10
+          }}
+        >
+          <Tooltip title={deleteTooltip}>
+            <IconButton
+              size="small"
+              onClick={onDelete}
+              sx={{
+                color: 'text.secondary',
+                bgcolor: mode === 'light' ? 'rgba(255,255,255,0.8)' : 'rgba(0,0,0,0.5)',
+                '&:hover': { color: 'error.main', bgcolor: 'error.lighter' }
+              }}
+            >
+              <Box component="svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <line x1="18" y1="6" x2="6" y2="18"></line>
+                <line x1="6" y1="6" x2="18" y2="18"></line>
+              </Box>
+            </IconButton>
+          </Tooltip>
+        </Box>
+      </MotionCard>
+    );
+  };
 
   const [isProgramsExpanded, setIsProgramsExpanded] = useState(true);
   const [isStreamersExpanded, setIsStreamersExpanded] = useState(true);
+  const [activeDeleteId, setActiveDeleteId] = useState<string | number | null>(null);
 
   // existing hook usages like useThemeContext and useSessionContext are above in the file
 
@@ -472,6 +490,9 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                           {subscriptions.map((subscription) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={subscription.id}>
                               <SubscriptionTile
+                                id={subscription.id}
+                                activeDeleteId={activeDeleteId}
+                                onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
                                 title={subscription.program.name}
                                 subtitle={
                                   <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
@@ -544,6 +565,9 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                           {streamerSubscriptions.map((streamer) => (
                             <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={streamer.id}>
                               <SubscriptionTile
+                                id={streamer.id}
+                                activeDeleteId={activeDeleteId}
+                                onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
                                 title={streamer.name}
                                 imageUrl={streamer.logo_url || undefined}
                                 imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
