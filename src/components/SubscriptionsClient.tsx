@@ -370,6 +370,13 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
     </MotionCard>
   );
 
+  const [isProgramsExpanded, setIsProgramsExpanded] = useState(true);
+  const [isStreamersExpanded, setIsStreamersExpanded] = useState(true);
+
+  // existing hook usages like useThemeContext and useSessionContext are above in the file
+
+  // Skip to rendering part to replace the grid
+
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
@@ -379,6 +386,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.5 }}
+            sx={{ maxWidth: '100%' }}
           >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={4}>
               <Box display="flex" alignItems="center" gap={2}>
@@ -412,73 +420,156 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
             )}
 
             {!loading && (
-              <Grid container spacing={4}>
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
                 {/* Programs Sections */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="h6" component="h2" gutterBottom fontWeight={600} color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
-                    Programas
-                  </Typography>
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      mb: isProgramsExpanded ? 2 : 0,
+                      p: 1,
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                    onClick={() => setIsProgramsExpanded(!isProgramsExpanded)}
+                  >
+                    <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                      Programas ({subscriptions.length})
+                    </Typography>
+                    <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
+                      <Box
+                        component="svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        sx={{
+                          transform: isProgramsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s'
+                        }}
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </Box>
+                    </IconButton>
+                  </Box>
 
-                  {subscriptions.length > 0 ? (
-                    <Grid container spacing={2}>
-                      {subscriptions.map((subscription) => (
-                        <Grid size={{ xs: 12, sm: 6 }} key={subscription.id}>
-                          <SubscriptionTile
-                            title={subscription.program.name}
-                            subtitle={
-                              <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-                                en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
-                              </Typography>
-                            }
-                            imageUrl={subscription.program.channel.logo_url}
-                            imageColor={subscription.program.channel.background_color || '#ffffff'}
-                            onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
-                            deleteTooltip="Cancelar suscripción"
-                          />
+                  {isProgramsExpanded && (
+                    <MotionBox
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {subscriptions.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {subscriptions.map((subscription) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={subscription.id}>
+                              <SubscriptionTile
+                                title={subscription.program.name}
+                                subtitle={
+                                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                    en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
+                                  </Typography>
+                                }
+                                imageUrl={subscription.program.channel.logo_url}
+                                imageColor={subscription.program.channel.background_color || '#ffffff'}
+                                onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
+                                deleteTooltip="Cancelar suscripción"
+                              />
+                            </Grid>
+                          ))}
                         </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">No tienes suscripciones a programas.</Typography>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>No tienes suscripciones a programas.</Typography>
+                      )}
+                    </MotionBox>
                   )}
-                </Grid>
+                </Box>
 
                 {/* Streamers Section */}
-                <Grid size={{ xs: 12, md: 6 }}>
-                  <Typography variant="h6" component="h2" gutterBottom fontWeight={600} color="text.secondary" sx={{ mb: 2, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
-                    Streamers
-                  </Typography>
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      mb: isStreamersExpanded ? 2 : 0,
+                      p: 1,
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                    onClick={() => setIsStreamersExpanded(!isStreamersExpanded)}
+                  >
+                    <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                      Streamers ({streamerSubscriptions.length})
+                    </Typography>
+                    <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
+                      <Box
+                        component="svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        sx={{
+                          transform: isStreamersExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s'
+                        }}
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
+                      </Box>
+                    </IconButton>
+                  </Box>
 
-                  {streamerSubscriptions.length > 0 ? (
-                    <Grid container spacing={2}>
-                      {streamerSubscriptions.map((streamer) => (
-                        <Grid size={{ xs: 12, sm: 6 }} key={streamer.id}>
-                          <SubscriptionTile
-                            title={streamer.name}
-                            imageUrl={streamer.logo_url || undefined}
-                            imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
-                            isStreamer={true}
-                            onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
-                            deleteTooltip="Dejar de seguir"
-                            services={streamer.services.filter(s => s.service === StreamingService.TWITCH || s.service === StreamingService.KICK)}
-                            onServiceClick={(service, url) => handleServiceClick(streamer, service, url)}
-                            subtitle={
-                              streamer.categories && streamer.categories.length > 0 ? (
-                                <Typography variant="caption" color="text.secondary" noWrap>
-                                  {streamer.categories.map(c => c.name).join(', ')}
-                                </Typography>
-                              ) : undefined
-                            }
-                          />
+                  {isStreamersExpanded && (
+                    <MotionBox
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {streamerSubscriptions.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {streamerSubscriptions.map((streamer) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={streamer.id}>
+                              <SubscriptionTile
+                                title={streamer.name}
+                                imageUrl={streamer.logo_url || undefined}
+                                imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
+                                isStreamer={true}
+                                onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
+                                deleteTooltip="Dejar de seguir"
+                                services={streamer.services.filter(s => s.service === StreamingService.TWITCH || s.service === StreamingService.KICK)}
+                                onServiceClick={(service, url) => handleServiceClick(streamer, service, url)}
+                                subtitle={
+                                  streamer.categories && streamer.categories.length > 0 ? (
+                                    <Typography variant="caption" color="text.secondary" noWrap>
+                                      {streamer.categories.map(c => c.name).join(', ')}
+                                    </Typography>
+                                  ) : undefined
+                                }
+                              />
+                            </Grid>
+                          ))}
                         </Grid>
-                      ))}
-                    </Grid>
-                  ) : (
-                    <Typography variant="body2" color="text.secondary">No sigues a ningún streamer.</Typography>
-                  )
-                  }
-                </Grid >
-              </Grid >
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>No sigues a ningún streamer.</Typography>
+                      )}
+                    </MotionBox>
+                  )}
+                </Box>
+              </Box>
             )}
           </MotionBox>
         </Container>
