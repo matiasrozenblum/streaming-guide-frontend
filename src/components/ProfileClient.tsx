@@ -426,9 +426,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 variant="h5"
                 sx={{
                   fontWeight: 600,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                  color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(78, 58, 58, 0.6)',
                   WebkitBackgroundClip: 'text',
                   WebkitTextFillColor: 'transparent',
                 }}
