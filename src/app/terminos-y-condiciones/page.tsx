@@ -33,7 +33,7 @@ export default function TerminosYCondiciones() {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            Última actualización: {new Date().toLocaleDateString('es-ES')}
+            Última actualización: 10/06/2025
           </Typography>
 
           <Divider sx={{ my: 3 }} />
