@@ -405,7 +405,8 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
 
   // existing hook usages like useThemeContext and useSessionContext are above in the file
 
-  // Skip to rendering part to replace the grid
+  // Header navigation colors
+  const headerTextColor = mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
@@ -427,9 +428,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                   variant="h5"
                   sx={{
                     fontWeight: 600,
-                    background: '#007bff',
-                    WebkitBackgroundClip: 'text',
-                    WebkitTextFillColor: 'transparent',
+                    color: headerTextColor,
                   }}>
                   Mis favoritos
                 </Typography>
@@ -474,10 +473,10 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     }}
                     onClick={() => setIsProgramsExpanded(!isProgramsExpanded)}
                   >
-                    <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                    <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Programas
                     </Typography>
-                    <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
+                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"
@@ -550,10 +549,10 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     }}
                     onClick={() => setIsStreamersExpanded(!isStreamersExpanded)}
                   >
-                    <Typography variant="h6" component="h2" fontWeight={600} color="text.secondary" sx={{ textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                    <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Streamers
                     </Typography>
-                    <IconButton size="small" disableRipple sx={{ color: 'text.secondary' }}>
+                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"
