@@ -427,9 +427,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                   variant="h5"
                   sx={{
                     fontWeight: 600,
-                    background: mode === 'light'
-                      ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                      : 'linear-gradient(to right, #90caf9, #42a5f5)',
+                    background: '#007bff',
                     WebkitBackgroundClip: 'text',
                     WebkitTextFillColor: 'transparent',
                   }}>
@@ -468,8 +466,9 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       cursor: 'pointer',
-                      mb: isProgramsExpanded ? 2 : 0,
-                      p: 1,
+                      mb: isProgramsExpanded ? 1 : 0,
+                      pr: 1,
+                      py: 1,
                       borderRadius: 1,
                       '&:hover': { bgcolor: 'action.hover' }
                     }}
@@ -543,8 +542,9 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                       alignItems: 'center',
                       justifyContent: 'space-between',
                       cursor: 'pointer',
-                      mb: isStreamersExpanded ? 2 : 0,
-                      p: 1,
+                      mb: isStreamersExpanded ? 1 : 0,
+                      pr: 1,
+                      py: 1,
                       borderRadius: 1,
                       '&:hover': { bgcolor: 'action.hover' }
                     }}
