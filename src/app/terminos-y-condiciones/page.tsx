@@ -33,7 +33,7 @@ export default function TerminosYCondiciones() {
           </Typography>
 
           <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
-            Última actualización: 10/06/2025
+            Última actualización: 04/03/2026
           </Typography>
 
           <Divider sx={{ my: 3 }} />
