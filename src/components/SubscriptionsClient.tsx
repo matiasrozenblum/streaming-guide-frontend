@@ -411,7 +411,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
-      <Box component="main" sx={{ pt: 1, pb: 4 }}>
+      <Box component="main" sx={{ pt: 2, pb: 4 }}>
         <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 3 } }}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
