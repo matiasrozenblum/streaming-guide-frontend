@@ -421,7 +421,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
           >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
               <Box display="flex" alignItems="center" gap={2}>
-                <IconButton onClick={() => router.back()} color="inherit">
+                <IconButton onClick={() => router.back()} sx={{ color: headerTextColor }}>
                   <ArrowBack />
                 </IconButton>
                 <Typography
