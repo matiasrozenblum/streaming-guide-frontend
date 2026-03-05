@@ -2,6 +2,8 @@ export interface SessionUser {
   id: string;
   role: string;
   name?: string;
+  firstName?: string;
+  lastName?: string;
   email?: string;
   gender?: string;      // Added for analytics
   birthDate?: string;   // Added for analytics

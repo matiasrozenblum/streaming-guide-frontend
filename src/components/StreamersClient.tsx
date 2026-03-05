@@ -13,9 +13,13 @@ import {
   CircularProgress,
   Chip,
   alpha,
+  IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   LiveTv,
+  Notifications,
+  NotificationsNone,
 } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
@@ -94,6 +98,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   // Only show loading if we have no initial data at all (undefined/null, not empty array)
   const [loading, setLoading] = useState(!initialStreamers);
+  const [subscriptionLoading, setSubscriptionLoading] = useState<Record<number, boolean>>({});
   const hasFetchedRef = useRef(false); // Track if we've already fetched to prevent double-fetch
 
   // Sync refreshed server props into local state (e.g., after SSE router.refresh)
@@ -103,7 +108,6 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       setLoading(false);
       hasFetchedRef.current = true;
     }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [initialStreamers]);
 
   const fetchStreamers = async (showLoading = true) => {
@@ -118,6 +122,11 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       const data = await res.json();
       setStreamers(data);
       hasFetchedRef.current = true;
+
+      // After fetching streamers, fetch subscriptions if logged in
+      if (typedSession?.accessToken) {
+        fetchSubscriptions();
+      }
     } catch (err) {
       console.error('Error fetching streamers:', err);
       setStreamers([]);
@@ -125,6 +134,31 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       if (showLoading) {
         setLoading(false);
       }
+    }
+  };
+
+  const fetchSubscriptions = async () => {
+    if (!typedSession?.accessToken) return;
+
+    try {
+      const res = await fetch('/api/streamers/subscriptions/my', {
+        headers: {
+          'Authorization': `Bearer ${typedSession.accessToken}`,
+        },
+        cache: 'no-store',
+      });
+
+      if (res.ok) {
+        const subscribedIds: number[] = await res.json();
+        setStreamers(prevStreamers => {
+          return prevStreamers.map(streamer => ({
+            ...streamer,
+            is_subscribed: subscribedIds.includes(streamer.id),
+          }));
+        });
+      }
+    } catch (err) {
+      console.error('Error fetching subscriptions:', err);
     }
   };
 
@@ -136,13 +170,18 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       // No initial data from server, need to fetch
       fetchStreamers();
     } else {
-      // We have initial data (even if empty array), no need to show loading or fetch again
+      // We have initial data (even if empty array), no need to show loading but MIGHT need to fetch subscriptions
       setLoading(false);
       hasFetchedRef.current = true; // Mark as fetched to prevent double-fetch
+
+      // If we have streamers but haven't checked subscriptions yet, do it now
+      if (typedSession?.accessToken && streamers.length > 0) {
+        fetchSubscriptions();
+      }
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []); // Empty deps - only run once on mount, initialStreamers is from props
-
+  }, [typedSession?.accessToken]);
+  // Add session dependency so it re-fetches when user logs in
 
   // Listen for live status updates via SSE
   useEffect(() => {
@@ -187,7 +226,14 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
         fetch('/api/streamers/visible', { cache: 'no-store' })
           .then(res => res.json())
           .then(data => {
-            setStreamers(data);
+            // Preserve subscription status when refetching only live status
+            setStreamers(prevStreamers => {
+              const subscriptionMap = new Map(prevStreamers.map(s => [s.id, s.is_subscribed]));
+              return (data as Streamer[]).map(s => ({
+                ...s,
+                is_subscribed: subscriptionMap.get(s.id)
+              }));
+            });
           })
           .catch(err => console.error('Error silently refetching streamers:', err));
       }
@@ -246,6 +292,57 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       if (channelName) {
         openStream('kick', channelName);
       }
+    }
+  };
+
+  const handleToggleSubscription = async (e: React.MouseEvent, streamer: Streamer) => {
+    e.stopPropagation(); // Prevent card click
+
+    if (!typedSession?.accessToken) {
+      // TODO: Show login prompt or redirect
+      return;
+    }
+
+    const isSubscribed = streamer.is_subscribed;
+    const action = isSubscribed ? 'unsubscribe' : 'subscribe';
+
+    // Optimistic update
+    setStreamers(prev => prev.map(s =>
+      s.id === streamer.id ? { ...s, is_subscribed: !isSubscribed } : s
+    ));
+    setSubscriptionLoading(prev => ({ ...prev, [streamer.id]: true }));
+
+    try {
+      const res = await fetch(`/api/streamers/${streamer.id}/${action}`, {
+        method: isSubscribed ? 'DELETE' : 'POST',
+        headers: {
+          'Authorization': `Bearer ${typedSession.accessToken}`,
+          'Content-Type': 'application/json',
+        },
+        body: !isSubscribed ? JSON.stringify({}) : undefined,
+      });
+
+      if (!res.ok) {
+        throw new Error(`Failed to ${action}`);
+      }
+
+      // Success - logic handled by optimistic update
+      gaEvent({
+        action: isSubscribed ? 'streamer_unsubscribe' : 'streamer_subscribe',
+        params: {
+          streamer_id: streamer.id,
+          streamer_name: streamer.name,
+        },
+        userData: typedSession.user
+      });
+    } catch (err) {
+      console.error(`Error ${action}ing:`, err);
+      // Revert optimistic update
+      setStreamers(prev => prev.map(s =>
+        s.id === streamer.id ? { ...s, is_subscribed: isSubscribed } : s
+      ));
+    } finally {
+      setSubscriptionLoading(prev => ({ ...prev, [streamer.id]: false }));
     }
   };
 
@@ -446,6 +543,12 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                             }
                             : {}),
                           // Do not brighten ::before on hover (single-color cards don't)
+
+                          // Show subscription button on hover
+                          '& .subscription-button': {
+                            opacity: 1,
+                            transform: 'scale(1)',
+                          }
                         }
                       }}
                     >
@@ -510,6 +613,47 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                               OFFLINE
                             </Box>
                           )}
+
+                          {/* Subscription Button */}
+                          {typedSession?.accessToken && (
+                            <Tooltip title={streamer.is_subscribed ? "Desuscribirse" : "Suscribirse"}>
+                              <IconButton
+                                className="subscription-button"
+                                onClick={(e) => handleToggleSubscription(e, streamer)}
+                                disabled={subscriptionLoading[streamer.id]}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 6,
+                                  left: 6,
+                                  zIndex: 10,
+                                  backgroundColor: 'rgba(0,0,0,0.6)',
+                                  color: 'white',
+                                  padding: '4px',
+                                  opacity: { xs: 1, md: streamer.is_subscribed ? 1 : 0 }, // Always visible on mobile, reveal on hover for desktop if not subscribed
+                                  transform: { xs: 'scale(1)', md: streamer.is_subscribed ? 'scale(1)' : 'scale(0.8)' },
+                                  transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(0,0,0,0.8)',
+                                    transform: 'scale(1.1)',
+                                  },
+                                  '&.Mui-disabled': {
+                                    backgroundColor: 'rgba(0,0,0,0.4)',
+                                    color: 'rgba(255,255,255,0.5)',
+                                  }
+                                }}
+                                size="small"
+                              >
+                                {subscriptionLoading[streamer.id] ? (
+                                  <CircularProgress size={16} color="inherit" />
+                                ) : streamer.is_subscribed ? (
+                                  <Notifications fontSize="small" sx={{ color: '#FFD700' }} /> // Gold color for subscribed
+                                ) : (
+                                  <NotificationsNone fontSize="small" />
+                                )}
+                              </IconButton>
+                            </Tooltip>
+                          )}
+
                           {streamer.logo_url ? (
                             <Box
                               component="img"

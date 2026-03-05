@@ -2,6 +2,7 @@ import CredentialsProvider from 'next-auth/providers/credentials'
 import { AuthOptions, Session } from 'next-auth'
 import { jwtDecode } from 'jwt-decode'
 import GoogleProvider from 'next-auth/providers/google';
+import AppleProvider from 'next-auth/providers/apple';
 // import FacebookProvider from 'next-auth/providers/facebook'; // Temporarily disabled - requires app review
 
 interface ExtendedSession extends Session {
@@ -35,8 +36,41 @@ interface DecodedJWT {
 
 type MaybeNamedUser = { firstName?: string; lastName?: string; name?: string };
 
+const useSecureCookies = process.env.NEXTAUTH_URL?.startsWith('https://') || !!process.env.VERCEL_URL;
+const cookiePrefix = useSecureCookies ? '__Secure-' : '';
+
 export const authOptions: AuthOptions = {
   secret: process.env.NEXTAUTH_SECRET,
+  cookies: {
+    pkceCodeVerifier: {
+      name: `${cookiePrefix}next-auth.pkce.code_verifier`,
+      options: {
+        httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        secure: useSecureCookies,
+      },
+    },
+    state: {
+      name: `${cookiePrefix}next-auth.state`,
+      options: {
+        httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        secure: useSecureCookies,
+        maxAge: 900,
+      },
+    },
+    nonce: {
+      name: `${cookiePrefix}next-auth.nonce`,
+      options: {
+        httpOnly: true,
+        sameSite: 'none',
+        path: '/',
+        secure: useSecureCookies,
+      },
+    },
+  },
   providers: [
     CredentialsProvider({
       id: 'credentials',
@@ -47,17 +81,23 @@ export const authOptions: AuthOptions = {
       },
       async authorize(credentials) {
         if (!credentials?.accessToken) return null;
-        const decoded = jwtDecode<DecodedJWT>(credentials.accessToken);
-        return {
-          id: decoded.sub?.toString() || '',
-          name: decoded.name || '',
-          email: decoded.email || '',
-          role: decoded.role || 'user',
-          accessToken: credentials.accessToken,
-          refreshToken: credentials.refreshToken || '',
-          gender: decoded.gender,
-          birthDate: decoded.birthDate,
-        } as JWTUser;
+
+        try {
+          const decoded = jwtDecode<DecodedJWT>(credentials.accessToken);
+          return {
+            id: decoded.sub?.toString() || '',
+            name: decoded.name || '',
+            email: decoded.email || '',
+            role: decoded.role || 'user',
+            accessToken: credentials.accessToken,
+            refreshToken: credentials.refreshToken || '',
+            gender: decoded.gender,
+            birthDate: decoded.birthDate,
+          } as JWTUser;
+        } catch (error) {
+          console.error('[auth.ts] Error decoding provided access token:', error);
+          return null;
+        }
       },
     }),
     GoogleProvider({
@@ -67,7 +107,8 @@ export const authOptions: AuthOptions = {
         params: {
           prompt: "consent",
           access_type: "offline",
-          response_type: "code"
+          response_type: "code",
+          scope: 'openid email profile',
         }
       },
       profile(profile) {
@@ -80,6 +121,20 @@ export const authOptions: AuthOptions = {
           lastName: profile.family_name || '',
           image: profile.picture || '',
           // gender, birthDate, phone are not provided by default
+        };
+      },
+    }),
+    AppleProvider({
+      clientId: (process.env.APPLE_ID || '').trim(),
+      clientSecret: (process.env.APPLE_PRIVATE_KEY || '').trim(),
+      checks: ['state'], // Bypass PKCE to fix SameSite=lax cookie drop on Apple's form_post callback
+      profile(profile) {
+        return {
+          id: profile.sub,
+          name: profile.name ? `${profile.name.firstName} ${profile.name.lastName}` : '',
+          email: profile.email || '',
+          firstName: profile.name?.firstName || '',
+          lastName: profile.name?.lastName || '',
         };
       },
     }),
@@ -141,7 +196,7 @@ export const authOptions: AuthOptions = {
               email: token.email,
               firstName: token.firstName || token.name?.split(' ')[0] || '',
               lastName: token.lastName || token.name?.split(' ').slice(1).join(' ') || '',
-              origin: account.provider === 'google' ? 'google' : account.provider === 'facebook' ? 'facebook' : 'traditional',
+              origin: account.provider === 'google' ? 'google' : account.provider === 'apple' ? 'apple' : account.provider === 'facebook' ? 'facebook' : 'traditional',
             }),
           });
 
@@ -160,7 +215,7 @@ export const authOptions: AuthOptions = {
               token.accessToken = data.access_token;
               token.refreshToken = data.refresh_token;
               token.profileIncomplete = false;
-              
+
               // Update token with backend user data (including role)
               if (data.user) {
                 token.role = data.user.role || token.role;
@@ -213,23 +268,26 @@ export const authOptions: AuthOptions = {
       }
 
       // Set backend tokens and profile status
-      if (token.accessToken && token.refreshToken) {
+      if (token.accessToken) {
         (session as ExtendedSession).accessToken = token.accessToken as string;
-        (session as ExtendedSession).refreshToken = token.refreshToken as string;
-        (session as ExtendedSession).profileIncomplete = token.profileIncomplete as boolean;
-        (session as ExtendedSession).registrationToken = token.registrationToken as string;
-        
-        console.log('[NextAuth Session] Tokens set:', {
-          accessToken: !!(session as ExtendedSession).accessToken,
-          refreshToken: !!(session as ExtendedSession).refreshToken,
-          profileIncomplete: (session as ExtendedSession).profileIncomplete
-        });
-      } else {
-        console.log('[NextAuth Session] No tokens available:', {
-          hasAccessToken: !!(token as Record<string, unknown>)?.accessToken,
-          hasRefreshToken: !!(token as Record<string, unknown>)?.refreshToken
-        });
       }
+      if (token.refreshToken) {
+        (session as ExtendedSession).refreshToken = token.refreshToken as string;
+      }
+
+      if (typeof token.profileIncomplete === 'boolean') {
+        (session as ExtendedSession).profileIncomplete = token.profileIncomplete;
+      }
+
+      if (token.registrationToken) {
+        (session as ExtendedSession).registrationToken = token.registrationToken as string;
+      }
+
+      console.log('[NextAuth Session] Tokens and flags set:', {
+        accessToken: !!(session as ExtendedSession).accessToken,
+        refreshToken: !!(session as ExtendedSession).refreshToken,
+        profileIncomplete: (session as ExtendedSession).profileIncomplete
+      });
 
       // Use JWT token expiration instead of NextAuth's calculated expiration
       if (token.accessToken) {
@@ -265,4 +323,5 @@ export const authOptions: AuthOptions = {
 // Required ENV variables:
 // GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
 // FACEBOOK_CLIENT_ID, FACEBOOK_CLIENT_SECRET
+// APPLE_ID, APPLE_TEAM_ID, APPLE_PRIVATE_KEY, APPLE_KEY_ID
 //

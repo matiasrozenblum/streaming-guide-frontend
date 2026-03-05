@@ -19,18 +19,12 @@ import {
   Typography,
   Divider,
 } from '@mui/material';
-import { Delete, Edit, Save, Cancel, Add } from '@mui/icons-material';
+import { Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
-import { UserSubscription, NotificationMethod } from '@/types/user-subscription';
+
 import { Program } from '@/types/program';
 import { SessionWithToken } from '@/types/session';
 import { useState, useEffect } from 'react';
-
-const notificationMethodTranslations: Record<string, string> = {
-  push: 'Push',
-  email: 'Email',
-  both: 'Ambos',
-};
 
 interface ManageSubscriptionsDialogProps {
   open: boolean;
@@ -41,16 +35,15 @@ interface ManageSubscriptionsDialogProps {
 }
 
 export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubscriptionsUpdate }: ManageSubscriptionsDialogProps) {
-  const [editingSub, setEditingSub] = useState<UserSubscription | null>(null);
-  const [newMethod, setNewMethod] = useState<NotificationMethod>(NotificationMethod.EMAIL);
+  // notificationMethod related state removed
   const [allPrograms, setAllPrograms] = useState<Program[]>([]);
   const [newSubProgramId, setNewSubProgramId] = useState<string>('');
 
   useEffect(() => {
     const fetchPrograms = async () => {
       try {
-        const res = await fetch('/api/programs', { 
-          headers: { Authorization: `Bearer ${session?.accessToken}` } 
+        const res = await fetch('/api/programs', {
+          headers: { Authorization: `Bearer ${session?.accessToken}` }
         });
         if (!res.ok) throw new Error('Failed to fetch programs');
         const data = await res.json();
@@ -66,24 +59,14 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
 
   if (!user) return null;
 
-  const handleUpdate = async (sub: UserSubscription) => {
-    try {
-      const res = await fetch(`/api/admin/subscriptions/${sub.id}`, {
-        method: 'PATCH',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${session?.accessToken}`,
-        },
-        body: JSON.stringify({ notificationMethod: newMethod }),
-      });
-      if (!res.ok) throw new Error('Failed to update');
-      onSubscriptionsUpdate();
-      setEditingSub(null);
-    } catch (error) {
-      console.error(error);
-      alert('Failed to update subscription');
-    }
-  };
+  // Let's assume for now we just remove the field from the payload or remove the update capability if it's solely for that.
+  // Given the context, I'll comment it out or remove the editable part.
+  // But wait, the dialog allows editing. If I remove the only editable field, the edit button becomes useless.
+  // Let's remove the edit functionality for now since there's nothing to edit.
+
+  // Changing approach: The dialog allows deleting and "editing". 
+  // Since "editing" was only for notification method, I will remove the edit button and the handleUpdate function.
+
 
   const handleDelete = async (subId: string) => {
     if (!confirm('Are you sure?')) return;
@@ -99,7 +82,7 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
       alert('Failed to delete subscription');
     }
   };
-  
+
   const handleCreate = async () => {
     if (!newSubProgramId) return;
     try {
@@ -109,10 +92,10 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
           'Content-Type': 'application/json',
           Authorization: `Bearer ${session?.accessToken}`,
         },
-        body: JSON.stringify({ 
-          userId: user.id, 
-          programId: Number(newSubProgramId), 
-          notificationMethod: NotificationMethod.EMAIL // Admins can only create email subs
+        body: JSON.stringify({
+          userId: user.id,
+          programId: Number(newSubProgramId),
+          // notificationMethod removed
         }),
       });
       if (!res.ok) {
@@ -163,40 +146,14 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
               <ListItem
                 key={sub.id}
                 secondaryAction={
-                  editingSub?.id === sub.id ? (
-                    <Box>
-                      <IconButton onClick={() => handleUpdate(sub)}><Save /></IconButton>
-                      <IconButton onClick={() => setEditingSub(null)}><Cancel /></IconButton>
-                    </Box>
-                  ) : (
-                    <Box>
-                      <IconButton onClick={() => {
-                        setEditingSub(sub);
-                        setNewMethod(sub.notificationMethod);
-                      }}><Edit /></IconButton>
-                      <IconButton onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
-                    </Box>
-                  )
+                  <Box>
+                    <IconButton onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
+                  </Box>
                 }
               >
                 <ListItemText
                   primary={sub.program.name}
-                  secondary={
-                    editingSub?.id === sub.id ? (
-                      <FormControl size="small" sx={{ mt: 1 }}>
-                        <Select
-                          value={newMethod}
-                          onChange={(e) => setNewMethod(e.target.value as NotificationMethod)}
-                        >
-                          <MenuItem value="email">Email</MenuItem>
-                          <MenuItem value="push">Push</MenuItem>
-                          <MenuItem value="both">Ambos</MenuItem>
-                        </Select>
-                      </FormControl>
-                    ) : (
-                      notificationMethodTranslations[sub.notificationMethod]
-                    )
-                  }
+                // Removed secondary text which showed notification method
                 />
               </ListItem>
             ))}

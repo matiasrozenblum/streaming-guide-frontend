@@ -7,28 +7,18 @@ import {
   Container,
   Typography,
   Card,
-  CardContent,
-  CardActions,
-  Button,
   Grid,
-  Chip,
-  Avatar,
-  Alert,
-  CircularProgress,
-  FormControl,
-  Select,
-  MenuItem,
   IconButton,
   Tooltip,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
 import {
-  Delete,
-  NotificationsActive,
-  Notifications,
-  Email,
-  NotificationsOff,
   ArrowBack,
 } from '@mui/icons-material';
+import { Streamer, StreamingService } from '@/types/streamer';
+
+
 import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
@@ -38,16 +28,40 @@ import Header from '@/components/Header';
 import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
 import { event as gaEvent } from '@/lib/gtag';
-import { usePush } from '@/contexts/PushContext';
+
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
 
-export enum NotificationMethod {
-  PUSH = 'push',
-  EMAIL = 'email',
-  BOTH = 'both',
-}
+
+
+const getServiceName = (service: StreamingService): string => {
+  switch (service) {
+    case StreamingService.TWITCH:
+      return 'Twitch';
+    case StreamingService.KICK:
+      return 'Kick';
+    case StreamingService.YOUTUBE:
+      return 'YouTube';
+    default:
+      return service;
+  }
+};
+
+const getServiceIconUrl = (service: StreamingService): string | null => {
+  switch (service) {
+    case StreamingService.TWITCH:
+      return 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/twitch_glitch_flat_purple.png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvdHdpdGNoX2dsaXRjaF9mbGF0X3B1cnBsZS5wbmciLCJpYXQiOjE3NjM1MjA4NTUsImV4cCI6MTc5NTA1Njg1NX0.9nqfLHXQIsExihVdeGIaAnhWqlW9zRnx0FPFqHarVpA';
+    case StreamingService.KICK:
+      return 'https://dwtkmfahaokhtpuafhsc.supabase.co/storage/v1/object/sign/streaming-services-logos/Kick%20Icon%20(Green).png?token=eyJraWQiOiJzdG9yYWdlLXVybC1zaWduaW5nLWtleV84ZWQzMzdmNy04YmEwLTQxYjAtYmJjOS05YjI2NjVhZWYwYzIiLCJhbGciOiJIUzI1NiJ9.eyJ1cmwiOiJzdHJlYW1pbmctc2VydmljZXMtbG9nb3MvS2ljayBJY29uIChHcmVlbikucG5nIiwiaWF0IjoxNzYzNTIwODQyLCJleHAiOjE3OTUwNTY4NDJ9.3cqNHCk9mYT4k6E7mUiIDIA8CWXWIKTUQK1iThtSrmo';
+    case StreamingService.YOUTUBE:
+      return null; // YouTube doesn't have an icon in the requirements
+    default:
+      return null;
+  }
+};
+
+// Enum removed
 
 export interface UserSubscription {
   id: string;
@@ -60,24 +74,206 @@ export interface UserSubscription {
       id: number;
       name: string;
       order?: number;
+      logo_url?: string;
+      background_color?: string;
     };
   };
-  notificationMethod: NotificationMethod;
   isActive: boolean;
   createdAt: string;
 }
 
+// Reusable Tile Component
+const SubscriptionTile = ({
+  id,
+  title,
+  subtitle,
+  imageUrl,
+  imageColor,
+  isStreamer,
+  activeDeleteId,
+  onToggleDelete,
+  onDelete,
+  deleteTooltip,
+  onClick,
+  services,
+  onServiceClick
+}: {
+  id: string | number,
+  title: string,
+  subtitle?: React.ReactNode,
+  imageUrl?: string,
+  imageColor?: string,
+  isStreamer?: boolean,
+  activeDeleteId: string | number | null,
+  onToggleDelete: (id: string | number) => void,
+  onDelete: (e: React.MouseEvent) => void,
+  deleteTooltip: string,
+  onClick?: () => void,
+  services?: { service: StreamingService, url: string }[],
+  onServiceClick?: (service: StreamingService, url: string) => void
+}) => {
+  const { mode } = useThemeContext();
+  const showDelete = activeDeleteId === id;
+
+  return (
+    <MotionCard
+      initial={{ opacity: 0, scale: 0.95 }}
+      animate={{ opacity: 1, scale: 1 }}
+      transition={{ duration: 0.2 }}
+      onClick={() => {
+        if (onClick) onClick();
+        else onToggleDelete(id);
+      }}
+      onMouseLeave={() => {
+        if (showDelete) onToggleDelete(id);
+      }}
+      sx={{
+        height: 80, // Compact fixed height
+        display: 'flex',
+        alignItems: 'center',
+        background: mode === 'light' ? '#ffffff' : '#1e293b', // Darker surface
+        borderRadius: 2,
+        border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
+        overflow: 'hidden',
+        cursor: 'pointer',
+        position: 'relative',
+        transition: 'all 0.2s',
+        '@media (hover: hover) and (pointer: fine)': {
+          '&:hover .delete-btn': { opacity: '1 !important' }
+        },
+        '&:hover': {
+          transform: 'translateY(-2px)',
+          borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+        }
+      }}
+    >
+      {/* Visual / Avatar Area */}
+      <Box
+        sx={{
+          width: 80,
+          height: 80,
+          flexShrink: 0,
+          background: imageColor || (mode === 'light' ? '#f1f5f9' : '#0f172a'),
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative'
+        }}
+      >
+        {imageUrl ? (
+          <Box
+            component="img"
+            src={imageUrl}
+            alt={title}
+            sx={{
+              width: '100%',
+              height: '100%',
+              objectFit: isStreamer ? 'cover' : 'contain', // Streamers use cover, Programs use contain
+              p: isStreamer ? 0 : 0.5 // Streamers have no padding, channels have 4px padding
+            }}
+          />
+        ) : (
+          <Typography fontWeight={700} sx={{ color: '#fff', fontSize: '1.5rem' }}>
+            {title.charAt(0).toUpperCase()}
+          </Typography>
+        )}
+      </Box>
+
+      {/* Content Area */}
+      <Box sx={{ flexGrow: 1, px: 2, minWidth: 0, display: 'flex', flexDirection: 'column', gap: 0.5 }}>
+        <Box display="flex" alignItems="center" gap={1}>
+          <Typography variant="subtitle1" fontWeight={600} noWrap title={title} sx={{ fontSize: '1.1rem' }}>
+            {title}
+          </Typography>
+        </Box>
+
+        {subtitle && (
+          <Box display="flex" alignItems="center" gap={1} overflow="hidden">
+            {subtitle}
+          </Box>
+        )}
+
+        {/* Small Service Icons for Streamers */}
+        {services && services.length > 0 && (
+          <Box display="flex" alignItems="center" gap={1} mt={0.5}>
+            <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem', textTransform: 'uppercase' }}>
+              EN
+            </Typography>
+            {services.map((s, idx) => {
+              const icon = getServiceIconUrl(s.service);
+              if (!icon) return null;
+              return (
+                <Tooltip key={idx} title={`Watch on ${getServiceName(s.service)}`}>
+                  <Box
+                    component="img"
+                    src={icon}
+                    sx={{ width: 14, height: 14, opacity: 0.7, '&:hover': { opacity: 1, cursor: 'pointer' } }}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      onServiceClick?.(s.service, s.url);
+                    }}
+                  />
+                </Tooltip>
+              );
+            })}
+          </Box>
+        )}
+      </Box>
+
+      {/* Action Area (Hover Reveal) */}
+      <Box
+        className="delete-btn"
+        sx={{
+          position: 'absolute',
+          top: 4,
+          right: 4,
+          opacity: showDelete ? 1 : 0, // Visible if active
+          transition: 'opacity 0.2s',
+          zIndex: 10
+        }}
+      >
+        <Tooltip title={deleteTooltip}>
+          <Box
+            onClick={onDelete}
+            sx={{
+              color: '#ef4444', // Literal red cross
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+              cursor: 'pointer',
+              transition: 'transform 0.1s ease-in-out',
+              '&:hover': {
+                transform: 'scale(1.15)'
+              }
+            }}
+          >
+            <svg xmlns="http://www.w3.org/2000/svg" width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18"></line>
+              <line x1="6" y1="6" x2="18" y2="18"></line>
+            </svg>
+          </Box>
+        </Tooltip>
+      </Box>
+    </MotionCard>
+  );
+};
+
 interface SubscriptionsClientProps {
   initialSubscriptions: UserSubscription[];
+  initialStreamerSubscriptions?: Streamer[];
 }
 
-export default function SubscriptionsClient({ initialSubscriptions }: SubscriptionsClientProps) {
+export default function SubscriptionsClient({ initialSubscriptions, initialStreamerSubscriptions = [] }: SubscriptionsClientProps) {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
   const { mode } = useThemeContext();
-  const { isIOSDevice, isPWAInstalled } = usePush();
+
+  // isIOSDevice, isPWAInstalled removed as they were only used for notification method logic
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
+  const [streamerSubscriptions, setStreamerSubscriptions] = useState<Streamer[]>(initialStreamerSubscriptions);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -94,52 +290,7 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
     return () => clearTimeout(timer);
   }, [typedSession, router]);
 
-  const updateNotificationMethod = async (subscriptionId: string, notificationMethod: NotificationMethod) => {
-    if (!typedSession?.accessToken) return;
-    try {
-      setLoading(true);
-      await api.put(`/subscriptions/${subscriptionId}`, 
-        { notificationMethod },
-        { headers: { Authorization: `Bearer ${typedSession.accessToken}` } }
-      );
-      setSubscriptions(prev => prev.map(sub => 
-        sub.id === subscriptionId 
-          ? { ...sub, notificationMethod }
-          : sub
-      ));
-      setSuccess('Preferencias de notificación actualizadas');
-      setTimeout(() => setSuccess(null), 3000);
-
-      // Track notification method change
-      gaEvent({
-        action: 'notification_method_change',
-        params: {
-          subscription_id: subscriptionId,
-          new_method: notificationMethod,
-          program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
-          channel_name: subscriptions.find(s => s.id === subscriptionId)?.program.channel.name,
-        },
-        userData: typedSession?.user
-      });
-    } catch {
-      setError('Error al actualizar las preferencias');
-      setTimeout(() => setError(null), 3000);
-
-      // Track notification method change error
-      gaEvent({
-        action: 'notification_method_change_error',
-        params: {
-          subscription_id: subscriptionId,
-          attempted_method: notificationMethod,
-          program_name: subscriptions.find(s => s.id === subscriptionId)?.program.name,
-          channel_name: subscriptions.find(s => s.id === subscriptionId)?.program.channel.name,
-        },
-        userData: typedSession?.user
-      });
-    } finally {
-      setLoading(false);
-    }
-  };
+  // updateNotificationMethod removed as it's no longer supported
 
   const removeSubscription = async (subscriptionId: string) => {
     if (!typedSession?.accessToken) return;
@@ -164,7 +315,6 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
           program_name: subscription?.program.name,
           channel_name: subscription?.program.channel.name,
           location: 'subscriptions_page',
-          notification_method: subscription?.notificationMethod,
         },
         userData: typedSession?.user
       });
@@ -187,313 +337,287 @@ export default function SubscriptionsClient({ initialSubscriptions }: Subscripti
     }
   };
 
+  const removeStreamerSubscription = async (streamerId: number) => {
+    if (!typedSession?.accessToken) return;
+    if (!confirm('¿Estás seguro de que deseas dejar de seguir a este streamer?')) {
+      return;
+    }
+    try {
+      setLoading(true);
+      await api.delete(`/streamers/${streamerId}/unsubscribe`, {
+        headers: { Authorization: `Bearer ${typedSession.accessToken}` },
+      });
+      setStreamerSubscriptions(prev => prev.filter(s => s.id !== streamerId));
+      setSuccess('Has dejado de seguir al streamer correctamente');
+      setTimeout(() => setSuccess(null), 3000);
+
+      gaEvent({
+        action: 'streamer_unsubscribe',
+        params: {
+          streamer_id: streamerId,
+          location: 'subscriptions_page',
+        },
+        userData: typedSession?.user
+      });
+    } catch {
+      setError('Error al dejar de seguir');
+      setTimeout(() => setError(null), 3000);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const handleServiceClick = (streamer: Streamer, service: StreamingService, url: string) => {
+    window.open(url, '_blank');
+
+    gaEvent({
+      action: 'streamer_service_click',
+      params: {
+        streamer_id: streamer.id,
+        streamer_name: streamer.name,
+        service: service,
+        location: 'subscriptions_page',
+      },
+      userData: typedSession?.user
+    });
+  };
+
   // Track subscriptions page visit
   useEffect(() => {
     gaEvent({
       action: 'subscriptions_page_visit',
       params: {
         subscription_count: subscriptions.length,
-        has_active_subscriptions: subscriptions.some(s => s.notificationMethod),
+        streamer_subscription_count: streamerSubscriptions.length,
+        has_active_subscriptions: subscriptions.length > 0 || streamerSubscriptions.length > 0,
       },
       userData: typedSession?.user
     });
-  }, [subscriptions, typedSession]);
+  }, [subscriptions, streamerSubscriptions, typedSession]);
 
-  if (loading) {
-    return (
-      <Box
-        sx={{
-          minHeight: '100dvh',
-          background: mode === 'light'
-            ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-            : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-          py: { xs: 1, sm: 2 },
-        }}
-      >
-        <Header />
-        <Container maxWidth="lg" sx={{ py: 4 }}>
-          <Box display="flex" justifyContent="center" alignItems="center" minHeight="50vh">
-            <CircularProgress size={60} />
-          </Box>
-        </Container>
-      </Box>
-    );
-  }
+
+
+
+
+  const [isProgramsExpanded, setIsProgramsExpanded] = useState(true);
+  const [isStreamersExpanded, setIsStreamersExpanded] = useState(true);
+  const [activeDeleteId, setActiveDeleteId] = useState<string | number | null>(null);
+
+  // existing hook usages like useThemeContext and useSessionContext are above in the file
+
+  // Header navigation colors
+  const headerTextColor = mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
 
   return (
-    <Box
-      sx={{
-        minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
-        py: { xs: 1, sm: 2 },
-      }}
-    >
+    <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
       <Header />
-      <Container 
-        maxWidth="lg" 
-        sx={{ 
-          mt: 4, 
-          mb: 6,
-          px: { xs: 2, sm: 3 },
-        }}
-      >
-        <MotionBox
-          initial={{ opacity: 0, y: 20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-        >
-          {/* Title section */}
-          <Box
-            sx={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 4,
-            }}
+      <Box component="main" sx={{ pt: 2, pb: 4 }}>
+        <Container maxWidth="lg" sx={{ px: { xs: 2, sm: 3, md: 3 } }}>
+          <MotionBox
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.5 }}
+            sx={{ maxWidth: '100%' }}
           >
-            <Box>
-              <Typography 
-                variant="h4" 
-                sx={{ 
-                  fontWeight: 700,
-                  background: mode === 'light'
-                    ? 'linear-gradient(to right, #1a237e, #0d47a1)'
-                    : 'linear-gradient(to right, #90caf9, #42a5f5)',
-                  WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
-                  mb: 1,
-                }}
-              >
-                Mis Favoritos
-              </Typography>
-              <Typography variant="body1" color="text.secondary">
-                Gestiona tus suscripciones a programas y preferencias de notificación
-              </Typography>
+            <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
+              <Box display="flex" alignItems="center" gap={2}>
+                <IconButton onClick={() => router.back()} sx={{ color: headerTextColor }}>
+                  <ArrowBack />
+                </IconButton>
+                <Typography
+                  variant="h5"
+                  sx={{
+                    fontWeight: 600,
+                    color: headerTextColor,
+                  }}>
+                  Mis favoritos
+                </Typography>
+              </Box>
             </Box>
-            <Button
-              startIcon={<ArrowBack />}
-              onClick={() => router.push('/')}
-              variant="outlined"
-              size="large"
-              sx={{ borderRadius: 2, textTransform: 'none', px: 3 }}
-            >
-              Volver
-            </Button>
-          </Box>
-          {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-          {success && <Alert severity="success" sx={{ mb: 2 }}>{success}</Alert>}
-          
-          {/* iOS Push Guide - only shown for iOS users */}
-          <IOSPushGuide />
-          {subscriptions.length === 0 ? (
-            <MotionCard
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.5, delay: 0.2 }}
-              sx={{ 
-                textAlign: 'center', 
-                py: 8,
-                background: mode === 'light'
-                  ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                  : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                backdropFilter: 'blur(8px)',
-                borderRadius: 3,
-                border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
-              }}
-            >
-              <CardContent>
-                <NotificationsOff sx={{ fontSize: 80, color: 'text.secondary', mb: 3 }} />
-                <Typography variant="h5" gutterBottom fontWeight={600}>
-                  No tienes suscripciones activas
-                </Typography>
-                <Typography variant="body1" color="text.secondary" sx={{ mb: 4, maxWidth: 400, mx: 'auto' }}>
-                  Suscríbete a tus programas favoritos haciendo clic en el ícono de campanita en la grilla de programación
-                </Typography>
-                <Button 
-                  variant="contained" 
-                  onClick={() => router.push('/')} 
-                  size="large"
-                  sx={{ 
-                    borderRadius: 2,
-                    px: 4,
-                    py: 1.5,
-                    textTransform: 'none',
-                    fontSize: '1.1rem',
-                  }}
-                >
-                  Ir a la programación
-                </Button>
-              </CardContent>
-            </MotionCard>
-          ) : (
-            <Grid container spacing={3}>
-              {subscriptions.map((subscription, index) => (
-                <Grid size={{ xs: 12, sm: 6, lg: 4 }} key={subscription.id}>
-                  <MotionCard
-                    initial={{ opacity: 0, y: 20 }}
-                    animate={{ opacity: 1, y: 0 }}
-                    transition={{ duration: 0.5, delay: index * 0.1 }}
-                    sx={{ 
-                      height: '100%', 
-                      display: 'flex', 
-                      flexDirection: 'column',
-                      background: mode === 'light'
-                        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-                      backdropFilter: 'blur(8px)',
-                      borderRadius: 3,
-                      border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
-                      transition: 'all 0.3s ease-in-out',
-                      '&:hover': {
-                        transform: 'translateY(-4px)',
-                        boxShadow: mode === 'light'
-                          ? '0 12px 24px rgba(0,0,0,0.15)'
-                          : '0 12px 24px rgba(0,0,0,0.4)',
-                      }
+
+            <IOSPushGuide />
+
+            {loading && (
+              <Box display="flex" justifyContent="center" my={4}>
+                <CircularProgress />
+              </Box>
+            )}
+
+            {error && (
+              <Alert severity="error" sx={{ mb: 4 }} onClose={() => setError(null)}>
+                {error}
+              </Alert>
+            )}
+
+            {success && (
+              <Alert severity="success" sx={{ mb: 4 }} onClose={() => setSuccess(null)}>
+                {success}
+              </Alert>
+            )}
+
+            {!loading && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                {/* Programs Sections */}
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      mb: isProgramsExpanded ? 1 : 0,
+                      pr: 1,
+                      py: 1,
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'action.hover' }
                     }}
+                    onClick={() => setIsProgramsExpanded(!isProgramsExpanded)}
                   >
-                    <CardContent sx={{ flexGrow: 1, p: 3 }}>
-                      <Box display="flex" alignItems="center" mb={2}>
-                        {subscription.program.logoUrl ? (
-                          <Avatar
-                            src={subscription.program.logoUrl}
-                            alt={subscription.program.name}
-                            sx={{ width: 56, height: 56, mr: 2 }}
-                          />
-                        ) : (
-                          <Avatar 
-                            sx={{ 
-                              width: 56, 
-                              height: 56, 
-                              mr: 2,
-                              backgroundColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
-                              fontSize: '1.5rem',
-                              fontWeight: 600,
-                              color: 'white',
-                            }}
-                          >
-                            {subscription.program.name.charAt(0)}
-                          </Avatar>
-                        )}
-                        <Box flexGrow={1}>
-                          <Typography variant="h6" component="h3" fontWeight={600} sx={{ mb: 0.5 }}>
-                            {subscription.program.name}
-                          </Typography>
-                          <Chip
-                            label={subscription.program.channel.name}
-                            size="small"
-                            variant="outlined"
-                            sx={{ 
-                              borderRadius: 1.5,
-                              fontWeight: 500,
-                              borderColor: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
-                              color: getColorForChannel((subscription.program.channel.order ?? 1) - 1, mode),
-                            }}
-                          />
-                        </Box>
+                    <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                      Programas
+                    </Typography>
+                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
+                      <Box
+                        component="svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        sx={{
+                          transform: isProgramsExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s'
+                        }}
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
                       </Box>
+                    </IconButton>
+                  </Box>
 
-                      {subscription.program.description && (
-                        <Typography 
-                          variant="body2" 
-                          color="text.secondary" 
-                          sx={{ 
-                            mb: 3,
-                            overflow: 'hidden',
-                            textOverflow: 'ellipsis',
-                            display: '-webkit-box',
-                            WebkitLineClamp: 2,
-                            WebkitBoxOrient: 'vertical',
-                            lineHeight: 1.5,
-                          }}
-                        >
-                          {subscription.program.description}
-                        </Typography>
+                  {isProgramsExpanded && (
+                    <MotionBox
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {subscriptions.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {subscriptions.map((subscription) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={subscription.id}>
+                              <SubscriptionTile
+                                id={subscription.id}
+                                activeDeleteId={activeDeleteId}
+                                onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
+                                title={subscription.program.name}
+                                subtitle={
+                                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                    en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
+                                  </Typography>
+                                }
+                                imageUrl={subscription.program.channel.logo_url}
+                                imageColor={subscription.program.channel.background_color || '#ffffff'}
+                                onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
+                                deleteTooltip="Cancelar suscripción"
+                              />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>No tienes suscripciones a programas.</Typography>
                       )}
+                    </MotionBox>
+                  )}
+                </Box>
 
-                      <Box>
-                        <Typography variant="subtitle2" gutterBottom fontWeight={600} sx={{ mb: 1.5 }}>
-                          Notificaciones:
-                        </Typography>
-                        <FormControl size="small" fullWidth>
-                          <Select
-                            value={subscription.notificationMethod}
-                            onChange={(e) => updateNotificationMethod(
-                              subscription.id, 
-                              e.target.value as NotificationMethod
-                            )}
-                            sx={{ 
-                              borderRadius: 2,
-                              '& .MuiSelect-select': {
-                                display: 'flex',
-                                alignItems: 'center',
-                                gap: 1,
-                              }
-                            }}
-                          >
-                            {/* Always show all options first, then add restrictions for iOS without PWA */}
-                            <MenuItem 
-                              value={NotificationMethod.BOTH}
-                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.BOTH}
-                            >
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <NotificationsActive fontSize="small" />
-                                Push y Email
-                              </Box>
-                            </MenuItem>
-                            <MenuItem 
-                              value={NotificationMethod.PUSH}
-                              disabled={isIOSDevice && !isPWAInstalled && subscription.notificationMethod !== NotificationMethod.PUSH}
-                            >
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Notifications fontSize="small" />
-                                Solo Push
-                              </Box>
-                            </MenuItem>
-                            <MenuItem value={NotificationMethod.EMAIL}>
-                              <Box display="flex" alignItems="center" gap={1}>
-                                <Email fontSize="small" />
-                                Solo Email
-                              </Box>
-                            </MenuItem>
-                          </Select>
-                        </FormControl>
+                {/* Streamers Section */}
+                <Box>
+                  <Box
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'space-between',
+                      cursor: 'pointer',
+                      mb: isStreamersExpanded ? 1 : 0,
+                      pr: 1,
+                      py: 1,
+                      borderRadius: 1,
+                      '&:hover': { bgcolor: 'action.hover' }
+                    }}
+                    onClick={() => setIsStreamersExpanded(!isStreamersExpanded)}
+                  >
+                    <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
+                      Streamers
+                    </Typography>
+                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
+                      <Box
+                        component="svg"
+                        width="16"
+                        height="16"
+                        viewBox="0 0 24 24"
+                        fill="none"
+                        stroke="currentColor"
+                        strokeWidth="2"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        sx={{
+                          transform: isStreamersExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                          transition: 'transform 0.2s'
+                        }}
+                      >
+                        <polyline points="9 18 15 12 9 6"></polyline>
                       </Box>
-                    </CardContent>
+                    </IconButton>
+                  </Box>
 
-                    <CardActions sx={{ justifyContent: 'space-between', px: 3, pb: 3 }}>
-                      <Typography variant="caption" color="text.secondary" fontWeight={500}>
-                        Desde {new Date(subscription.createdAt).toLocaleDateString('es-ES', {
-                          day: 'numeric',
-                          month: 'short',
-                          year: 'numeric'
-                        })}
-                      </Typography>
-                      <Tooltip title="Cancelar suscripción">
-                        <IconButton
-                          size="small"
-                          color="error"
-                          onClick={() => removeSubscription(subscription.id)}
-                          sx={{
-                            '&:hover': {
-                              backgroundColor: 'error.main',
-                              color: 'error.contrastText',
-                            }
-                          }}
-                        >
-                          <Delete fontSize="small" />
-                        </IconButton>
-                      </Tooltip>
-                    </CardActions>
-                  </MotionCard>
-                </Grid>
-              ))}
-            </Grid>
-          )}
-        </MotionBox>
-      </Container>
+                  {isStreamersExpanded && (
+                    <MotionBox
+                      initial={{ opacity: 0, height: 0 }}
+                      animate={{ opacity: 1, height: 'auto' }}
+                      exit={{ opacity: 0, height: 0 }}
+                      transition={{ duration: 0.3 }}
+                    >
+                      {streamerSubscriptions.length > 0 ? (
+                        <Grid container spacing={2}>
+                          {streamerSubscriptions.map((streamer) => (
+                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={streamer.id}>
+                              <SubscriptionTile
+                                id={streamer.id}
+                                activeDeleteId={activeDeleteId}
+                                onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
+                                title={streamer.name}
+                                imageUrl={streamer.logo_url || undefined}
+                                imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
+                                isStreamer={true}
+                                onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
+                                deleteTooltip="Dejar de seguir"
+                                services={streamer.services.filter(s => s.service === StreamingService.TWITCH || s.service === StreamingService.KICK)}
+                                onServiceClick={(service, url) => handleServiceClick(streamer, service, url)}
+                                subtitle={
+                                  streamer.categories && streamer.categories.length > 0 ? (
+                                    <Typography variant="caption" color="text.secondary" noWrap>
+                                      {streamer.categories.map(c => c.name).join(', ')}
+                                    </Typography>
+                                  ) : undefined
+                                }
+                              />
+                            </Grid>
+                          ))}
+                        </Grid>
+                      ) : (
+                        <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>No sigues a ningún streamer.</Typography>
+                      )}
+                    </MotionBox>
+                  )}
+                </Box>
+              </Box>
+            )}
+          </MotionBox>
+        </Container>
+      </Box>
     </Box>
   );
-} 
+}

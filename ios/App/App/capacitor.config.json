@@ -1,0 +1,22 @@
+{
+	"appId": "com.laguiadelstreaming.app",
+	"appName": "La Guía",
+	"webDir": "out",
+	"server": {
+		"url": "https://staging.laguiadelstreaming.com",
+		"cleartext": true
+	},
+	"plugins": {
+		"PushNotifications": {
+			"presentationOptions": [
+				"badge",
+				"sound",
+				"alert"
+			]
+		}
+	},
+	"packageClassList": [
+		"PushNotificationsPlugin",
+		"StatusBarPlugin"
+	]
+}

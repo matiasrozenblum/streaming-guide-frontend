@@ -21,6 +21,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import { useTooltip } from '@/contexts/TooltipContext';
 import { styled, Theme } from '@mui/material/styles';
 import GoogleIcon from '@mui/icons-material/Google';
+import AppleIcon from '@mui/icons-material/Apple';
 // import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
 import CircularProgress from '@mui/material/CircularProgress';
 
@@ -31,11 +32,11 @@ function getErrorMessage(err: unknown): string {
 
 type StepKey = 'email' | 'code' | 'profile' | 'password' | 'existing-user';
 
-const ALL_STEPS: Record<'new'|'existing', StepKey[]> = {
-  new: ['email','code','profile','password'],
-  existing: ['email','existing-user']
+const ALL_STEPS: Record<'new' | 'existing', StepKey[]> = {
+  new: ['email', 'code', 'profile', 'password'],
+  existing: ['email', 'existing-user']
 };
-const STEP_LABELS: Record<StepKey,string> = {
+const STEP_LABELS: Record<StepKey, string> = {
   email: 'Correo',
   code: 'Verificar',
   profile: 'Perfil',
@@ -138,7 +139,7 @@ declare global {
 
 }
 
-export default function LoginModal({ open, onClose }: { open:boolean; onClose:()=>void }) {
+export default function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
@@ -159,7 +160,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
   const [gender, setGender] = useState('');
   const [userFirstName, setUserFirstName] = useState('');
   const [userGender, setUserGender] = useState('');
-  const [phase, setPhase] = useState<'email'|'flow'>('email');
+  const [phase, setPhase] = useState<'email' | 'flow'>('email');
   const [socialLoginPending, setSocialLoginPending] = useState(false);
 
   useEffect(() => {
@@ -184,7 +185,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
       if (socialProvider) {
         // Clear the sessionStorage
         sessionStorage.removeItem('lastSocialProvider');
-        
+
         // For existing users, track login success immediately
         // For new users, we'll track signup success when they reach profile completion
         if (window.location.pathname !== '/profile-completion') {
@@ -265,19 +266,19 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
         }
       }}
     >
-      <DialogTitle sx={{ display:'flex', justifyContent:'space-between', px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
         {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
-          isUserExisting && step==='existing-user'
+          isUserExisting && step === 'existing-user'
             ? 'Iniciar Sesión'
-            : !isUserExisting && step==='email'
-            ? 'Acceder / Registrarse'
-            : step==='code'
-            ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar correo')
-            : step==='profile'
-            ? 'Completa tu perfil'
-            : step==='password'
-            ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
-            : ''
+            : !isUserExisting && step === 'email'
+              ? 'Acceder / Registrarse'
+              : step === 'code'
+                ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar correo')
+                : step === 'profile'
+                  ? 'Completa tu perfil'
+                  : step === 'password'
+                    ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
+                    : ''
         )}
         <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
@@ -329,8 +330,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                           },
                         }}
                         StepIconComponent={(props) => (
-                          <CustomStepIcon 
-                            {...props} 
+                          <CustomStepIcon
+                            {...props}
                             stepKey={key}
                             isLoading={isCurrentlyLoading}
                             completedSteps={completedSteps}
@@ -346,7 +347,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
             </Box>
           )}
 
-          <DialogContent sx={{ px:3, py:2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+          <DialogContent sx={{ px: 3, py: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
             {phase === 'email' && (
               <>
                 <EmailStep
@@ -363,7 +364,7 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         setUserGender(userData.gender || '');
                         setCompletedSteps(prev => new Set([...prev, 'email']));
                         setIsUserExisting(true);
-                        
+
                         // Check if user registered via social login
                         if (userData.origin && userData.origin !== 'traditional') {
                           // Automatically trigger social login for the detected provider
@@ -392,8 +393,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                         setCompletedSteps(prev => new Set([...prev, 'email']));
                         setIsUserExisting(false);
                         await fetch('/api/auth/send-code', {
-                          method:'POST',
-                          headers:{'Content-Type':'application/json'},
+                          method: 'POST',
+                          headers: { 'Content-Type': 'application/json' },
                           body: JSON.stringify({ identifier: e }),
                         });
                         setStep('code');
@@ -462,6 +463,54 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                     )}
                     {socialLoginPending ? 'Conectando...' : 'Conectate con Google'}
                   </Button>
+
+                  <Button
+                    variant="outlined"
+                    fullWidth
+                    onClick={async () => {
+                      setSocialLoginPending(true);
+                      sessionStorage.setItem('lastSocialProvider', 'apple');
+                      gaEvent({
+                        action: 'social_login_attempt',
+                        params: {
+                          provider: 'apple',
+                          method: 'social_signup',
+                        }
+                      });
+                      await signIn('apple', { callbackUrl: '/profile-completion' });
+                      setSocialLoginPending(false);
+                    }}
+                    disabled={socialLoginPending}
+                    sx={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 1,
+                      py: 1.5,
+                      borderRadius: 1.5,
+                      textTransform: 'none',
+                      fontSize: 16,
+                      fontWeight: 600,
+                      borderColor: 'text.primary',
+                      color: 'text.primary',
+                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
+                      '&:hover': {
+                        borderColor: 'primary.main',
+                        backgroundColor: 'action.hover',
+                      },
+                      '&:disabled': {
+                        opacity: 0.6,
+                      }
+                    }}
+                  >
+                    {socialLoginPending ? (
+                      <CircularProgress size={20} sx={{ color: 'text.primary' }} />
+                    ) : (
+                      <AppleIcon sx={{ color: theme.palette.mode === 'dark' ? '#FFF' : '#000' }} />
+                    )}
+                    {socialLoginPending ? 'Conectando...' : 'Conectate con Apple'}
+                  </Button>
+
                   {/* Facebook login temporarily disabled - requires app review
                   <Button
                     variant="outlined"
@@ -618,8 +667,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   setIsLoading(true); setError(''); setCode(c);
                   try {
                     const res = await fetch('/api/auth/verify-code', {
-                      method:'POST',
-                      headers:{'Content-Type':'application/json'},
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ identifier: email, code: c, deviceId }),
                     });
                     const body = await res.json();
@@ -706,8 +755,8 @@ export default function LoginModal({ open, onClose }: { open:boolean; onClose:()
                   setIsLoading(true); setError('');
                   try {
                     const res = await fetch('/api/auth/register', {
-                      method:'POST',
-                      headers:{'Content-Type':'application/json'},
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({
                         registration_token: registrationToken,
                         firstName,
