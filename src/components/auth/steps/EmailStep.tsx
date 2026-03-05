@@ -37,7 +37,7 @@ export default function EmailStep({
       return;
     }
     setLocalErr('');
-    onSubmit(email.trim());
+    onSubmit(email.trim().toLowerCase());
   };
 
   return (

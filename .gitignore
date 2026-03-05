@@ -44,3 +44,5 @@ next-env.d.ts
 scripts/
 
 public/workbox-*.js
+
+.gemini

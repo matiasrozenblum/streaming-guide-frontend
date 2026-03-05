@@ -17,6 +17,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.0] - 2026-03-05
+
+### Changed
+- Major refactor to favorites section
+- Major refactor to subscriptions, removing types, only push.
+
 ## [1.15.10] - 2026-01-31
 
 ### Added

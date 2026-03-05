@@ -46,7 +46,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const typedSession = session as SessionWithToken | null;
   const streamersEnabled = initialData.streamersEnabled;
   const isSeasonActive = isBeforeInBuenosAires('2026-01-02');
-  
+
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
   );
@@ -54,7 +54,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const [bannerVisible, setBannerVisible] = useState(true);
-  const [lastScrollY, setLastScrollY] = useState(0);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -74,7 +73,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     return map;
   }, [initialData.weekSchedules]);
-  
+
   // Set initial live statuses immediately
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
@@ -100,34 +99,31 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled, banners.length]);
 
-  // Grid scroll detection for banner hide/show - simplified
+  // Grid scroll detection for banner hide/show - optimized with capture phase and hysteresis
   useEffect(() => {
-    const handleGridScroll = () => {
-      const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
-      if (!scheduleGrid) return;
-      
-      const currentScrollY = scheduleGrid.scrollTop;
-      
-      if (currentScrollY < 10) {
-        // Show banner when at the very top
-        setBannerVisible(true);
-      } else {
-        // Hide banner on any scroll
-        setBannerVisible(false);
+    const handleScroll = (e: Event) => {
+      const target = e.target as HTMLElement;
+
+      // Only process scroll events originating from our schedule grid
+      if (target && target.getAttribute && target.getAttribute('data-schedule-grid')) {
+        const currentScrollY = target.scrollTop;
+
+        setBannerVisible(prev => {
+          // Add hysteresis to prevent stuttering/bouncing
+          if (currentScrollY > 20 && prev) return false;
+          if (currentScrollY <= 5 && !prev) return true;
+          return prev;
+        });
       }
-      
-      setLastScrollY(currentScrollY);
     };
 
-    // Find and attach listener to schedule grid
-    const scheduleGrid = document.querySelector('[data-schedule-grid]');
-    if (scheduleGrid) {
-      scheduleGrid.addEventListener('scroll', handleGridScroll, { passive: true });
-      
-      // Cleanup
-      return () => scheduleGrid.removeEventListener('scroll', handleGridScroll);
-    }
-  }, [lastScrollY]);
+    // Use capture phase to catch non-bubbling scroll events from descendants
+    document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
+
+    return () => {
+      document.removeEventListener('scroll', handleScroll, { capture: true });
+    };
+  }, []);
 
   // Forward wheel events from anywhere on the page to the grid
   useEffect(() => {
@@ -146,7 +142,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
         // Prevent default page scroll
         e.preventDefault();
-        
+
         // Forward the scroll to the grid
         scheduleGrid.scrollTop += e.deltaY;
       }
@@ -271,25 +267,25 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       >
         <Header streamersEnabled={streamersEnabled} />
 
-        <Container 
-          maxWidth={false} 
-          disableGutters 
-          sx={{ 
-            px: 0, 
+        <Container
+          maxWidth={false}
+          disableGutters
+          sx={{
+            px: 0,
             mx: { xs: 0, sm: 2 }, // 16px margin on each side (matches production)
-            maxWidth: { 
-              xs: '100%', 
+            maxWidth: {
+              xs: '100%',
               sm: 'min(1920px, calc(100vw - 32px))' // Max 1920px, but account for 16px margins on each side
             },
-            width: { 
-              xs: '100%', 
+            width: {
+              xs: '100%',
               sm: 'calc(100% - 32px)' // Subtract margins to prevent overflow
             },
             boxSizing: 'border-box',
-            flex: 1, 
-            display: 'flex', 
-            flexDirection: 'column', 
-            minHeight: 0 
+            flex: 1,
+            display: 'flex',
+            flexDirection: 'column',
+            minHeight: 0
           }}
         >
           {/* CSS Keyframes for banner and grid animations */}

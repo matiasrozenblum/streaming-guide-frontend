@@ -54,7 +54,7 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
   }
 
   const user = typedSession.user;
-  const firstName = user.name?.split(' ')[0] ?? 'Usuario';
+  const firstName = user.firstName || user.name?.split(' ')[0] || 'Usuario';
   const isAdmin = user.role === 'admin';
 
   const handleOpen = (e: React.MouseEvent<HTMLButtonElement>) =>
@@ -103,7 +103,7 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
             fontSize: '0.9rem',
           }}
         >
-          {user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase()}
+          {firstName[0]?.toUpperCase() || user.name?.[0]?.toUpperCase() || user.email?.[0]?.toUpperCase() || 'U'}
         </Avatar>
         {!isMobile && (
           <Typography

@@ -25,6 +25,7 @@ export interface Streamer {
     order?: number;
   }>;
   is_live?: boolean; // Live status from backend
+  is_subscribed?: boolean; // Subscription status
 }
 
 // Frontend display interface (for compatibility with existing components)
