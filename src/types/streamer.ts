@@ -25,6 +25,7 @@ export interface Streamer {
     order?: number;
   }>;
   is_live?: boolean; // Live status from backend
+  active_services?: string[]; // Array of services that are currently live
   is_subscribed?: boolean; // Subscription status
 }
 
