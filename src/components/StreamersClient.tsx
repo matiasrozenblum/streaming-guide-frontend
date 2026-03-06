@@ -205,16 +205,19 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
             return prevStreamers;
           }
 
-          // Check if update is actually needed
-          const currentStreamer = prevStreamers.find(s => s.id === streamerId);
-          if (currentStreamer?.is_live === isLive) {
-            return prevStreamers;
-          }
-
           const updated = prevStreamers.map(streamer => {
             if (streamer.id === streamerId) {
               // Create a new object to ensure React detects the change
-              return { ...streamer, is_live: isLive };
+              // If the exact active_services array comes in the event payload, use it
+              // Otherwise, we do a fallback logic: if they went live, assume it was the service that triggered it
+              // If offline, assume nothing is live anymore (as a simplification until next fetch)
+              const newActiveServices = eventData?.payload?.active_services ||
+                (isLive ? [eventData?.payload?.service].filter(Boolean) : []);
+              return {
+                ...streamer,
+                is_live: isLive,
+                active_services: newActiveServices
+              };
             }
             return streamer;
           });
@@ -229,9 +232,10 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
             // Preserve subscription status when refetching only live status
             setStreamers(prevStreamers => {
               const subscriptionMap = new Map(prevStreamers.map(s => [s.id, s.is_subscribed]));
-              return (data as Streamer[]).map(s => ({
+              return (data as Array<Streamer & { active_services?: string[] }>).map(s => ({
                 ...s,
-                is_subscribed: subscriptionMap.get(s.id)
+                is_subscribed: subscriptionMap.get(s.id),
+                active_services: s.active_services || [],
               }));
             });
           })
