@@ -755,6 +755,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                               .filter(service => service.service === StreamingService.TWITCH || service.service === StreamingService.KICK)
                               .map((service, serviceIndex) => {
                                 const serviceIconUrl = getServiceIconUrl(service.service);
+                                const isActivePlatform = streamer.is_live && streamer.active_services?.includes(service.service);
+                                const isOtherPlatformActive = streamer.is_live && !isActivePlatform && streamer.active_services && streamer.active_services.length > 0;
 
                                 return (
                                   <Button
@@ -764,6 +766,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                     fullWidth
                                     onClick={() => handleServiceClick(streamer, service.service, service.url)}
                                     sx={{
+                                      opacity: isOtherPlatformActive ? 0.35 : 1,
                                       justifyContent: 'center',
                                       borderRadius: 1.5,
                                       borderColor: getServiceColor(service.service, mode),
@@ -773,7 +776,9 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                       py: 0.75,
                                       px: 1.5,
                                       minHeight: 36,
+                                      transition: 'opacity 0.2s ease',
                                       '&:hover': {
+                                        opacity: 1, // Full opacity on hover even if inactive
                                         borderColor: getServiceColor(service.service, mode),
                                         backgroundColor: mode === 'light'
                                           ? `${getServiceColor(service.service, mode)}15`
