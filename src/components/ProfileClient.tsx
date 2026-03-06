@@ -428,7 +428,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   fontWeight: 600,
                   color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(78, 58, 58, 0.6)',
                   WebkitBackgroundClip: 'text',
-                  WebkitTextFillColor: 'transparent',
                 }}
               >
                 Mi cuenta
