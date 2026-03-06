@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.1] - 2026-03-05
+
+### Changed
+- Now indicating which service the streamer is live on
+
 ## [1.16.0] - 2026-03-05
 
 ### Changed
