@@ -177,22 +177,58 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
     let isMounted = true;
 
-    const updateLiveStatuses = async () => {
+    // 1. Background fetch for the full week's schedules
+    const fetchWeekSchedules = async () => {
       const currentDeviceId = deviceId;
       try {
-        const params: { live_status: boolean; deviceId?: string } = { live_status: true }; // Re-enabled with optimized backend
+        const params: { live_status: boolean; deviceId?: string } = { live_status: true };
         if (currentDeviceId) {
           params.deviceId = currentDeviceId;
         }
 
-        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', {
+        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', { params });
+        if (!isMounted) return;
+
+        const weekData = resp.data;
+        if (Array.isArray(weekData)) {
+          setChannelsWithSchedules(weekData);
+
+          // Update live map with week data. Since setLiveStatuses typed as (statuses: LiveStatus) => void,
+          // we overwrite it with the week's data.
+          const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+          weekData.forEach(ch =>
+            ch.schedules.forEach(sch => {
+              liveMap[sch.id.toString()] = {
+                is_live: sch.program.is_live,
+                stream_url: sch.program.stream_url,
+              };
+            })
+          );
+          setLiveStatuses(liveMap);
+        }
+      } catch (error) {
+        console.warn('Failed to fetch background week schedules:', error);
+      }
+    };
+
+    // 2. Optimized polling for today's live statuses using V2
+    const updateLiveStatuses = async () => {
+      const currentDeviceId = deviceId;
+      try {
+        const params: { live_status: boolean; deviceId?: string } = { live_status: true };
+        if (currentDeviceId) {
+          params.deviceId = currentDeviceId;
+        }
+
+        // Use the highly optimized V2 endpoint for polling
+        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/today/v2', {
           params
         });
         if (!isMounted) return;
 
-        const weekData = resp.data;
+        const todayData = resp.data;
         const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-        weekData.forEach(ch =>
+        todayData.forEach(ch =>
           ch.schedules.forEach(sch => {
             liveMap[sch.id.toString()] = {
               is_live: sch.program.is_live,
@@ -201,15 +237,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           })
         );
 
+        // Fetch current live statuses to merge (setLiveStatuses doesn't support functional updates directly)
+        // Note: The context setter might just overwrite, which is fine since today data has the current live status
         setLiveStatuses(liveMap);
-        setChannelsWithSchedules(Array.isArray(weekData) ? weekData : []);
       } catch {
         // ignore
       }
     };
 
-    // Initial load
-    updateLiveStatuses();
+    // Kick off background fetch for the week
+    fetchWeekSchedules();
 
     // Reduced from 60 seconds to 5 minutes to optimize YouTube API usage
     // Backend cron (every 2 min) keeps cache fresh, so 5 min frontend polling is sufficient

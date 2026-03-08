@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.17.0] - 2026-03-08
+
+### Changed
+- Api v2 endpoints
+
 ## [1.16.1] - 2026-03-05
 
 ### Changed
