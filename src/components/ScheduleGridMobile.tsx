@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button, Fab, CircularProgress } from '@mui/material';
+import { Box, Typography, Button, Fab } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
@@ -9,6 +9,7 @@ import CategoryTabs from './CategoryTabs';
 import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
+import { SkeletonScheduleRow } from './SkeletonScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues } from '@/constants/layout';
@@ -188,11 +189,8 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               borderRadius: '8px',
               transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
               transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
-              display: 'flex',
-              gap: 0.5,
             }}
           >
-            {loadingDays[day.value] && <CircularProgress size={12} color="inherit" />}
             {day.label}
           </Button>
         ))}
@@ -263,32 +261,38 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader isMobile={true} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
-          {visibleChannels.map((channel, idx) => (
-            <ScheduleRow
-              key={channel.id}
-              channelName={channel.name}
-              channelLogo={channel.logo_url || undefined}
-              channelBackgroundColor={channel.background_color}
-              programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.program.id.toString(),
-                scheduleId: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                subscribed: s.subscribed,
-                description: s.program.description || undefined,
-                panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
-                logo_url: s.program.logo_url || undefined,
-                is_live: s.program.is_live,
-                stream_url: s.program.stream_url || undefined,
-                isWeeklyOverride: s.isWeeklyOverride,
-                overrideType: s.overrideType,
-                style_override: s.program.style_override,
-              }))}
-              color={getColorForChannel(idx, mode)}
-              isToday={isToday}
-            />
-          ))}
+          {loadingDays[selectedDay] ? (
+            Array.from({ length: Math.max(5, channels.length) }).map((_, idx) => (
+              <SkeletonScheduleRow key={idx} />
+            ))
+          ) : (
+            visibleChannels.map((channel, idx) => (
+              <ScheduleRow
+                key={channel.id}
+                channelName={channel.name}
+                channelLogo={channel.logo_url || undefined}
+                channelBackgroundColor={channel.background_color}
+                programs={getSchedulesForChannel(channel.id).map(s => ({
+                  id: s.program.id.toString(),
+                  scheduleId: s.id.toString(),
+                  name: s.program.name,
+                  start_time: s.start_time.slice(0, 5),
+                  end_time: s.end_time.slice(0, 5),
+                  subscribed: s.subscribed,
+                  description: s.program.description || undefined,
+                  panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
+                  logo_url: s.program.logo_url || undefined,
+                  is_live: s.program.is_live,
+                  stream_url: s.program.stream_url || undefined,
+                  isWeeklyOverride: s.isWeeklyOverride,
+                  overrideType: s.overrideType,
+                  style_override: s.program.style_override,
+                }))}
+                color={getColorForChannel(idx, mode)}
+                isToday={isToday}
+              />
+            ))
+          )}
           {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
           {containerWidth > 0 && (
             <Box
