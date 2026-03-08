@@ -20,41 +20,33 @@ export const SkeletonScheduleGridMobile: React.FC<Props> = ({ rowCount }) => {
   const hours = Array.from({ length: 24 }, (_, i) => i);
 
   const blocks = Array.from({ length: rowCount }).flatMap((_, r) => {
-    const MAX_MIN = 11 * 60;          // límite de inicio: 11:00 en minutos
-    const DURS = [60, 120];           // posibles duraciones: 60' o 120'
+    const MAX_MIN = 24 * 60; // Up to 24 hours
+    const DURS = [60, 90, 120, 180];
     const yTop = timeHeaderHeight +
       r * rowHeight + rowHeight * 0.34;
     const h = rowHeight - 1;
-  
-    // 1️⃣ Primer bloque
-    const dur1 = DURS[Math.floor(Math.random() * DURS.length)];
-    const start1 = Math.floor(Math.random() * (MAX_MIN - dur1 + 1));
-  
-    // 2️⃣ Segundo bloque: reintentar hasta que no solape con el primero
-    const dur2 = DURS[Math.floor(Math.random() * DURS.length)];
-    let start2: number;
-    do {
-      start2 = Math.floor(Math.random() * (MAX_MIN - dur2 + 1));
-    } while (
-      // condición de solapamiento:
-      !(start2 + dur2 <= start1 || start2 >= start1 + dur1)
-    );
-  
-    // ahora construimos ambos rectángulos
-    return [
-      {
+
+    const numBlocks = Math.floor(Math.random() * 5) + 8;
+    const rowBlocks = [];
+    let currentStart = Math.floor(Math.random() * 120);
+
+    for (let i = 0; i < numBlocks; i++) {
+      const dur = DURS[Math.floor(Math.random() * DURS.length)];
+      const gap = Math.floor(Math.random() * 60);
+
+      rowBlocks.push({
         top: yTop,
-        left: channelLabelWidth + start1 * pixelsPerMinute + 2,
-        width: dur1 * pixelsPerMinute - 4,
+        left: channelLabelWidth + currentStart * pixelsPerMinute + 2,
+        width: dur * pixelsPerMinute - 4,
         height: h,
-      },
-      {
-        top: yTop,
-        left: channelLabelWidth + start2 * pixelsPerMinute + 2,
-        width: dur2 * pixelsPerMinute - 4,
-        height: h,
-      },
-    ];
+        dur: dur,
+      });
+
+      currentStart += dur + gap;
+      if (currentStart > MAX_MIN) break;
+    }
+
+    return rowBlocks;
   });
 
   return (
@@ -130,10 +122,10 @@ export const SkeletonScheduleGridMobile: React.FC<Props> = ({ rowCount }) => {
 
       {/* — Filas de canales — */}
       <Box sx={{
-            position: 'relative',
-            height: `${timeHeaderHeight + rowCount * rowHeight}px`,
-            overflow: 'hidden',      // para que no “se salgan” de la caja
-        }}>
+        position: 'relative',
+        height: `${timeHeaderHeight + rowCount * rowHeight}px`,
+        overflow: 'hidden',      // para que no “se salgan” de la caja
+      }}>
         {Array.from({ length: rowCount }).map((_, r) => (
           <Box
             key={r}
@@ -168,10 +160,8 @@ export const SkeletonScheduleGridMobile: React.FC<Props> = ({ rowCount }) => {
 
         {/* — Bloques “programa” — */}
         {blocks.map((b, i) => (
-          <Skeleton
+          <Box
             key={i}
-            variant="rectangular"
-            animation="wave"
             sx={{
               position: 'absolute',
               top: b.top,
@@ -179,9 +169,24 @@ export const SkeletonScheduleGridMobile: React.FC<Props> = ({ rowCount }) => {
               width: b.width,
               height: b.height,
               borderRadius: theme.shape.borderRadius,
+              bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+              display: 'flex',
+              alignItems: 'center',
+              pl: 2,
               zIndex: 1
             }}
-          />
+          >
+            <Skeleton
+              variant="rounded"
+              animation="wave"
+              width={Math.min(b.dur * pixelsPerMinute * 0.5, 80)}
+              height={12}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.09)',
+                borderRadius: '8px'
+              }}
+            />
+          </Box>
         ))}
       </Box>
     </Box>

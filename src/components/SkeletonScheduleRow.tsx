@@ -13,21 +13,21 @@ export const SkeletonScheduleRow = () => {
 
     // Memoize the random blocks so they don't jump around on re-renders
     const blocks = useMemo(() => {
-        // Generate 2 to 4 random blocks across the timeline
-        const numBlocks = Math.floor(Math.random() * 3) + 2;
-        const MAX_MIN = 22 * 60; // Up to 10 PM
+        // Generate 8 to 12 random blocks across 24h timeline
+        const numBlocks = Math.floor(Math.random() * 5) + 8;
+        const MAX_MIN = 24 * 60; // 24 hours
         const DURS = [60, 90, 120, 180];
         const generatedBlocks = [];
 
         // Simple deterministic sequential generation for skeletons so they look structured
-        let currentStart = Math.floor(Math.random() * 300); // Start somewhere in the morning (0 to 5 hours)
+        let currentStart = Math.floor(Math.random() * 120); // Start somewhere in the first 2 hours
 
         for (let i = 0; i < numBlocks; i++) {
             const dur = DURS[Math.floor(Math.random() * DURS.length)];
-            // Add a random gap between 0 and 120 mins
-            const gap = Math.floor(Math.random() * 120);
+            // Add a random gap between 0 and 60 mins
+            const gap = Math.floor(Math.random() * 60);
 
-            generatedBlocks.push({ start: currentStart + gap, dur });
+            generatedBlocks.push({ start: currentStart, dur });
             currentStart += dur + gap;
             if (currentStart > MAX_MIN) break;
         }
@@ -76,9 +76,8 @@ export const SkeletonScheduleRow = () => {
             {/* Skeletons for Programs */}
             <Box position="relative" flex="1" height="100%">
                 {blocks.map((b, i) => (
-                    <Skeleton
+                    <Box
                         key={i}
-                        variant="rectangular"
                         sx={{
                             position: 'absolute',
                             left: `${b.start * pixelsPerMinute + 2}px`,
@@ -87,8 +86,21 @@ export const SkeletonScheduleRow = () => {
                             height: `${rowHeight - 4}px`,
                             borderRadius: '8px',
                             bgcolor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+                            display: 'flex',
+                            alignItems: 'center',
+                            pl: 2,
                         }}
-                    />
+                    >
+                        <Skeleton
+                            variant="rounded"
+                            width={isMobile ? Math.min(b.dur * pixelsPerMinute * 0.5, 80) : Math.min(b.dur * pixelsPerMinute * 0.6, 120)}
+                            height={isMobile ? 12 : 16}
+                            sx={{
+                                bgcolor: mode === 'light' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.09)',
+                                borderRadius: '8px'
+                            }}
+                        />
+                    </Box>
                 ))}
             </Box>
         </Box>
