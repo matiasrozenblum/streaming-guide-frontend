@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useCallback } from 'react';
 import {
   Box,
   Container,
@@ -23,6 +23,8 @@ import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { isBeforeInBuenosAires } from '@/utils/date';
+import { ScheduleCacheService } from '@/services/schedule.cache';
+import dayjs from 'dayjs';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
@@ -54,6 +56,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const [bannerVisible, setBannerVisible] = useState(true);
+  const [loadingDays, setLoadingDays] = useState<Record<string, boolean>>({});
 
   const { mode } = useThemeContext();
   const { setLiveStatuses } = useLiveStatus();
@@ -173,43 +176,13 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const showSkeleton = flattened.length === 0;
 
   useEffect(() => {
-    if (!deviceId) return; // Only wait for deviceId
-
     let isMounted = true;
 
-    // 1. Background fetch for the full week's schedules
-    const fetchWeekSchedules = async () => {
-      const currentDeviceId = deviceId;
-      try {
-        const params: { live_status: boolean; deviceId?: string } = { live_status: true };
-        if (currentDeviceId) {
-          params.deviceId = currentDeviceId;
-        }
-
-        const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', { params });
-        if (!isMounted) return;
-
-        const weekData = resp.data;
-        if (Array.isArray(weekData)) {
-          setChannelsWithSchedules(weekData);
-
-          // Update live map with week data. Since setLiveStatuses typed as (statuses: LiveStatus) => void,
-          // we overwrite it with the week's data.
-          const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
-          weekData.forEach(ch =>
-            ch.schedules.forEach(sch => {
-              liveMap[sch.id.toString()] = {
-                is_live: sch.program.is_live,
-                stream_url: sch.program.stream_url,
-              };
-            })
-          );
-          setLiveStatuses(liveMap);
-        }
-      } catch (error) {
-        console.warn('Failed to fetch background week schedules:', error);
-      }
-    };
+    // Cache the initial "Today" data that was provided via SSR
+    const todayStr = dayjs().format('dddd').toLowerCase();
+    if (initialData.weekSchedules.length > 0 && typeof window !== 'undefined') {
+      ScheduleCacheService.set(todayStr, initialData.weekSchedules);
+    }
 
     // 2. Optimized polling for today's live statuses using V2
     const updateLiveStatuses = async () => {
@@ -237,7 +210,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           })
         );
 
-        // Fetch current live statuses to merge (setLiveStatuses doesn't support functional updates directly)
         // Note: The context setter might just overwrite, which is fine since today data has the current live status
         setLiveStatuses(liveMap);
       } catch {
@@ -245,8 +217,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       }
     };
 
-    // Kick off background fetch for the week
-    fetchWeekSchedules();
+    // Initial load
+    updateLiveStatuses();
 
     // Reduced from 60 seconds to 5 minutes to optimize YouTube API usage
     // Backend cron (every 2 min) keeps cache fresh, so 5 min frontend polling is sufficient
@@ -282,6 +254,64 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
+
+  const handleFetchDay = useCallback(async (day: string) => {
+    // 1. Check local cache
+    const { data: cachedData, isStale } = ScheduleCacheService.get(day);
+
+    if (cachedData) {
+      // Instantly render cache
+      setChannelsWithSchedules(cachedData);
+
+      // Update Live Status Context for the cached day so UI respects live statuses immediately
+      const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+      cachedData.forEach(ch =>
+        ch.schedules.forEach(sch => {
+          liveMap[sch.id.toString()] = {
+            is_live: sch.program.is_live,
+            stream_url: sch.program.stream_url,
+          };
+        })
+      );
+      setLiveStatuses(liveMap);
+    }
+
+    // 2. Stop here if cache is fresh
+    if (cachedData && !isStale) return;
+
+    // 3. Otherwise fetch fresh data (Stale-While-Revalidate if cache exists, or straight loader if missing)
+    if (!cachedData) {
+      setLoadingDays(prev => ({ ...prev, [day]: true }));
+    }
+
+    try {
+      const params: { day: string; live_status: boolean; deviceId?: string } = { day, live_status: true };
+      if (deviceId) params.deviceId = deviceId;
+
+      const resp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules', { params });
+      const freshData = resp.data;
+
+      if (Array.isArray(freshData)) {
+        ScheduleCacheService.set(day, freshData);
+        setChannelsWithSchedules(freshData);
+
+        const liveMap: Record<string, { is_live: boolean; stream_url: string | null }> = {};
+        freshData.forEach(ch =>
+          ch.schedules.forEach(sch => {
+            liveMap[sch.id.toString()] = {
+              is_live: sch.program.is_live,
+              stream_url: sch.program.stream_url,
+            };
+          })
+        );
+        setLiveStatuses(liveMap);
+      }
+    } catch (e) {
+      console.warn(`Failed to fetch schedules for day: ${day}`, e);
+    } finally {
+      setLoadingDays(prev => ({ ...prev, [day]: false }));
+    }
+  }, [deviceId, setLiveStatuses]);
 
   return (
     <>
@@ -416,7 +446,18 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               flexDirection: 'column',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
+            {showSkeleton ? (
+              <SkeletonScheduleGrid rowCount={10} />
+            ) : (
+              <ScheduleGrid
+                channels={channels}
+                schedules={flattened}
+                categories={initialData.categories}
+                categoriesEnabled={initialData.categoriesEnabled}
+                onFetchDay={handleFetchDay}
+                loadingDays={loadingDays}
+              />
+            )}
           </Box>
         </Container>
         <BottomNavigation />

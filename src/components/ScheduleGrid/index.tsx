@@ -9,15 +9,17 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  onFetchDay: (day: string) => void;
+  loadingDays: Record<string, boolean>;
 }
 
-export const ScheduleGrid = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGrid = ({ channels, schedules, categories, categoriesEnabled, onFetchDay, loadingDays }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return isMobile ? (
-    <ScheduleGridMobile channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} />
+    <ScheduleGridMobile channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} onFetchDay={onFetchDay} loadingDays={loadingDays} />
   ) : (
-    <ScheduleGridDesktop channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} />
+    <ScheduleGridDesktop channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} onFetchDay={onFetchDay} loadingDays={loadingDays} />
   );
 };

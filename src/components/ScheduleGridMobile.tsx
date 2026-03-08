@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, Typography, Button, Fab } from '@mui/material';
+import { Box, Typography, Button, Fab, CircularProgress } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import { useEffect, useState, useRef, useCallback } from 'react';
 import dayjs from 'dayjs';
@@ -25,9 +25,11 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  onFetchDay: (day: string) => void;
+  loadingDays: Record<string, boolean>;
 }
 
-export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled, onFetchDay, loadingDays }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -102,7 +104,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         setContainerWidth(scrollRef.current.clientWidth);
       }
     };
-    
+
     updateContainerWidth();
     window.addEventListener('resize', updateContainerWidth);
     return () => window.removeEventListener('resize', updateContainerWidth);
@@ -168,6 +170,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => {
               setSelectedDay(day.value);
+              if (!loadingDays[day.value]) {
+                onFetchDay(day.value);
+              }
               Clarity.setTag('selected_day', day.value);
               Clarity.event('day_change');
               gaEvent({
@@ -183,8 +188,11 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               borderRadius: '8px',
               transition: 'background-color 0.3s ease, border 0.3s ease, color 0.3s ease, box-shadow 0.3s ease, transform 0.2s cubic-bezier(0.68, -0.55, 0.27, 1.55)',
               transform: selectedDay === day.value ? 'scale(1.05)' : 'scale(1)',
+              display: 'flex',
+              gap: 0.5,
             }}
           >
+            {loadingDays[day.value] && <CircularProgress size={12} color="inherit" />}
             {day.label}
           </Button>
         ))}
@@ -230,15 +238,15 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             borderRadius: '4px',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.2)' 
+            background: mode === 'light'
+              ? 'rgba(0, 0, 0, 0.2)'
               : 'rgba(255, 255, 255, 0.2)',
             borderRadius: '4px',
             border: '1px solid transparent',
             backgroundClip: 'content-box',
             '&:hover': {
-              background: mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.3)' 
+              background: mode === 'light'
+                ? 'rgba(0, 0, 0, 0.3)'
                 : 'rgba(255, 255, 255, 0.3)',
             },
           },
@@ -247,8 +255,8 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           },
           // Firefox scrollbar styling
           scrollbarWidth: 'thin',
-          scrollbarColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.2) transparent' 
+          scrollbarColor: mode === 'light'
+            ? 'rgba(0, 0, 0, 0.2) transparent'
             : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
@@ -283,13 +291,13 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           ))}
           {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
           {containerWidth > 0 && (
-            <Box 
-              sx={{ 
+            <Box
+              sx={{
                 width: `${containerWidth}px`,
                 position: 'sticky',
                 left: 0,
                 mt: 2,
-                pb: streamersEnabled 
+                pb: streamersEnabled
                   ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
                   : 0,
                 zIndex: 10,
@@ -326,7 +334,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           }}
           sx={{
             position: 'fixed',
-            bottom: streamersEnabled 
+            bottom: streamersEnabled
               ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + 16px)`
               : '5vh',
             left: '50%',
