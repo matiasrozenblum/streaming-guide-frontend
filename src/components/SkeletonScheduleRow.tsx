@@ -85,18 +85,32 @@ export const SkeletonScheduleRow = () => {
                             width: `${b.dur * pixelsPerMinute - 4}px`,
                             height: `${rowHeight - 4}px`,
                             borderRadius: '8px',
-                            bgcolor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+                            bgcolor: mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)',
+                            border: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
                             display: 'flex',
+                            flexDirection: 'column',
+                            justifyContent: 'center',
                             alignItems: 'center',
-                            pl: 2,
+                            gap: 1,
                         }}
                     >
+                        {/* Title Skeleton */}
                         <Skeleton
                             variant="rounded"
                             width={isMobile ? Math.min(b.dur * pixelsPerMinute * 0.5, 80) : Math.min(b.dur * pixelsPerMinute * 0.6, 120)}
                             height={isMobile ? 12 : 16}
                             sx={{
                                 bgcolor: mode === 'light' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.09)',
+                                borderRadius: '8px'
+                            }}
+                        />
+                        {/* Panelists Skeleton */}
+                        <Skeleton
+                            variant="rounded"
+                            width={isMobile ? Math.min(b.dur * pixelsPerMinute * 0.7, 100) : Math.min(b.dur * pixelsPerMinute * 0.8, 160)}
+                            height={isMobile ? 8 : 12}
+                            sx={{
+                                bgcolor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
                                 borderRadius: '8px'
                             }}
                         />

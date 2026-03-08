@@ -169,13 +169,17 @@ export const SkeletonScheduleGridDesktop: React.FC<Props> = ({ rowCount }) => {
               width: b.width,
               height: b.height,
               borderRadius: theme.shape.borderRadius,
-              bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
+              bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.02)' : 'rgba(255,255,255,0.02)',
+              border: `1px solid ${theme.palette.mode === 'light' ? 'rgba(0, 0, 0, 0.08)' : 'rgba(255, 255, 255, 0.08)'}`,
               display: 'flex',
+              flexDirection: 'column',
+              justifyContent: 'center',
               alignItems: 'center',
-              pl: 2,
+              gap: 1,
               zIndex: 1
             }}
           >
+            {/* Title Skeleton */}
             <Skeleton
               variant="rounded"
               animation="wave"
@@ -183,6 +187,17 @@ export const SkeletonScheduleGridDesktop: React.FC<Props> = ({ rowCount }) => {
               height={16}
               sx={{
                 bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.09)' : 'rgba(255,255,255,0.09)',
+                borderRadius: '8px'
+              }}
+            />
+            {/* Panelists Skeleton */}
+            <Skeleton
+              variant="rounded"
+              animation="wave"
+              width={Math.min(b.dur * pixelsPerMinute * 0.8, 160)}
+              height={12}
+              sx={{
+                bgcolor: theme.palette.mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.06)',
                 borderRadius: '8px'
               }}
             />
