@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.2] - 2026-03-15
+
+### Changed
+- Program block title vertical positioning
+
 ## [1.16.1] - 2026-03-05
 
 ### Changed

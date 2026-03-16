@@ -727,7 +727,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%',
+                    mt: 1,
                     gap: 1,
                   }}
                 >
