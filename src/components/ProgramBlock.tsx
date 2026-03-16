@@ -728,8 +728,9 @@ export const ProgramBlock: React.FC<Props> = ({
                     alignItems: 'flex-start',
                     justifyContent: 'center',
                     height: '100%',
-                    pt: 1,
+                    py: 1,
                     gap: 1,
+                    overflow: 'hidden',
                   }}
                 >
                   {logo_url && (
