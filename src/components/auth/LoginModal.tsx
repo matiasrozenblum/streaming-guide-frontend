@@ -280,7 +280,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
                     : ''
         )}
-        <IconButton onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
+        <IconButton aria-label="Cerrar modal" onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
       </DialogTitle>
 
       {(

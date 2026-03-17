@@ -286,6 +286,7 @@ export default function BannerCarousel({
         <>
           {/* Previous/Next Buttons */}
           <IconButton
+            aria-label="Imagen anterior"
             onClick={(e) => {
               e.stopPropagation();
               goToPrevious();
@@ -310,6 +311,7 @@ export default function BannerCarousel({
           </IconButton>
 
           <IconButton
+            aria-label="Siguiente imagen"
             onClick={(e) => {
               e.stopPropagation();
               goToNext();
@@ -346,6 +348,16 @@ export default function BannerCarousel({
             {banners.map((_, index) => (
               <Box
                 key={index}
+                role="button"
+                tabIndex={0}
+                aria-label={`Ir a imagen ${index + 1}`}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' || e.key === ' ') {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    goToSlide(index);
+                  }
+                }}
                 onClick={(e) => {
                   e.stopPropagation();
                   goToSlide(index);
