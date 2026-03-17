@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.2] - 2026-03-16
+
+### Added
+- Added aria-labels to buttons
+
+### Fixed
+- Fixed error page not showing up
+
 ## [1.16.1] - 2026-03-05
 
 ### Changed

@@ -220,15 +220,15 @@ export const YouTubeGlobalPlayer = () => {
           flexShrink: 0,
         }}>
           {minimized ? (
-            <IconButton onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+            <IconButton aria-label="Maximizar reproductor" onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           ) : (
-            <IconButton onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+            <IconButton aria-label="Minimizar reproductor" onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
               <CropSquareIcon fontSize="small" />
             </IconButton>
           )}
-          <IconButton onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+          <IconButton aria-label="Cerrar reproductor" onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
             <CloseIcon fontSize="small" />
           </IconButton>
         </Box>
