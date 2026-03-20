@@ -1,0 +1,3 @@
+## 2024-05-24 - Missing ARIA Labels on Core Header Interactions
+**Learning:** Found that key interactive elements in the main header like `ThemeToggle`, `UserButton` (guest login icon), and `UserMenu` (authenticated user button) lacked `aria-label` attributes. Screen reader users would just hear "button" for these critical actions.
+**Action:** Always ensure that icon-only buttons or interactive components representing a single action receive a descriptive `aria-label`. For bilingual/Spanish-first apps, these labels must be contextualized (e.g. "Cambiar a modo oscuro" vs "Cambiar a modo claro") and correctly localized.

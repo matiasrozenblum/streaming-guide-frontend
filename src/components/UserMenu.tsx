@@ -70,6 +70,7 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
       <Button
         ref={buttonRef}
         onClick={handleOpen}
+        aria-label="Menú de usuario"
         aria-controls={menuOpen ? 'user-menu-popover' : undefined}
         aria-haspopup="true"
         aria-expanded={menuOpen ? 'true' : undefined}
