@@ -93,7 +93,7 @@ export default function ExistingUserStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton onClick={() => setShow(s => !s)} edge="end" size="small">
+              <IconButton onClick={() => setShow(s => !s)} edge="end" size="small" aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
                 {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>

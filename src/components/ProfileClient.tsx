@@ -872,7 +872,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(s => !s)}>
+                      <IconButton size="small" onClick={() => setShowPassword(s => !s)} aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
                         {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
@@ -908,7 +908,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowConfirmPassword(s => !s)}>
+                      <IconButton size="small" onClick={() => setShowConfirmPassword(s => !s)} aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
                         {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
