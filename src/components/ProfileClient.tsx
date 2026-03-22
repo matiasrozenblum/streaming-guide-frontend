@@ -83,6 +83,7 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</Typography>
       <IconButton
+        aria-label="Editar información"
         onClick={onEdit}
         size="small"
         sx={{
@@ -872,7 +873,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowPassword(s => !s)}>
+                      <IconButton
+                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        size="small"
+                        onClick={() => setShowPassword(s => !s)}
+                      >
                         {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
@@ -908,7 +913,11 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton size="small" onClick={() => setShowConfirmPassword(s => !s)}>
+                      <IconButton
+                        aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                        size="small"
+                        onClick={() => setShowConfirmPassword(s => !s)}
+                      >
                         {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
                       </IconButton>
                     </InputAdornment>
