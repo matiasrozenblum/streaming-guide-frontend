@@ -344,7 +344,7 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   {channel.logo_url ? (
-                    <Image src={channel.logo_url} alt={channel.name} width={50} height={50} style={{ objectFit: 'contain' }} />
+                    <Image unoptimized src={channel.logo_url} alt={channel.name} width={50} height={50} style={{ objectFit: 'contain' }} />
                   ) : (
                     <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
                       <Typography variant="caption" color="textSecondary">Sin logo</Typography>
