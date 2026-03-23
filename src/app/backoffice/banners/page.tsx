@@ -385,6 +385,7 @@ export default function BannersPage() {
                       sx={{ height: 140, position: 'relative' }}
                     >
                       <Image
+                        unoptimized
                         src={banner.image_url_desktop || banner.image_url}
                         alt={banner.title}
                         fill
@@ -550,6 +551,7 @@ export default function BannersPage() {
                         }}
                       >
                         <Image
+                          unoptimized
                           src={imagePreviewDesktop || formData.image_url_desktop || ''}
                           alt="Desktop Preview"
                           fill
@@ -604,6 +606,7 @@ export default function BannersPage() {
                         }}
                       >
                         <Image
+                          unoptimized
                           src={imagePreviewMobile || formData.image_url_mobile || ''}
                           alt="Mobile Preview"
                           fill
