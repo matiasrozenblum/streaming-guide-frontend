@@ -252,6 +252,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                 <TableCell>
                   {panelist.avatar_url && (
                     <Image
+                      unoptimized
                       src={panelist.avatar_url}
                       alt={panelist.name}
                       width={50}

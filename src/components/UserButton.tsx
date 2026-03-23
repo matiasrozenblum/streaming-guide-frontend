@@ -12,9 +12,10 @@ export const UserButton = () => {
 
   return (
     <>
-      <Tooltip title="Acceder" arrow>
+      <Tooltip title="Acceder a tu cuenta" arrow>
         <IconButton
           onClick={() => setLoginOpen(true)}
+          aria-label="Acceder a tu cuenta"
           size="large"
           sx={{
             width: 44,

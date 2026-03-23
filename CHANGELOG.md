@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.3] - 2026-03-23
+
+### Changed
+- Unoptimized images in backoffice
+
 ## [1.16.2] - 2026-03-16
 
 ### Added

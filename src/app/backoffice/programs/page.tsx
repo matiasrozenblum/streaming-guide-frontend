@@ -313,14 +313,14 @@ export default function ProgramsPage() {
                 <TableRow key={program.id}>
                   <TableCell>
                     {program.logo_url && (
-                      <Image src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
+                      <Image unoptimized src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
                     )}
                   </TableCell>
                   <TableCell>{program.name}</TableCell>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
                       {channel?.logo_url && (
-                        <Image src={channel.logo_url} alt={channel.name} width={32} height={32} style={{ objectFit: 'contain', borderRadius: 4 }} />
+                        <Image unoptimized src={channel.logo_url} alt={channel.name} width={32} height={32} style={{ objectFit: 'contain', borderRadius: 4 }} />
                       )}
                       <span>{channel?.name || 'Sin canal'}</span>
                     </Box>

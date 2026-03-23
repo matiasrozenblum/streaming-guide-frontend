@@ -525,7 +525,7 @@ export default function StreamersPage() {
                 </TableCell>
                 <TableCell>
                   {streamer.logo_url ? (
-                    <Image src={streamer.logo_url} alt={streamer.name} width={50} height={50} style={{ objectFit: 'contain' }} />
+                    <Image unoptimized src={streamer.logo_url} alt={streamer.name} width={50} height={50} style={{ objectFit: 'contain' }} />
                   ) : (
                     <Box width={50} height={50} display="flex" justifyContent="center" alignItems="center">
                       <Typography variant="caption" color="textSecondary">Sin logo</Typography>
@@ -587,6 +587,7 @@ export default function StreamersPage() {
                         <CircularProgress size={18} />
                       ) : (
                         <Image
+                          unoptimized
                           src={SERVICE_ICONS.kick}
                           alt="Kick"
                           width={18}
@@ -612,6 +613,7 @@ export default function StreamersPage() {
                         <CircularProgress size={18} />
                       ) : (
                         <Image
+                          unoptimized
                           src={SERVICE_ICONS.twitch}
                           alt="Twitch"
                           width={18}
@@ -682,6 +684,7 @@ export default function StreamersPage() {
                     }}
                   >
                     <Image
+                      unoptimized
                       src={logoPreview}
                       alt="Logo preview"
                       fill
