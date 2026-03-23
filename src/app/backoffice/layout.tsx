@@ -79,6 +79,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           onClick={() => router.push('/')}
         >
           <Image
+            unoptimized
             src="/img/logo.png"
             alt="La Guía del Streaming"
             width={44}
@@ -86,6 +87,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
             style={{ marginRight: '8px', objectFit: 'contain' }}
           />
           <Image
+            unoptimized
             src={mode === 'light' ? '/img/text.png' : '/img/text-white.png'}
             alt="La Guía del Streaming"
             width={120}
