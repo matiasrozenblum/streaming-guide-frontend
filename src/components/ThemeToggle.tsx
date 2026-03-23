@@ -10,6 +10,7 @@ export const ThemeToggle = () => {
       <IconButton
         aria-label={`Cambiar a modo ${mode === 'light' ? 'oscuro' : 'claro'}`}
         onClick={toggleTheme}
+        aria-label={mode === 'light' ? 'Cambiar a modo oscuro' : 'Cambiar a modo claro'}
         size="large"
         sx={{
           width: 44,

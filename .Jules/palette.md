@@ -1,1 +1,1 @@
-## 2024-05-15 - Missing ARIA label in ThemeToggle\n**Learning:** ThemeToggle button lacks an aria-label, which degrades screen reader accessibility despite having a Tooltip.\n**Action:** Add aria-label to ThemeToggle component.
+
