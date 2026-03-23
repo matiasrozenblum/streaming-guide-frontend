@@ -86,7 +86,11 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton size="small" onClick={() => setShow(s => !s)} aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+              <IconButton
+                aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                size="small"
+                onClick={() => setShow(s => !s)}
+              >
                 {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>
@@ -114,7 +118,11 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton size="small" onClick={() => setShow2(s => !s)} aria-label={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+              <IconButton
+                aria-label={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                size="small"
+                onClick={() => setShow2(s => !s)}
+              >
                 {show2 ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
               </IconButton>
             </InputAdornment>
