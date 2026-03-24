@@ -19,9 +19,9 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [1.16.4] - 2026-03-23
 
-### Changed
+### Fixed
 - Fixed bell icon not showing up for users without session on streamers
-
+- Fixed bell icon triggering browser confirm message
 
 
 ## [1.16.3] - 2026-03-23
