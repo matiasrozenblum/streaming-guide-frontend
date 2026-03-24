@@ -1,20 +1,33 @@
 'use client';
 import { useEffect, useState } from 'react';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
+import { useSessionContext } from '@/contexts/SessionContext';
 import { GA_TRACKING_ID } from '@/lib/gtag';
 import posthog from 'posthog-js';
+import type { SessionWithToken } from '@/types/session';
 
 const GTM_ID = 'GTM-TCGNQB97';
 
 export function ConditionalTrackingLoader() {
   const { hasConsent, consent } = useCookieConsent();
+  const { session } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
+  const isAdmin = typedSession?.user?.role === 'admin';
   const [loadedScripts, setLoadedScripts] = useState({
     analytics: false,
     marketing: false,
   });
 
-  // Initialize PostHog when analytics consent is given
+  // Initialize PostHog when analytics consent is given (skip for admin users)
   useEffect(() => {
+    if (isAdmin && typeof window !== 'undefined') {
+      // Opt out admin users from PostHog to avoid polluting metrics
+      if (posthog.__loaded) {
+        posthog.opt_out_capturing();
+      }
+      return;
+    }
+
     if (hasConsent('analytics') && typeof window !== 'undefined') {
       // Initialize PostHog
       if (!posthog.__loaded) {
@@ -34,11 +47,11 @@ export function ConditionalTrackingLoader() {
         posthog.opt_out_capturing();
       }
     }
-  }, [hasConsent, consent]);
+  }, [hasConsent, consent, isAdmin]);
 
-  // Initialize Google Analytics when analytics consent is given
+  // Initialize Google Analytics when analytics consent is given (skip for admin users)
   useEffect(() => {
-    if (hasConsent('analytics') && typeof window !== 'undefined' && !loadedScripts.analytics) {
+    if (hasConsent('analytics') && !isAdmin && typeof window !== 'undefined' && !loadedScripts.analytics) {
       // Dynamically load GA script
       const gaScript = document.createElement('script');
       gaScript.src = `https://www.googletagmanager.com/gtag/js?id=${GA_TRACKING_ID}`;
@@ -63,11 +76,11 @@ export function ConditionalTrackingLoader() {
 
       setLoadedScripts(prev => ({ ...prev, analytics: true }));
     }
-  }, [hasConsent, loadedScripts.analytics]);
+  }, [hasConsent, loadedScripts.analytics, isAdmin]);
 
-  // Initialize GTM when marketing consent is given
+  // Initialize GTM when marketing consent is given (skip for admin users)
   useEffect(() => {
-    if (hasConsent('marketing') && typeof window !== 'undefined' && !loadedScripts.marketing) {
+    if (hasConsent('marketing') && !isAdmin && typeof window !== 'undefined' && !loadedScripts.marketing) {
       // Dynamically load GTM script
       const gtmScript = document.createElement('script');
       gtmScript.innerHTML = `(function(w,d,s,l,i){w[l]=w[l]||[];w[l].push({'gtm.start':
@@ -79,7 +92,7 @@ export function ConditionalTrackingLoader() {
 
       setLoadedScripts(prev => ({ ...prev, marketing: true }));
     }
-  }, [hasConsent, loadedScripts.marketing]);
+  }, [hasConsent, loadedScripts.marketing, isAdmin]);
 
   // Don't render anything if no consent has been given yet
   if (!consent) return null;
@@ -88,13 +101,15 @@ export function ConditionalTrackingLoader() {
   return null;
 }
 
-// Component for loading Clarity only with analytics consent
+// Component for loading Clarity only with analytics consent (skip for admin users)
 export function ConditionalClarityLoader() {
   const { hasConsent } = useCookieConsent();
+  const { session } = useSessionContext();
+  const isAdmin = (session as SessionWithToken | null)?.user?.role === 'admin';
   const [clarityLoaded, setClarityLoaded] = useState(false);
 
   useEffect(() => {
-    if (hasConsent('analytics') && typeof window !== 'undefined' && !clarityLoaded) {
+    if (hasConsent('analytics') && !isAdmin && typeof window !== 'undefined' && !clarityLoaded) {
       // Load Clarity script directly without dynamic import
       const script = document.createElement('script');
       script.innerHTML = `
@@ -107,18 +122,20 @@ export function ConditionalClarityLoader() {
       document.head.appendChild(script);
       setClarityLoaded(true);
     }
-  }, [hasConsent, clarityLoaded]);
+  }, [hasConsent, clarityLoaded, isAdmin]);
 
   return null;
 }
 
-// Component for loading Hotjar only with analytics consent
+// Component for loading Hotjar only with analytics consent (skip for admin users)
 export function ConditionalHotjarLoader() {
   const { hasConsent } = useCookieConsent();
+  const { session } = useSessionContext();
+  const isAdmin = (session as SessionWithToken | null)?.user?.role === 'admin';
   const [hotjarLoaded, setHotjarLoaded] = useState(false);
 
   useEffect(() => {
-    if (hasConsent('analytics') && typeof window !== 'undefined' && !hotjarLoaded) {
+    if (hasConsent('analytics') && !isAdmin && typeof window !== 'undefined' && !hotjarLoaded) {
       // Initialize Hotjar
       interface HotjarWindow extends Window {
         hj?: {
@@ -144,7 +161,7 @@ export function ConditionalHotjarLoader() {
       document.getElementsByTagName('head')[0].appendChild(script);
       setHotjarLoaded(true);
     }
-  }, [hasConsent, hotjarLoaded]);
+  }, [hasConsent, hotjarLoaded, isAdmin]);
 
   return null;
 } 
