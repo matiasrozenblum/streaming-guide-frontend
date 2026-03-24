@@ -32,6 +32,9 @@ export const pageview = (url: string) => {
   const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
   const user = nextData?.props?.pageProps?.session?.user || {};
 
+  // Don't track admin users to avoid polluting metrics
+  if (user?.role === 'admin') return;
+
   // Calculate age if birthDate is available
   let age: number | undefined;
   if (user?.birthDate) {
@@ -133,6 +136,9 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     const nextData = (window as { __NEXT_DATA__?: NextData }).__NEXT_DATA__;
     user = nextData?.props?.pageProps?.session?.user || {};
   }
+
+  // Don't track admin users to avoid polluting metrics
+  if (user?.role === 'admin') return;
 
   // Calculate age if birthDate is available
   let age: number | undefined;
