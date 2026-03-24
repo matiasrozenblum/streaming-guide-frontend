@@ -17,6 +17,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.5] - 2026-03-24
+
+### Added
+- Added admin non-tracking
+
 ## [1.16.4] - 2026-03-23
 
 ### Fixed
