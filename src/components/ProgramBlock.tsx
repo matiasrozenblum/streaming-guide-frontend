@@ -210,10 +210,7 @@ export const ProgramBlock: React.FC<Props> = ({
     setIsLoading(true);
 
     if (!typedSession?.user) {
-      if (confirm('Debes iniciar sesión para suscribirte. ¿Deseas iniciar sesión?')) {
-        const currentPath = window.location.pathname;
-        window.location.href = `/login?redirect=${encodeURIComponent(currentPath)}`;
-      }
+      setLoginOpen(true);
       setIsOn(previousIsOn); // Revert optimistic update
       setIsLoading(false);
       return;
