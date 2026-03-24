@@ -86,12 +86,12 @@ export default function RootLayout({
                 </CustomThemeProvider>
               </TooltipProvider>
             </PushProvider>
+
+            {/* Conditional Tracking Scripts (inside SessionProviderWrapper for admin check) */}
+            <ConditionalTrackingLoader />
+            <ConditionalClarityLoader />
+            <ConditionalHotjarLoader />
           </SessionProviderWrapper>
-          
-          {/* Conditional Tracking Scripts */}
-          <ConditionalTrackingLoader />
-          <ConditionalClarityLoader />
-          <ConditionalHotjarLoader />
         </CookieConsentProvider>
       </body>
     </html>
