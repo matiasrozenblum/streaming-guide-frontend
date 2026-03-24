@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.4] - 2026-03-23
+
+### Changed
+- Fixed bell icon not showing up for users without session on streamers
+
+
+
 ## [1.16.3] - 2026-03-23
 
 ### Changed
