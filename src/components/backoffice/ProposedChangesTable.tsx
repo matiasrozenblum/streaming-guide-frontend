@@ -228,12 +228,14 @@ export default function ProposedChangesTable() {
                   </TableCell>
                   <TableCell>
                     <IconButton
+                      aria-label="Aprobar"
                       onClick={() => handleAction(change.id, 'approve')}
                       color="success"
                     >
                       <Check />
                     </IconButton>
                     <IconButton
+                      aria-label="Rechazar"
                       onClick={() => handleAction(change.id, 'reject')}
                       color="error"
                     >

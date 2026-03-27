@@ -567,8 +567,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                             aspectRatio: '1 / 1',
                             overflow: 'hidden',
                             // Match the card's rounded corners at the top
-                            borderTopLeftRadius: theme.shape.borderRadius * 3,
-                            borderTopRightRadius: theme.shape.borderRadius * 3,
+                            borderTopLeftRadius: Number(theme.shape.borderRadius) * 3,
+                            borderTopRightRadius: Number(theme.shape.borderRadius) * 3,
                             backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
                           })}
                         >

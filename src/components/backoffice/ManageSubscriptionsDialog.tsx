@@ -147,7 +147,7 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
                 key={sub.id}
                 secondaryAction={
                   <Box>
-                    <IconButton onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
+                    <IconButton aria-label="Eliminar" onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
                   </Box>
                 }
               >

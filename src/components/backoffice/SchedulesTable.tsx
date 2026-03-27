@@ -531,10 +531,10 @@ export function SchedulesTable() {
                                   />
                                 </TableCell>
                                 <TableCell>
-                                  <IconButton onClick={handleSubmit}>
+                                  <IconButton aria-label="Aceptar" onClick={handleSubmit}>
                                     <Check />
                                   </IconButton>
-                                  <IconButton onClick={handleCloseEditDialog}>
+                                  <IconButton aria-label="Cancelar" onClick={handleCloseEditDialog}>
                                     <Close />
                                   </IconButton>
                                 </TableCell>
@@ -545,8 +545,8 @@ export function SchedulesTable() {
                                 <TableCell>{formatTime(schedule.start_time)}</TableCell>
                                 <TableCell>{formatTime(schedule.end_time)}</TableCell>
                                 <TableCell>
-                                  <IconButton onClick={() => handleOpenEditDialog(schedule)}><Edit /></IconButton>
-                                  <IconButton onClick={() => handleDelete(schedule.id)}><Delete /></IconButton>
+                                  <IconButton aria-label="Editar" onClick={() => handleOpenEditDialog(schedule)}><Edit /></IconButton>
+                                  <IconButton aria-label="Eliminar" onClick={() => handleDelete(schedule.id)}><Delete /></IconButton>
                                 </TableCell>
                               </>
                             )}
@@ -682,6 +682,7 @@ export function SchedulesTable() {
                             />
                             <ListItemSecondaryAction>
                               <IconButton 
+                                aria-label="Eliminar"
                                 edge="end" 
                                 onClick={() => handleRemoveBulkSchedule(index)}
                                 color="error"
