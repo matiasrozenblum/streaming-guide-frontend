@@ -357,7 +357,8 @@ export function UsersTable() {
           
           {/* Page Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton 
+            <IconButton
+              aria-label="Página anterior"
               onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
               disabled={currentPage <= 1}
               size="small"
@@ -367,7 +368,8 @@ export function UsersTable() {
             <Typography variant="body2" color="text.primary">
               Página {currentPage} de {totalPages}
             </Typography>
-            <IconButton 
+            <IconButton
+              aria-label="Página siguiente"
               onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
               disabled={currentPage >= totalPages}
               size="small"
@@ -424,10 +426,10 @@ export function UsersTable() {
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton size="small" onClick={() => handleOpenDialog(user)}>
+                    <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
                       <Edit />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleDelete(user.id)}>
+                    <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
                       <Delete />
                     </IconButton>
                   </Box>

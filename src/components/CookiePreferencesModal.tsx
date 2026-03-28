@@ -141,7 +141,7 @@ export function CookiePreferencesModal() {
           <Typography variant="h6" component="h2" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
             🍪 Configuración de Cookies
           </Typography>
-          <IconButton onClick={closePreferences} size="small" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
+          <IconButton aria-label="Cerrar preferencias de cookies" onClick={closePreferences} size="small" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
             <CloseIcon />
           </IconButton>
         </Box>
