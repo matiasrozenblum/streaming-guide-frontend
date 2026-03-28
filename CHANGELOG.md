@@ -29,8 +29,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Fixed TypeScript type error for `applicationServerKey` in PushContext
 - Fixed `borderTopRadius` arithmetic type error in StreamersClient
 
----
-
 ## [1.16.5] - 2026-03-24
 
 ### Added
