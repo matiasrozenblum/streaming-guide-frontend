@@ -92,6 +92,10 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
               ? 'rgba(255,255,255,0.95)'
               : 'rgba(50,61,79,0.95)',
           },
+          '&:focus-visible': {
+            outline: `2px solid ${theme.palette.mode === 'light' ? '#1976d2' : '#90caf9'}`,
+            outlineOffset: '2px',
+          },
           transition: 'background-color 0.3s ease, border 0.3s ease',
         }}
       >

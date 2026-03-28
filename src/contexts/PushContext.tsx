@@ -224,7 +224,7 @@ export const PushProvider: FC<PushProviderProps> = ({ children, enabled = false,
         try {
           subscription = await registration.pushManager.subscribe({
             userVisibleOnly: true,
-            applicationServerKey: urlBase64ToUint8Array(vapidKey),
+            applicationServerKey: urlBase64ToUint8Array(vapidKey) as ArrayBufferView<ArrayBuffer>,
           });
         } catch (subscribeError) {
           throw subscribeError;

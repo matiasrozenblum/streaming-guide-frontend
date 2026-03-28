@@ -421,7 +421,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
           >
             <Box display="flex" justifyContent="space-between" alignItems="center" mb={1}>
               <Box display="flex" alignItems="center" gap={2}>
-                <IconButton onClick={() => router.back()} sx={{ color: headerTextColor }}>
+                <IconButton aria-label="Volver atrás" onClick={() => router.back()} sx={{ color: headerTextColor }}>
                   <ArrowBack />
                 </IconButton>
                 <Typography
@@ -476,7 +476,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Programas
                     </Typography>
-                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
+                    <IconButton aria-label="Expandir o contraer programas" size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"
@@ -552,7 +552,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Streamers
                     </Typography>
-                    <IconButton size="small" disableRipple sx={{ color: headerTextColor }}>
+                    <IconButton aria-label="Expandir o contraer streamers" size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"

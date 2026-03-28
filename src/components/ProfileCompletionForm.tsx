@@ -220,6 +220,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
           >
             <Box sx={{ display: 'flex', alignItems: 'center', mb: 4 }}>
               <IconButton
+                aria-label="Volver atrás"
                 onClick={() => {
                   setErrorMessage('Por favor completa tu perfil antes de salir');
                 }}
