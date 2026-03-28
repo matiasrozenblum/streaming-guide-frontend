@@ -273,13 +273,13 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(panelist)}>
+                  <IconButton aria-label="Editar panelista" onClick={() => handleOpenDialog(panelist)}>
                     <Edit />
                   </IconButton>
-                  <IconButton onClick={() => handleOpenProgramsDialog(panelist)}>
+                  <IconButton aria-label="Gestionar programas" onClick={() => handleOpenProgramsDialog(panelist)}>
                     <Group />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(String(panelist.id))}>
+                  <IconButton aria-label="Eliminar panelista" onClick={() => handleDelete(String(panelist.id))}>
                     <Delete />
                   </IconButton>
                 </TableCell>

@@ -17,6 +17,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.6] - 2026-03-28
+
+### Added
+- Added tooltip and dynamic aria-label to notification bell in ProgramBlock
+- Added focus-visible keyboard navigation styles to header buttons (ThemeToggle, UserButton, UserMenu)
+- Added aria-labels to icon-only buttons across app: CookiePreferencesModal, ProfileCompletionForm, SubscriptionsClient
+- Added aria-labels to backoffice data table action buttons: PanelistsTable, UsersTable, ManageSubscriptionsDialog, ProposedChangesTable, SchedulesTable, WeeklyOverridesTable
+
+### Fixed
+- Fixed TypeScript type error for `applicationServerKey` in PushContext
+- Fixed `borderTopRadius` arithmetic type error in StreamersClient
+
 ## [1.16.5] - 2026-03-24
 
 ### Added
