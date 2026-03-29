@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.7] - 2026-03-29
+
+### Changed
+- Show "Sin playlist disponible" in tooltip when channel has no stream URL
+
+### Fixed
+- Fixed YouTube iframe player freezing/blanking after ~3 minutes by removing `enablejsapi=1` from embed URL
+
 ## [1.16.6] - 2026-03-28
 
 ### Added

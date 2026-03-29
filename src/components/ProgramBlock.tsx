@@ -493,7 +493,7 @@ export const ProgramBlock: React.FC<Props> = ({
         </Box>
       ) : null}
       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1, mt: tokens.spacing.md }}>
-        {streamUrl && (
+        {streamUrl ? (
           <BaseButton
             onClick={handleClick}
             onTouchStart={handleClick}
@@ -513,6 +513,17 @@ export const ProgramBlock: React.FC<Props> = ({
           >
             {isLive ? 'Ver en vivo' : 'Ver en YouTube'}
           </BaseButton>
+        ) : (
+          <Text
+            variant="body2"
+            sx={{
+              color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : theme.palette.text.disabled,
+              fontStyle: 'italic',
+              fontSize: tokens.typography.fontSize.sm,
+            }}
+          >
+            Sin playlist disponible
+          </Text>
         )}
         <Tooltip title={isOn ? "Desactivar notificación" : "Activar notificación"} arrow>
           <IconButton
