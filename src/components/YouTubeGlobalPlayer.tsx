@@ -119,12 +119,16 @@ export const YouTubeGlobalPlayer = () => {
   if (!open || !playerData) return null;
 
   // Build embed URL based on service type
+  // NOTE: Do NOT add enablejsapi=1 — this flag enables the YouTube IFrame API and
+  // causes the player to send periodic heartbeat postMessages to the parent frame.
+  // Since this component has no YouTube API code to respond, the player detects an
+  // unresponsive channel after ~3 minutes and freezes/blanks the video.
   let src = '';
   if (playerData.service === 'youtube') {
     const baseUrl = `https://www.youtube.com/embed/${playerData.embedPath}`;
     src = playerData.embedPath.includes('?')
-      ? `${baseUrl}&autoplay=1&enablejsapi=1`
-      : `${baseUrl}?autoplay=1&enablejsapi=1`;
+      ? `${baseUrl}&autoplay=1`
+      : `${baseUrl}?autoplay=1`;
   } else if (playerData.service === 'twitch') {
     // Twitch embed requires parent domain for security
     const parent = typeof window !== 'undefined' ? window.location.hostname : '';
