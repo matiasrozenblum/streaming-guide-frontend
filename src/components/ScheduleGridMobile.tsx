@@ -310,6 +310,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       {/* Botón flotante */}
       {showScrollButton && (
         <Fab
+          aria-label="Ir al horario en vivo"
           variant="extended"
           size="medium"
           onClick={() => {
