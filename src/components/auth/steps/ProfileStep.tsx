@@ -5,7 +5,8 @@ import {
   Button,
   Alert,
   AlertTitle,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -180,7 +181,7 @@ export default function ProfileStep({
           fullWidth
           disabled={!first || !last || !birthDate || !gender || !!birthDateError || isLoading}
         >
-          Continuar
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Continuar'}
         </Button>
       </Box>
     </Box>
