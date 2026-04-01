@@ -452,10 +452,10 @@ export function ProgramSchedulesSection({
                               />
                             </TableCell>
                             <TableCell>
-                              <IconButton onClick={handleUpdateSchedule} size="small">
+                              <IconButton aria-label="Actualizar horario" onClick={handleUpdateSchedule} size="small">
                                 <Check />
                               </IconButton>
-                              <IconButton onClick={handleCloseEditDialog} size="small">
+                              <IconButton aria-label="Cancelar edición" onClick={handleCloseEditDialog} size="small">
                                 <Close />
                               </IconButton>
                             </TableCell>
@@ -468,10 +468,10 @@ export function ProgramSchedulesSection({
                             <TableCell>{formatTime(schedule.start_time)}</TableCell>
                             <TableCell>{formatTime(schedule.end_time)}</TableCell>
                             <TableCell>
-                              <IconButton onClick={() => handleOpenEditDialog(schedule)} size="small">
+                              <IconButton aria-label="Editar horario" onClick={() => handleOpenEditDialog(schedule)} size="small">
                                 <Edit />
                               </IconButton>
-                              <IconButton onClick={() => handleDeleteSchedule(schedule.id)} size="small">
+                              <IconButton aria-label="Eliminar horario" onClick={() => handleDeleteSchedule(schedule.id)} size="small">
                                 <Delete />
                               </IconButton>
                             </TableCell>
@@ -508,10 +508,10 @@ export function ProgramSchedulesSection({
                         <TableCell>{formatTime(schedule.startTime)}</TableCell>
                         <TableCell>{formatTime(schedule.endTime)}</TableCell>
                         <TableCell>
-                          <IconButton onClick={() => handleEditPendingSchedule(schedule.id)} size="small">
+                          <IconButton aria-label="Editar horario pendiente" onClick={() => handleEditPendingSchedule(schedule.id)} size="small">
                             <Edit />
                           </IconButton>
-                          <IconButton onClick={() => handleDeletePendingSchedule(schedule.id)} size="small">
+                          <IconButton aria-label="Eliminar horario pendiente" onClick={() => handleDeletePendingSchedule(schedule.id)} size="small">
                             <Delete />
                           </IconButton>
                         </TableCell>
@@ -650,6 +650,7 @@ export function ProgramSchedulesSection({
                         <ListItemSecondaryAction>
                           <IconButton
                             edge="end"
+                            aria-label="Eliminar horario de creación masiva"
                             onClick={() => handleRemoveBulkSchedule(index)}
                             size="small"
                           >

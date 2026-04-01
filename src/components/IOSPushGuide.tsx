@@ -79,6 +79,7 @@ export default function IOSPushGuide() {
         <IconButton
           color="inherit"
           size="small"
+          aria-label={expanded ? "Contraer guía de notificaciones" : "Expandir guía de notificaciones"}
           onClick={() => setExpanded(!expanded)}
         >
           {expanded ? <ExpandLess /> : <ExpandMore />}
