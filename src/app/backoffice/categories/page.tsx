@@ -255,6 +255,7 @@ export default function CategoriesPage() {
                       size="small" 
                       onClick={() => handleMoveLeft(index)}
                       disabled={index === 0}
+                      aria-label="Mover a la izquierda"
                     >
                       <ArrowBack />
                     </IconButton>
@@ -265,6 +266,7 @@ export default function CategoriesPage() {
                       size="small" 
                       onClick={() => handleMoveRight(index)}
                       disabled={index === categories.length - 1}
+                      aria-label="Mover a la derecha"
                     >
                       <ArrowForward />
                     </IconButton>
@@ -324,10 +326,10 @@ export default function CategoriesPage() {
                   />
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(category)}>
+                  <IconButton aria-label="Editar categoría" onClick={() => handleOpenDialog(category)}>
                     <EditIcon />
                   </IconButton>
-                  <IconButton onClick={() => handleDelete(category.id)}>
+                  <IconButton aria-label="Eliminar categoría" onClick={() => handleDelete(category.id)}>
                     <DeleteIcon />
                   </IconButton>
                 </TableCell>
