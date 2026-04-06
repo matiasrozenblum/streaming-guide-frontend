@@ -168,8 +168,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => {
               setSelectedDay(day.value);
-              Clarity.setTag('selected_day', day.value);
-              Clarity.event('day_change');
+              try { Clarity.setTag('selected_day', day.value); Clarity.event('day_change'); } catch { /* Clarity not yet loaded */ }
               gaEvent({
                 action: 'day_change',
                 params: { day: day.value, client: 'mobile' },
@@ -317,7 +316,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               setSelectedDay(today);
               setTimeout(() => scrollToNow(), 100);
             } else scrollToNow();
-            Clarity.event('live_button_click');
+            try { Clarity.event('live_button_click'); } catch { /* Clarity not yet loaded */ }
             gaEvent({
               action: 'scroll_to_now',
               params: { client: 'mobile' },
