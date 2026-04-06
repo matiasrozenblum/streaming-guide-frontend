@@ -8,7 +8,8 @@ import {
   InputAdornment,
   IconButton,
   LinearProgress,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -157,7 +158,7 @@ export default function PasswordStep({
           fullWidth
           disabled={isLoading}
         >
-          {submitLabel}
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : submitLabel}
         </Button>
       </Box>
     </Box>

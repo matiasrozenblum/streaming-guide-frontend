@@ -7,7 +7,8 @@ import {
   AlertTitle,
   InputAdornment,
   IconButton,
-  Typography
+  Typography,
+  CircularProgress
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -118,7 +119,7 @@ export default function ExistingUserStep({
           fullWidth
           disabled={isLoading}
         >
-          Iniciar sesión
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
         </Button>
         <Button
           variant="outlined"
