@@ -57,7 +57,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const minimizePlayer = () => {
     setMinimized(true);
-    Clarity.event('minimize_youtube')
+    try { Clarity.event('minimize_youtube') } catch { /* Clarity not yet loaded */ }
     gaEvent({
       action: 'minimize_youtube',
       params: {}
@@ -66,7 +66,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const maximizePlayer = () => {
     setMinimized(false);
-    Clarity.event('maximize_youtube')
+    try { Clarity.event('maximize_youtube') } catch { /* Clarity not yet loaded */ }
     gaEvent({
       action: 'maximize_youtube',
       params: {}
