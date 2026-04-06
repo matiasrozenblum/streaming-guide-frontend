@@ -180,8 +180,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
             onClick={
               () => {
                 setSelectedDay(day.value);
-                Clarity.setTag('selected_day', day.value);
-                Clarity.event('day_change');
+                try { Clarity.setTag('selected_day', day.value); Clarity.event('day_change'); } catch { /* Clarity not yet loaded */ }
                 gaEvent({
                   action: 'day_change',
                   params: {
@@ -205,7 +204,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         {!inView && (
           <Button
             onClick={() => {
-              Clarity.event('live_button_click');
+              try { Clarity.event('live_button_click'); } catch { /* Clarity not yet loaded */ }
               gaEvent({
                 action: 'scroll_to_now',
                 params: {

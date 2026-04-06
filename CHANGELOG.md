@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.8] - 2026-04-06
+
+### Changed
+
+### Fixed
+- Botón "En vivo" lanzaba un error al hacer click cuando Microsoft Clarity aún no había cargado
+
 ## [1.16.7] - 2026-03-29
 
 ### Changed
