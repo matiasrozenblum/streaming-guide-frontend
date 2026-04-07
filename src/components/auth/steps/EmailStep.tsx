@@ -5,7 +5,8 @@ import {
   Button,
   Alert,
   AlertTitle,
-  InputAdornment
+  InputAdornment,
+  CircularProgress
 } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 
@@ -69,6 +70,7 @@ export default function EmailStep({
         variant="contained"
         fullWidth
         disabled={isLoading}
+        startIcon={isLoading ? <CircularProgress size={24} color="inherit" /> : undefined}
       >
         {isLoading ? 'Enviando…' : 'Continuar'}
       </Button>
