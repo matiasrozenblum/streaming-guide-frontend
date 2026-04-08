@@ -653,7 +653,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'flex-start',
+                  justifyContent: totalMultipleStreams && totalMultipleStreams > 1 ? 'center' : 'flex-start',
                   alignItems: 'center',
                   position: 'relative',
                 }}
@@ -680,7 +680,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   </Box>
                 )}
                 {isWeeklyOverride && (
-                  (isMobile || duration < 120) ? (
+                  (isMobile || duration < 120 || (totalMultipleStreams && totalMultipleStreams > 1)) ? (
                     <Box
                       sx={{
                         position: 'absolute',

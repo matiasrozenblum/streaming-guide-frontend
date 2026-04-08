@@ -14,6 +14,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Removed
 
 ### Fixed
+- Programas simultáneos en un canal: el título ahora se centra verticalmente en cada sub-bloque
+- Programas simultáneos en un canal: el indicador "¡Hoy!" ahora muestra el círculo naranja en lugar del pill completo
 
 ---
 
