@@ -737,7 +737,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%',
+                    height: totalMultipleStreams && totalMultipleStreams > 1 ? 'auto' : '100%',
                     gap: 1,
                   }}
                 >
