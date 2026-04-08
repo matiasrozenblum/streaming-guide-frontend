@@ -779,7 +779,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     >
                       {name.toUpperCase()}
                     </Typography>
-                    {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) ? (
+                    {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
                       <Typography
                         variant="caption"
                         sx={{
@@ -787,7 +787,6 @@ export const ProgramBlock: React.FC<Props> = ({
                           textAlign: 'center',
                           color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
                           lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 1.2,
-                          minHeight: totalMultipleStreams && totalMultipleStreams > 1 ? undefined : '2.4em',
                           maxWidth: '100%',
                           overflow: 'hidden',
                           textOverflow: 'ellipsis',
@@ -798,8 +797,6 @@ export const ProgramBlock: React.FC<Props> = ({
                       >
                         {panelists.map(p => p.name).join(', ')}
                       </Typography>
-                    ) : (
-                      <Box sx={{ minHeight: '2.4em', fontSize: '0.65rem' }} />
                     )}
                   </Box>
                 </Box>
