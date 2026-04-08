@@ -229,6 +229,55 @@ export const ScheduleRow = ({
     </Box>
   );
 
+  // Precompute split programs once
+  const allSplitPrograms = programs.flatMap(p => splitLongProgram(p, isMobile));
+
+  // Helper: convert "HH:MM" to minutes since midnight
+  const parseTimeMin = (timeStr: string) => {
+    const [h, m] = timeStr.split(':').map(Number);
+    return h * 60 + m;
+  };
+
+  // Greedy interval-graph lane assignment.
+  // Sorts programs by start time, assigns each to the lowest lane whose
+  // previous occupant has already ended. This gives the chromatic number of
+  // the interval graph (= max simultaneous programs), which is the correct
+  // number of vertical "slots" needed.
+  const sortedForLanes = [...allSplitPrograms].sort(
+    (a, b) => parseTimeMin(a.start_time) - parseTimeMin(b.start_time)
+  );
+
+  const laneAssignments = new Map<string, number>(); // program id → lane index
+  const laneEndTimes: number[] = [];               // current end time for each lane
+
+  for (const prog of sortedForLanes) {
+    const progStart = parseTimeMin(prog.start_time);
+    const progEnd = parseTimeMin(prog.end_time);
+
+    // Only include in the multi-lane layout if it truly overlaps another program
+    const hasOverlap = allSplitPrograms.some(other => {
+      if (other.id === prog.id) return false;
+      return progStart < parseTimeMin(other.end_time) &&
+             parseTimeMin(other.start_time) < progEnd;
+    });
+
+    if (!hasOverlap) continue;
+
+    // Find the lowest lane that is free at progStart
+    let lane = laneEndTimes.findIndex(t => t <= progStart);
+    if (lane === -1) {
+      lane = laneEndTimes.length; // open a new lane
+      laneEndTimes.push(progEnd);
+    } else {
+      laneEndTimes[lane] = progEnd;
+    }
+
+    laneAssignments.set(prog.id, lane);
+  }
+
+  // Total lanes = chromatic number = max simultaneous programs in this row
+  const totalLanes = laneEndTimes.length;
+
   return (
     <>
       <Box
@@ -248,76 +297,13 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
-          {programs.flatMap(p => splitLongProgram(p, isMobile)).map((p) => {
-            // Get live status from context using schedule ID
+          {allSplitPrograms.map((p) => {
             const currentLiveStatus = liveStatus[p.scheduleId];
-            // Always prioritize program's is_live field if it's explicitly set
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
-            // Check for time overlap with other programs
-            const hasTimeOverlap = programs.some(otherProg => {
-              if (otherProg.id === p.id) return false; // Don't compare with self
-
-              // Convert time strings to minutes for comparison
-              const parseTime = (timeStr: string) => {
-                const [hours, minutes] = timeStr.split(':').map(Number);
-                return hours * 60 + minutes;
-              };
-
-              const pStart = parseTime(p.start_time);
-              const pEnd = parseTime(p.end_time);
-              const otherStart = parseTime(otherProg.start_time);
-              const otherEnd = parseTime(otherProg.end_time);
-
-              // Check for overlap: two time ranges overlap if one starts before the other ends
-              return pStart < otherEnd && otherStart < pEnd;
-            });
-
-            // Count overlapping programs (including self)
-            const overlappingPrograms = programs.filter(prog => {
-              if (prog.id === p.id) return true; // Include self
-
-              const parseTime = (timeStr: string) => {
-                const [hours, minutes] = timeStr.split(':').map(Number);
-                return hours * 60 + minutes;
-              };
-
-              const pStart = parseTime(p.start_time);
-              const pEnd = parseTime(p.end_time);
-              const progStart = parseTime(prog.start_time);
-              const progEnd = parseTime(prog.end_time);
-
-              return pStart < progEnd && progStart < pEnd;
-            });
-
-            // Apply multiple streams layout if there's time overlap
-            if (hasTimeOverlap) {
-              return (
-                <React.Fragment key={p.id}>
-                  <ProgramBlock
-                    id={p.id}
-                    name={p.name}
-                    start={p.start_time}
-                    end={p.end_time}
-                    description={p.description}
-                    panelists={p.panelists}
-                    logo_url={p.logo_url}
-                    channelName={channelName}
-                    color={color}
-                    isToday={isToday}
-                    stream_url={currentStreamUrl}
-                    is_live={isLive}
-                    subscribed={p.subscribed ?? false}
-                    isWeeklyOverride={p.isWeeklyOverride ?? false}
-                    overrideType={p.overrideType ?? ''}
-                    styleOverride={p.style_override}
-                    multipleStreamsIndex={overlappingPrograms.findIndex(prog => prog.id === p.id)}
-                    totalMultipleStreams={overlappingPrograms.length}
-                  />
-                </React.Fragment>
-              );
-            }
+            const laneIndex = laneAssignments.get(p.id);
+            const hasTimeOverlap = laneIndex !== undefined;
 
             return (
               <React.Fragment key={p.id}>
@@ -338,6 +324,10 @@ export const ScheduleRow = ({
                   isWeeklyOverride={p.isWeeklyOverride ?? false}
                   overrideType={p.overrideType ?? ''}
                   styleOverride={p.style_override}
+                  {...(hasTimeOverlap ? {
+                    multipleStreamsIndex: laneIndex,
+                    totalMultipleStreams: totalLanes,
+                  } : {})}
                 />
               </React.Fragment>
             );
