@@ -112,24 +112,18 @@ export const ProgramBlock: React.FC<Props> = ({
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
 
   // Handle multiple streams positioning
-  let widthPx = duration * pixelsPerMinute - 1;
-  let topOffset = 0;
+  const widthPx = duration * pixelsPerMinute - 1;
+  let top: string = '0px';
   let height = '100%';
 
   if (totalMultipleStreams && totalMultipleStreams > 1) {
-    // Keep full width for each program, but stack them vertically
-    widthPx = duration * pixelsPerMinute - 1;
-    // Stack vertically to fill the entire row height without gaps
-    // Ensure the total height doesn't exceed 100% of the row
-    const heightPercentage = 100 / totalMultipleStreams;
-    topOffset = (multipleStreamsIndex || 0) * heightPercentage;
-    if (topOffset > 0) {
-      // Different offset adjustments for mobile vs web
-      const offsetAdjustment = isMobile ? 20 : 10;
-      topOffset = topOffset - offsetAdjustment;
-    }
-    // Use a slightly smaller height to prevent overflow
-    height = `${heightPercentage}%`; // Reduce by 1% to prevent overflow
+    // Divide the row height equally among simultaneous programs.
+    // Use percentage-based top/height so positioning is always relative to
+    // the containing row regardless of its pixel height.
+    const heightPct = 100 / totalMultipleStreams;
+    const topPct = (multipleStreamsIndex ?? 0) * heightPct;
+    top = `${topPct}%`;
+    height = `${heightPct}%`;
   }
 
   const now = dayjs();
@@ -616,7 +610,7 @@ export const ProgramBlock: React.FC<Props> = ({
               left: `${offsetPx}px`,
               width: `${widthPx}px`,
               height: height,
-              top: `${topOffset}px`,
+              top: top,
               ...(overrideStyle ? overrideStyle.boxStyle : {}),
             }}
             height="100%"
@@ -653,7 +647,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   height: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'flex-start',
+                  justifyContent: totalMultipleStreams && totalMultipleStreams > 1 ? 'center' : 'flex-start',
                   alignItems: 'center',
                   position: 'relative',
                 }}
@@ -680,7 +674,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   </Box>
                 )}
                 {isWeeklyOverride && (
-                  (isMobile || duration < 120) ? (
+                  (isMobile || duration < 120 || (totalMultipleStreams && totalMultipleStreams > 1)) ? (
                     <Box
                       sx={{
                         position: 'absolute',
@@ -737,7 +731,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     flexDirection: 'row',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    height: '100%',
+                    height: totalMultipleStreams && totalMultipleStreams > 1 ? 'auto' : '100%',
                     gap: 1,
                   }}
                 >
