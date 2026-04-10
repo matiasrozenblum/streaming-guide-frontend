@@ -4,6 +4,7 @@ import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { GA_TRACKING_ID } from '@/lib/gtag';
 import posthog from 'posthog-js';
+import { datadogRum } from '@datadog/browser-rum';
 import type { SessionWithToken } from '@/types/session';
 
 const GTM_ID = 'GTM-TCGNQB97';
@@ -45,6 +46,35 @@ export function ConditionalTrackingLoader() {
       // Opt out of PostHog if consent is withdrawn
       if (posthog.__loaded) {
         posthog.opt_out_capturing();
+      }
+    }
+  }, [hasConsent, consent, isAdmin]);
+
+  // Initialize Datadog RUM when analytics consent is given (skip for admin users)
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isAdmin) return;
+
+    const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
+    const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
+    if (!appId || !clientToken) return;
+
+    if (hasConsent('analytics')) {
+      if (!datadogRum.getInitConfiguration()) {
+        datadogRum.init({
+          applicationId: appId,
+          clientToken,
+          site: 'datadoghq.com',
+          service: 'la-guia-del-streaming-frontend',
+          env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+          version: process.env.NEXT_PUBLIC_APP_VERSION,
+          sessionSampleRate: 100,
+          sessionReplaySampleRate: 0,
+          trackUserInteractions: false,
+          trackResources: false,
+          trackLongTasks: false,
+          defaultPrivacyLevel: 'mask-user-input',
+        });
       }
     }
   }, [hasConsent, consent, isAdmin]);

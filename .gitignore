@@ -49,3 +49,5 @@ public/workbox-*.js
 
 # Claude Code (local settings, not shared)
 .claude/settings.local.json
+# Story context (multi-session, not shared)
+STORY.md
