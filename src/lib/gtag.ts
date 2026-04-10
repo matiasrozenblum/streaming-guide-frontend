@@ -1,4 +1,5 @@
 import posthog from 'posthog-js';
+import { datadogRum } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
@@ -63,6 +64,18 @@ export const pageview = (url: string) => {
   // Send to PostHog if loaded
   if (posthog.__loaded) {
     posthog.capture('$pageview', pageviewData);
+  }
+
+  // Send to Datadog RUM if initialized
+  if (datadogRum.getInitConfiguration()) {
+    datadogRum.setUser({
+      id: pageviewData.user_id,
+      gender: pageviewData.user_gender,
+      age: pageviewData.user_age,
+      age_group: pageviewData.user_age_group,
+      role: pageviewData.user_role,
+    });
+    datadogRum.addAction('$pageview', { page_path: pageviewData.page_path });
   }
 };
 
@@ -169,5 +182,10 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   // Only send to PostHog if analytics consent is given and PostHog is loaded
   if (hasAnalyticsConsent && posthog.__loaded) {
     posthog.capture(action, eventData);
+  }
+
+  // Only send to Datadog RUM if analytics consent is given and RUM is initialized
+  if (hasAnalyticsConsent && datadogRum.getInitConfiguration()) {
+    datadogRum.addAction(action, eventData);
   }
 };
