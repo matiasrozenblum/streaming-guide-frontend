@@ -186,6 +186,7 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   }
 
   // Don't track admin users to avoid polluting metrics
+  console.log('[event] action:', action, '| role:', user?.role, '| consent:', hasAnalyticsConsent, '| datadogInited:', datadogInited);
   if (user?.role === 'admin') return;
 
   // Calculate age if birthDate is available
