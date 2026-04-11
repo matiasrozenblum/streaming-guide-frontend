@@ -31,8 +31,9 @@ export function initDatadogRum(): void {
       defaultPrivacyLevel: 'mask-user-input',
     });
     datadogInited = true;
+    console.log('[Datadog] init OK');
   } catch (e) {
-    console.warn('[Datadog] init failed:', e);
+    console.warn('[Datadog] init FAILED:', e);
   }
 }
 
@@ -118,7 +119,7 @@ type GtagEventParams = {
  */
 const getAgeGroup = (birthDate: string | Date | undefined): string => {
   if (!birthDate) return 'unknown';
-  
+
   const birth = new Date(birthDate);
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
@@ -126,7 +127,7 @@ const getAgeGroup = (birthDate: string | Date | undefined): string => {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   if (age < 18) return 'under_18';
   if (age < 25) return '18_24';
   if (age < 35) return '25_34';
@@ -215,11 +216,16 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   }
 
   // Only send to Datadog RUM if analytics consent is given and SDK is initialized
-  if (hasAnalyticsConsent && datadogInited) {
-    try {
-      datadogRum.addAction(action, eventData);
-    } catch (e) {
-      console.warn('[Datadog] addAction error:', e);
+  if (hasAnalyticsConsent) {
+    if (!datadogInited) {
+      console.warn('[Datadog] addAction skipped — not inited yet');
+    } else {
+      try {
+        datadogRum.addAction(action, eventData);
+        console.log('[Datadog] addAction sent:', action);
+      } catch (e) {
+        console.warn('[Datadog] addAction error:', e);
+      }
     }
   }
 };
