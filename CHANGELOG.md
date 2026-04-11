@@ -9,6 +9,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 - Datadog RUM integration to replicate all PostHog analytics events (pageviews + custom actions) with consent and admin-user gating (feature/datadog-rum-analytics)
+- Enable Datadog RUM native page view tracking (startView) and automatic resource/interaction/long-task tracking for visitors, sessions and bounce rate analytics
 
 ### Changed
 
