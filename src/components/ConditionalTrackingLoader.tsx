@@ -58,10 +58,12 @@ export function ConditionalTrackingLoader() {
     const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
     const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
     console.log('[Datadog] appId:', appId, '| clientToken:', clientToken ? clientToken.slice(0, 10) + '...' : undefined);
+    console.log('[Datadog] hasConsent(analytics):', hasConsent('analytics'), '| isAdmin:', isAdmin, '| already init:', !!datadogRum.getInitConfiguration());
     if (!appId || !clientToken) return;
 
     if (hasConsent('analytics')) {
       if (!datadogRum.getInitConfiguration()) {
+        console.log('[Datadog] calling datadogRum.init()...');
         datadogRum.init({
           applicationId: appId,
           clientToken,
@@ -76,6 +78,7 @@ export function ConditionalTrackingLoader() {
           trackLongTasks: false,
           defaultPrivacyLevel: 'mask-user-input',
         });
+        console.log('[Datadog] init() called. getInitConfiguration():', datadogRum.getInitConfiguration());
       }
     }
   }, [hasConsent, consent, isAdmin]);
