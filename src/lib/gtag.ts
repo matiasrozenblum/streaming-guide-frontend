@@ -218,7 +218,14 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   }
 
   // Only send to Datadog RUM if analytics consent is given (init lazily if needed)
-  if (hasAnalyticsConsent && ensureDatadogInit()) {
-    datadogRum.addAction(action, eventData);
+  const ddInit = ensureDatadogInit();
+  console.log('[gtag.event] ensureDatadogInit:', ddInit, '| consent:', hasAnalyticsConsent, '| getInitConfig:', !!datadogRum.getInitConfiguration());
+  if (hasAnalyticsConsent && ddInit) {
+    try {
+      datadogRum.addAction(action, eventData);
+      console.log('[gtag.event] addAction sent:', action);
+    } catch (e) {
+      console.error('[gtag.event] addAction error:', e);
+    }
   }
 };
