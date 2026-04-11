@@ -3,36 +3,37 @@ import { datadogRum } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
-/**
- * Ensures Datadog RUM is initialized synchronously before sending an event.
- * This prevents race conditions where events fire before the useEffect in
- * ConditionalTrackingLoader has had a chance to run datadogRum.init().
- */
-function ensureDatadogInit(): boolean {
-  if (datadogRum.getInitConfiguration()) return true;
+// Module-level flag — avoids calling datadogRum.getInitConfiguration() which
+// throws a TrustedScript CSP error in Next.js on some browsers.
+let datadogInited = false;
 
-  if (typeof window === 'undefined') return false;
+export function initDatadogRum(): void {
+  if (datadogInited) return;
+  if (typeof window === 'undefined') return;
 
   const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
   const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
-  if (!appId || !clientToken) return false;
+  if (!appId || !clientToken) return;
 
-  datadogRum.init({
-    applicationId: appId,
-    clientToken,
-    site: 'datadoghq.com',
-    service: 'la-guia-del-streaming-frontend',
-    env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
-    version: process.env.NEXT_PUBLIC_APP_VERSION,
-    sessionSampleRate: 100,
-    sessionReplaySampleRate: 0,
-    trackUserInteractions: false,
-    trackResources: false,
-    trackLongTasks: false,
-    defaultPrivacyLevel: 'mask-user-input',
-  });
-
-  return true;
+  try {
+    datadogRum.init({
+      applicationId: appId,
+      clientToken,
+      site: 'datadoghq.com',
+      service: 'la-guia-del-streaming-frontend',
+      env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+      version: process.env.NEXT_PUBLIC_APP_VERSION,
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 0,
+      trackUserInteractions: false,
+      trackResources: false,
+      trackLongTasks: false,
+      defaultPrivacyLevel: 'mask-user-input',
+    });
+    datadogInited = true;
+  } catch (e) {
+    console.warn('[Datadog] init failed:', e);
+  }
 }
 
 declare global {
@@ -98,16 +99,13 @@ export const pageview = (url: string) => {
     posthog.capture('$pageview', pageviewData);
   }
 
-  // Send to Datadog RUM (init lazily if not yet initialized)
-  if (ensureDatadogInit()) {
-    datadogRum.setUser({
-      id: pageviewData.user_id,
-      gender: pageviewData.user_gender,
-      age: pageviewData.user_age,
-      age_group: pageviewData.user_age_group,
-      role: pageviewData.user_role,
-    });
-    datadogRum.addAction('$pageview', { page_path: pageviewData.page_path });
+  // Send to Datadog RUM if initialized
+  if (datadogInited) {
+    try {
+      datadogRum.addAction('$pageview', { page_path: pageviewData.page_path });
+    } catch (e) {
+      console.warn('[Datadog] addAction error:', e);
+    }
   }
 };
 
@@ -159,7 +157,6 @@ type NextData = {
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
 export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
-  console.log('[gtag.event] called:', action, params);
   // Check if analytics consent is given
   const consent = localStorage.getItem('cookie-consent');
   let hasAnalyticsConsent = false;
@@ -217,15 +214,12 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     posthog.capture(action, eventData);
   }
 
-  // Only send to Datadog RUM if analytics consent is given (init lazily if needed)
-  const ddInit = ensureDatadogInit();
-  console.log('[gtag.event] ensureDatadogInit:', ddInit, '| consent:', hasAnalyticsConsent, '| getInitConfig:', !!datadogRum.getInitConfiguration());
-  if (hasAnalyticsConsent && ddInit) {
+  // Only send to Datadog RUM if analytics consent is given and SDK is initialized
+  if (hasAnalyticsConsent && datadogInited) {
     try {
       datadogRum.addAction(action, eventData);
-      console.log('[gtag.event] addAction sent:', action);
     } catch (e) {
-      console.error('[gtag.event] addAction error:', e);
+      console.warn('[Datadog] addAction error:', e);
     }
   }
 };
