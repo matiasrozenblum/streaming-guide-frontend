@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.11] - 2026-04-11
+
+### Added
+- Enable Datadog RUM native page view tracking (startView) and automatic resource/interaction/long-task tracking for visitors, sessions and bounce rate analytics (enhancement/datadog-rum-native-pageviews)
+
+---
+
 ## [1.16.10] - 2026-04-11
 
 ### Added

@@ -25,9 +25,9 @@ export function initDatadogRum(): void {
       version: process.env.NEXT_PUBLIC_APP_VERSION,
       sessionSampleRate: 100,
       sessionReplaySampleRate: 0,
-      trackUserInteractions: false,
-      trackResources: false,
-      trackLongTasks: false,
+      trackUserInteractions: true,
+      trackResources: true,
+      trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
     });
     datadogInited = true;
@@ -103,12 +103,13 @@ export const pageview = (url: string) => {
     } catch { /* non-fatal */ }
   }
 
-  // Send to Datadog RUM if initialized
+  // Send to Datadog RUM if initialized — use startView() for native page view tracking
+  // (feeds visitors/sessions/bounce rate in RUM analytics, unlike addAction which only creates custom events)
   if (datadogInited) {
     try {
-      datadogRum.addAction('$pageview', { page_path: pageviewData.page_path });
+      datadogRum.startView({ name: pageviewData.page_path });
     } catch (e) {
-      console.warn('[Datadog] addAction error:', e);
+      console.warn('[Datadog] startView error:', e);
     }
   }
 };
