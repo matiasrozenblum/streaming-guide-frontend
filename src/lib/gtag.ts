@@ -92,12 +92,16 @@ export const pageview = (url: string) => {
   };
 
   if (typeof window.gtag === 'function') {
-    window.gtag('config', GA_TRACKING_ID, pageviewData);
+    try {
+      window.gtag('config', GA_TRACKING_ID, pageviewData);
+    } catch { /* gtag Trusted Types error — non-fatal */ }
   }
 
   // Send to PostHog if loaded
   if (posthog.__loaded) {
-    posthog.capture('$pageview', pageviewData);
+    try {
+      posthog.capture('$pageview', pageviewData);
+    } catch { /* non-fatal */ }
   }
 
   // Send to Datadog RUM if initialized
@@ -205,27 +209,29 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     user_role: user?.role,
   };
 
-  // Only send to Google Analytics if analytics consent is given
+  // Only send to Google Analytics if analytics consent is given.
+  // Wrapped in try-catch: gtag.js violates Trusted Types CSP on some browsers
+  // and would otherwise throw synchronously, blocking PostHog and Datadog.
   if (hasAnalyticsConsent && typeof window.gtag === 'function') {
-    window.gtag('event', action, eventData);
+    try {
+      window.gtag('event', action, eventData);
+    } catch { /* gtag Trusted Types error — non-fatal */ }
   }
 
   // Only send to PostHog if analytics consent is given and PostHog is loaded
   if (hasAnalyticsConsent && posthog.__loaded) {
-    posthog.capture(action, eventData);
+    try {
+      posthog.capture(action, eventData);
+    } catch { /* non-fatal */ }
   }
 
   // Only send to Datadog RUM if analytics consent is given and SDK is initialized
-  if (hasAnalyticsConsent) {
-    if (!datadogInited) {
-      console.warn('[Datadog] addAction skipped — not inited yet');
-    } else {
-      try {
-        datadogRum.addAction(action, eventData);
-        console.log('[Datadog] addAction sent:', action);
-      } catch (e) {
-        console.warn('[Datadog] addAction error:', e);
-      }
+  if (hasAnalyticsConsent && datadogInited) {
+    try {
+      datadogRum.addAction(action, eventData);
+      console.log('[Datadog] addAction sent:', action);
+    } catch (e) {
+      console.warn('[Datadog] addAction error:', e);
     }
   }
 };
