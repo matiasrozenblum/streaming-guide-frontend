@@ -57,6 +57,7 @@ export function ConditionalTrackingLoader() {
 
     const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
     const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
+    console.log('[Datadog] appId:', appId, '| clientToken:', clientToken ? clientToken.slice(0, 10) + '...' : undefined);
     if (!appId || !clientToken) return;
 
     if (hasConsent('analytics')) {
