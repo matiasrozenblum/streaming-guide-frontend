@@ -159,6 +159,7 @@ type NextData = {
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
 export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
+  console.log('[gtag.event] called:', action, params);
   // Check if analytics consent is given
   const consent = localStorage.getItem('cookie-consent');
   let hasAnalyticsConsent = false;
