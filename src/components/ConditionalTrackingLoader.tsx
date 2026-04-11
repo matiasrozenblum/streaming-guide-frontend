@@ -50,38 +50,48 @@ export function ConditionalTrackingLoader() {
     }
   }, [hasConsent, consent, isAdmin]);
 
-  // Initialize Datadog RUM when analytics consent is given (skip for admin users)
+  // Initialize Datadog RUM when analytics consent is given (skip for admin users).
+  // We read consent directly from localStorage instead of relying on the context
+  // state because CookieConsentProvider loads it asynchronously in a useEffect,
+  // and children effects run before parent effects in React — so the context
+  // would still be null on first run.
   useEffect(() => {
     if (typeof window === 'undefined') return;
     if (isAdmin) return;
+    if (datadogRum.getInitConfiguration()) return;
 
     const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
     const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
-    console.log('[Datadog] appId:', appId, '| clientToken:', clientToken ? clientToken.slice(0, 10) + '...' : undefined);
-    console.log('[Datadog] hasConsent(analytics):', hasConsent('analytics'), '| isAdmin:', isAdmin, '| already init:', !!datadogRum.getInitConfiguration());
     if (!appId || !clientToken) return;
 
-    if (hasConsent('analytics')) {
-      if (!datadogRum.getInitConfiguration()) {
-        console.log('[Datadog] calling datadogRum.init()...');
-        datadogRum.init({
-          applicationId: appId,
-          clientToken,
-          site: 'datadoghq.com',
-          service: 'la-guia-del-streaming-frontend',
-          env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
-          version: process.env.NEXT_PUBLIC_APP_VERSION,
-          sessionSampleRate: 100,
-          sessionReplaySampleRate: 0,
-          trackUserInteractions: false,
-          trackResources: false,
-          trackLongTasks: false,
-          defaultPrivacyLevel: 'mask-user-input',
-        });
-        console.log('[Datadog] init() called. getInitConfiguration():', datadogRum.getInitConfiguration());
+    let hasAnalyticsConsent = false;
+    try {
+      const stored = localStorage.getItem('cookie-consent');
+      if (stored) {
+        const consentData = JSON.parse(stored);
+        hasAnalyticsConsent = consentData.preferences?.analytics || false;
       }
+    } catch {
+      return;
     }
-  }, [hasConsent, consent, isAdmin]);
+
+    if (hasAnalyticsConsent) {
+      datadogRum.init({
+        applicationId: appId,
+        clientToken,
+        site: 'datadoghq.com',
+        service: 'la-guia-del-streaming-frontend',
+        env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+        version: process.env.NEXT_PUBLIC_APP_VERSION,
+        sessionSampleRate: 100,
+        sessionReplaySampleRate: 0,
+        trackUserInteractions: false,
+        trackResources: false,
+        trackLongTasks: false,
+        defaultPrivacyLevel: 'mask-user-input',
+      });
+    }
+  }, [isAdmin]);
 
   // Initialize Google Analytics when analytics consent is given (skip for admin users)
   useEffect(() => {
