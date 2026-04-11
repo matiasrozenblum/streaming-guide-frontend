@@ -149,6 +149,7 @@ export const ProgramBlock: React.FC<Props> = ({
 
   // Manejo de click en YouTube
   const handleClick = (e: React.MouseEvent | React.TouchEvent) => {
+    console.log('[ProgramBlock] handleClick fired, streamUrl:', streamUrl, 'event type:', e.type);
     e.stopPropagation();
     e.preventDefault();
     if (!streamUrl) return;
