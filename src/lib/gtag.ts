@@ -3,6 +3,38 @@ import { datadogRum } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
+/**
+ * Ensures Datadog RUM is initialized synchronously before sending an event.
+ * This prevents race conditions where events fire before the useEffect in
+ * ConditionalTrackingLoader has had a chance to run datadogRum.init().
+ */
+function ensureDatadogInit(): boolean {
+  if (datadogRum.getInitConfiguration()) return true;
+
+  if (typeof window === 'undefined') return false;
+
+  const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
+  const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
+  if (!appId || !clientToken) return false;
+
+  datadogRum.init({
+    applicationId: appId,
+    clientToken,
+    site: 'datadoghq.com',
+    service: 'la-guia-del-streaming-frontend',
+    env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+    version: process.env.NEXT_PUBLIC_APP_VERSION,
+    sessionSampleRate: 100,
+    sessionReplaySampleRate: 0,
+    trackUserInteractions: false,
+    trackResources: false,
+    trackLongTasks: false,
+    defaultPrivacyLevel: 'mask-user-input',
+  });
+
+  return true;
+}
+
 declare global {
   interface Window {
     gtag: (
@@ -66,8 +98,8 @@ export const pageview = (url: string) => {
     posthog.capture('$pageview', pageviewData);
   }
 
-  // Send to Datadog RUM if initialized
-  if (datadogRum.getInitConfiguration()) {
+  // Send to Datadog RUM (init lazily if not yet initialized)
+  if (ensureDatadogInit()) {
     datadogRum.setUser({
       id: pageviewData.user_id,
       gender: pageviewData.user_gender,
@@ -184,8 +216,8 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     posthog.capture(action, eventData);
   }
 
-  // Only send to Datadog RUM if analytics consent is given and RUM is initialized
-  if (hasAnalyticsConsent && datadogRum.getInitConfiguration()) {
+  // Only send to Datadog RUM if analytics consent is given (init lazily if needed)
+  if (hasAnalyticsConsent && ensureDatadogInit()) {
     datadogRum.addAction(action, eventData);
   }
 };
