@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { GA_TRACKING_ID } from '@/lib/gtag';
+import { GA_TRACKING_ID, initDatadogRum } from '@/lib/gtag';
 import posthog from 'posthog-js';
 import type { SessionWithToken } from '@/types/session';
 
@@ -48,6 +48,31 @@ export function ConditionalTrackingLoader() {
       }
     }
   }, [hasConsent, consent, isAdmin]);
+
+  // Initialize Datadog RUM when analytics consent is given (skip for admin users).
+  // We read consent directly from localStorage instead of relying on the context
+  // state because CookieConsentProvider loads it asynchronously in a useEffect,
+  // and children effects run before parent effects in React — so the context
+  // would still be null on first run.
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    if (isAdmin) return;
+
+    let hasAnalyticsConsent = false;
+    try {
+      const stored = localStorage.getItem('cookie-consent');
+      if (stored) {
+        const consentData = JSON.parse(stored);
+        hasAnalyticsConsent = consentData.preferences?.analytics || false;
+      }
+    } catch {
+      return;
+    }
+
+    if (hasAnalyticsConsent) {
+      initDatadogRum();
+    }
+  }, [isAdmin]);
 
   // Initialize Google Analytics when analytics consent is given (skip for admin users)
   useEffect(() => {

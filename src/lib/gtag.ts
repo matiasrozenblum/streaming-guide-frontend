@@ -1,6 +1,40 @@
 import posthog from 'posthog-js';
+import { datadogRum } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
+
+// Module-level flag — avoids calling datadogRum.getInitConfiguration() which
+// throws a TrustedScript CSP error in Next.js on some browsers.
+let datadogInited = false;
+
+export function initDatadogRum(): void {
+  if (datadogInited) return;
+  if (typeof window === 'undefined') return;
+
+  const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
+  const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
+  if (!appId || !clientToken) return;
+
+  try {
+    datadogRum.init({
+      applicationId: appId,
+      clientToken,
+      site: 'datadoghq.com',
+      service: 'la-guia-del-streaming-frontend',
+      env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+      version: process.env.NEXT_PUBLIC_APP_VERSION,
+      sessionSampleRate: 100,
+      sessionReplaySampleRate: 0,
+      trackUserInteractions: false,
+      trackResources: false,
+      trackLongTasks: false,
+      defaultPrivacyLevel: 'mask-user-input',
+    });
+    datadogInited = true;
+  } catch (e) {
+    console.warn('[Datadog] init FAILED:', e);
+  }
+}
 
 declare global {
   interface Window {
@@ -57,12 +91,25 @@ export const pageview = (url: string) => {
   };
 
   if (typeof window.gtag === 'function') {
-    window.gtag('config', GA_TRACKING_ID, pageviewData);
+    try {
+      window.gtag('config', GA_TRACKING_ID, pageviewData);
+    } catch { /* gtag Trusted Types error — non-fatal */ }
   }
 
   // Send to PostHog if loaded
   if (posthog.__loaded) {
-    posthog.capture('$pageview', pageviewData);
+    try {
+      posthog.capture('$pageview', pageviewData);
+    } catch { /* non-fatal */ }
+  }
+
+  // Send to Datadog RUM if initialized
+  if (datadogInited) {
+    try {
+      datadogRum.addAction('$pageview', { page_path: pageviewData.page_path });
+    } catch (e) {
+      console.warn('[Datadog] addAction error:', e);
+    }
   }
 };
 
@@ -75,7 +122,7 @@ type GtagEventParams = {
  */
 const getAgeGroup = (birthDate: string | Date | undefined): string => {
   if (!birthDate) return 'unknown';
-  
+
   const birth = new Date(birthDate);
   const today = new Date();
   let age = today.getFullYear() - birth.getFullYear();
@@ -83,7 +130,7 @@ const getAgeGroup = (birthDate: string | Date | undefined): string => {
   if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birth.getDate())) {
     age--;
   }
-  
+
   if (age < 18) return 'under_18';
   if (age < 25) return '18_24';
   if (age < 35) return '25_34';
@@ -161,13 +208,28 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     user_role: user?.role,
   };
 
-  // Only send to Google Analytics if analytics consent is given
+  // Only send to Google Analytics if analytics consent is given.
+  // Wrapped in try-catch: gtag.js violates Trusted Types CSP on some browsers
+  // and would otherwise throw synchronously, blocking PostHog and Datadog.
   if (hasAnalyticsConsent && typeof window.gtag === 'function') {
-    window.gtag('event', action, eventData);
+    try {
+      window.gtag('event', action, eventData);
+    } catch { /* gtag Trusted Types error — non-fatal */ }
   }
 
   // Only send to PostHog if analytics consent is given and PostHog is loaded
   if (hasAnalyticsConsent && posthog.__loaded) {
-    posthog.capture(action, eventData);
+    try {
+      posthog.capture(action, eventData);
+    } catch { /* non-fatal */ }
+  }
+
+  // Only send to Datadog RUM if analytics consent is given and SDK is initialized
+  if (hasAnalyticsConsent && datadogInited) {
+    try {
+      datadogRum.addAction(action, eventData);
+    } catch (e) {
+      console.warn('[Datadog] addAction error:', e);
+    }
   }
 };

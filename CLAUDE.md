@@ -35,11 +35,23 @@ Desktop and mobile responsive. The mobile layout is the design reference for the
 - `src/contexts/` - React context providers
 - `src/hooks/` - Custom hooks
 - `src/design-system/` - Design system primitives
+- `src/types/` - TypeScript type definitions
+- `src/constants/` - Shared constants (e.g., layout.ts)
+- `src/utils/` - Utility functions
 
 ## Scripts
 - `npm run dev` - Development server
 - `npm run build` - Production build
 - `npm run lint` - ESLint
+
+## API Endpoints
+- **Local**: `http://localhost:3001`
+- **Staging**: `https://streaming-guide-backend-staging.up.railway.app`
+- **Production**: set via `NEXT_PUBLIC_API_URL` in Vercel environment variables
+
+## Deployment
+- **Staging**: push to `staging` branch → Vercel auto-deploys staging environment
+- **Production**: merge `release/X.Y.Z` → `main` → Vercel auto-deploys production
 
 ## Cross-Repo Context
 - Backend: `streaming-guide-backend` (NestJS on Railway)
