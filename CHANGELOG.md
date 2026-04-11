@@ -9,14 +9,23 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 - Datadog RUM integration to replicate all PostHog analytics events (pageviews + custom actions) with consent and admin-user gating (feature/datadog-rum-analytics)
+- Enable Datadog RUM native page view tracking (startView) and automatic resource/interaction/long-task tracking for visitors, sessions and bounce rate analytics
 
 ### Changed
 
 ### Removed
 
 ### Fixed
-- Programas simultáneos en un canal: el título ahora se centra verticalmente en cada sub-bloque
-- Programas simultáneos en un canal: el indicador "¡Hoy!" ahora muestra el círculo naranja en lugar del pill completo
+
+---
+
+## [1.16.9] - 2026-04-08
+
+### Fixed
+- Programas simultáneos: el indicador "¡Hoy!" ahora muestra el círculo naranja en lugar del pill completo
+- Programas simultáneos: el título ahora se centra verticalmente en cada sub-bloque
+- Programas simultáneos: cálculo corregido de cantidad máxima de programas simultáneos usando greedy lane assignment (evitaba dividir el row en demasiadas partes cuando un programa solapaba con distintos vecinos en momentos diferentes)
+- Programas simultáneos: posicionamiento vertical corregido usando porcentajes en lugar de píxeles, garantizando que 2 o 3 bloques dividan la altura del row correctamente
 
 ---
 
