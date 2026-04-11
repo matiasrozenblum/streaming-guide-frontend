@@ -31,7 +31,6 @@ export function initDatadogRum(): void {
       defaultPrivacyLevel: 'mask-user-input',
     });
     datadogInited = true;
-    console.log('[Datadog] init OK');
   } catch (e) {
     console.warn('[Datadog] init FAILED:', e);
   }
@@ -186,7 +185,6 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   }
 
   // Don't track admin users to avoid polluting metrics
-  console.log('[event] action:', action, '| role:', user?.role, '| consent:', hasAnalyticsConsent, '| datadogInited:', datadogInited);
   if (user?.role === 'admin') return;
 
   // Calculate age if birthDate is available
@@ -230,7 +228,6 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   if (hasAnalyticsConsent && datadogInited) {
     try {
       datadogRum.addAction(action, eventData);
-      console.log('[Datadog] addAction sent:', action);
     } catch (e) {
       console.warn('[Datadog] addAction error:', e);
     }
