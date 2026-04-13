@@ -17,6 +17,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.16.12] - 2026-04-12
+
+### Added
+- Add loading spinners (CircularProgress) to auth submit buttons with accessible aria-labels during loading state (enhancement/jules-prs-consolidation)
+- Add aria-labels to icon-only buttons across backoffice: configs delete, categories move/edit/delete, ProgramSchedulesSection accept/cancel/edit/delete/bulk-delete, IOSPushGuide expand/collapse, and mobile live schedule FAB (enhancement/jules-prs-consolidation)
+
+---
+
 ## [1.16.11] - 2026-04-11
 
 ### Added

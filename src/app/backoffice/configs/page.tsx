@@ -96,7 +96,7 @@ const ConfigPage = () => {
                   />
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleDeleteConfig(config.key)}>
+                  <IconButton aria-label="Eliminar configuración" onClick={() => handleDeleteConfig(config.key)}>
                     <Delete />
                   </IconButton>
                   {editConfig?.key === config.key && editConfig.value !== config.value && (
