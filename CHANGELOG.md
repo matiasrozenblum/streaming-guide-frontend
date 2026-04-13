@@ -8,14 +8,22 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Datadog RUM integration to replicate all PostHog analytics events (pageviews + custom actions) with consent and admin-user gating (feature/datadog-rum-analytics)
 - Enable Datadog RUM native page view tracking (startView) and automatic resource/interaction/long-task tracking for visitors, sessions and bounce rate analytics
+- Add loading spinners (CircularProgress) to auth submit buttons with accessible aria-labels during loading state (enhancement/jules-prs-consolidation)
+- Add aria-labels to icon-only buttons across backoffice: configs delete, categories move/edit/delete, ProgramSchedulesSection accept/cancel/edit/delete/bulk-delete, IOSPushGuide expand/collapse, and mobile live schedule FAB (enhancement/jules-prs-consolidation)
 
 ### Changed
 
 ### Removed
 
 ### Fixed
+
+---
+
+## [1.16.10] - 2026-04-11
+
+### Added
+- Datadog RUM integration to replicate all PostHog analytics events (pageviews + custom actions) with consent and admin-user gating (feature/datadog-rum-analytics)
 
 ---
 
