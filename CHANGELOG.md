@@ -10,6 +10,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 
 ### Changed
+- Switch Datadog RUM to opt-out model: initialize for all non-admin users and only skip events on explicit analytics rejection, matching PostHog coverage (enhancement/datadog-opt-out-model)
 
 ### Removed
 
