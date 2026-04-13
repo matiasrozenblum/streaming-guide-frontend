@@ -6,7 +6,8 @@ import {
   Alert,
   AlertTitle,
   Typography,
-  useTheme
+  useTheme,
+  CircularProgress
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
@@ -176,8 +177,9 @@ export default function CodeStep({
           variant="contained"
           fullWidth
           disabled={isLoading}
+          aria-label={isLoading ? 'Verificando' : undefined}
         >
-          Verificar
+          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verificar'}
         </Button>
         <Button
           variant="outlined"
