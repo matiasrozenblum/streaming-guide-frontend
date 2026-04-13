@@ -162,21 +162,25 @@ type NextData = {
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
 export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
-  // Check if analytics consent is given
+  // Resolve consent state:
+  //   hasAnalyticsConsent — user explicitly accepted analytics
+  //   analyticsExplicitlyRejected — user explicitly rejected analytics
+  //   Neither flag set — user hasn't responded yet (opt-out model applies)
   const consent = localStorage.getItem('cookie-consent');
   let hasAnalyticsConsent = false;
+  let analyticsExplicitlyRejected = false;
   if (consent) {
     try {
       const consentData = JSON.parse(consent);
-      hasAnalyticsConsent = consentData.preferences?.analytics || false;
+      hasAnalyticsConsent = consentData.preferences?.analytics === true;
+      analyticsExplicitlyRejected = consentData.preferences?.analytics === false;
     } catch {
       // Don't track if consent data is invalid
       return;
     }
-  } else {
-    // Don't track if no consent data
-    return;
   }
+  // If user hasn't responded yet, GA4 and PostHog still require explicit consent,
+  // but Datadog uses opt-out model (tracks unless explicitly rejected).
 
   // Use userData if provided, otherwise try to get from window.__NEXT_DATA__
   let user = userData;
@@ -225,8 +229,9 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     } catch { /* non-fatal */ }
   }
 
-  // Only send to Datadog RUM if analytics consent is given and SDK is initialized
-  if (hasAnalyticsConsent && datadogInited) {
+  // Send to Datadog RUM using opt-out model: track unless user explicitly rejected.
+  // Mirrors PostHog's behavior so both tools have comparable coverage.
+  if (!analyticsExplicitlyRejected && datadogInited) {
     try {
       datadogRum.addAction(action, eventData);
     } catch (e) {
