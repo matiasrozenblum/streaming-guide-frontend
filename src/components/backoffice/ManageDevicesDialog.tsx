@@ -88,7 +88,7 @@ export function ManageDevicesDialog({ open, onClose, user, session, onDeviceDele
                 <ListItem
                   key={device.id}
                   secondaryAction={
-                    <IconButton edge="end" aria-label="delete" onClick={() => handleDeleteDevice(device.id)}>
+                    <IconButton edge="end" aria-label="Eliminar dispositivo" onClick={() => handleDeleteDevice(device.id)}>
                       <Delete />
                     </IconButton>
                   }
