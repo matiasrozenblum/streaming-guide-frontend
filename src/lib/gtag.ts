@@ -24,12 +24,13 @@ export function initDatadogRum(): void {
       env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
       version: process.env.NEXT_PUBLIC_APP_VERSION,
       sessionSampleRate: 100,
-      sessionReplaySampleRate: 0,
+      sessionReplaySampleRate: 20,
       trackUserInteractions: true,
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
     });
+    datadogRum.startSessionReplayRecording();
     datadogInited = true;
   } catch (e) {
     console.warn('[Datadog] init FAILED:', e);

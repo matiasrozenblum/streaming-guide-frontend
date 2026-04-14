@@ -59,6 +59,11 @@ Create a release for production deployment.
 ### 8. Report
 - Show the PR URL.
 - Remind: "Merging this PR to main will trigger the production deploy on Vercel."
+- **IMPORTANT — back-merge reminder**: After you manually merge the PR to `main`, run the following commands to sync `develop` and avoid CHANGELOG conflicts on the next release:
+  ```bash
+  git checkout develop && git pull origin main && git push origin develop
+  ```
+  This must be done after every release merge to main.
 
 ## Important
 - Always show the CHANGELOG entry and get user confirmation before committing.
