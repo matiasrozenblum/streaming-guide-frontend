@@ -10,10 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 
 ### Changed
+- Enable Datadog Session Replay at 20% sample rate (fix/analytics-channel-name-and-datadog-replay)
 
 ### Removed
 
 ### Fixed
+- Fix click_youtube_live analytics events sending undefined channel_name (shown as "unknown" in PostHog breakdowns); make channelName required in ProgramBlock and add explicit fallback (fix/analytics-channel-name-and-datadog-replay)
+- Hide panelists in ProgramBlock when multiple programs run simultaneously to prioritize title space in reduced-height blocks (fix/hide-panelists-on-simultaneous-programs)
 
 ---
 

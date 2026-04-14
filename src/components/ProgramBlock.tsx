@@ -37,7 +37,7 @@ interface Props {
   panelists?: { id: string; name: string }[];
   logo_url?: string;
   color?: string;
-  channelName?: string;
+  channelName: string;
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
@@ -170,7 +170,7 @@ export const ProgramBlock: React.FC<Props> = ({
       params: {
         category: 'program',
         program_name: name,
-        channel_name: channelName,
+        channel_name: channelName || 'unknown',
       },
       userData: typedSession?.user
     });
@@ -773,7 +773,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     >
                       {name.toUpperCase()}
                     </Typography>
-                    {panelists && panelists.length > 0 && (!isMobile || (isMobile && widthPx > 120)) && (
+                    {panelists && panelists.length > 0 && !totalMultipleStreams && (!isMobile || (isMobile && widthPx > 120)) && (
                       <Typography
                         variant="caption"
                         sx={{
