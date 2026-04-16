@@ -382,10 +382,10 @@ export default function ChannelsPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                    <IconButton aria-label="Mover hacia arriba" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
                       <ArrowUpward fontSize="small" />
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === channels.length - 1}>
+                    <IconButton aria-label="Mover hacia abajo" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === channels.length - 1}>
                       <ArrowDownward fontSize="small" />
                     </IconButton>
                   </Box>
@@ -416,7 +416,7 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                    <IconButton aria-label="Editar canal" onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
                     <Switch
                       checked={channel.is_visible}
                       onChange={() => handleToggleVisibility(channel)}
@@ -425,6 +425,7 @@ export default function ChannelsPage() {
                     />
                     {channel.handle && (
                       <IconButton
+                        aria-label="Limpiar caché de estado en vivo"
                         onClick={() => handleClearCache(channel)}
                         disabled={clearingCache === channel.id}
                         title="Limpiar caché de estado en vivo"
@@ -433,7 +434,7 @@ export default function ChannelsPage() {
                         <RefreshIcon />
                       </IconButton>
                     )}
-                    <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                    <IconButton aria-label="Eliminar canal" onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
                   </Box>
                 </TableCell>
               </TableRow>
