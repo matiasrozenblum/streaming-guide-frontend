@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
 import {
+  Avatar,
   Box,
   Button,
   Paper,
@@ -55,6 +56,8 @@ export default function ChannelsPage() {
   const [savingOrder, setSavingOrder] = useState(false);
   const [loadingConfigs, setLoadingConfigs] = useState(false);
   const [clearingCache, setClearingCache] = useState<number | null>(null);
+  const [uploadingLogo, setUploadingLogo] = useState(false);
+  const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
   useEffect(() => {
     if (status === 'authenticated') fetchChannels();
@@ -151,6 +154,7 @@ export default function ChannelsPage() {
       setEditingChannel(channel);
       setFormData({ name: channel.name, logo_url: channel.logo_url || '', handle: channel.handle || '', is_visible: channel.is_visible ?? true, background_color: channel.background_color || '', show_only_when_scheduled: channel.show_only_when_scheduled ?? false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
       setSelectedCategories(channel.categories || []);
+      setLogoPreview(channel.logo_url || null);
       
       // Fetch current config values for this channel before opening dialog
       if (channel.handle) {
@@ -178,6 +182,7 @@ export default function ChannelsPage() {
       setEditingChannel(null);
       setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
       setSelectedCategories([]);
+      setLogoPreview(null);
       // For new channels, open immediately (no config fetch needed)
       setOpenDialog(true);
     }
@@ -189,6 +194,7 @@ export default function ChannelsPage() {
     setFormData({ name: '', logo_url: '', handle: '', is_visible: false, background_color: '', show_only_when_scheduled: false, youtube_fetch_enabled: true, youtube_fetch_override_holiday: true });
     setSelectedCategories([]);
     setLoadingConfigs(false);
+    setLogoPreview(null);
   };
 
   const handleSubmit = async () => {
@@ -273,6 +279,48 @@ export default function ChannelsPage() {
       setError(err instanceof Error ? err.message : 'Error al limpiar la caché');
     } finally {
       setClearingCache(null);
+    }
+  };
+
+  const handleLogoFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith('image/')) {
+      setError('Por favor selecciona un archivo de imagen');
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      setError('El archivo es demasiado grande. Máximo 5MB');
+      return;
+    }
+
+    setUploadingLogo(true);
+
+    try {
+      const uploadFormData = new FormData();
+      uploadFormData.append('file', file);
+
+      const response = await fetch('/api/channels/upload', {
+        method: 'POST',
+        body: uploadFormData,
+      });
+
+      if (!response.ok) {
+        const body = await response.json().catch(() => null);
+        throw new Error(body?.error || 'Error al subir el logo');
+      }
+
+      const data = await response.json();
+      setFormData(prev => ({ ...prev, logo_url: data.url }));
+      setLogoPreview(data.url);
+      setSuccess('Logo subido correctamente');
+    } catch (err: unknown) {
+      console.error('Error uploading logo:', err);
+      setError(err instanceof Error ? err.message : 'Error al subir el logo');
+    } finally {
+      setUploadingLogo(false);
     }
   };
 
@@ -406,12 +454,63 @@ export default function ChannelsPage() {
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               fullWidth required
             />
-            <TextField
-              label="URL del Logo"
-              value={formData.logo_url}
-              onChange={e => setFormData({ ...formData, logo_url: e.target.value })}
-              fullWidth
-            />
+            <Box>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Logo del Canal (recomendado 200×200px, PNG con fondo transparente)
+              </Typography>
+              <input
+                accept="image/*"
+                style={{ display: 'none' }}
+                id="channel-logo-upload"
+                type="file"
+                onChange={handleLogoFileSelect}
+                disabled={uploadingLogo}
+              />
+              <label htmlFor="channel-logo-upload">
+                <Button
+                  variant="outlined"
+                  component="span"
+                  fullWidth
+                  disabled={uploadingLogo}
+                  sx={{ mb: 2 }}
+                >
+                  {uploadingLogo ? 'Subiendo...' : 'Subir Logo'}
+                </Button>
+              </label>
+              {logoPreview && (
+                <Box sx={{ mb: 2 }}>
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Vista previa (tal como aparece en la grilla):
+                  </Typography>
+                  <Avatar
+                    src={logoPreview}
+                    alt="Logo preview"
+                    variant="rounded"
+                    sx={{
+                      width: 130,
+                      height: 68,
+                      background: formData.background_color || '#ffffff',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      '& img': {
+                        objectFit: 'contain',
+                        width: '100%',
+                        height: '100%',
+                      },
+                    }}
+                  />
+                </Box>
+              )}
+              <TextField
+                label="URL del Logo"
+                value={formData.logo_url}
+                onChange={e => {
+                  setFormData({ ...formData, logo_url: e.target.value });
+                  setLogoPreview(e.target.value || null);
+                }}
+                fullWidth
+                helperText="Se completa automáticamente al subir. También podés ingresar una URL manualmente."
+              />
+            </Box>
             <TextField
               label="Handle de YouTube"
               value={formData.handle}
