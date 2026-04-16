@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
 import {
+  Avatar,
   Box,
   Button,
   Paper,
@@ -478,27 +479,25 @@ export default function ChannelsPage() {
               </label>
               {logoPreview && (
                 <Box sx={{ mb: 2 }}>
-                  <Typography variant="body2" sx={{ mb: 1 }}>Vista previa:</Typography>
-                  <Box
+                  <Typography variant="body2" sx={{ mb: 1 }}>
+                    Vista previa (tal como aparece en la grilla):
+                  </Typography>
+                  <Avatar
+                    src={logoPreview}
+                    alt="Logo preview"
+                    variant="rounded"
                     sx={{
-                      position: 'relative',
-                      width: 140,
-                      height: 140,
-                      borderRadius: 2,
-                      overflow: 'hidden',
-                      border: '1px solid',
-                      borderColor: 'divider',
-                      backgroundColor: 'background.paper',
+                      width: 130,
+                      height: 68,
+                      background: formData.background_color || '#ffffff',
+                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                      '& img': {
+                        objectFit: 'contain',
+                        width: '100%',
+                        height: '100%',
+                      },
                     }}
-                  >
-                    <Image
-                      unoptimized
-                      src={logoPreview}
-                      alt="Logo preview"
-                      fill
-                      style={{ objectFit: 'contain' }}
-                    />
-                  </Box>
+                  />
                 </Box>
               )}
               <TextField
