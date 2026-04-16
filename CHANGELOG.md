@@ -8,13 +8,19 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Add channel logo image upload via Supabase in admin panel, with preview and manual URL fallback (feature/channel-logo-upload)
 
 ### Changed
 
 ### Removed
 
 ### Fixed
+
+---
+
+## [1.17.0] - 2026-04-16
+
+### Added
+- Add channel logo image upload via Supabase in admin panel, with preview and manual URL fallback (feature/channel-logo-upload)
 
 ---
 
