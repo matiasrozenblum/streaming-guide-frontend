@@ -28,6 +28,7 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -514,13 +515,21 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
-                      {/* using a simple caret by unicode to avoid extra imports */}
-                      <span style={{ fontSize: 14 }}>▲</span>
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
-                      <span style={{ fontSize: 14 }}>▼</span>
-                    </IconButton>
+                    <Tooltip title="Mover hacia arriba">
+                      <span>
+                        <IconButton aria-label="Mover hacia arriba" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                          {/* using a simple caret by unicode to avoid extra imports */}
+                          <span style={{ fontSize: 14 }}>▲</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Mover hacia abajo">
+                      <span>
+                        <IconButton aria-label="Mover hacia abajo" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
+                          <span style={{ fontSize: 14 }}>▼</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
                 <TableCell>
@@ -625,8 +634,12 @@ export default function StreamersPage() {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  <Tooltip title="Editar streamer">
+                    <IconButton aria-label="Editar streamer" onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar streamer">
+                    <IconButton aria-label="Eliminar streamer" onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
