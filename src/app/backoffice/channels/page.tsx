@@ -24,6 +24,7 @@ import {
   Alert,
   Snackbar,
   Switch,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -382,12 +383,20 @@ export default function ChannelsPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
-                      <ArrowUpward fontSize="small" />
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === channels.length - 1}>
-                      <ArrowDownward fontSize="small" />
-                    </IconButton>
+                    <Tooltip title="Subir canal">
+                      <span>
+                        <IconButton aria-label="Subir canal" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                          <ArrowUpward fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Bajar canal">
+                      <span>
+                        <IconButton aria-label="Bajar canal" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === channels.length - 1}>
+                          <ArrowDownward fontSize="small" />
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
                 <TableCell>
@@ -416,7 +425,11 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                    <Tooltip title="Editar canal">
+                      <IconButton aria-label="Editar canal" onClick={() => handleOpenDialog(channel)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
                     <Switch
                       checked={channel.is_visible}
                       onChange={() => handleToggleVisibility(channel)}
@@ -424,16 +437,24 @@ export default function ChannelsPage() {
                       size="small"
                     />
                     {channel.handle && (
-                      <IconButton
-                        onClick={() => handleClearCache(channel)}
-                        disabled={clearingCache === channel.id}
-                        title="Limpiar caché de estado en vivo"
-                        color="secondary"
-                      >
-                        <RefreshIcon />
-                      </IconButton>
+                      <Tooltip title="Limpiar caché de estado en vivo">
+                        <span>
+                          <IconButton
+                            aria-label="Limpiar caché de estado en vivo"
+                            onClick={() => handleClearCache(channel)}
+                            disabled={clearingCache === channel.id}
+                            color="secondary"
+                          >
+                            <RefreshIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
                     )}
-                    <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                    <Tooltip title="Eliminar canal">
+                      <IconButton aria-label="Eliminar canal" onClick={() => handleDelete(channel.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
