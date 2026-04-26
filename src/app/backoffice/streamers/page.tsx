@@ -28,6 +28,7 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -514,13 +515,21 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
-                      {/* using a simple caret by unicode to avoid extra imports */}
-                      <span style={{ fontSize: 14 }}>▲</span>
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
-                      <span style={{ fontSize: 14 }}>▼</span>
-                    </IconButton>
+                    <Tooltip title="Subir streamer">
+                      <span>
+                        <IconButton aria-label="Subir streamer" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                          {/* using a simple caret by unicode to avoid extra imports */}
+                          <span style={{ fontSize: 14 }}>▲</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Bajar streamer">
+                      <span>
+                        <IconButton aria-label="Bajar streamer" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
+                          <span style={{ fontSize: 14 }}>▼</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
                 <TableCell>
@@ -570,63 +579,79 @@ export default function StreamersPage() {
                 </TableCell>
                 <TableCell>
                   <Box display="flex" gap={0.5}>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleSyncLiveStatus(streamer.id, 'kick')}
-                      disabled={!hasService(streamer, StreamingService.KICK) || syncingService?.streamerId === streamer.id}
-                      title={hasService(streamer, StreamingService.KICK) ? 'Sync Kick' : 'No tiene Kick'}
-                      sx={{
-                        backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.1)' : undefined,
-                        '&:hover': {
-                          backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.2)' : undefined,
-                        },
-                        opacity: hasService(streamer, StreamingService.KICK) ? 1 : 0.3,
-                      }}
-                    >
-                      {syncingService?.streamerId === streamer.id && syncingService?.service === 'kick' ? (
-                        <CircularProgress size={18} />
-                      ) : (
-                        <Image
-                          unoptimized
-                          src={SERVICE_ICONS.kick}
-                          alt="Kick"
-                          width={18}
-                          height={18}
-                          style={{ objectFit: 'contain' }}
-                        />
-                      )}
-                    </IconButton>
-                    <IconButton
-                      size="small"
-                      onClick={() => handleSyncLiveStatus(streamer.id, 'twitch')}
-                      disabled={!hasService(streamer, StreamingService.TWITCH) || syncingService?.streamerId === streamer.id}
-                      title={hasService(streamer, StreamingService.TWITCH) ? 'Sync Twitch' : 'No tiene Twitch'}
-                      sx={{
-                        backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.1)' : undefined,
-                        '&:hover': {
-                          backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.2)' : undefined,
-                        },
-                        opacity: hasService(streamer, StreamingService.TWITCH) ? 1 : 0.3,
-                      }}
-                    >
-                      {syncingService?.streamerId === streamer.id && syncingService?.service === 'twitch' ? (
-                        <CircularProgress size={18} />
-                      ) : (
-                        <Image
-                          unoptimized
-                          src={SERVICE_ICONS.twitch}
-                          alt="Twitch"
-                          width={18}
-                          height={18}
-                          style={{ objectFit: 'contain' }}
-                        />
-                      )}
-                    </IconButton>
+                    <Tooltip title={hasService(streamer, StreamingService.KICK) ? 'Sincronizar Kick' : 'No tiene Kick'}>
+                      <span>
+                        <IconButton
+                          aria-label={hasService(streamer, StreamingService.KICK) ? 'Sincronizar Kick' : 'No tiene Kick'}
+                          size="small"
+                          onClick={() => handleSyncLiveStatus(streamer.id, 'kick')}
+                          disabled={!hasService(streamer, StreamingService.KICK) || syncingService?.streamerId === streamer.id}
+                          sx={{
+                            backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.1)' : undefined,
+                            '&:hover': {
+                              backgroundColor: hasService(streamer, StreamingService.KICK) ? 'rgba(83, 252, 24, 0.2)' : undefined,
+                            },
+                            opacity: hasService(streamer, StreamingService.KICK) ? 1 : 0.3,
+                          }}
+                        >
+                          {syncingService?.streamerId === streamer.id && syncingService?.service === 'kick' ? (
+                            <CircularProgress size={18} />
+                          ) : (
+                            <Image
+                              unoptimized
+                              src={SERVICE_ICONS.kick}
+                              alt="Kick"
+                              width={18}
+                              height={18}
+                              style={{ objectFit: 'contain' }}
+                            />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title={hasService(streamer, StreamingService.TWITCH) ? 'Sincronizar Twitch' : 'No tiene Twitch'}>
+                      <span>
+                        <IconButton
+                          aria-label={hasService(streamer, StreamingService.TWITCH) ? 'Sincronizar Twitch' : 'No tiene Twitch'}
+                          size="small"
+                          onClick={() => handleSyncLiveStatus(streamer.id, 'twitch')}
+                          disabled={!hasService(streamer, StreamingService.TWITCH) || syncingService?.streamerId === streamer.id}
+                          sx={{
+                            backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.1)' : undefined,
+                            '&:hover': {
+                              backgroundColor: hasService(streamer, StreamingService.TWITCH) ? 'rgba(145, 70, 255, 0.2)' : undefined,
+                            },
+                            opacity: hasService(streamer, StreamingService.TWITCH) ? 1 : 0.3,
+                          }}
+                        >
+                          {syncingService?.streamerId === streamer.id && syncingService?.service === 'twitch' ? (
+                            <CircularProgress size={18} />
+                          ) : (
+                            <Image
+                              unoptimized
+                              src={SERVICE_ICONS.twitch}
+                              alt="Twitch"
+                              width={18}
+                              height={18}
+                              style={{ objectFit: 'contain' }}
+                            />
+                          )}
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  <Tooltip title="Editar streamer">
+                    <IconButton aria-label="Editar streamer" onClick={() => handleOpenDialog(streamer)}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar streamer">
+                    <IconButton aria-label="Eliminar streamer" onClick={() => handleDelete(streamer.id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -760,13 +785,16 @@ export default function StreamersPage() {
                         placeholder="https://www.youtube.com/@channelname"
                       />
                     ) : null}
-                    <IconButton
-                      onClick={() => handleRemoveService(index)}
-                      color="error"
-                      sx={{ mt: 1 }}
-                    >
-                      <RemoveIcon />
-                    </IconButton>
+                    <Tooltip title="Eliminar servicio">
+                      <IconButton
+                        aria-label="Eliminar servicio"
+                        onClick={() => handleRemoveService(index)}
+                        color="error"
+                        sx={{ mt: 1 }}
+                      >
+                        <RemoveIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 )
               })}
