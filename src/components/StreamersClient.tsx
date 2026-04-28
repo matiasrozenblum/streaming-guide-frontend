@@ -623,6 +623,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                           {/* Subscription Button */}
                           <Tooltip title={streamer.is_subscribed ? "Desuscribirse" : "Suscribirse"}>
                             <IconButton
+                              aria-label={streamer.is_subscribed ? `Desuscribirse de ${streamer.name}` : `Suscribirse a ${streamer.name}`}
                               className="subscription-button"
                               onClick={(e) => handleToggleSubscription(e, streamer)}
                               disabled={subscriptionLoading[streamer.id]}
