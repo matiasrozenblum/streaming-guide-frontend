@@ -622,40 +622,43 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
 
                           {/* Subscription Button */}
                           <Tooltip title={streamer.is_subscribed ? "Desuscribirse" : "Suscribirse"}>
-                            <IconButton
-                              className="subscription-button"
-                              onClick={(e) => handleToggleSubscription(e, streamer)}
-                              disabled={subscriptionLoading[streamer.id]}
-                              sx={{
-                                position: 'absolute',
-                                top: 6,
-                                left: 6,
-                                zIndex: 10,
-                                backgroundColor: 'rgba(0,0,0,0.6)',
-                                color: 'white',
-                                padding: '4px',
-                                opacity: { xs: 1, md: streamer.is_subscribed ? 1 : 0 }, // Always visible on mobile, reveal on hover for desktop if not subscribed
-                                transform: { xs: 'scale(1)', md: streamer.is_subscribed ? 'scale(1)' : 'scale(0.8)' },
-                                transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
-                                '&:hover': {
-                                  backgroundColor: 'rgba(0,0,0,0.8)',
-                                  transform: 'scale(1.1)',
-                                },
-                                '&.Mui-disabled': {
-                                  backgroundColor: 'rgba(0,0,0,0.4)',
-                                  color: 'rgba(255,255,255,0.5)',
-                                }
-                              }}
-                              size="small"
-                            >
-                              {subscriptionLoading[streamer.id] ? (
-                                <CircularProgress size={16} color="inherit" />
-                              ) : streamer.is_subscribed ? (
-                                <Notifications fontSize="small" sx={{ color: '#FFD700' }} /> // Gold color for subscribed
-                              ) : (
-                                <NotificationsNone fontSize="small" />
-                              )}
-                            </IconButton>
+                            <span>
+                              <IconButton
+                                aria-label={streamer.is_subscribed ? "Desuscribirse" : "Suscribirse"}
+                                className="subscription-button"
+                                onClick={(e) => handleToggleSubscription(e, streamer)}
+                                disabled={subscriptionLoading[streamer.id]}
+                                sx={{
+                                  position: 'absolute',
+                                  top: 6,
+                                  left: 6,
+                                  zIndex: 10,
+                                  backgroundColor: 'rgba(0,0,0,0.6)',
+                                  color: 'white',
+                                  padding: '4px',
+                                  opacity: { xs: 1, md: streamer.is_subscribed ? 1 : 0 }, // Always visible on mobile, reveal on hover for desktop if not subscribed
+                                  transform: { xs: 'scale(1)', md: streamer.is_subscribed ? 'scale(1)' : 'scale(0.8)' },
+                                  transition: 'all 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275)',
+                                  '&:hover': {
+                                    backgroundColor: 'rgba(0,0,0,0.8)',
+                                    transform: 'scale(1.1)',
+                                  },
+                                  '&.Mui-disabled': {
+                                    backgroundColor: 'rgba(0,0,0,0.4)',
+                                    color: 'rgba(255,255,255,0.5)',
+                                  }
+                                }}
+                                size="small"
+                              >
+                                {subscriptionLoading[streamer.id] ? (
+                                  <CircularProgress size={16} color="inherit" />
+                                ) : streamer.is_subscribed ? (
+                                  <Notifications fontSize="small" sx={{ color: '#FFD700' }} /> // Gold color for subscribed
+                                ) : (
+                                  <NotificationsNone fontSize="small" />
+                                )}
+                              </IconButton>
+                            </span>
                           </Tooltip>
 
                           {streamer.logo_url ? (
