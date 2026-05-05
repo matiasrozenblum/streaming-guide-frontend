@@ -14,6 +14,7 @@ import {
   Typography,
   IconButton,
   Dialog,
+  Tooltip,
   DialogTitle,
   DialogContent,
   DialogActions,
@@ -343,11 +344,21 @@ export default function ProgramsPage() {
                   </TableCell>
                   <TableCell>{program.style_override || '-'}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
-                    <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
-                    <IconButton onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
-                      <GroupIcon />
-                    </IconButton>
+                    <Tooltip title="Editar programa" arrow>
+                      <IconButton aria-label="Editar programa" onClick={() => handleOpenDialog(program)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar programa" arrow>
+                      <IconButton aria-label="Eliminar programa" onClick={() => handleDelete(program.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Gestionar panelistas" arrow>
+                      <IconButton aria-label="Gestionar panelistas" onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
+                        <GroupIcon />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );
