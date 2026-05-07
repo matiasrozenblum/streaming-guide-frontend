@@ -149,6 +149,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
       >
         <Toolbar>
           <IconButton 
+            aria-label="Abrir menú"
             color="inherit" 
             edge="start" 
             onClick={() => setMobileOpen(o => !o)}

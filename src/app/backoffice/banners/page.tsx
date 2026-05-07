@@ -449,6 +449,7 @@ export default function BannersPage() {
                       />
                       <Box>
                         <IconButton
+                          aria-label="Editar banner"
                           size="small"
                           onClick={() => handleOpenDialog(banner)}
                           color="primary"
@@ -456,6 +457,7 @@ export default function BannersPage() {
                           <EditIcon />
                         </IconButton>
                         <IconButton
+                          aria-label="Eliminar banner"
                           size="small"
                           onClick={() => setDeleteConfirm({ open: true, banner })}
                           color="error"

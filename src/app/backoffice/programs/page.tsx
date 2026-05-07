@@ -343,9 +343,9 @@ export default function ProgramsPage() {
                   </TableCell>
                   <TableCell>{program.style_override || '-'}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
-                    <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
-                    <IconButton onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
+                    <IconButton aria-label="Editar programa" onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
+                    <IconButton aria-label="Eliminar programa" onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
+                    <IconButton aria-label="Gestionar panelistas" onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
                       <GroupIcon />
                     </IconButton>
                   </TableCell>

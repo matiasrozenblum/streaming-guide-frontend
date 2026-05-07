@@ -514,11 +514,11 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                    <IconButton aria-label="Mover arriba" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
                       {/* using a simple caret by unicode to avoid extra imports */}
                       <span style={{ fontSize: 14 }}>▲</span>
                     </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
+                    <IconButton aria-label="Mover abajo" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
                       <span style={{ fontSize: 14 }}>▼</span>
                     </IconButton>
                   </Box>
@@ -571,6 +571,7 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" gap={0.5}>
                     <IconButton
+                      aria-label="Sincronizar Kick"
                       size="small"
                       onClick={() => handleSyncLiveStatus(streamer.id, 'kick')}
                       disabled={!hasService(streamer, StreamingService.KICK) || syncingService?.streamerId === streamer.id}
@@ -597,6 +598,7 @@ export default function StreamersPage() {
                       )}
                     </IconButton>
                     <IconButton
+                      aria-label="Sincronizar Twitch"
                       size="small"
                       onClick={() => handleSyncLiveStatus(streamer.id, 'twitch')}
                       disabled={!hasService(streamer, StreamingService.TWITCH) || syncingService?.streamerId === streamer.id}
@@ -625,8 +627,8 @@ export default function StreamersPage() {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  <IconButton aria-label="Editar streamer" onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
+                  <IconButton aria-label="Eliminar streamer" onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
                 </TableCell>
               </TableRow>
             ))}
@@ -761,6 +763,7 @@ export default function StreamersPage() {
                       />
                     ) : null}
                     <IconButton
+                      aria-label="Eliminar servicio"
                       onClick={() => handleRemoveService(index)}
                       color="error"
                       sx={{ mt: 1 }}
