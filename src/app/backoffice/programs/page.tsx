@@ -27,6 +27,7 @@ import {
   InputLabel,
   FormControlLabel,
   Checkbox,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -343,11 +344,21 @@ export default function ProgramsPage() {
                   </TableCell>
                   <TableCell>{program.style_override || '-'}</TableCell>
                   <TableCell>
-                    <IconButton onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
-                    <IconButton onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
-                    <IconButton onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
-                      <GroupIcon />
-                    </IconButton>
+                    <Tooltip title="Editar">
+                      <IconButton aria-label="Editar" onClick={() => handleOpenDialog(program)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar">
+                      <IconButton aria-label="Eliminar" onClick={() => handleDelete(program.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Gestionar panelistas">
+                      <IconButton aria-label="Gestionar panelistas" onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
+                        <GroupIcon />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               );
