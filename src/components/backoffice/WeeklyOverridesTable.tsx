@@ -32,6 +32,7 @@ import {
   InputLabel,
   Select,
   Autocomplete,
+  Tooltip,
 } from '@mui/material';
 import {
   Add,
@@ -673,12 +674,16 @@ export function WeeklyOverridesTable() {
                     <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
-                          <Edit />
-                        </IconButton>
-                        <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
-                          <Delete />
-                        </IconButton>
+                        <Tooltip title="Editar">
+                          <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -776,12 +781,16 @@ export function WeeklyOverridesTable() {
                     <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
-                        <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
-                          <Edit />
-                        </IconButton>
-                        <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
-                          <Delete />
-                        </IconButton>
+                        <Tooltip title="Editar">
+                          <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
+                            <Edit />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar">
+                          <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
+                            <Delete />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -1165,12 +1174,16 @@ export function WeeklyOverridesTable() {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
-                            <IconButton onClick={() => handleEdit(override)} color="primary">
-                              <Edit />
-                            </IconButton>
-                            <IconButton onClick={() => handleDelete(override.id)} color="error">
-                              <Delete />
-                            </IconButton>
+                            <Tooltip title="Editar">
+                              <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
+                                <Edit />
+                              </IconButton>
+                            </Tooltip>
+                            <Tooltip title="Eliminar">
+                              <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
+                                <Delete />
+                              </IconButton>
+                            </Tooltip>
                           </Box>
                         </TableCell>
                       </TableRow>
