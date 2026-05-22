@@ -28,6 +28,7 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -625,8 +626,16 @@ export default function StreamersPage() {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  <Tooltip title="Editar streamer" arrow>
+                    <IconButton aria-label="Editar streamer" onClick={() => handleOpenDialog(streamer)}>
+                      <EditIcon />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar streamer" arrow>
+                    <IconButton aria-label="Eliminar streamer" onClick={() => handleDelete(streamer.id)}>
+                      <DeleteIcon />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}

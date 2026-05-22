@@ -24,6 +24,7 @@ import {
   Alert,
   Snackbar,
   Switch,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -416,7 +417,11 @@ export default function ChannelsPage() {
                 </TableCell>
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
-                    <IconButton onClick={() => handleOpenDialog(channel)}><EditIcon /></IconButton>
+                    <Tooltip title="Editar canal" arrow>
+                      <IconButton aria-label="Editar canal" onClick={() => handleOpenDialog(channel)}>
+                        <EditIcon />
+                      </IconButton>
+                    </Tooltip>
                     <Switch
                       checked={channel.is_visible}
                       onChange={() => handleToggleVisibility(channel)}
@@ -433,7 +438,11 @@ export default function ChannelsPage() {
                         <RefreshIcon />
                       </IconButton>
                     )}
-                    <IconButton onClick={() => handleDelete(channel.id)}><DeleteIcon /></IconButton>
+                    <Tooltip title="Eliminar canal" arrow>
+                      <IconButton aria-label="Eliminar canal" onClick={() => handleDelete(channel.id)}>
+                        <DeleteIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
