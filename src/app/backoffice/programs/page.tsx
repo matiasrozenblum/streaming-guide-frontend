@@ -45,9 +45,12 @@ import type { SessionWithToken } from '@/types/session';
 
 interface PendingSchedule {
   id: string;
-  dayOfWeek: string;
+  dayOfWeek?: string;
   startTime: string;
   endTime: string;
+  scheduleType: string;
+  weekNumberInMonth?: string;
+  specificDate?: string;
 }
 
 export default function ProgramsPage() {
@@ -183,9 +186,12 @@ export default function ProgramsPage() {
             programId: newProgramId.toString(),
             channelId: channelId.toString(),
             schedules: pendingSchedules.map(s => ({
-              dayOfWeek: s.dayOfWeek,
               startTime: s.startTime,
               endTime: s.endTime,
+              scheduleType: s.scheduleType || 'weekly',
+              ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
+              ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
+              ...(s.specificDate && { specificDate: s.specificDate }),
             })),
           };
           
