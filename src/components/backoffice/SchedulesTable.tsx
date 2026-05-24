@@ -33,12 +33,13 @@ import {
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
-import { 
-  Edit, 
-  Delete, 
-  Add, 
-  Check, 
-  Close, 
+import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
+import {
+  Edit,
+  Delete,
+  Add,
+  Check,
+  Close,
   AddCircle,
   Schedule,
 } from '@mui/icons-material';
@@ -65,6 +66,34 @@ const DAYS_OF_WEEK = [
   { value: 'sunday', label: 'Domingo' },
 ] as const;
 
+const SCHEDULE_TYPES = [
+  { value: 'weekly', label: 'Semanal' },
+  { value: 'monthly_weekday', label: 'Mensual fijo' },
+  { value: 'monthly_dated', label: 'Mensual por fecha' },
+] as const;
+
+const WEEK_NUMBERS = [
+  { value: 1, label: '1°' },
+  { value: 2, label: '2°' },
+  { value: 3, label: '3°' },
+  { value: 4, label: '4°' },
+  { value: -1, label: 'Último' },
+] as const;
+
+const formatScheduleLabel = (schedule: ScheduleType): string => {
+  const type = schedule.schedule_type || 'weekly';
+  if (type === 'monthly_weekday') {
+    const weekLabel = WEEK_NUMBERS.find(w => w.value === schedule.week_number_in_month)?.label || '';
+    const dayLabel = DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week || '';
+    return `${weekLabel} ${dayLabel} de cada mes ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`;
+  }
+  if (type === 'monthly_dated') {
+    return `Fecha ${schedule.specific_date || ''} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`;
+  }
+  const dayLabel = DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week || '';
+  return `${dayLabel} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`;
+};
+
 type DayOfWeek = typeof DAYS_OF_WEEK[number]['value'];
 
 interface ProgramWithSchedules extends Program {
@@ -86,11 +115,11 @@ export function SchedulesTable() {
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedProgram, setSelectedProgram] = useState<ProgramWithSchedules | null>(null);
   const [editingSchedule, setEditingSchedule] = useState<ScheduleType | null>(null);
-  const [formData, setFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '', programId: '' });
+  const [formData, setFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '', programId: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openProgramDialog, setOpenProgramDialog] = useState(false);
-  const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '' });
+  const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
   const [bulkSchedules, setBulkSchedules] = useState<BulkScheduleData[]>([]);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [bulkTimeRange, setBulkTimeRange] = useState({ startTime: '', endTime: '' });
@@ -142,25 +171,31 @@ export function SchedulesTable() {
   const handleOpenEditDialog = (schedule: ScheduleType) => {
     setEditingSchedule(schedule);
     setFormData({
-      dayOfWeek: schedule.day_of_week,
+      dayOfWeek: schedule.day_of_week || '',
       startTime: schedule.start_time,
       endTime: schedule.end_time,
       programId: schedule.program.id.toString(),
+      scheduleType: schedule.schedule_type || 'weekly',
+      weekNumberInMonth: schedule.week_number_in_month?.toString() || '',
+      specificDate: schedule.specific_date || '',
     });
   };
 
   const handleCloseEditDialog = () => {
     setEditingSchedule(null);
-    setFormData({ dayOfWeek: '', startTime: '', endTime: '', programId: '' });
+    setFormData({ dayOfWeek: '', startTime: '', endTime: '', programId: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
   };
 
   const handleSubmit = async () => {
     if (!editingSchedule) return;
     try {
-      const updateData = {
-        dayOfWeek: formData.dayOfWeek,
+      const updateData: Record<string, unknown> = {
         startTime: formData.startTime,
         endTime: formData.endTime,
+        scheduleType: formData.scheduleType,
+        ...(formData.scheduleType !== 'monthly_dated' && { dayOfWeek: formData.dayOfWeek }),
+        ...(formData.scheduleType === 'monthly_weekday' && formData.weekNumberInMonth && { weekNumberInMonth: parseInt(formData.weekNumberInMonth, 10) }),
+        ...(formData.scheduleType === 'monthly_dated' && formData.specificDate && { specificDate: formData.specificDate }),
       };
       const response = await api.put<ScheduleType>(
         `/schedules/${editingSchedule.id}`,
@@ -216,7 +251,7 @@ export function SchedulesTable() {
 
   const handleOpenProgramDialog = (program: ProgramWithSchedules) => {
     setSelectedProgram(program);
-    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
+    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
     setBulkSchedules([]);
     setSelectedDays([]);
     setBulkTimeRange({ startTime: '', endTime: '' });
@@ -254,7 +289,7 @@ export function SchedulesTable() {
   const handleCloseProgramDialog = () => {
     setOpenProgramDialog(false);
     setSelectedProgram(null);
-    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
+    setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
     setBulkSchedules([]);
     setSelectedDays([]);
     setBulkTimeRange({ startTime: '', endTime: '' });
@@ -264,18 +299,31 @@ export function SchedulesTable() {
   const handleAddProgramSchedule = async () => {
     if (!selectedProgram) return;
     try {
-      if (!programFormData.dayOfWeek || !programFormData.startTime || !programFormData.endTime) {
-        throw new Error('Todos los campos son requeridos');
+      const type = programFormData.scheduleType;
+      if (!programFormData.startTime || !programFormData.endTime) {
+        throw new Error('Los campos de horario son requeridos');
+      }
+      if ((type === 'weekly' || type === 'monthly_weekday') && !programFormData.dayOfWeek) {
+        throw new Error('El día de la semana es requerido');
+      }
+      if (type === 'monthly_weekday' && !programFormData.weekNumberInMonth) {
+        throw new Error('La semana del mes es requerida');
+      }
+      if (type === 'monthly_dated' && !programFormData.specificDate) {
+        throw new Error('La fecha específica es requerida');
       }
       if (!selectedProgram.channel_id) {
         throw new Error('El programa debe estar asociado a un canal');
       }
-      const newData = {
+      const newData: Record<string, unknown> = {
         programId: selectedProgram.id.toString(),
         channelId: selectedProgram.channel_id.toString(),
-        dayOfWeek: programFormData.dayOfWeek,
         startTime: programFormData.startTime,
         endTime: programFormData.endTime,
+        scheduleType: type,
+        ...(type !== 'monthly_dated' && { dayOfWeek: programFormData.dayOfWeek }),
+        ...(type === 'monthly_weekday' && { weekNumberInMonth: parseInt(programFormData.weekNumberInMonth, 10) }),
+        ...(type === 'monthly_dated' && { specificDate: programFormData.specificDate }),
       };
       const resp = await api.post<ScheduleType>('/schedules', newData, { headers: { Authorization: `Bearer ${typedSession?.accessToken}` } });
       const created = resp.data;
@@ -290,7 +338,7 @@ export function SchedulesTable() {
           : prev
       );
       setSuccess('Nuevo horario agregado correctamente');
-      setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '' });
+      setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
     } catch (err) {
       console.error('Error adding schedule:', err);
       setError((err as Error).message || 'Error al agregar el horario');
@@ -416,7 +464,7 @@ export function SchedulesTable() {
                     {program.schedules.map(schedule => (
                       <Chip
                         key={schedule.id}
-                        label={`${DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week} ${formatTime(schedule.start_time)}-${formatTime(schedule.end_time)}`}
+                        label={formatScheduleLabel(schedule)}
                         onClick={() => handleOpenEditDialog(schedule)}
                         onDelete={() => handleDelete(schedule.id)}
                       />
@@ -487,7 +535,8 @@ export function SchedulesTable() {
                     <Table size="small">
                       <TableHead>
                         <TableRow>
-                          <TableCell>Día</TableCell>
+                          <TableCell>Tipo</TableCell>
+                          <TableCell>Día / Fecha</TableCell>
                           <TableCell>Inicio</TableCell>
                           <TableCell>Fin</TableCell>
                           <TableCell>Acciones</TableCell>
@@ -501,16 +550,60 @@ export function SchedulesTable() {
                                 <TableCell>
                                   <TextField
                                     select
-                                    value={formData.dayOfWeek}
-                                    onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                                    value={formData.scheduleType}
+                                    onChange={(e) => setFormData({ ...formData, scheduleType: e.target.value })}
                                     fullWidth
+                                    size="small"
                                   >
-                                    {DAYS_OF_WEEK.map((day) => (
-                                      <MenuItem key={day.value} value={day.value}>
-                                        {day.label}
+                                    {SCHEDULE_TYPES.map((type) => (
+                                      <MenuItem key={type.value} value={type.value}>
+                                        {type.label}
                                       </MenuItem>
                                     ))}
                                   </TextField>
+                                </TableCell>
+                                <TableCell>
+                                  {formData.scheduleType === 'monthly_dated' ? (
+                                    <TextField
+                                      type="date"
+                                      value={formData.specificDate}
+                                      onChange={(e) => setFormData({ ...formData, specificDate: e.target.value })}
+                                      InputLabelProps={{ shrink: true }}
+                                      fullWidth
+                                      size="small"
+                                    />
+                                  ) : (
+                                    <Box sx={{ display: 'flex', gap: 1 }}>
+                                      {formData.scheduleType === 'monthly_weekday' && (
+                                        <TextField
+                                          select
+                                          value={formData.weekNumberInMonth}
+                                          onChange={(e) => setFormData({ ...formData, weekNumberInMonth: e.target.value })}
+                                          size="small"
+                                          sx={{ minWidth: 80 }}
+                                        >
+                                          {WEEK_NUMBERS.map((w) => (
+                                            <MenuItem key={w.value} value={w.value.toString()}>
+                                              {w.label}
+                                            </MenuItem>
+                                          ))}
+                                        </TextField>
+                                      )}
+                                      <TextField
+                                        select
+                                        value={formData.dayOfWeek}
+                                        onChange={(e) => setFormData({ ...formData, dayOfWeek: e.target.value })}
+                                        fullWidth
+                                        size="small"
+                                      >
+                                        {DAYS_OF_WEEK.map((day) => (
+                                          <MenuItem key={day.value} value={day.value}>
+                                            {day.label}
+                                          </MenuItem>
+                                        ))}
+                                      </TextField>
+                                    </Box>
+                                  )}
                                 </TableCell>
                                 <TableCell>
                                   <TextField
@@ -519,6 +612,7 @@ export function SchedulesTable() {
                                     onChange={(e) => setFormData({ ...formData, startTime: e.target.value })}
                                     InputLabelProps={{ shrink: true }}
                                     fullWidth
+                                    size="small"
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -528,6 +622,7 @@ export function SchedulesTable() {
                                     onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                                     InputLabelProps={{ shrink: true }}
                                     fullWidth
+                                    size="small"
                                   />
                                 </TableCell>
                                 <TableCell>
@@ -541,7 +636,21 @@ export function SchedulesTable() {
                               </>
                             ) : (
                               <>
-                                <TableCell>{DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week}</TableCell>
+                                <TableCell>
+                                  <Chip
+                                    label={SCHEDULE_TYPES.find(t => t.value === (schedule.schedule_type || 'weekly'))?.label || 'Semanal'}
+                                    size="small"
+                                    color={schedule.schedule_type === 'monthly_weekday' ? 'primary' : schedule.schedule_type === 'monthly_dated' ? 'secondary' : 'default'}
+                                  />
+                                </TableCell>
+                                <TableCell>
+                                  {schedule.schedule_type === 'monthly_dated'
+                                    ? schedule.specific_date || '-'
+                                    : schedule.schedule_type === 'monthly_weekday'
+                                      ? `${WEEK_NUMBERS.find(w => w.value === schedule.week_number_in_month)?.label || ''} ${DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week || ''}`
+                                      : DAYS_OF_WEEK.find(d => d.value === schedule.day_of_week)?.label || schedule.day_of_week || '-'
+                                  }
+                                </TableCell>
                                 <TableCell>{formatTime(schedule.start_time)}</TableCell>
                                 <TableCell>{formatTime(schedule.end_time)}</TableCell>
                                 <TableCell>
@@ -564,43 +673,109 @@ export function SchedulesTable() {
                   <Typography variant="h6" color="text.primary" sx={{ mb: 2 }}>
                     Agregar Nuevo Horario
                   </Typography>
-                  <Box sx={{ display: 'flex', gap: 2, mt: 2 }}>
+                  <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, mt: 2 }}>
                     <TextField
                       select
-                      label="Día de la semana"
-                      value={programFormData.dayOfWeek}
-                      onChange={(e) => setProgramFormData({ ...programFormData, dayOfWeek: e.target.value })}
+                      label="Tipo de recurrencia"
+                      value={programFormData.scheduleType}
+                      onChange={(e) => setProgramFormData({ ...programFormData, scheduleType: e.target.value, dayOfWeek: '', weekNumberInMonth: '', specificDate: '' })}
                       fullWidth
                     >
-                      {DAYS_OF_WEEK.map((day) => (
-                        <MenuItem key={day.value} value={day.value}>
-                          {day.label}
+                      {SCHEDULE_TYPES.map((type) => (
+                        <MenuItem key={type.value} value={type.value}>
+                          {type.label}
                         </MenuItem>
                       ))}
                     </TextField>
-                    <TextField
-                      label="Hora de inicio"
-                      type="time"
-                      value={programFormData.startTime}
-                      onChange={(e) => setProgramFormData({ ...programFormData, startTime: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                    />
-                    <TextField
-                      label="Hora de fin"
-                      type="time"
-                      value={programFormData.endTime}
-                      onChange={(e) => setProgramFormData({ ...programFormData, endTime: e.target.value })}
-                      InputLabelProps={{ shrink: true }}
-                      fullWidth
-                    />
-                    <Button
-                      variant="contained"
-                      onClick={handleAddProgramSchedule}
-                      sx={{ alignSelf: 'flex-end' }}
-                    >
-                      Agregar
-                    </Button>
+
+                    {programFormData.scheduleType === 'weekly' && (
+                      <TextField
+                        select
+                        label="Día de la semana"
+                        value={programFormData.dayOfWeek}
+                        onChange={(e) => setProgramFormData({ ...programFormData, dayOfWeek: e.target.value })}
+                        fullWidth
+                      >
+                        {DAYS_OF_WEEK.map((day) => (
+                          <MenuItem key={day.value} value={day.value}>
+                            {day.label}
+                          </MenuItem>
+                        ))}
+                      </TextField>
+                    )}
+
+                    {programFormData.scheduleType === 'monthly_weekday' && (
+                      <Box sx={{ display: 'flex', gap: 2 }}>
+                        <TextField
+                          select
+                          label="Semana del mes"
+                          value={programFormData.weekNumberInMonth}
+                          onChange={(e) => setProgramFormData({ ...programFormData, weekNumberInMonth: e.target.value })}
+                          fullWidth
+                        >
+                          {WEEK_NUMBERS.map((w) => (
+                            <MenuItem key={w.value} value={w.value.toString()}>
+                              {w.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                        <TextField
+                          select
+                          label="Día de la semana"
+                          value={programFormData.dayOfWeek}
+                          onChange={(e) => setProgramFormData({ ...programFormData, dayOfWeek: e.target.value })}
+                          fullWidth
+                        >
+                          {DAYS_OF_WEEK.map((day) => (
+                            <MenuItem key={day.value} value={day.value}>
+                              {day.label}
+                            </MenuItem>
+                          ))}
+                        </TextField>
+                      </Box>
+                    )}
+
+                    {programFormData.scheduleType === 'monthly_dated' && (
+                      <Box>
+                        <TextField
+                          label="Fecha específica"
+                          type="date"
+                          value={programFormData.specificDate}
+                          onChange={(e) => setProgramFormData({ ...programFormData, specificDate: e.target.value })}
+                          InputLabelProps={{ shrink: true }}
+                          fullWidth
+                        />
+                        <Alert severity="info" icon={<InfoOutlinedIcon />} sx={{ mt: 1 }}>
+                          Deberás cargar manualmente cada fecha cuando se confirme.
+                        </Alert>
+                      </Box>
+                    )}
+
+                    <Box sx={{ display: 'flex', gap: 2 }}>
+                      <TextField
+                        label="Hora de inicio"
+                        type="time"
+                        value={programFormData.startTime}
+                        onChange={(e) => setProgramFormData({ ...programFormData, startTime: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                      />
+                      <TextField
+                        label="Hora de fin"
+                        type="time"
+                        value={programFormData.endTime}
+                        onChange={(e) => setProgramFormData({ ...programFormData, endTime: e.target.value })}
+                        InputLabelProps={{ shrink: true }}
+                        fullWidth
+                      />
+                      <Button
+                        variant="contained"
+                        onClick={handleAddProgramSchedule}
+                        sx={{ alignSelf: 'flex-end' }}
+                      >
+                        Agregar
+                      </Button>
+                    </Box>
                   </Box>
                 </Box>
               )}
