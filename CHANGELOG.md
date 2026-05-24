@@ -22,6 +22,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 - "Agregar Horario" button no longer overflows the dialog on narrow screens (moved to its own full-width row below the time fields), in both `SchedulesTable` and `ProgramSchedulesSection`
+- Banner hide/show infinite loop in categories with few channels (e.g. Deporte): banner now only hides on scroll if the content would still overflow after the banner is removed
 
 ---
 
