@@ -722,7 +722,7 @@ export function ProgramSchedulesSection({
                 </Box>
               )}
 
-              <Box sx={{ display: 'flex', gap: 2, alignItems: 'flex-end' }}>
+              <Box sx={{ display: 'flex', gap: 2 }}>
                 <TextField
                   label="Hora de inicio"
                   type="time"
@@ -739,14 +739,15 @@ export function ProgramSchedulesSection({
                   InputLabelProps={{ shrink: true }}
                   fullWidth
                 />
-                <Button
-                  variant="contained"
-                  onClick={handleAddSchedule}
-                  startIcon={<Add />}
-                >
-                  Agregar
-                </Button>
               </Box>
+              <Button
+                variant="contained"
+                onClick={handleAddSchedule}
+                startIcon={<Add />}
+                fullWidth
+              >
+                Agregar
+              </Button>
             </Box>
           </Box>
 

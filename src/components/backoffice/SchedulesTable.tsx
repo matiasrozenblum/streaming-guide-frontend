@@ -768,14 +768,14 @@ export function SchedulesTable() {
                         InputLabelProps={{ shrink: true }}
                         fullWidth
                       />
-                      <Button
-                        variant="contained"
-                        onClick={handleAddProgramSchedule}
-                        sx={{ alignSelf: 'flex-end' }}
-                      >
-                        Agregar
-                      </Button>
                     </Box>
+                    <Button
+                      variant="contained"
+                      onClick={handleAddProgramSchedule}
+                      fullWidth
+                    >
+                      Agregar
+                    </Button>
                   </Box>
                 </Box>
               )}
