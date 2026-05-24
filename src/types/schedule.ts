@@ -6,6 +6,9 @@ export interface Schedule {
   start_time: string;
   end_time: string;
   subscribed: boolean;
+  schedule_type?: 'weekly' | 'monthly_weekday' | 'monthly_dated';
+  week_number_in_month?: number | null;
+  specific_date?: string | null;
   program: {
     id: number;
     name: string;

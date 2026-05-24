@@ -7,13 +7,22 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.18.0] - 2026-05-24
+
 ### Added
-
-### Changed
-
-### Removed
+- Monthly schedule recurrence UI in backoffice (`SchedulesTable`): "Tipo de recurrencia" selector with three modes — Semanal, Mensual fijo, Mensual por fecha
+- "Mensual fijo": shows week-of-month picker (1°–4°, Último) + day-of-week picker
+- "Mensual por fecha": shows date picker + informational alert to load each date manually
+- "Horarios Actuales" table: new Tipo chip column and unified Día / Fecha column supporting all three recurrence types
+- Inline edit row in the schedule table supports switching and editing all three recurrence types
+- Monthly schedule recurrence UI in "Editar Programa" dialog (`ProgramSchedulesSection`): same recurrence modes available when adding/editing schedules from the program edit flow
+- TypeScript types updated: `schedule_type`, `week_number_in_month`, `specific_date` added to `Schedule` interface
 
 ### Fixed
+- "Agregar Horario" button no longer overflows the dialog on narrow screens (moved to its own full-width row below the time fields), in both `SchedulesTable` and `ProgramSchedulesSection`
+- Banner hide/show infinite loop in categories with few channels (e.g. Deporte): banner now only hides on scroll if the content would still overflow after the banner is removed
 
 ---
 
