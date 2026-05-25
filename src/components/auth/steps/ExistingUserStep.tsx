@@ -8,7 +8,8 @@ import {
   InputAdornment,
   IconButton,
   Typography,
-  CircularProgress
+  CircularProgress,
+  Tooltip
 } from '@mui/material';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
@@ -94,14 +95,16 @@ export default function ExistingUserStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                onClick={() => setShow(s => !s)}
-                edge="end"
-                size="small"
-              >
-                {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-              </IconButton>
+              <Tooltip title={show ? 'Ocultar contraseña' : 'Mostrar contraseña'} arrow>
+                <IconButton
+                  aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShow(s => !s)}
+                  edge="end"
+                  size="small"
+                >
+                  {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           )
         }}
