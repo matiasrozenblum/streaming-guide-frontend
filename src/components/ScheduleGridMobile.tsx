@@ -2,13 +2,13 @@
 
 import { Box, Typography, Button, Fab } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import CategoryTabs from './CategoryTabs';
 import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
-import { ScheduleRow } from './ScheduleRow';
+import { ScheduleRow, Program } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues, DAY_ORDER, DayOfWeek, DAY_WIDTH_PX, WEEK_WIDTH_PX } from '@/constants/layout';
@@ -60,6 +60,47 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     { label: 'D', value: 'sunday' },
   ];
 
+  // Memoize programs per channel — stable references prevent ScheduleRow re-renders during scroll
+  const channelPrograms = useMemo(() => {
+    const map = new Map<number, Program[]>();
+    for (const s of schedules) {
+      const channelId = s.program.channel.id;
+      if (!map.has(channelId)) map.set(channelId, []);
+      map.get(channelId)!.push({
+        id: s.program.id.toString(),
+        scheduleId: s.id.toString(),
+        name: s.program.name,
+        start_time: s.start_time.slice(0, 5),
+        end_time: s.end_time.slice(0, 5),
+        day_of_week: s.day_of_week,
+        subscribed: s.subscribed,
+        description: s.program.description || undefined,
+        panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
+        logo_url: s.program.logo_url || undefined,
+        is_live: s.program.is_live,
+        stream_url: s.program.stream_url || undefined,
+        isWeeklyOverride: s.isWeeklyOverride,
+        overrideType: s.overrideType,
+        style_override: s.program.style_override,
+      });
+    }
+    return map;
+  }, [schedules]);
+
+  const visibleChannels = useMemo(() =>
+    channels.filter(channel => {
+      if (selectedCategory) {
+        const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
+        if (!hasCategory) return false;
+      }
+      if (channel.show_only_when_scheduled) {
+        return (channelPrograms.get(channel.id)?.length ?? 0) > 0;
+      }
+      return true;
+    }),
+    [channels, selectedCategory, channelPrograms]
+  );
+
   // Scroll to the current time in the weekly timeline
   const scrollToNow = useCallback(() => {
     const now = dayjs();
@@ -77,7 +118,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     if (dayIndex === -1) return;
     const hourOffset = container.scrollLeft % DAY_WIDTH_PX;
     container.scrollTo({ left: dayIndex * DAY_WIDTH_PX + hourOffset, behavior: 'smooth' });
-    setSelectedDay(dayValue); // immediate button feedback
+    setSelectedDay(dayValue);
   }, []);
 
   const checkNowIndicatorVisibility = useCallback(() => {
@@ -94,7 +135,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     setShowScrollButton(!isVisible);
   }, []);
 
-  // RAF-throttled scroll handler: updates selectedDay, visibleDayRange and scroll button
+  // RAF-throttled scroll handler — only updates state when values actually change
   const handleScroll = useCallback(() => {
     if (scrollRafRef.current !== null) return;
     scrollRafRef.current = requestAnimationFrame(() => {
@@ -107,12 +148,18 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       // Day index at center of visible timeline
       const timelineCenter = scrollLeft + (clientWidth - channelLabelWidth) / 2;
       const centerDayIndex = Math.max(0, Math.min(6, Math.floor(Math.max(0, timelineCenter) / DAY_WIDTH_PX)));
-      setSelectedDay(DAY_ORDER[centerDayIndex]);
+      setSelectedDay(prev => {
+        const next = DAY_ORDER[centerDayIndex];
+        return prev === next ? prev : next;
+      });
 
       // Visible day range with ±1 buffer for lazy rendering
       const leftDay = Math.max(0, Math.floor(scrollLeft / DAY_WIDTH_PX) - 1);
       const rightDay = Math.min(6, Math.ceil((scrollLeft + clientWidth) / DAY_WIDTH_PX));
-      setVisibleDayRange([leftDay, rightDay]);
+      setVisibleDayRange(prev => {
+        if (prev[0] === leftDay && prev[1] === rightDay) return prev;
+        return [leftDay, rightDay];
+      });
 
       checkNowIndicatorVisibility();
     });
@@ -149,22 +196,6 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       </Typography>
     );
   }
-
-  // All schedules for the week — no day filter
-  const getSchedulesForChannel = (channelId: number) =>
-    schedules.filter(s => s.program.channel.id === channelId);
-
-  // Filter channels based on conditional visibility and category
-  const visibleChannels = channels.filter(channel => {
-    if (selectedCategory) {
-      const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
-      if (!hasCategory) return false;
-    }
-    if (channel.show_only_when_scheduled) {
-      return getSchedulesForChannel(channel.id).length > 0;
-    }
-    return true;
-  });
 
   // Account for bottom navigation bar (56px height) + safe area inset (only if streamers enabled)
   const bottomNavHeight = streamersEnabled ? 56 : 0;
@@ -274,23 +305,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               channelBackgroundColor={channel.background_color}
-              programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.program.id.toString(),
-                scheduleId: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                day_of_week: s.day_of_week,
-                subscribed: s.subscribed,
-                description: s.program.description || undefined,
-                panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
-                logo_url: s.program.logo_url || undefined,
-                is_live: s.program.is_live,
-                stream_url: s.program.stream_url || undefined,
-                isWeeklyOverride: s.isWeeklyOverride,
-                overrideType: s.overrideType,
-                style_override: s.program.style_override,
-              }))}
+              programs={channelPrograms.get(channel.id) ?? []}
               color={getColorForChannel(idx, mode)}
               todayName={today}
               visibleDayRange={visibleDayRange}

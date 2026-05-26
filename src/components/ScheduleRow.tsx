@@ -1,15 +1,12 @@
 'use client';
 
-import React from 'react';
+import React, { useMemo } from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues, DAY_ORDER, DayOfWeek } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
-// Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
-
-// Removed LiveStream import - no longer needed
 
 // Helper function to split long programs into smaller blocks for better visibility
 const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
@@ -28,11 +25,9 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
   const endMinutes = parseTime(program.end_time);
   const duration = endMinutes - startMinutes;
 
-  // Define thresholds and max block duration based on device
-  const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
-  const maxBlockDuration = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
+  const threshold = isMobile ? 360 : 600;
+  const maxBlockDuration = isMobile ? 360 : 600;
 
-  // Check if program needs to be split
   if (duration > threshold) {
     const blocks: Program[] = [];
     const numBlocks = Math.ceil(duration / maxBlockDuration);
@@ -41,26 +36,30 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     for (let i = 0; i < numBlocks; i++) {
       const blockStart = startMinutes + (i * actualBlockDuration);
       const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
-
       blocks.push({
         ...program,
-        id: `${program.id}-block-${i}`, // Unique ID for each block
+        id: `${program.id}-block-${i}`,
         start_time: formatTime(blockStart),
         end_time: formatTime(blockEnd),
-        // Preserve the original program's live status for all blocks
         is_live: program.is_live,
       });
     }
-
     return blocks;
   }
 
-  return [program]; // Return original program if doesn't need splitting
+  return [program];
 };
 
-interface Program {
-  id: string; // program ID
-  scheduleId: string; // schedule ID for live status lookup
+// Module-level: no component state needed
+const parseAbsoluteMin = (timeStr: string, dayOfWeek: string): number => {
+  const [h, m] = timeStr.split(':').map(Number);
+  const dayIndex = DAY_ORDER.indexOf(dayOfWeek as DayOfWeek);
+  return (dayIndex >= 0 ? dayIndex : 0) * 1440 + h * 60 + m;
+};
+
+export interface Program {
+  id: string;
+  scheduleId: string;
   name: string;
   start_time: string;
   end_time: string;
@@ -86,7 +85,7 @@ interface Props {
   visibleDayRange: [number, number];
 }
 
-export const ScheduleRow = ({
+export const ScheduleRow = React.memo(({
   channelName,
   channelLogo,
   channelBackgroundColor,
@@ -102,6 +101,44 @@ export const ScheduleRow = ({
   const pathname = usePathname();
   const isLegalPage = pathname === '/legal';
   const { liveStatus } = useLiveStatus();
+
+  // Memoize the expensive split + lane-assignment so it only re-runs when programs/isMobile change
+  const { allSplitPrograms, laneAssignments, totalLanes } = useMemo(() => {
+    const split = programs.flatMap(p => splitLongProgram(p, isMobile));
+
+    const sorted = [...split].sort(
+      (a, b) => parseAbsoluteMin(a.start_time, a.day_of_week) - parseAbsoluteMin(b.start_time, b.day_of_week)
+    );
+
+    const assignments = new Map<string, number>();
+    const laneEndTimes: number[] = [];
+
+    for (const prog of sorted) {
+      const progStart = parseAbsoluteMin(prog.start_time, prog.day_of_week);
+      const progEnd = parseAbsoluteMin(prog.end_time, prog.day_of_week);
+
+      const hasOverlap = split.some(other => {
+        if (other.id === prog.id) return false;
+        const otherStart = parseAbsoluteMin(other.start_time, other.day_of_week);
+        const otherEnd = parseAbsoluteMin(other.end_time, other.day_of_week);
+        return progStart < otherEnd && otherStart < progEnd;
+      });
+
+      if (!hasOverlap) continue;
+
+      let lane = laneEndTimes.findIndex(t => t <= progStart);
+      if (lane === -1) {
+        lane = laneEndTimes.length;
+        laneEndTimes.push(progEnd);
+      } else {
+        laneEndTimes[lane] = progEnd;
+      }
+
+      assignments.set(prog.id, lane);
+    }
+
+    return { allSplitPrograms: split, laneAssignments: assignments, totalLanes: laneEndTimes.length };
+  }, [programs, isMobile]);
 
   const StandardLayout = (
     <Box
@@ -131,7 +168,7 @@ export const ScheduleRow = ({
           sx={{
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
-            background: channelBackgroundColor || '#ffffff', // fallback to white
+            background: channelBackgroundColor || '#ffffff',
             boxShadow: mode === 'light'
               ? '0 2px 4px rgba(0,0,0,0.1)'
               : '0 2px 4px rgba(0,0,0,0.2)',
@@ -177,7 +214,6 @@ export const ScheduleRow = ({
           : '2px 0 4px rgba(0,0,0,0.2)',
       }}
     >
-      {/* Blurred Logo Background */}
       {channelLogo && (
         <Box
           sx={{
@@ -196,8 +232,6 @@ export const ScheduleRow = ({
           }}
         />
       )}
-
-      {/* Content Container */}
       <Box
         sx={{
           position: 'relative',
@@ -212,7 +246,6 @@ export const ScheduleRow = ({
           padding: 1,
         }}
       >
-        {/* Channel Name */}
         <Typography
           variant="subtitle1"
           sx={{
@@ -231,54 +264,6 @@ export const ScheduleRow = ({
       </Box>
     </Box>
   );
-
-  // Precompute split programs once
-  const allSplitPrograms = programs.flatMap(p => splitLongProgram(p, isMobile));
-
-  // Convert "HH:MM" + day_of_week to absolute week minutes for lane assignment
-  const parseAbsoluteMin = (timeStr: string, dayOfWeek: string): number => {
-    const [h, m] = timeStr.split(':').map(Number);
-    const dayIndex = DAY_ORDER.indexOf(dayOfWeek as DayOfWeek);
-    return (dayIndex >= 0 ? dayIndex : 0) * 1440 + h * 60 + m;
-  };
-
-  // Greedy interval-graph lane assignment using absolute week minutes.
-  // This prevents Monday 14:00 and Tuesday 14:00 from being treated as overlapping.
-  const sortedForLanes = [...allSplitPrograms].sort(
-    (a, b) => parseAbsoluteMin(a.start_time, a.day_of_week) - parseAbsoluteMin(b.start_time, b.day_of_week)
-  );
-
-  const laneAssignments = new Map<string, number>(); // program id → lane index
-  const laneEndTimes: number[] = [];               // current end time for each lane
-
-  for (const prog of sortedForLanes) {
-    const progStart = parseAbsoluteMin(prog.start_time, prog.day_of_week);
-    const progEnd = parseAbsoluteMin(prog.end_time, prog.day_of_week);
-
-    // Only include in the multi-lane layout if it truly overlaps another program
-    const hasOverlap = allSplitPrograms.some(other => {
-      if (other.id === prog.id) return false;
-      const otherStart = parseAbsoluteMin(other.start_time, other.day_of_week);
-      const otherEnd = parseAbsoluteMin(other.end_time, other.day_of_week);
-      return progStart < otherEnd && otherStart < progEnd;
-    });
-
-    if (!hasOverlap) continue;
-
-    // Find the lowest lane that is free at progStart
-    let lane = laneEndTimes.findIndex(t => t <= progStart);
-    if (lane === -1) {
-      lane = laneEndTimes.length; // open a new lane
-      laneEndTimes.push(progEnd);
-    } else {
-      laneEndTimes[lane] = progEnd;
-    }
-
-    laneAssignments.set(prog.id, lane);
-  }
-
-  // Total lanes = chromatic number = max simultaneous programs in this row
-  const totalLanes = laneEndTimes.length;
 
   return (
     <>
@@ -348,4 +333,6 @@ export const ScheduleRow = ({
       </Box>
     </>
   );
-};
+});
+
+ScheduleRow.displayName = 'ScheduleRow';
