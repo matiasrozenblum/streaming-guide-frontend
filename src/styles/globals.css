@@ -125,6 +125,7 @@ html[data-theme="dark"] ::-webkit-scrollbar-thumb:hover {
 /* Smooth scrolling */
 html {
   scroll-behavior: smooth;
+  scrollbar-gutter: stable;
 }
 
 /* Better tap targets on mobile */

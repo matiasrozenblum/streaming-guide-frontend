@@ -586,8 +586,12 @@ export const ProgramBlock: React.FC<Props> = ({
               {
                 name: 'preventOverflow',
                 enabled: true,
+                options: { boundary: 'viewport' },
               },
             ],
+            popperOptions: {
+              strategy: 'fixed',
+            },
             sx: {
               '& .MuiTooltip-tooltip': {
                 backgroundColor: mode === 'light'
