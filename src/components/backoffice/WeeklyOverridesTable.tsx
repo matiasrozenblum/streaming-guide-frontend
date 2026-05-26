@@ -1165,10 +1165,10 @@ export function WeeklyOverridesTable() {
                         </TableCell>
                         <TableCell>
                           <Box sx={{ display: 'flex', gap: 1 }}>
-                            <IconButton onClick={() => handleEdit(override)} color="primary">
+                            <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
                               <Edit />
                             </IconButton>
-                            <IconButton onClick={() => handleDelete(override.id)} color="error">
+                            <IconButton aria-label="Eliminar" onClick={() => handleDelete(override.id)} color="error">
                               <Delete />
                             </IconButton>
                           </Box>
