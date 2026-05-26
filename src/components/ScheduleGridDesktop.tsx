@@ -19,6 +19,7 @@ import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
+import { useTooltip } from '@/contexts/TooltipContext';
 import Footer from './Footer';
 
 dayjs.extend(weekday);
@@ -48,6 +49,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const totalGridWidth = WEEK_WIDTH_PX + channelLabelWidth;
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
+  const { closeTooltip } = useTooltip();
 
   // IntersectionObserver para el botón 'En vivo'
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
@@ -126,6 +128,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
       scrollRafRef.current = null;
       const container = scrollRef.current;
       if (!container) return;
+      closeTooltip();
 
       const { scrollLeft, clientWidth } = container;
 
@@ -147,7 +150,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         return [leftDay, rightDay];
       });
     });
-  }, [channelLabelWidth]);
+  }, [channelLabelWidth, closeTooltip]);
 
   // Scroll to now on mount
   useEffect(() => {

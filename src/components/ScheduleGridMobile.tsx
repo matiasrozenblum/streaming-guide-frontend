@@ -18,6 +18,7 @@ import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
+import { useTooltip } from '@/contexts/TooltipContext';
 import Footer from './Footer';
 
 interface Props {
@@ -49,6 +50,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const { streamersEnabled } = useStreamersConfig();
+  const { closeTooltip } = useTooltip();
 
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
@@ -142,6 +144,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
       scrollRafRef.current = null;
       const container = scrollRef.current;
       if (!container) return;
+      closeTooltip();
 
       const { scrollLeft, clientWidth } = container;
 
@@ -163,7 +166,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
 
       checkNowIndicatorVisibility();
     });
-  }, [channelLabelWidth, checkNowIndicatorVisibility]);
+  }, [channelLabelWidth, checkNowIndicatorVisibility, closeTooltip]);
 
   // Scroll to now on mount
   useEffect(() => {

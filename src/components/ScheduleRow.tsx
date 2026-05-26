@@ -134,7 +134,7 @@ export const ScheduleRow = React.memo(({
         laneEndTimes[lane] = progEnd;
       }
 
-      assignments.set(prog.id, lane);
+      assignments.set(`${prog.scheduleId}-${prog.id}`, lane);
     }
 
     return { allSplitPrograms: split, laneAssignments: assignments, totalLanes: laneEndTimes.length };
@@ -295,14 +295,14 @@ export const ScheduleRow = React.memo(({
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
-            const laneIndex = laneAssignments.get(p.id);
+            const laneIndex = laneAssignments.get(`${p.scheduleId}-${p.id}`);
             const hasTimeOverlap = laneIndex !== undefined;
 
             const dayOffsetMinutes = (blockDayIndex >= 0 ? blockDayIndex : 0) * 1440;
             const blockIsToday = p.day_of_week === todayName;
 
             return (
-              <React.Fragment key={p.id}>
+              <React.Fragment key={`${p.scheduleId}-${p.id}`}>
                 <ProgramBlock
                   id={p.id}
                   name={p.name}
