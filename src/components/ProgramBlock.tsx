@@ -765,7 +765,7 @@ export const ProgramBlock: React.FC<Props> = ({
                         color: isPast ? alpha(color, 1) : color,
                         lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 'normal',
                         display: '-webkit-box',
-                        WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 2 : 1,
+                        WebkitLineClamp: totalMultipleStreams && totalMultipleStreams > 1 ? 2 : (duration <= 30 ? 3 : 1),
                         WebkitBoxOrient: 'vertical',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
@@ -773,7 +773,7 @@ export const ProgramBlock: React.FC<Props> = ({
                     >
                       {name.toUpperCase()}
                     </Typography>
-                    {panelists && panelists.length > 0 && !totalMultipleStreams && (!isMobile || (isMobile && widthPx > 120)) && (
+                    {panelists && panelists.length > 0 && !totalMultipleStreams && duration > 30 && (!isMobile || (isMobile && widthPx > 120)) && (
                       <Typography
                         variant="caption"
                         sx={{

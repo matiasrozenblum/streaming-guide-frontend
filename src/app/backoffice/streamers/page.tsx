@@ -28,6 +28,7 @@ import {
   FormControl,
   InputLabel,
   Chip,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -514,13 +515,21 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" alignItems="center" gap={1}>
                     #{idx + 1}
-                    <IconButton size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
-                      {/* using a simple caret by unicode to avoid extra imports */}
-                      <span style={{ fontSize: 14 }}>▲</span>
-                    </IconButton>
-                    <IconButton size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
-                      <span style={{ fontSize: 14 }}>▼</span>
-                    </IconButton>
+                    <Tooltip title="Mover hacia arriba">
+                      <span>
+                        <IconButton aria-label="Mover hacia arriba" size="small" onClick={() => handleMoveUp(idx)} disabled={idx === 0}>
+                          {/* using a simple caret by unicode to avoid extra imports */}
+                          <span style={{ fontSize: 14 }}>▲</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
+                    <Tooltip title="Mover hacia abajo">
+                      <span>
+                        <IconButton aria-label="Mover hacia abajo" size="small" onClick={() => handleMoveDown(idx)} disabled={idx === streamers.length - 1}>
+                          <span style={{ fontSize: 14 }}>▼</span>
+                        </IconButton>
+                      </span>
+                    </Tooltip>
                   </Box>
                 </TableCell>
                 <TableCell>
@@ -571,6 +580,7 @@ export default function StreamersPage() {
                 <TableCell>
                   <Box display="flex" gap={0.5}>
                     <IconButton
+                      aria-label="Sincronizar Kick"
                       size="small"
                       onClick={() => handleSyncLiveStatus(streamer.id, 'kick')}
                       disabled={!hasService(streamer, StreamingService.KICK) || syncingService?.streamerId === streamer.id}
@@ -597,6 +607,7 @@ export default function StreamersPage() {
                       )}
                     </IconButton>
                     <IconButton
+                      aria-label="Sincronizar Twitch"
                       size="small"
                       onClick={() => handleSyncLiveStatus(streamer.id, 'twitch')}
                       disabled={!hasService(streamer, StreamingService.TWITCH) || syncingService?.streamerId === streamer.id}
@@ -625,8 +636,12 @@ export default function StreamersPage() {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
-                  <IconButton onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  <Tooltip title="Editar streamer">
+                    <IconButton aria-label="Editar streamer" onClick={() => handleOpenDialog(streamer)}><EditIcon /></IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar streamer">
+                    <IconButton aria-label="Eliminar streamer" onClick={() => handleDelete(streamer.id)}><DeleteIcon /></IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}
@@ -760,13 +775,16 @@ export default function StreamersPage() {
                         placeholder="https://www.youtube.com/@channelname"
                       />
                     ) : null}
-                    <IconButton
-                      onClick={() => handleRemoveService(index)}
-                      color="error"
-                      sx={{ mt: 1 }}
-                    >
-                      <RemoveIcon />
-                    </IconButton>
+                    <Tooltip title="Eliminar servicio">
+                      <IconButton
+                        aria-label="Eliminar servicio"
+                        onClick={() => handleRemoveService(index)}
+                        color="error"
+                        sx={{ mt: 1 }}
+                      >
+                        <RemoveIcon />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 )
               })}

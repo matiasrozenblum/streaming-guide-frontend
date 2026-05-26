@@ -7,6 +7,7 @@ import {
   AlertTitle,
   InputAdornment,
   IconButton,
+  Tooltip,
   Typography,
   CircularProgress
 } from '@mui/material';
@@ -94,14 +95,16 @@ export default function ExistingUserStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                onClick={() => setShow(s => !s)}
-                edge="end"
-                size="small"
-              >
-                {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-              </IconButton>
+              <Tooltip title={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                <IconButton
+                  aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  onClick={() => setShow(s => !s)}
+                  edge="end"
+                  size="small"
+                >
+                  {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           )
         }}
