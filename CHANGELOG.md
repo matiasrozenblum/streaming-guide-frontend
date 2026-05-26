@@ -9,6 +9,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.18.1] - 2026-05-25
+
+### Added
+- Tooltips and ARIA labels to all backoffice icon buttons (programs, channels, streamers, banners, WeeklyOverridesTable, ManageDevicesDialog, hamburger menu)
+- Tooltips on password visibility toggles in login/register steps
+- Dynamic ARIA label on streamer subscription toggle
+
+### Fixed
+- Program blocks of 30 minutes or less no longer show panelists, using the freed space to display the full title across up to 3 lines
+
+---
+
 ## [1.18.0] - 2026-05-24
 
 ### Added
