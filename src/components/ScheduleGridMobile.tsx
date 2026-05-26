@@ -11,7 +11,7 @@ import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
-import { useLayoutValues } from '@/constants/layout';
+import { useLayoutValues, DAY_ORDER, DayOfWeek, DAY_WIDTH_PX, WEEK_WIDTH_PX } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
@@ -30,16 +30,21 @@ interface Props {
 export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
+  const scrollRafRef = useRef<number | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
+  const todayDayIndex = DAY_ORDER.indexOf(today as DayOfWeek);
   const [selectedDay, setSelectedDay] = useState(today);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(0);
+  const [visibleDayRange, setVisibleDayRange] = useState<[number, number]>([
+    Math.max(0, todayDayIndex - 1),
+    Math.min(6, todayDayIndex + 1),
+  ]);
 
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
-  const isToday = selectedDay === today;
-  const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+  const totalGridWidth = WEEK_WIDTH_PX + channelLabelWidth;
 
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -55,12 +60,25 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     { label: 'D', value: 'sunday' },
   ];
 
+  // Scroll to the current time in the weekly timeline
   const scrollToNow = useCallback(() => {
     const now = dayjs();
-    const minutesFromStart = now.hour() * 60 + now.minute();
-    const scrollPosition = minutesFromStart * pixelsPerMinute - 120;
-    scrollRef.current?.scrollTo({ left: scrollPosition, behavior: 'smooth' });
-  }, [pixelsPerMinute]);
+    const minutes = now.hour() * 60 + now.minute();
+    const dayIndex = DAY_ORDER.indexOf(today as DayOfWeek);
+    const targetLeft = dayIndex * DAY_WIDTH_PX + minutes * pixelsPerMinute - 120;
+    scrollRef.current?.scrollTo({ left: Math.max(0, targetLeft), behavior: 'smooth' });
+  }, [pixelsPerMinute, today]);
+
+  // Scroll to a specific day preserving the current hour offset
+  const scrollToDay = useCallback((dayValue: string) => {
+    const container = scrollRef.current;
+    if (!container) return;
+    const dayIndex = DAY_ORDER.indexOf(dayValue as DayOfWeek);
+    if (dayIndex === -1) return;
+    const hourOffset = container.scrollLeft % DAY_WIDTH_PX;
+    container.scrollTo({ left: dayIndex * DAY_WIDTH_PX + hourOffset, behavior: 'smooth' });
+    setSelectedDay(dayValue); // immediate button feedback
+  }, []);
 
   const checkNowIndicatorVisibility = useCallback(() => {
     const indicator = nowIndicatorRef.current;
@@ -76,33 +94,49 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     setShowScrollButton(!isVisible);
   }, []);
 
-  useEffect(() => { scrollToNow(); }, [scrollToNow]);
+  // RAF-throttled scroll handler: updates selectedDay, visibleDayRange and scroll button
+  const handleScroll = useCallback(() => {
+    if (scrollRafRef.current !== null) return;
+    scrollRafRef.current = requestAnimationFrame(() => {
+      scrollRafRef.current = null;
+      const container = scrollRef.current;
+      if (!container) return;
 
+      const { scrollLeft, clientWidth } = container;
+
+      // Day index at center of visible timeline
+      const timelineCenter = scrollLeft + (clientWidth - channelLabelWidth) / 2;
+      const centerDayIndex = Math.max(0, Math.min(6, Math.floor(Math.max(0, timelineCenter) / DAY_WIDTH_PX)));
+      setSelectedDay(DAY_ORDER[centerDayIndex]);
+
+      // Visible day range with ±1 buffer for lazy rendering
+      const leftDay = Math.max(0, Math.floor(scrollLeft / DAY_WIDTH_PX) - 1);
+      const rightDay = Math.min(6, Math.ceil((scrollLeft + clientWidth) / DAY_WIDTH_PX));
+      setVisibleDayRange([leftDay, rightDay]);
+
+      checkNowIndicatorVisibility();
+    });
+  }, [channelLabelWidth, checkNowIndicatorVisibility]);
+
+  // Scroll to now on mount
+  useEffect(() => {
+    scrollToNow();
+  }, [scrollToNow]);
+
+  // Wire up scroll listener
   useEffect(() => {
     const container = scrollRef.current;
     if (!container) return;
-
-    if (selectedDay !== today) {
-      setShowScrollButton(true);
-      return;
-    }
-
-    container.addEventListener('scroll', checkNowIndicatorVisibility);
+    container.addEventListener('scroll', handleScroll, { passive: true });
     checkNowIndicatorVisibility();
-
-    return () => {
-      container.removeEventListener('scroll', checkNowIndicatorVisibility);
-    };
-  }, [checkNowIndicatorVisibility, selectedDay, today]);
+    return () => container.removeEventListener('scroll', handleScroll);
+  }, [handleScroll, checkNowIndicatorVisibility]);
 
   // Get scrollable container width for footer
   useEffect(() => {
     const updateContainerWidth = () => {
-      if (scrollRef.current) {
-        setContainerWidth(scrollRef.current.clientWidth);
-      }
+      if (scrollRef.current) setContainerWidth(scrollRef.current.clientWidth);
     };
-    
     updateContainerWidth();
     window.addEventListener('resize', updateContainerWidth);
     return () => window.removeEventListener('resize', updateContainerWidth);
@@ -116,23 +150,19 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     );
   }
 
-  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
+  // All schedules for the week — no day filter
   const getSchedulesForChannel = (channelId: number) =>
-    schedulesForDay.filter(s => s.program.channel.id === channelId);
+    schedules.filter(s => s.program.channel.id === channelId);
 
   // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
-    // Filter by category if one is selected
     if (selectedCategory) {
       const hasCategory = channel.categories?.some(cat => cat.id === selectedCategory.id);
       if (!hasCategory) return false;
     }
-
-    // If channel should show only when scheduled, check if it has schedules for this day
     if (channel.show_only_when_scheduled) {
       return getSchedulesForChannel(channel.id).length > 0;
     }
-    // Otherwise, always show the channel
     return true;
   });
 
@@ -167,12 +197,12 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             key={day.value}
             variant={selectedDay === day.value ? 'contained' : 'outlined'}
             onClick={() => {
-              setSelectedDay(day.value);
+              scrollToDay(day.value);
               try { Clarity.setTag('selected_day', day.value); Clarity.event('day_change'); } catch { /* Clarity not yet loaded */ }
               gaEvent({
                 action: 'day_change',
                 params: { day: day.value, client: 'mobile' },
-                userData: typedSession?.user
+                userData: typedSession?.user,
               });
             }}
             sx={{
@@ -203,9 +233,9 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         ref={scrollRef}
         data-schedule-grid="mobile"
         sx={{
-          borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
+          borderTopLeftRadius: categoriesEnabled ? 0 : '12px',
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
-          borderBottomLeftRadius: '12px', // Round bottom corners
+          borderBottomLeftRadius: '12px',
           borderBottomRightRadius: '12px',
           flex: 1,
           minHeight: 0,
@@ -216,44 +246,28 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           userSelect: 'none',
           WebkitUserDrag: 'none',
           cursor: 'grab',
-          '&.dragging': {
-            cursor: 'grabbing',
-          },
-          // Custom scrollbar styling
-          '&::-webkit-scrollbar': {
-            width: '8px',
-            height: '8px',
-          },
-          '&::-webkit-scrollbar-track': {
-            background: 'transparent',
-            borderRadius: '4px',
-          },
+          '&.dragging': { cursor: 'grabbing' },
+          '&::-webkit-scrollbar': { width: '8px', height: '8px' },
+          '&::-webkit-scrollbar-track': { background: 'transparent', borderRadius: '4px' },
           '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.2)' 
-              : 'rgba(255, 255, 255, 0.2)',
+            background: mode === 'light' ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.2)',
             borderRadius: '4px',
             border: '1px solid transparent',
             backgroundClip: 'content-box',
             '&:hover': {
-              background: mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.3)' 
-                : 'rgba(255, 255, 255, 0.3)',
+              background: mode === 'light' ? 'rgba(0, 0, 0, 0.3)' : 'rgba(255, 255, 255, 0.3)',
             },
           },
-          '&::-webkit-scrollbar-corner': {
-            background: 'transparent',
-          },
-          // Firefox scrollbar styling
+          '&::-webkit-scrollbar-corner': { background: 'transparent' },
           scrollbarWidth: 'thin',
-          scrollbarColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.2) transparent' 
+          scrollbarColor: mode === 'light'
+            ? 'rgba(0, 0, 0, 0.2) transparent'
             : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader isMobile={true} />
-          {isToday && <NowIndicator ref={nowIndicatorRef} />}
+          <NowIndicator ref={nowIndicatorRef} />
           {visibleChannels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
@@ -266,6 +280,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
                 name: s.program.name,
                 start_time: s.start_time.slice(0, 5),
                 end_time: s.end_time.slice(0, 5),
+                day_of_week: s.day_of_week,
                 subscribed: s.subscribed,
                 description: s.program.description || undefined,
                 panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
@@ -277,18 +292,19 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
                 style_override: s.program.style_override,
               }))}
               color={getColorForChannel(idx, mode)}
-              isToday={isToday}
+              todayName={today}
+              visibleDayRange={visibleDayRange}
             />
           ))}
-          {/* Footer at the bottom of grid - matches grid container width, sticky horizontally like channel column */}
+          {/* Footer at the bottom of grid */}
           {containerWidth > 0 && (
-            <Box 
-              sx={{ 
+            <Box
+              sx={{
                 width: `${containerWidth}px`,
                 position: 'sticky',
                 left: 0,
                 mt: 2,
-                pb: streamersEnabled 
+                pb: streamersEnabled
                   ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
                   : 0,
                 zIndex: 10,
@@ -313,20 +329,17 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           variant="extended"
           size="medium"
           onClick={() => {
-            if (selectedDay !== today) {
-              setSelectedDay(today);
-              setTimeout(() => scrollToNow(), 100);
-            } else scrollToNow();
+            scrollToNow();
             try { Clarity.event('live_button_click'); } catch { /* Clarity not yet loaded */ }
             gaEvent({
               action: 'scroll_to_now',
               params: { client: 'mobile' },
-              userData: typedSession?.user
+              userData: typedSession?.user,
             });
           }}
           sx={{
             position: 'fixed',
-            bottom: streamersEnabled 
+            bottom: streamersEnabled
               ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px) + 16px)`
               : '5vh',
             left: '50%',

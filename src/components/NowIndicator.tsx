@@ -1,6 +1,6 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues, DAY_ORDER, DayOfWeek } from '../constants/layout';
 import { forwardRef, useEffect, useState } from 'react';
 
 interface Props {
@@ -13,6 +13,7 @@ export const NowIndicator = forwardRef<HTMLDivElement, Props>(({ isModalOpen }, 
     const now = dayjs();
     return now.diff(now.startOf('day'), 'minute');
   });
+  const todayName = dayjs().format('dddd').toLowerCase();
 
   useEffect(() => {
     if (!isModalOpen) {
@@ -20,14 +21,14 @@ export const NowIndicator = forwardRef<HTMLDivElement, Props>(({ isModalOpen }, 
         const now = dayjs();
         setMinutesFromMidnight(now.diff(now.startOf('day'), 'minute'));
       };
-
-      // Update every minute
       const intervalId = setInterval(updatePosition, 60000);
       return () => clearInterval(intervalId);
     }
   }, [isModalOpen]);
 
-  const offsetPx = channelLabelWidth + (minutesFromMidnight * pixelsPerMinute);
+  const dayIndex = DAY_ORDER.indexOf(todayName as DayOfWeek);
+  const absoluteMinutes = (dayIndex >= 0 ? dayIndex : 0) * 1440 + minutesFromMidnight;
+  const offsetPx = channelLabelWidth + absoluteMinutes * pixelsPerMinute;
 
   return (
     <Box

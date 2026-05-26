@@ -46,6 +46,7 @@ interface Props {
   styleOverride?: string | null;
   multipleStreamsIndex?: number;
   totalMultipleStreams?: number;
+  dayOffsetMinutes?: number;
 }
 
 
@@ -69,6 +70,7 @@ export const ProgramBlock: React.FC<Props> = ({
   styleOverride,
   multipleStreamsIndex,
   totalMultipleStreams,
+  dayOffsetMinutes = 0,
 }) => {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -108,7 +110,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const [endHours, endMinutes] = end.split(':').map(Number);
   const minutesFromMidnightStart = startHours * 60 + startMinutes;
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
-  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
+  const offsetPx = (dayOffsetMinutes + minutesFromMidnightStart) * pixelsPerMinute;
   const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
 
   // Handle multiple streams positioning

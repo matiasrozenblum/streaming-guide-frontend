@@ -12,6 +12,14 @@ export const CHANNEL_LABEL_WIDTH = {
   desktop: 150,
 };
 
+export const DAY_ORDER = [
+  'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday',
+] as const;
+export type DayOfWeek = typeof DAY_ORDER[number];
+
+export const DAY_WIDTH_PX = PIXELS_PER_MINUTE * 60 * 24; // 2880
+export const WEEK_WIDTH_PX = DAY_WIDTH_PX * 7;           // 20160
+
 // Custom hook to get layout values based on screen size
 export const useLayoutValues = () => {
   const theme = useTheme();

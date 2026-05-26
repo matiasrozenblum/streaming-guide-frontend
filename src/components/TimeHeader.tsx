@@ -2,12 +2,13 @@
 
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues, DAY_ORDER, DayOfWeek, DAY_WIDTH_PX, WEEK_WIDTH_PX } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { tokens } from '@/design-system/tokens';
 
 const hours = Array.from({ length: 24 }, (_, i) => i);
+const DAY_LABELS = ['Lun', 'Mar', 'Mié', 'Jue', 'Vie', 'Sáb', 'Dom'];
 
 interface Props {
   isModalOpen?: boolean;
@@ -17,32 +18,27 @@ interface Props {
 export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
-  const [currentHour, setCurrentHour] = useState(dayjs().hour());
-  const totalWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
+  const [now, setNow] = useState(dayjs);
+
+  const currentHour = now.hour();
+  const todayDayIndex = DAY_ORDER.indexOf(now.format('dddd').toLowerCase() as DayOfWeek);
 
   useEffect(() => {
     if (!isModalOpen) {
-      const updateCurrentHour = () => {
-        const newHour = dayjs().hour();
-        setCurrentHour(newHour);
-      };
-
-      // Update every minute
-      const intervalId = setInterval(updateCurrentHour, 60000);
+      const update = () => setNow(dayjs());
+      const intervalId = setInterval(update, 60000);
       return () => clearInterval(intervalId);
     }
-  }, [currentHour, isModalOpen]);
-  
+  }, [isModalOpen]);
+
   return (
-    <Box 
-      display="flex" 
-      width={`${totalWidth}px`}
+    <Box
+      display="flex"
+      width={`${WEEK_WIDTH_PX + channelLabelWidth}px`}
       borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
       height={`${timeHeaderHeight}px`}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
-      position="sticky"
-      zIndex={1000}
-      sx={{ 
+      sx={{
         boxShadow: mode === 'light'
           ? '0 1px 2px rgba(0,0,0,0.05)'
           : '0 1px 2px rgba(0,0,0,0.2)',
@@ -51,15 +47,8 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
         zIndex: 1000,
       }}
     >
+      {/* Channel label column */}
       <Box
-        width={`${channelLabelWidth}px`}
-        minWidth={`${channelLabelWidth}px`}
-        borderRight={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
-        bgcolor={mode === 'light' ? 'white' : '#1e293b'}
-        position="sticky"
-        left={0}
-        zIndex={2}
-        p={2}
         sx={{
           width: `${channelLabelWidth}px`,
           minWidth: `${channelLabelWidth}px`,
@@ -88,53 +77,77 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
           Canal
         </Typography>
       </Box>
-      
-      <Box 
-        display="flex" 
-        width={`${pixelsPerMinute * 60 * 24}px`}
-        position="relative"
-      >
-        {hours.map((hour) => {
-          const hourTime = dayjs().startOf('day').add(hour, 'hour');
-          const isPast = hour < currentHour;
-          
+
+      {/* Weekly timeline: 7 days × 24 hours */}
+      <Box display="flex" width={`${WEEK_WIDTH_PX}px`} position="relative">
+        {DAY_ORDER.map((day, dayIndex) => {
+          const isCurrentDay = dayIndex === todayDayIndex;
+          const isPastDay = dayIndex < todayDayIndex;
+
           return (
             <Box
-              key={hour}
+              key={day}
               sx={{
-                width: `${pixelsPerMinute * 60}px`,
-                minWidth: `${pixelsPerMinute * 60}px`,
+                width: `${DAY_WIDTH_PX}px`,
+                minWidth: `${DAY_WIDTH_PX}px`,
                 height: '100%',
                 display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                opacity: isPast ? 0.5 : 1,
-                transition: 'opacity 0.2s ease',
-                position: 'relative',
-                '&:not(:last-child)::after': {
-                  content: '""',
-                  position: 'absolute',
-                  right: 0,
-                  top: 0,
-                  bottom: 0,
-                  width: '1px',
-                  backgroundColor: mode === 'light'
-                    ? 'rgba(0, 0, 0, 0.08)'
-                    : 'rgba(255, 255, 255, 0.08)',
-                }
+                borderLeft: dayIndex > 0
+                  ? `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`
+                  : 'none',
               }}
             >
-              <Typography 
-                variant="body2"
-                sx={{
-                  fontWeight: hour === currentHour ? 'bold' : 'normal',
-                  color: hour === currentHour 
-                    ? theme.palette.primary.main
-                    : mode === 'light' ? '#374151' : '#f1f5f9',
-                }}
-              >
-                {hourTime.format('HH:mm')}
-              </Typography>
+              {hours.map((hour) => {
+                const isPastHour = isPastDay || (isCurrentDay && hour < currentHour);
+                const isCurrentHour = isCurrentDay && hour === currentHour;
+                const hourTime = dayjs().startOf('day').add(hour, 'hour');
+                const isFirstHour = hour === 0;
+
+                return (
+                  <Box
+                    key={hour}
+                    sx={{
+                      width: `${pixelsPerMinute * 60}px`,
+                      minWidth: `${pixelsPerMinute * 60}px`,
+                      height: '100%',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      opacity: isPastHour ? 0.5 : 1,
+                      transition: 'opacity 0.2s ease',
+                      position: 'relative',
+                      '&:not(:last-child)::after': {
+                        content: '""',
+                        position: 'absolute',
+                        right: 0,
+                        top: 0,
+                        bottom: 0,
+                        width: '1px',
+                        backgroundColor: mode === 'light'
+                          ? 'rgba(0, 0, 0, 0.08)'
+                          : 'rgba(255, 255, 255, 0.08)',
+                      },
+                    }}
+                  >
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        fontWeight: isCurrentHour ? 'bold' : 'normal',
+                        color: isCurrentHour
+                          ? theme.palette.primary.main
+                          : isCurrentDay && isFirstHour
+                            ? theme.palette.primary.main
+                            : mode === 'light' ? '#374151' : '#f1f5f9',
+                        fontSize: '0.7rem',
+                        lineHeight: 1,
+                        textAlign: 'center',
+                      }}
+                    >
+                      {isFirstHour ? DAY_LABELS[dayIndex] : hourTime.format('HH:mm')}
+                    </Typography>
+                  </Box>
+                );
+              })}
             </Box>
           );
         })}

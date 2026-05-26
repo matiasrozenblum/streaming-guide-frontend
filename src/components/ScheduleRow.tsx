@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues, DAY_ORDER, DayOfWeek } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 // Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
@@ -64,6 +64,7 @@ interface Program {
   name: string;
   start_time: string;
   end_time: string;
+  day_of_week: string;
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
@@ -81,7 +82,8 @@ interface Props {
   channelBackgroundColor?: string | null;
   programs: Program[];
   color?: string;
-  isToday?: boolean;
+  todayName: string;
+  visibleDayRange: [number, number];
 }
 
 export const ScheduleRow = ({
@@ -90,7 +92,8 @@ export const ScheduleRow = ({
   channelBackgroundColor,
   programs,
   color,
-  isToday,
+  todayName,
+  visibleDayRange,
 }: Props) => {
   const theme = useTheme();
   const { mode } = useThemeContext();
@@ -232,33 +235,32 @@ export const ScheduleRow = ({
   // Precompute split programs once
   const allSplitPrograms = programs.flatMap(p => splitLongProgram(p, isMobile));
 
-  // Helper: convert "HH:MM" to minutes since midnight
-  const parseTimeMin = (timeStr: string) => {
+  // Convert "HH:MM" + day_of_week to absolute week minutes for lane assignment
+  const parseAbsoluteMin = (timeStr: string, dayOfWeek: string): number => {
     const [h, m] = timeStr.split(':').map(Number);
-    return h * 60 + m;
+    const dayIndex = DAY_ORDER.indexOf(dayOfWeek as DayOfWeek);
+    return (dayIndex >= 0 ? dayIndex : 0) * 1440 + h * 60 + m;
   };
 
-  // Greedy interval-graph lane assignment.
-  // Sorts programs by start time, assigns each to the lowest lane whose
-  // previous occupant has already ended. This gives the chromatic number of
-  // the interval graph (= max simultaneous programs), which is the correct
-  // number of vertical "slots" needed.
+  // Greedy interval-graph lane assignment using absolute week minutes.
+  // This prevents Monday 14:00 and Tuesday 14:00 from being treated as overlapping.
   const sortedForLanes = [...allSplitPrograms].sort(
-    (a, b) => parseTimeMin(a.start_time) - parseTimeMin(b.start_time)
+    (a, b) => parseAbsoluteMin(a.start_time, a.day_of_week) - parseAbsoluteMin(b.start_time, b.day_of_week)
   );
 
   const laneAssignments = new Map<string, number>(); // program id → lane index
   const laneEndTimes: number[] = [];               // current end time for each lane
 
   for (const prog of sortedForLanes) {
-    const progStart = parseTimeMin(prog.start_time);
-    const progEnd = parseTimeMin(prog.end_time);
+    const progStart = parseAbsoluteMin(prog.start_time, prog.day_of_week);
+    const progEnd = parseAbsoluteMin(prog.end_time, prog.day_of_week);
 
     // Only include in the multi-lane layout if it truly overlaps another program
     const hasOverlap = allSplitPrograms.some(other => {
       if (other.id === prog.id) return false;
-      return progStart < parseTimeMin(other.end_time) &&
-             parseTimeMin(other.start_time) < progEnd;
+      const otherStart = parseAbsoluteMin(other.start_time, other.day_of_week);
+      const otherEnd = parseAbsoluteMin(other.end_time, other.day_of_week);
+      return progStart < otherEnd && otherStart < progEnd;
     });
 
     if (!hasOverlap) continue;
@@ -298,12 +300,21 @@ export const ScheduleRow = ({
 
         <Box position="relative" flex="1" height="100%">
           {allSplitPrograms.map((p) => {
+            // Lazy render: skip programs outside visible day range
+            const blockDayIndex = DAY_ORDER.indexOf(p.day_of_week as DayOfWeek);
+            if (blockDayIndex < visibleDayRange[0] || blockDayIndex > visibleDayRange[1]) {
+              return null;
+            }
+
             const currentLiveStatus = liveStatus[p.scheduleId];
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
             const laneIndex = laneAssignments.get(p.id);
             const hasTimeOverlap = laneIndex !== undefined;
+
+            const dayOffsetMinutes = (blockDayIndex >= 0 ? blockDayIndex : 0) * 1440;
+            const blockIsToday = p.day_of_week === todayName;
 
             return (
               <React.Fragment key={p.id}>
@@ -317,13 +328,14 @@ export const ScheduleRow = ({
                   logo_url={p.logo_url}
                   channelName={channelName}
                   color={color}
-                  isToday={isToday}
+                  isToday={blockIsToday}
                   stream_url={currentStreamUrl}
                   is_live={isLive}
                   subscribed={p.subscribed ?? false}
                   isWeeklyOverride={p.isWeeklyOverride ?? false}
                   overrideType={p.overrideType ?? ''}
                   styleOverride={p.style_override}
+                  dayOffsetMinutes={dayOffsetMinutes}
                   {...(hasTimeOverlap ? {
                     multipleStreamsIndex: laneIndex,
                     totalMultipleStreams: totalLanes,
