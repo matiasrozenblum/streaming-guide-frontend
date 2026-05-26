@@ -7,6 +7,7 @@ import {
   AlertTitle,
   InputAdornment,
   IconButton,
+  Tooltip,
   LinearProgress,
   Typography,
   CircularProgress
@@ -87,13 +88,15 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                size="small"
-                onClick={() => setShow(s => !s)}
-              >
-                {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-              </IconButton>
+              <Tooltip title={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                <IconButton
+                  aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  size="small"
+                  onClick={() => setShow(s => !s)}
+                >
+                  {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           )
         }}
@@ -119,13 +122,15 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <IconButton
-                aria-label={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                size="small"
-                onClick={() => setShow2(s => !s)}
-              >
-                {show2 ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-              </IconButton>
+              <Tooltip title={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                <IconButton
+                  aria-label={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  size="small"
+                  onClick={() => setShow2(s => !s)}
+                >
+                  {show2 ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                </IconButton>
+              </Tooltip>
             </InputAdornment>
           )
         }}

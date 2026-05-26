@@ -25,6 +25,7 @@ import {
   Card,
   CardMedia,
   CardContent,
+  Tooltip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -448,20 +449,26 @@ export default function BannersPage() {
                         size="small"
                       />
                       <Box>
-                        <IconButton
-                          size="small"
-                          onClick={() => handleOpenDialog(banner)}
-                          color="primary"
-                        >
-                          <EditIcon />
-                        </IconButton>
-                        <IconButton
-                          size="small"
-                          onClick={() => setDeleteConfirm({ open: true, banner })}
-                          color="error"
-                        >
-                          <DeleteIcon />
-                        </IconButton>
+                        <Tooltip title="Editar banner">
+                          <IconButton
+                            aria-label="Editar banner"
+                            size="small"
+                            onClick={() => handleOpenDialog(banner)}
+                            color="primary"
+                          >
+                            <EditIcon />
+                          </IconButton>
+                        </Tooltip>
+                        <Tooltip title="Eliminar banner">
+                          <IconButton
+                            aria-label="Eliminar banner"
+                            size="small"
+                            onClick={() => setDeleteConfirm({ open: true, banner })}
+                            color="error"
+                          >
+                            <DeleteIcon />
+                          </IconButton>
+                        </Tooltip>
                       </Box>
                     </Box>
                   </CardContent>
