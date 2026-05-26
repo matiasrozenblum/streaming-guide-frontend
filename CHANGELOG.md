@@ -9,6 +9,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.18.2] - 2026-05-26
+
+### Added
+- `robots.txt`: disallow indexing of `/backoffice/`, `/api/`, `/profile` and `/subscriptions`
+- `sitemap.xml`: homepage (hourly), streamers (daily), legal pages (monthly)
+
+---
+
 ## [1.18.1] - 2026-05-25
 
 ### Added
