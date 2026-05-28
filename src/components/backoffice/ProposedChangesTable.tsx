@@ -15,6 +15,7 @@ import {
   Alert,
   Typography,
   CircularProgress,
+  Tooltip,
 } from '@mui/material';
 import { Check, Close } from '@mui/icons-material';
 import { api } from '@/services/api';
@@ -227,20 +228,24 @@ export default function ProposedChangesTable() {
                     )}
                   </TableCell>
                   <TableCell>
-                    <IconButton
-                      aria-label="Aprobar"
-                      onClick={() => handleAction(change.id, 'approve')}
-                      color="success"
-                    >
-                      <Check />
-                    </IconButton>
-                    <IconButton
-                      aria-label="Rechazar"
-                      onClick={() => handleAction(change.id, 'reject')}
-                      color="error"
-                    >
-                      <Close />
-                    </IconButton>
+                    <Tooltip title="Aprobar">
+                      <IconButton
+                        aria-label="Aprobar"
+                        onClick={() => handleAction(change.id, 'approve')}
+                        color="success"
+                      >
+                        <Check />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Rechazar">
+                      <IconButton
+                        aria-label="Rechazar"
+                        onClick={() => handleAction(change.id, 'reject')}
+                        color="error"
+                      >
+                        <Close />
+                      </IconButton>
+                    </Tooltip>
                   </TableCell>
                 </TableRow>
               ))
