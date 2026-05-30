@@ -28,9 +28,10 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  nextWeekMondaySchedules?: Schedule[];
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -125,17 +126,20 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
 
   const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
 
-  const nextDay = selectedDay !== 'sunday'
-    ? DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7]
-    : null;
+  const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
-  const schedulesForOverflow = nextDay
-    ? schedules.filter(s => {
-        if (s.day_of_week !== nextDay) return false;
-        const [h, m] = s.start_time.split(':').map(Number);
-        return (h * 60 + m) < OVERFLOW_MINUTES;
-      })
-    : [];
+  // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
+  // Falls back to current week's monday schedules (correct for non-overridden programs).
+  const overflowSource =
+    selectedDay === 'sunday' && nextWeekMondaySchedules && nextWeekMondaySchedules.length > 0
+      ? nextWeekMondaySchedules
+      : schedules;
+
+  const schedulesForOverflow = overflowSource.filter(s => {
+    if (s.day_of_week !== nextDay) return false;
+    const [h, m] = s.start_time.split(':').map(Number);
+    return (h * 60 + m) < OVERFLOW_MINUTES;
+  });
 
   const getSchedulesForChannel = (id: number) => [
     ...schedulesForDay.filter(s => s.program.channel.id === id),

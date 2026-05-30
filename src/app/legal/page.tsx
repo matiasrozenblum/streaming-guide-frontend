@@ -2,6 +2,7 @@ export const revalidate = 60;
 export const dynamic = 'force-dynamic';
 
 import { ChannelWithSchedules, Category } from '@/types/channel';
+import type { Schedule } from '@/types/schedule';
 import type { Banner } from '@/types/banner';
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
@@ -14,6 +15,7 @@ interface InitialData {
   categoriesEnabled: boolean;
   streamersEnabled: boolean;
   banners: Banner[];
+  nextWeekMondaySchedules: Schedule[];
 }
 
 export default async function Page() {
@@ -104,13 +106,14 @@ export default async function Page() {
 
   // Prepare the initial data with the correct structure
   const initialData: InitialData = {
-    holiday: false, // Legal page doesn't need holiday info
+    holiday: false,
     todaySchedules,
     weekSchedules,
     categories,
     categoriesEnabled,
     streamersEnabled,
-    banners
+    banners,
+    nextWeekMondaySchedules: [],
   };
 
   // Renderiza componente cliente con datos pre-cargados
