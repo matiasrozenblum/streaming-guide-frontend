@@ -35,3 +35,11 @@ export function isBeforeInBuenosAires(target: string | Date): boolean {
     : dayjs(target).tz(TIMEZONE);
   return nowBA.isBefore(targetBA);
 }
+
+export function isSundayInBuenosAires(): boolean {
+  return getBuenosAiresTime().day() === 0;
+}
+
+export function getNextMondayDate(): string {
+  return getBuenosAiresTime().add(1, 'day').format('YYYY-MM-DD');
+}

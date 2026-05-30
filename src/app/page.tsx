@@ -1,7 +1,9 @@
 import HomeClient from '@/components/HomeClient';
 import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
+import type { Schedule } from '@/types/schedule';
 import type { Metadata } from 'next';
+import { isSundayInBuenosAires, getNextMondayDate } from '@/utils/date';
 
 import type { Banner } from '@/types/banner';
 
@@ -13,6 +15,7 @@ interface InitialData {
   categoriesEnabled: boolean;
   streamersEnabled: boolean;
   banners: Banner[];
+  nextWeekMondaySchedules: Schedule[];
 }
 
 async function getInitialData(): Promise<InitialData> {
@@ -65,8 +68,27 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.ok ? res.json() : []).catch(() => []);
 
+    // On Sundays, fetch next week's Monday schedules (with next-week overrides applied)
+    // so Sunday's overflow zone can show the correct next-Monday programs.
+    const nextWeekMondaySchedulesPromise: Promise<Schedule[]> = isSundayInBuenosAires()
+      ? fetch(
+          `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?weekStart=${getNextMondayDate()}`,
+          { next: { revalidate: 300 } }
+        )
+          .then(res => res.ok ? res.json() : [])
+          .then((data: ChannelWithSchedules[]) => {
+            if (!Array.isArray(data)) return [];
+            return data.flatMap(c =>
+              c.schedules
+                .filter(s => s.day_of_week === 'monday')
+                .map(s => ({ ...s, program: { ...s.program, channel: c.channel } }))
+            );
+          })
+          .catch(() => [])
+      : Promise.resolve([]);
+
     // Fetch all data in parallel
-    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData, banners] = await Promise.all([
+    const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData, banners, nextWeekMondaySchedules] = await Promise.all([
       holidayPromise,
       todayPromise,
       weekPromise,
@@ -74,6 +96,7 @@ async function getInitialData(): Promise<InitialData> {
       categoriesEnabledPromise,
       streamersEnabledPromise,
       bannersPromise,
+      nextWeekMondaySchedulesPromise,
     ]);
 
     // Only use banners if streamers are enabled
@@ -88,6 +111,7 @@ async function getInitialData(): Promise<InitialData> {
       categoriesEnabled: categoriesEnabledData === 'true',
       streamersEnabled: streamersEnabledData === 'true',
       banners: finalBanners,
+      nextWeekMondaySchedules: Array.isArray(nextWeekMondaySchedules) ? nextWeekMondaySchedules : [],
     };
   } catch {
     return {
@@ -95,9 +119,10 @@ async function getInitialData(): Promise<InitialData> {
       todaySchedules: [],
       weekSchedules: [],
       categories: [],
-      categoriesEnabled: false, // Default to false on error
-      streamersEnabled: false, // Default to false on error
+      categoriesEnabled: false,
+      streamersEnabled: false,
       banners: [],
+      nextWeekMondaySchedules: [],
     };
   }
 }

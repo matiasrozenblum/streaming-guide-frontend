@@ -15,6 +15,7 @@ import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import BannerCarousel from '@/components/BannerCarousel';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
+import type { Schedule } from '@/types/schedule';
 import type { Banner } from '@/types/banner';
 import Header from './Header';
 import BottomNavigation from './BottomNavigation';
@@ -37,6 +38,7 @@ interface HomeClientProps {
     categoriesEnabled: boolean;
     streamersEnabled: boolean;
     banners: Banner[];
+    nextWeekMondaySchedules: Schedule[];
   };
 }
 
@@ -387,7 +389,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               flexDirection: 'column',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} nextWeekMondaySchedules={initialData.nextWeekMondaySchedules} />}
           </Box>
         </Container>
         <BottomNavigation />
