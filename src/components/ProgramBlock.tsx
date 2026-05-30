@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { useLayoutValues } from '@/constants/layout';
+import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX } from '@/constants/layout';
 import { OpenInNew, Notifications } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
@@ -116,8 +116,8 @@ export const ProgramBlock: React.FC<Props> = ({
   // Handle cross-midnight programs (end < start, no positionOffset) or overflow-injected programs
   const duration = !offset && rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
-  // Handle multiple streams positioning
-  const widthPx = duration * pixelsPerMinute - 1;
+  // Cap at column boundary so blocks never extend past the 28h grid edge
+  const widthPx = Math.max(1, Math.min(duration * pixelsPerMinute - 1, DAY_WITH_OVERFLOW_WIDTH_PX - offsetPx - 1));
   let top: string = '0px';
   let height = '100%';
 

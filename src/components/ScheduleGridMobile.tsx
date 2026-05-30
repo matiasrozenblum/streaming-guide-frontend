@@ -266,7 +266,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
-        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative', overflow: 'hidden' }}>
+        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
           <TimeHeader isMobile={true} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {visibleChannels.map((channel, idx) => (
