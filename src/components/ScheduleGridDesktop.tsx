@@ -309,7 +309,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
             : 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
-        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
+        <Box sx={{ width: `${totalGridWidth}px`, position: 'relative', overflow: 'hidden' }}>
           <TimeHeader isMobile={false} />
           {isToday && <NowIndicator ref={nowIndicatorRef} />}
           {visibleChannels.map((channel, idx) => (
