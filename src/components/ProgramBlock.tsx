@@ -116,8 +116,6 @@ export const ProgramBlock: React.FC<Props> = ({
   // Handle cross-midnight programs (end < start, no positionOffset) or overflow-injected programs
   const duration = !offset && rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
-  // Bail out for split-block fragments that land outside the 28h column boundary
-  if (offsetPx >= DAY_WITH_OVERFLOW_WIDTH_PX) return null;
   // Cap at column boundary so blocks never extend past the 28h grid edge
   const widthPx = Math.max(1, Math.min(duration * pixelsPerMinute - 1, DAY_WITH_OVERFLOW_WIDTH_PX - offsetPx - 1));
   let top: string = '0px';
@@ -407,6 +405,9 @@ export const ProgramBlock: React.FC<Props> = ({
       }
     }
   }, [mousePosition, isTooltipOpenForThis, isMobile]);
+
+  // Bail out for split-block fragments that land outside the 28h column boundary
+  if (offsetPx >= DAY_WITH_OVERFLOW_WIDTH_PX) return null;
 
   // Responsive pill styles
   let pillFontSize = '0.82rem';
