@@ -9,6 +9,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.18.3] - 2026-05-30
+
+### Fixed
+- Banner create/update/delete no longer invalidates the full Next.js Data Cache for the home page. The banners fetch now uses cache tag `banners`, and `/api/revalidate` supports tag-based revalidation. Previously, any banner change triggered `revalidatePath('/')` which busted all server-side caches (including the heavy week-schedules endpoint), causing a Vercel 15-second timeout loop that could take 15–20 minutes to recover from.
+
+---
+
 ## [1.18.2] - 2026-05-26
 
 ### Added

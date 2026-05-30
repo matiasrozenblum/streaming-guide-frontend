@@ -1,31 +1,28 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { revalidatePath } from 'next/cache';
+import { revalidatePath, revalidateTag } from 'next/cache';
 
 export async function POST(req: NextRequest) {
-  console.log(`[Frontend Revalidate] ===== REVALIDATION REQUEST RECEIVED =====`);
-  console.log(`[Frontend Revalidate] Request URL: ${req.url}`);
-  console.log(`[Frontend Revalidate] Request headers:`, Object.fromEntries(req.headers.entries()));
-  
-  const { path, secret } = await req.json();
-  
-  console.log(`[Frontend Revalidate] Received revalidation request for path: ${path}`);
-  console.log(`[Frontend Revalidate] Secret provided: ${secret ? secret.substring(0, 8) + '...' : 'none'}`);
-  console.log(`[Frontend Revalidate] Expected secret: ${process.env.REVALIDATE_SECRET ? process.env.REVALIDATE_SECRET.substring(0, 8) + '...' : 'none'}`);
+  const { path, tag, secret } = await req.json();
 
-  // Protect with a secret token
   if (secret !== process.env.REVALIDATE_SECRET) {
-    console.log(`[Frontend Revalidate] ❌ Invalid secret provided`);
+    console.log(`[Revalidate] ❌ Invalid secret`);
     return NextResponse.json({ message: 'Invalid secret' }, { status: 401 });
   }
 
   try {
-    console.log(`[Frontend Revalidate] ✅ Valid secret, revalidating path: ${path}`);
-    // Revalidate the given path
-    await revalidatePath(path);
-    console.log(`[Frontend Revalidate] ✅ Successfully revalidated path: ${path}`);
-    return NextResponse.json({ revalidated: true, now: Date.now(), path });
+    if (tag) {
+      revalidateTag(tag);
+      console.log(`[Revalidate] ✅ Revalidated tag: ${tag}`);
+      return NextResponse.json({ revalidated: true, now: Date.now(), tag });
+    }
+    if (path) {
+      revalidatePath(path);
+      console.log(`[Revalidate] ✅ Revalidated path: ${path}`);
+      return NextResponse.json({ revalidated: true, now: Date.now(), path });
+    }
+    return NextResponse.json({ message: 'Either path or tag is required' }, { status: 400 });
   } catch (err) {
-    console.log(`[Frontend Revalidate] ❌ Error revalidating path ${path}:`, err);
+    console.log(`[Revalidate] ❌ Error:`, err);
     return NextResponse.json({ message: 'Error revalidating', error: err }, { status: 500 });
   }
-} 
+}

@@ -61,7 +61,7 @@ async function getInitialData(): Promise<InitialData> {
     const bannersPromise = fetch(
       `${process.env.NEXT_PUBLIC_API_URL}/banners/active`,
       {
-        next: { revalidate: 300 } // Cache for 5 minutes, same as API route
+        next: { revalidate: 300, tags: ['banners'] }
       }
     ).then(res => res.ok ? res.json() : []).catch(() => []);
 
