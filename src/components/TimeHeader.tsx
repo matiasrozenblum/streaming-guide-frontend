@@ -2,12 +2,12 @@
 
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { tokens } from '@/design-system/tokens';
 
-const hours = Array.from({ length: 24 }, (_, i) => i);
+const allHours = Array.from({ length: 28 }, (_, i) => i);
 
 interface Props {
   isModalOpen?: boolean;
@@ -18,7 +18,7 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
   const [currentHour, setCurrentHour] = useState(dayjs().hour());
-  const totalWidth = (pixelsPerMinute * 60 * 24) + channelLabelWidth;
+  const totalWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
 
   useEffect(() => {
     if (!isModalOpen) {
@@ -27,22 +27,21 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
         setCurrentHour(newHour);
       };
 
-      // Update every minute
       const intervalId = setInterval(updateCurrentHour, 60000);
       return () => clearInterval(intervalId);
     }
   }, [currentHour, isModalOpen]);
-  
+
   return (
-    <Box 
-      display="flex" 
+    <Box
+      display="flex"
       width={`${totalWidth}px`}
       borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
       height={`${timeHeaderHeight}px`}
       bgcolor={mode === 'light' ? 'white' : '#1e293b'}
       position="sticky"
       zIndex={1000}
-      sx={{ 
+      sx={{
         boxShadow: mode === 'light'
           ? '0 1px 2px rgba(0,0,0,0.05)'
           : '0 1px 2px rgba(0,0,0,0.2)',
@@ -88,16 +87,19 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
           Canal
         </Typography>
       </Box>
-      
-      <Box 
-        display="flex" 
-        width={`${pixelsPerMinute * 60 * 24}px`}
+
+      <Box
+        display="flex"
+        width={`${DAY_WITH_OVERFLOW_WIDTH_PX}px`}
         position="relative"
       >
-        {hours.map((hour) => {
-          const hourTime = dayjs().startOf('day').add(hour, 'hour');
-          const isPast = hour < currentHour;
-          
+        {allHours.map((hour) => {
+          const isOverflow = hour >= 24;
+          const displayHour = isOverflow ? hour - 24 : hour;
+          const hourTime = dayjs().startOf('day').add(displayHour, 'hour');
+          const isPast = !isOverflow && hour < currentHour;
+          const isDimmed = isPast || isOverflow;
+
           return (
             <Box
               key={hour}
@@ -108,9 +110,14 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                opacity: isPast ? 0.5 : 1,
+                opacity: isDimmed ? 0.5 : 1,
                 transition: 'opacity 0.2s ease',
                 position: 'relative',
+                backgroundColor: isOverflow
+                  ? mode === 'dark'
+                    ? 'rgba(255,255,255,0.04)'
+                    : 'rgba(0,0,0,0.04)'
+                  : undefined,
                 '&:not(:last-child)::after': {
                   content: '""',
                   position: 'absolute',
@@ -124,11 +131,11 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
                 }
               }}
             >
-              <Typography 
+              <Typography
                 variant="body2"
                 sx={{
                   fontWeight: hour === currentHour ? 'bold' : 'normal',
-                  color: hour === currentHour 
+                  color: hour === currentHour
                     ? theme.palette.primary.main
                     : mode === 'light' ? '#374151' : '#f1f5f9',
                 }}
@@ -138,6 +145,18 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
             </Box>
           );
         })}
+        {/* Overflow zone border — subtle left edge at midnight */}
+        <Box
+          sx={{
+            position: 'absolute',
+            left: `${DAY_WIDTH_PX}px`,
+            top: 0,
+            width: `${OVERFLOW_WIDTH_PX}px`,
+            height: '100%',
+            borderLeft: `1px dashed ${mode === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`,
+            pointerEvents: 'none',
+          }}
+        />
       </Box>
     </Box>
   );

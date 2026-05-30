@@ -44,6 +44,7 @@ interface Props {
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
+  positionOffset?: number;
   multipleStreamsIndex?: number;
   totalMultipleStreams?: number;
 }
@@ -67,6 +68,7 @@ export const ProgramBlock: React.FC<Props> = ({
   isWeeklyOverride,
   overrideType,
   styleOverride,
+  positionOffset,
   multipleStreamsIndex,
   totalMultipleStreams,
 }) => {
@@ -108,8 +110,11 @@ export const ProgramBlock: React.FC<Props> = ({
   const [endHours, endMinutes] = end.split(':').map(Number);
   const minutesFromMidnightStart = startHours * 60 + startMinutes;
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
-  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
-  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  const offset = positionOffset ?? 0;
+  const offsetPx = (minutesFromMidnightStart + offset) * pixelsPerMinute;
+  const rawDuration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  // Handle cross-midnight programs (end < start, no positionOffset) or overflow-injected programs
+  const duration = !offset && rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
   // Handle multiple streams positioning
   const widthPx = duration * pixelsPerMinute - 1;
@@ -128,7 +133,15 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
-  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  let parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  // Cross-midnight: end time is earlier than start (e.g., 23:00 → 01:00)
+  if (!offset && minutesFromMidnightEnd < minutesFromMidnightStart) {
+    parsedEndWithDate = parsedEndWithDate.add(1, 'day');
+  }
+  // Overflow-injected programs are from the next calendar day
+  if (offset >= 1440) {
+    parsedEndWithDate = parsedEndWithDate.add(Math.floor(offset / 1440), 'day');
+  }
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   // Calculate background opacity as in the default style

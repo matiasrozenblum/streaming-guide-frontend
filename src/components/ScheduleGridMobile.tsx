@@ -11,7 +11,7 @@ import { Schedule } from '@/types/schedule';
 import { ScheduleRow } from './ScheduleRow';
 import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
-import { useLayoutValues } from '@/constants/layout';
+import { useLayoutValues, DAY_ORDER, DAY_WITH_OVERFLOW_WIDTH_PX, OVERFLOW_MINUTES, DayOfWeek } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
@@ -39,7 +39,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
-  const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+  const totalGridWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
 
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -117,8 +117,23 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   }
 
   const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
-  const getSchedulesForChannel = (channelId: number) =>
-    schedulesForDay.filter(s => s.program.channel.id === channelId);
+
+  const nextDay = selectedDay !== 'sunday'
+    ? DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7]
+    : null;
+
+  const schedulesForOverflow = nextDay
+    ? schedules.filter(s => {
+        if (s.day_of_week !== nextDay) return false;
+        const [h, m] = s.start_time.split(':').map(Number);
+        return (h * 60 + m) < OVERFLOW_MINUTES;
+      })
+    : [];
+
+  const getSchedulesForChannel = (channelId: number) => [
+    ...schedulesForDay.filter(s => s.program.channel.id === channelId),
+    ...schedulesForOverflow.filter(s => s.program.channel.id === channelId),
+  ];
 
   // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
@@ -260,22 +275,27 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               channelBackgroundColor={channel.background_color}
-              programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.program.id.toString(),
-                scheduleId: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                subscribed: s.subscribed,
-                description: s.program.description || undefined,
-                panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
-                logo_url: s.program.logo_url || undefined,
-                is_live: s.program.is_live,
-                stream_url: s.program.stream_url || undefined,
-                isWeeklyOverride: s.isWeeklyOverride,
-                overrideType: s.overrideType,
-                style_override: s.program.style_override,
-              }))}
+              programs={getSchedulesForChannel(channel.id).map(s => {
+                const isOverflowProgram = s.day_of_week === nextDay;
+                return {
+                  id: s.program.id.toString(),
+                  scheduleId: s.id.toString(),
+                  name: s.program.name,
+                  start_time: s.start_time.slice(0, 5),
+                  end_time: s.end_time.slice(0, 5),
+                  day_of_week: s.day_of_week,
+                  positionOffset: isOverflowProgram ? 24 * 60 : undefined,
+                  subscribed: s.subscribed,
+                  description: s.program.description || undefined,
+                  panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
+                  logo_url: s.program.logo_url || undefined,
+                  is_live: s.program.is_live,
+                  stream_url: s.program.stream_url || undefined,
+                  isWeeklyOverride: s.isWeeklyOverride,
+                  overrideType: s.overrideType,
+                  style_override: s.program.style_override,
+                };
+              })}
               color={getColorForChannel(idx, mode)}
               isToday={isToday}
             />
