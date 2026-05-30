@@ -3,7 +3,7 @@ import { ClientWrapper } from '@/components/ClientWrapper';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
 import type { Schedule } from '@/types/schedule';
 import type { Metadata } from 'next';
-import { isSundayInBuenosAires, getNextMondayDate } from '@/utils/date';
+import { getNextMondayDate } from '@/utils/date';
 
 import type { Banner } from '@/types/banner';
 
@@ -68,24 +68,22 @@ async function getInitialData(): Promise<InitialData> {
       }
     ).then(res => res.ok ? res.json() : []).catch(() => []);
 
-    // On Sundays, fetch next week's Monday schedules (with next-week overrides applied)
-    // so Sunday's overflow zone can show the correct next-Monday programs.
-    const nextWeekMondaySchedulesPromise: Promise<Schedule[]> = isSundayInBuenosAires()
-      ? fetch(
-          `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?weekStart=${getNextMondayDate()}`,
-          { next: { revalidate: 300 } }
-        )
-          .then(res => res.ok ? res.json() : [])
-          .then((data: ChannelWithSchedules[]) => {
-            if (!Array.isArray(data)) return [];
-            return data.flatMap(c =>
-              c.schedules
-                .filter(s => s.day_of_week === 'monday')
-                .map(s => ({ ...s, program: { ...s.program, channel: c.channel } }))
-            );
-          })
-          .catch(() => [])
-      : Promise.resolve([]);
+    // Always fetch next week's Monday schedules so Sunday's overflow zone shows
+    // the correct next-Monday programs with overrides, regardless of today's day.
+    const nextWeekMondaySchedulesPromise: Promise<Schedule[]> = fetch(
+      `${process.env.NEXT_PUBLIC_API_URL}/channels/with-schedules/week?weekStart=${getNextMondayDate()}`,
+      { next: { revalidate: 300 } }
+    )
+      .then(res => res.ok ? res.json() : [])
+      .then((data: ChannelWithSchedules[]) => {
+        if (!Array.isArray(data)) return [];
+        return data.flatMap(c =>
+          c.schedules
+            .filter(s => s.day_of_week === 'monday')
+            .map(s => ({ ...s, program: { ...s.program, channel: c.channel } }))
+        );
+      })
+      .catch(() => []);
 
     // Fetch all data in parallel
     const [holidayData, todaySchedules, weekSchedules, categories, categoriesEnabledData, streamersEnabledData, banners, nextWeekMondaySchedules] = await Promise.all([
