@@ -278,7 +278,7 @@ export const ScheduleRow = ({
       laneEndTimes[lane] = progEnd;
     }
 
-    laneAssignments.set(prog.id, lane);
+    laneAssignments.set(`${prog.scheduleId}|${prog.id}`, lane);
   }
 
   // Total lanes = chromatic number = max simultaneous programs in this row
@@ -324,7 +324,7 @@ export const ScheduleRow = ({
             const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
-            const laneIndex = laneAssignments.get(p.id);
+            const laneIndex = laneAssignments.get(`${p.scheduleId}|${p.id}`);
             const hasTimeOverlap = laneIndex !== undefined;
 
             return (
