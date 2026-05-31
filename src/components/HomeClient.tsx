@@ -23,7 +23,7 @@ import { useDeviceId } from '@/hooks/useDeviceId';
 import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
-import { isBeforeInBuenosAires } from '@/utils/date';
+import { isBeforeInBuenosAires, getNextMondayDate } from '@/utils/date';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
@@ -51,6 +51,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   const [channelsWithSchedules, setChannelsWithSchedules] = useState(
     Array.isArray(initialData.weekSchedules) ? initialData.weekSchedules : []
+  );
+  const [nextWeekMondaySchedules, setNextWeekMondaySchedules] = useState<Schedule[]>(
+    initialData.nextWeekMondaySchedules ?? []
   );
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
@@ -81,6 +84,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
   }, [setLiveStatuses, initialLiveMap]);
+
+  // Sync next-week Monday schedules when router.refresh() brings new server props (e.g. after override SSE)
+  useEffect(() => {
+    setNextWeekMondaySchedules(initialData.nextWeekMondaySchedules ?? []);
+  }, [initialData.nextWeekMondaySchedules]);
 
   // Banners are now loaded server-side, but we can refresh them periodically if needed
   // Only fetch if streamers are enabled and we don't have banners yet (fallback)
@@ -212,6 +220,25 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
         setLiveStatuses(liveMap);
         setChannelsWithSchedules(Array.isArray(weekData) ? weekData : []);
+
+        // Also refresh next-week Monday schedules for Sunday overflow
+        try {
+          const nextMonday = getNextMondayDate();
+          const nextWeekResp = await api.get<ChannelWithSchedules[]>('/channels/with-schedules/week', {
+            params: { weekStart: nextMonday }
+          });
+          if (isMounted && Array.isArray(nextWeekResp.data)) {
+            setNextWeekMondaySchedules(
+              nextWeekResp.data.flatMap(c =>
+                c.schedules
+                  .filter(s => s.day_of_week === 'monday')
+                  .map(s => ({ ...s, program: { ...s.program, channel: c.channel } }))
+              )
+            );
+          }
+        } catch {
+          // ignore
+        }
       } catch {
         // ignore
       }
@@ -389,7 +416,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               flexDirection: 'column',
             }}
           >
-            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} nextWeekMondaySchedules={initialData.nextWeekMondaySchedules} />}
+            {showSkeleton ? <SkeletonScheduleGrid rowCount={10} /> : <ScheduleGrid channels={channels} schedules={flattened} categories={initialData.categories} categoriesEnabled={initialData.categoriesEnabled} nextWeekMondaySchedules={nextWeekMondaySchedules} />}
           </Box>
         </Container>
         <BottomNavigation />
