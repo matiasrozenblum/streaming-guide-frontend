@@ -547,6 +547,8 @@ export function ProgramSchedulesSection({
                                 InputLabelProps={{ shrink: true }}
                                 size="small"
                                 fullWidth
+                                helperText={formData.endTime && formData.startTime && formData.endTime <= formData.startTime ? 'día siguiente' : ' '}
+                                FormHelperTextProps={{ sx: { color: 'warning.main', m: 0 } }}
                               />
                             </TableCell>
                             <TableCell>
@@ -738,6 +740,8 @@ export function ProgramSchedulesSection({
                   onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
                   InputLabelProps={{ shrink: true }}
                   fullWidth
+                  helperText={formData.endTime && formData.startTime && formData.endTime <= formData.startTime ? 'día siguiente' : ' '}
+                  FormHelperTextProps={{ sx: { color: 'warning.main' } }}
                 />
               </Box>
               <Button
@@ -795,6 +799,8 @@ export function ProgramSchedulesSection({
                     onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, endTime: e.target.value })}
                     InputLabelProps={{ shrink: true }}
                     fullWidth
+                    helperText={bulkTimeRange.endTime && bulkTimeRange.startTime && bulkTimeRange.endTime <= bulkTimeRange.startTime ? 'día siguiente' : ' '}
+                    FormHelperTextProps={{ sx: { color: 'warning.main' } }}
                   />
                   <Button
                     variant="outlined"
