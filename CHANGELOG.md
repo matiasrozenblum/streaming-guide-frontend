@@ -9,6 +9,22 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.19.0] - 2026-05-31
+
+### Added
+- Day overflow zone: cada columna de día extiende 4 horas pasada la medianoche (00:00–03:59), mostrando programas que cruzan la medianoche como un bloque continuo en lugar de divididos en dos días
+- El domingo muestra los programas del próximo lunes en la zona de overflow, incluyendo cambios semanales (cancelaciones, horarios alterados, programas especiales) aplicados en tiempo real
+- Zona de overflow con fondo diferenciado y borde punteado en el límite de medianoche (00:00)
+- Actualización en tiempo real vía SSE: el overflow del domingo reacciona a overrides del lunes siguiente sin recargar la página
+
+### Fixed
+- Programas que cruzan medianoche (ej: 23:00–01:00) ahora se renderizan como un único bloque continuo
+- Programas con el mismo `program.id` en días consecutivos (inyección de overflow) ahora tienen lane assignments independientes, evitando renderizado a media altura
+- El guard de out-of-bounds se ejecuta después de todos los hooks (corrección de rules-of-hooks)
+- La columna de canal sticky y el TimeHeader ya no se rompen por el contenido de overflow
+
+---
+
 ## [1.18.2] - 2026-05-26
 
 ### Added

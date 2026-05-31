@@ -1462,6 +1462,8 @@ export function WeeklyOverridesTable() {
                     InputLabelProps={{ shrink: true }}
                     fullWidth
                     required
+                    helperText={formData.newEndTime && formData.newStartTime && formData.newEndTime <= formData.newStartTime ? 'día siguiente' : ' '}
+                    FormHelperTextProps={{ sx: { color: 'warning.main' } }}
                   />
                 </Box>
 
