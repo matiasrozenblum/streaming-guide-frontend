@@ -1454,17 +1454,25 @@ export function WeeklyOverridesTable() {
                     fullWidth
                     required
                   />
-                  <TextField
-                    label="Nueva hora de fin"
-                    type="time"
-                    value={formData.newEndTime}
-                    onChange={(e) => setFormData({ ...formData, newEndTime: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                    required
-                    helperText={formData.newEndTime && formData.newStartTime && formData.newEndTime <= formData.newStartTime ? 'día siguiente' : ' '}
-                    FormHelperTextProps={{ sx: { color: 'warning.main' } }}
-                  />
+                  <Box sx={{ position: 'relative', flex: 1 }}>
+                    <TextField
+                      label="Nueva hora de fin"
+                      type="time"
+                      value={formData.newEndTime}
+                      onChange={(e) => setFormData({ ...formData, newEndTime: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                      required
+                    />
+                    {formData.newEndTime && formData.newStartTime && formData.newEndTime <= formData.newStartTime && (
+                      <Chip
+                        label="+1 día"
+                        size="small"
+                        color="warning"
+                        sx={{ position: 'absolute', top: -8, right: 8, height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
+                      />
+                    )}
+                  </Box>
                 </Box>
 
                 {formData.overrideType === 'reschedule' && (
