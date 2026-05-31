@@ -24,6 +24,7 @@ import {
   MenuItem,
   Collapse,
   Snackbar,
+  Tooltip,
 } from '@mui/material';
 import VpnKeyIcon from '@mui/icons-material/VpnKey';
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
@@ -82,17 +83,19 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
   >
     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
       <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</Typography>
-      <IconButton
-        aria-label="Editar información"
-        onClick={onEdit}
-        size="small"
-        sx={{
-          color: 'primary.main',
-          '&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
-        }}
-      >
-        <EditIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title="Editar información">
+        <IconButton
+          aria-label="Editar información"
+          onClick={onEdit}
+          size="small"
+          sx={{
+            color: 'primary.main',
+            '&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
+          }}
+        >
+          <EditIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
     </Box>
     {value}
   </Paper>
@@ -873,13 +876,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                        size="small"
-                        onClick={() => setShowPassword(s => !s)}
-                      >
-                        {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                      </IconButton>
+                      <Tooltip title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                        <IconButton
+                          aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          size="small"
+                          onClick={() => setShowPassword(s => !s)}
+                        >
+                          {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
                     </InputAdornment>
                   )
                 }}
@@ -913,13 +918,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <IconButton
-                        aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
-                        size="small"
-                        onClick={() => setShowConfirmPassword(s => !s)}
-                      >
-                        {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
-                      </IconButton>
+                      <Tooltip title={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+                        <IconButton
+                          aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          size="small"
+                          onClick={() => setShowConfirmPassword(s => !s)}
+                        >
+                          {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                        </IconButton>
+                      </Tooltip>
                     </InputAdornment>
                   )
                 }}
