@@ -7,6 +7,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+### Deleted
+
 ---
 
 ## [1.19.1] - 2026-06-03
@@ -33,6 +41,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Programas con el mismo `program.id` en días consecutivos (inyección de overflow) ahora tienen lane assignments independientes, evitando renderizado a media altura
 - El guard de out-of-bounds se ejecuta después de todos los hooks (corrección de rules-of-hooks)
 - La columna de canal sticky y el TimeHeader ya no se rompen por el contenido de overflow
+
+## [1.18.3] - 2026-05-30
+
+### Fixed
+- Banner create/update/delete no longer invalidates the full Next.js Data Cache for the home page. The banners fetch now uses cache tag `banners`, and `/api/revalidate` supports tag-based revalidation. Previously, any banner change triggered `revalidatePath('/')` which busted all server-side caches (including the heavy week-schedules endpoint), causing a Vercel 15-second timeout loop that could take 15–20 minutes to recover from.
 
 ---
 
