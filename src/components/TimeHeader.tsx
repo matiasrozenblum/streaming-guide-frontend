@@ -2,7 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
+import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { tokens } from '@/design-system/tokens';
@@ -145,18 +145,6 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
             </Box>
           );
         })}
-        {/* Overflow zone border — subtle left edge at midnight */}
-        <Box
-          sx={{
-            position: 'absolute',
-            left: `${DAY_WIDTH_PX}px`,
-            top: 0,
-            width: `${OVERFLOW_WIDTH_PX}px`,
-            height: '100%',
-            borderLeft: `1px dashed ${mode === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`,
-            pointerEvents: 'none',
-          }}
-        />
       </Box>
     </Box>
   );
