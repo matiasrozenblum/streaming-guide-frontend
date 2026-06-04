@@ -2,7 +2,7 @@
 
 import { Box, Typography } from '@mui/material';
 import dayjs from 'dayjs';
-import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
+import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useEffect, useState } from 'react';
 import { tokens } from '@/design-system/tokens';
