@@ -314,7 +314,6 @@ export const ScheduleRow = ({
               backgroundColor: mode === 'dark'
                 ? 'rgba(255,255,255,0.04)'
                 : 'rgba(0,0,0,0.04)',
-              borderLeft: `1px dashed ${mode === 'light' ? 'rgba(0,0,0,0.15)' : 'rgba(255,255,255,0.15)'}`,
               pointerEvents: 'none',
               zIndex: 0,
             }}
