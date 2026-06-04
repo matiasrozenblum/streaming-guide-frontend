@@ -320,7 +320,21 @@ export const ScheduleRow = ({
           />
           {allSplitPrograms.map((p) => {
             const currentLiveStatus = liveStatus[p.scheduleId];
-            const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
+            let isLive = currentLiveStatus?.is_live ?? p.is_live ?? false;
+
+            // Cross-midnight programs (end < start in minutes) have a known backend detection
+            // bug: the time-window check fails because end_time minutes < start_time minutes.
+            // Detect airing state client-side when backend returns false and program has a stream.
+            if (!isLive && isToday && p.stream_url && !p.positionOffset) {
+              const startMin = parseTimeMin(p.start_time);
+              const endMin = parseTimeMin(p.end_time);
+              if (endMin < startMin) {
+                const now = new Date();
+                const nowMin = now.getHours() * 60 + now.getMinutes();
+                isLive = nowMin >= startMin || nowMin < endMin;
+              }
+            }
+
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
             const laneIndex = laneAssignments.get(`${p.scheduleId}|${p.id}`);
