@@ -9,6 +9,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.19.1] - 2026-06-03
+
+### Added
+- Indicador "día siguiente" en inputs de hora de fin del backoffice cuando el horario cruza medianoche: chip flotante sobre el campo (reemplaza el helperText anterior)
+
+### Fixed
+- Separador de medianoche en la zona de overflow: se elimina la línea punteada vertical, el límite ahora se indica únicamente con el cambio de fondo (alineado con el estilo de la app mobile)
+- Programas cross-midnight (ej: 23:00–00:30) ahora muestran correctamente el badge LIVE: se corrige la prioridad entre el valor estático del load inicial y el valor actualizado por el poller, y se agrega detección client-side de ventana horaria cross-midnight como fallback ante el bug de cálculo en el backend
+
+---
+
 ## [1.19.0] - 2026-05-31
 
 ### Added
