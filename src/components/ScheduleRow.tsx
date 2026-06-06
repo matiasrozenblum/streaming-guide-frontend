@@ -341,7 +341,7 @@ export const ScheduleRow = ({
             const hasTimeOverlap = laneIndex !== undefined;
 
             return (
-              <React.Fragment key={p.id}>
+              <React.Fragment key={`${p.scheduleId}|${p.id}`}>
                 <ProgramBlock
                   id={p.id}
                   name={p.name}
