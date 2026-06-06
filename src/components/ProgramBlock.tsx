@@ -4,7 +4,7 @@ import React, { useState, useEffect, useRef } from 'react';
 import { Box, Tooltip, Typography, alpha, ClickAwayListener, IconButton, Snackbar, Alert, Button, useTheme } from '@mui/material';
 import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
-import { useLayoutValues } from '@/constants/layout';
+import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX } from '@/constants/layout';
 import { OpenInNew, Notifications } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
@@ -44,6 +44,7 @@ interface Props {
   isWeeklyOverride?: boolean;
   overrideType?: string;
   styleOverride?: string | null;
+  positionOffset?: number;
   multipleStreamsIndex?: number;
   totalMultipleStreams?: number;
 }
@@ -67,6 +68,7 @@ export const ProgramBlock: React.FC<Props> = ({
   isWeeklyOverride,
   overrideType,
   styleOverride,
+  positionOffset,
   multipleStreamsIndex,
   totalMultipleStreams,
 }) => {
@@ -108,11 +110,14 @@ export const ProgramBlock: React.FC<Props> = ({
   const [endHours, endMinutes] = end.split(':').map(Number);
   const minutesFromMidnightStart = startHours * 60 + startMinutes;
   const minutesFromMidnightEnd = endHours * 60 + endMinutes;
-  const offsetPx = minutesFromMidnightStart * pixelsPerMinute;
-  const duration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  const offset = positionOffset ?? 0;
+  const offsetPx = (minutesFromMidnightStart + offset) * pixelsPerMinute;
+  const rawDuration = minutesFromMidnightEnd - minutesFromMidnightStart;
+  // Handle cross-midnight programs (end < start, no positionOffset) or overflow-injected programs
+  const duration = !offset && rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
-  // Handle multiple streams positioning
-  const widthPx = duration * pixelsPerMinute - 1;
+  // Cap at column boundary so blocks never extend past the 28h grid edge
+  const widthPx = Math.max(1, Math.min(duration * pixelsPerMinute - 1, DAY_WITH_OVERFLOW_WIDTH_PX - offsetPx - 1));
   let top: string = '0px';
   let height = '100%';
 
@@ -128,7 +133,15 @@ export const ProgramBlock: React.FC<Props> = ({
 
   const now = dayjs();
   const currentDate = now.format('YYYY-MM-DD');
-  const parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  let parsedEndWithDate = dayjs(`${currentDate} ${end}`, 'YYYY-MM-DD HH:mm');
+  // Cross-midnight: end time is earlier than start (e.g., 23:00 → 01:00)
+  if (!offset && minutesFromMidnightEnd < minutesFromMidnightStart) {
+    parsedEndWithDate = parsedEndWithDate.add(1, 'day');
+  }
+  // Overflow-injected programs are from the next calendar day
+  if (offset >= 1440) {
+    parsedEndWithDate = parsedEndWithDate.add(Math.floor(offset / 1440), 'day');
+  }
   const isPast = isToday && now.isAfter(parsedEndWithDate);
 
   // Calculate background opacity as in the default style
@@ -392,6 +405,9 @@ export const ProgramBlock: React.FC<Props> = ({
       }
     }
   }, [mousePosition, isTooltipOpenForThis, isMobile]);
+
+  // Bail out for split-block fragments that land outside the 28h column boundary
+  if (offsetPx >= DAY_WITH_OVERFLOW_WIDTH_PX) return null;
 
   // Responsive pill styles
   let pillFontSize = '0.82rem';
