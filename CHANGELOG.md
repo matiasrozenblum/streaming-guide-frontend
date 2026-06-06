@@ -7,6 +7,46 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+### Changed
+
+### Fixed
+
+### Deleted
+
+---
+
+## [1.19.1] - 2026-06-03
+
+### Added
+- Indicador "día siguiente" en inputs de hora de fin del backoffice cuando el horario cruza medianoche: chip flotante sobre el campo (reemplaza el helperText anterior)
+
+### Fixed
+- Separador de medianoche en la zona de overflow: se elimina la línea punteada vertical, el límite ahora se indica únicamente con el cambio de fondo (alineado con el estilo de la app mobile)
+- Programas cross-midnight (ej: 23:00–00:30) ahora muestran correctamente el badge LIVE: se corrige la prioridad entre el valor estático del load inicial y el valor actualizado por el poller, y se agrega detección client-side de ventana horaria cross-midnight como fallback ante el bug de cálculo en el backend
+
+---
+
+## [1.19.0] - 2026-05-31
+
+### Added
+- Day overflow zone: cada columna de día extiende 4 horas pasada la medianoche (00:00–03:59), mostrando programas que cruzan la medianoche como un bloque continuo en lugar de divididos en dos días
+- El domingo muestra los programas del próximo lunes en la zona de overflow, incluyendo cambios semanales (cancelaciones, horarios alterados, programas especiales) aplicados en tiempo real
+- Zona de overflow con fondo diferenciado y borde punteado en el límite de medianoche (00:00)
+- Actualización en tiempo real vía SSE: el overflow del domingo reacciona a overrides del lunes siguiente sin recargar la página
+
+### Fixed
+- Programas que cruzan medianoche (ej: 23:00–01:00) ahora se renderizan como un único bloque continuo
+- Programas con el mismo `program.id` en días consecutivos (inyección de overflow) ahora tienen lane assignments independientes, evitando renderizado a media altura
+- El guard de out-of-bounds se ejecuta después de todos los hooks (corrección de rules-of-hooks)
+- La columna de canal sticky y el TimeHeader ya no se rompen por el contenido de overflow
+
+## [1.18.3] - 2026-05-30
+
+### Fixed
+- Banner create/update/delete no longer invalidates the full Next.js Data Cache for the home page. The banners fetch now uses cache tag `banners`, and `/api/revalidate` supports tag-based revalidation. Previously, any banner change triggered `revalidatePath('/')` which busted all server-side caches (including the heavy week-schedules endpoint), causing a Vercel 15-second timeout loop that could take 15–20 minutes to recover from.
+
 ---
 
 ## [1.19.0] - 2026-05-31
