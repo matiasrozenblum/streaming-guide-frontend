@@ -17,6 +17,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.19.2] - 2026-06-06
+
+### Fixed
+- Bloques fantasma al cambiar de día: se corrige la key de `React.Fragment` en `ScheduleRow` usando `scheduleId|programId` en lugar de solo `programId`. El mismo programa puede aparecer dos veces en la lista de un día (como bloque regular y como overflow inyectado del día siguiente), lo que causaba colisión de keys y que React dejara bloques del día anterior visibles al navegar entre días
+
+---
+
 ## [1.19.1] - 2026-06-03
 
 ### Added

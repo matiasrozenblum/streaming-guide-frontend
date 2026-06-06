@@ -12,25 +12,27 @@ const allHours = Array.from({ length: 28 }, (_, i) => i);
 interface Props {
   isModalOpen?: boolean;
   isMobile?: boolean;
+  /** Override the highlighted/dimmed hour (e.g. the ART current hour in ARG display mode). */
+  currentHourOverride?: number;
 }
 
-export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
+export const TimeHeader = ({ isModalOpen, isMobile, currentHourOverride }: Props) => {
   const { channelLabelWidth, timeHeaderHeight, pixelsPerMinute } = useLayoutValues();
   const { mode, theme } = useThemeContext();
-  const [currentHour, setCurrentHour] = useState(dayjs().hour());
+  const [localHour, setLocalHour] = useState(dayjs().hour());
+  const currentHour = currentHourOverride !== undefined ? currentHourOverride : localHour;
   const totalWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
 
   useEffect(() => {
     if (!isModalOpen) {
       const updateCurrentHour = () => {
-        const newHour = dayjs().hour();
-        setCurrentHour(newHour);
+        setLocalHour(dayjs().hour());
       };
 
       const intervalId = setInterval(updateCurrentHour, 60000);
       return () => clearInterval(intervalId);
     }
-  }, [currentHour, isModalOpen]);
+  }, [isModalOpen]);
 
   return (
     <Box
