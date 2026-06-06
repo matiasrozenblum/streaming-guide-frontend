@@ -540,14 +540,24 @@ export function ProgramSchedulesSection({
                               />
                             </TableCell>
                             <TableCell>
-                              <TextField
-                                type="time"
-                                value={formData.endTime}
-                                onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                                InputLabelProps={{ shrink: true }}
-                                size="small"
-                                fullWidth
-                              />
+                              <Box sx={{ position: 'relative', width: '100%' }}>
+                                <TextField
+                                  type="time"
+                                  value={formData.endTime}
+                                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                                  InputLabelProps={{ shrink: true }}
+                                  size="small"
+                                  fullWidth
+                                />
+                                {formData.endTime && formData.startTime && formData.endTime <= formData.startTime && (
+                                  <Chip
+                                    label="+1d"
+                                    size="small"
+                                    color="warning"
+                                    sx={{ position: 'absolute', top: -8, right: 4, height: 16, fontSize: 9, '& .MuiChip-label': { px: 0.5 } }}
+                                  />
+                                )}
+                              </Box>
                             </TableCell>
                             <TableCell>
                               <IconButton aria-label="Aceptar" onClick={handleUpdateSchedule} size="small">
@@ -731,14 +741,24 @@ export function ProgramSchedulesSection({
                   InputLabelProps={{ shrink: true }}
                   fullWidth
                 />
-                <TextField
-                  label="Hora de fin"
-                  type="time"
-                  value={formData.endTime}
-                  onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
-                  InputLabelProps={{ shrink: true }}
-                  fullWidth
-                />
+                <Box sx={{ position: 'relative', flex: 1 }}>
+                  <TextField
+                    label="Hora de fin"
+                    type="time"
+                    value={formData.endTime}
+                    onChange={(e) => setFormData({ ...formData, endTime: e.target.value })}
+                    InputLabelProps={{ shrink: true }}
+                    fullWidth
+                  />
+                  {formData.endTime && formData.startTime && formData.endTime <= formData.startTime && (
+                    <Chip
+                      label="+1 día"
+                      size="small"
+                      color="warning"
+                      sx={{ position: 'absolute', top: -8, right: 8, height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
+                    />
+                  )}
+                </Box>
               </Box>
               <Button
                 variant="contained"
@@ -788,14 +808,24 @@ export function ProgramSchedulesSection({
                     InputLabelProps={{ shrink: true }}
                     fullWidth
                   />
-                  <TextField
-                    label="Hora de fin"
-                    type="time"
-                    value={bulkTimeRange.endTime}
-                    onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, endTime: e.target.value })}
-                    InputLabelProps={{ shrink: true }}
-                    fullWidth
-                  />
+                  <Box sx={{ position: 'relative', flex: 1 }}>
+                    <TextField
+                      label="Hora de fin"
+                      type="time"
+                      value={bulkTimeRange.endTime}
+                      onChange={(e) => setBulkTimeRange({ ...bulkTimeRange, endTime: e.target.value })}
+                      InputLabelProps={{ shrink: true }}
+                      fullWidth
+                    />
+                    {bulkTimeRange.endTime && bulkTimeRange.startTime && bulkTimeRange.endTime <= bulkTimeRange.startTime && (
+                      <Chip
+                        label="+1 día"
+                        size="small"
+                        color="warning"
+                        sx={{ position: 'absolute', top: -8, right: 8, height: 18, fontSize: 10, '& .MuiChip-label': { px: 0.75 } }}
+                      />
+                    )}
+                  </Box>
                   <Button
                     variant="outlined"
                     onClick={handleAddBulkSchedule}

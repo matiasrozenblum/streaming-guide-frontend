@@ -10,7 +10,7 @@ import CategoryTabs from './CategoryTabs';
 import { Channel, Category } from '@/types/channel';
 import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
-import { useLayoutValues } from '@/constants/layout';
+import { useLayoutValues, DAY_ORDER, DAY_WITH_OVERFLOW_WIDTH_PX, OVERFLOW_MINUTES, DayOfWeek } from '@/constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { AccessTime } from '@mui/icons-material';
 import weekday from 'dayjs/plugin/weekday';
@@ -28,9 +28,10 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  nextWeekMondaySchedules?: Schedule[];
 }
 
-export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
   const today = dayjs().format('dddd').toLowerCase();
@@ -40,7 +41,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
   const { mode } = useThemeContext();
   const isToday = selectedDay === today;
-  const totalGridWidth = pixelsPerMinute * 60 * 24 + channelLabelWidth;
+  const totalGridWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
 
@@ -124,8 +125,26 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   }
 
   const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
-  const getSchedulesForChannel = (id: number) =>
-    schedulesForDay.filter(s => s.program.channel.id === id);
+
+  const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
+
+  // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
+  // Falls back to current week's monday schedules (correct for non-overridden programs).
+  const overflowSource =
+    selectedDay === 'sunday' && nextWeekMondaySchedules && nextWeekMondaySchedules.length > 0
+      ? nextWeekMondaySchedules
+      : schedules;
+
+  const schedulesForOverflow = overflowSource.filter(s => {
+    if (s.day_of_week !== nextDay) return false;
+    const [h, m] = s.start_time.split(':').map(Number);
+    return (h * 60 + m) < OVERFLOW_MINUTES;
+  });
+
+  const getSchedulesForChannel = (id: number) => [
+    ...schedulesForDay.filter(s => s.program.channel.id === id),
+    ...schedulesForOverflow.filter(s => s.program.channel.id === id),
+  ];
 
   // Filter channels based on conditional visibility and category
   const visibleChannels = channels.filter(channel => {
@@ -303,22 +322,27 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               channelBackgroundColor={channel.background_color}
-              programs={getSchedulesForChannel(channel.id).map(s => ({
-                id: s.program.id.toString(),
-                scheduleId: s.id.toString(),
-                name: s.program.name,
-                start_time: s.start_time.slice(0, 5),
-                end_time: s.end_time.slice(0, 5),
-                subscribed: s.subscribed,
-                description: s.program.description || undefined,
-                panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
-                logo_url: s.program.logo_url || undefined,
-                is_live: s.program.is_live,
-                stream_url: s.program.stream_url || undefined,
-                isWeeklyOverride: s.isWeeklyOverride,
-                overrideType: s.overrideType,
-                style_override: s.program.style_override,
-              }))}
+              programs={getSchedulesForChannel(channel.id).map(s => {
+                const isOverflowProgram = s.day_of_week === nextDay;
+                return {
+                  id: s.program.id.toString(),
+                  scheduleId: s.id.toString(),
+                  name: s.program.name,
+                  start_time: s.start_time.slice(0, 5),
+                  end_time: s.end_time.slice(0, 5),
+                  day_of_week: s.day_of_week,
+                  positionOffset: isOverflowProgram ? 24 * 60 : undefined,
+                  subscribed: s.subscribed,
+                  description: s.program.description || undefined,
+                  panelists: s.program.panelists?.map(p => ({ id: p.id.toString(), name: p.name })) || undefined,
+                  logo_url: s.program.logo_url || undefined,
+                  is_live: s.program.is_live,
+                  stream_url: s.program.stream_url || undefined,
+                  isWeeklyOverride: s.isWeeklyOverride,
+                  overrideType: s.overrideType,
+                  style_override: s.program.style_override,
+                };
+              })}
               color={getColorForChannel(idx, mode)}
               isToday={isToday}
             />

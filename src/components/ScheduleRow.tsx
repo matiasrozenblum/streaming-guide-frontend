@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
-import { useLayoutValues } from '../constants/layout';
+import { useLayoutValues, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 // Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
@@ -26,7 +26,8 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
 
   const startMinutes = parseTime(program.start_time);
   const endMinutes = parseTime(program.end_time);
-  const duration = endMinutes - startMinutes;
+  const rawDuration = endMinutes - startMinutes;
+  const duration = rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
   // Define thresholds and max block duration based on device
   const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
@@ -59,11 +60,13 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
 };
 
 interface Program {
-  id: string; // program ID
-  scheduleId: string; // schedule ID for live status lookup
+  id: string;
+  scheduleId: string;
   name: string;
   start_time: string;
   end_time: string;
+  day_of_week?: string;
+  positionOffset?: number; // extra minutes offset for overflow-injected programs (= 24*60)
   description?: string;
   panelists?: { id: string; name: string }[];
   logo_url?: string;
@@ -238,41 +241,44 @@ export const ScheduleRow = ({
     return h * 60 + m;
   };
 
+  // Compute effective absolute minute range for a program (handles cross-midnight and overflow offset).
+  const getEffectiveRange = (p: Program) => {
+    const offset = p.positionOffset ?? 0;
+    const startMin = parseTimeMin(p.start_time) + offset;
+    const rawStart = parseTimeMin(p.start_time);
+    const rawEnd = parseTimeMin(p.end_time);
+    const endMin = (!offset && rawEnd < rawStart) ? rawEnd + 1440 : rawEnd + offset;
+    return { startMin, endMin };
+  };
+
   // Greedy interval-graph lane assignment.
-  // Sorts programs by start time, assigns each to the lowest lane whose
-  // previous occupant has already ended. This gives the chromatic number of
-  // the interval graph (= max simultaneous programs), which is the correct
-  // number of vertical "slots" needed.
   const sortedForLanes = [...allSplitPrograms].sort(
-    (a, b) => parseTimeMin(a.start_time) - parseTimeMin(b.start_time)
+    (a, b) => getEffectiveRange(a).startMin - getEffectiveRange(b).startMin
   );
 
-  const laneAssignments = new Map<string, number>(); // program id → lane index
-  const laneEndTimes: number[] = [];               // current end time for each lane
+  const laneAssignments = new Map<string, number>();
+  const laneEndTimes: number[] = [];
 
   for (const prog of sortedForLanes) {
-    const progStart = parseTimeMin(prog.start_time);
-    const progEnd = parseTimeMin(prog.end_time);
+    const { startMin: progStart, endMin: progEnd } = getEffectiveRange(prog);
 
-    // Only include in the multi-lane layout if it truly overlaps another program
     const hasOverlap = allSplitPrograms.some(other => {
       if (other.id === prog.id) return false;
-      return progStart < parseTimeMin(other.end_time) &&
-             parseTimeMin(other.start_time) < progEnd;
+      const { startMin: otherStart, endMin: otherEnd } = getEffectiveRange(other);
+      return progStart < otherEnd && otherStart < progEnd;
     });
 
     if (!hasOverlap) continue;
 
-    // Find the lowest lane that is free at progStart
     let lane = laneEndTimes.findIndex(t => t <= progStart);
     if (lane === -1) {
-      lane = laneEndTimes.length; // open a new lane
+      lane = laneEndTimes.length;
       laneEndTimes.push(progEnd);
     } else {
       laneEndTimes[lane] = progEnd;
     }
 
-    laneAssignments.set(prog.id, lane);
+    laneAssignments.set(`${prog.scheduleId}|${prog.id}`, lane);
   }
 
   // Total lanes = chromatic number = max simultaneous programs in this row
@@ -297,12 +303,41 @@ export const ScheduleRow = ({
         {!isLegalPage ? StandardLayout : LegalLayout}
 
         <Box position="relative" flex="1" height="100%">
+          {/* Overflow zone background — subtle shade for the 4h past midnight */}
+          <Box
+            sx={{
+              position: 'absolute',
+              left: `${DAY_WIDTH_PX}px`,
+              top: 0,
+              width: `${OVERFLOW_WIDTH_PX}px`,
+              height: '100%',
+              backgroundColor: mode === 'dark'
+                ? 'rgba(255,255,255,0.04)'
+                : 'rgba(0,0,0,0.04)',
+              pointerEvents: 'none',
+              zIndex: 0,
+            }}
+          />
           {allSplitPrograms.map((p) => {
             const currentLiveStatus = liveStatus[p.scheduleId];
-            const isLive = p.is_live !== undefined ? p.is_live : (currentLiveStatus?.is_live || false);
+            let isLive = currentLiveStatus?.is_live ?? p.is_live ?? false;
+
+            // Cross-midnight programs (end < start in minutes) have a known backend detection
+            // bug: the time-window check fails because end_time minutes < start_time minutes.
+            // Detect airing state client-side when backend returns false and program has a stream.
+            if (!isLive && isToday && p.stream_url && !p.positionOffset) {
+              const startMin = parseTimeMin(p.start_time);
+              const endMin = parseTimeMin(p.end_time);
+              if (endMin < startMin) {
+                const now = new Date();
+                const nowMin = now.getHours() * 60 + now.getMinutes();
+                isLive = nowMin >= startMin || nowMin < endMin;
+              }
+            }
+
             const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
 
-            const laneIndex = laneAssignments.get(p.id);
+            const laneIndex = laneAssignments.get(`${p.scheduleId}|${p.id}`);
             const hasTimeOverlap = laneIndex !== undefined;
 
             return (
@@ -312,6 +347,7 @@ export const ScheduleRow = ({
                   name={p.name}
                   start={p.start_time}
                   end={p.end_time}
+                  positionOffset={p.positionOffset}
                   description={p.description}
                   panelists={p.panelists}
                   logo_url={p.logo_url}

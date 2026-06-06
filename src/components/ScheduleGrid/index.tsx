@@ -9,15 +9,16 @@ interface Props {
   schedules: Schedule[];
   categories: Category[];
   categoriesEnabled: boolean;
+  nextWeekMondaySchedules?: Schedule[];
 }
 
-export const ScheduleGrid = ({ channels, schedules, categories, categoriesEnabled }: Props) => {
+export const ScheduleGrid = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return isMobile ? (
-    <ScheduleGridMobile channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} />
+    <ScheduleGridMobile channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} nextWeekMondaySchedules={nextWeekMondaySchedules} />
   ) : (
-    <ScheduleGridDesktop channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} />
+    <ScheduleGridDesktop channels={channels} schedules={schedules} categories={categories} categoriesEnabled={categoriesEnabled} nextWeekMondaySchedules={nextWeekMondaySchedules} />
   );
 };
