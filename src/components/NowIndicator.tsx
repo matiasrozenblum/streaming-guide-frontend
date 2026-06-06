@@ -1,59 +1,66 @@
 import { Box } from '@mui/material';
 import dayjs from 'dayjs';
 import { useLayoutValues } from '../constants/layout';
+import { getARTMinutesFromMidnight } from '@/utils/timezone';
 import { forwardRef, useEffect, useState } from 'react';
 
 interface Props {
   isModalOpen?: boolean;
+  /** When non-zero (ARG display mode), position the indicator at ART time instead of local time. */
+  localToARTOffsetMinutes?: number;
 }
 
-export const NowIndicator = forwardRef<HTMLDivElement, Props>(({ isModalOpen }, ref) => {
-  const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
-  const [minutesFromMidnight, setMinutesFromMidnight] = useState(() => {
-    const now = dayjs();
-    return now.diff(now.startOf('day'), 'minute');
-  });
+export const NowIndicator = forwardRef<HTMLDivElement, Props>(
+  ({ isModalOpen, localToARTOffsetMinutes = 0 }, ref) => {
+    const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
 
-  useEffect(() => {
-    if (!isModalOpen) {
-      const updatePosition = () => {
-        const now = dayjs();
-        setMinutesFromMidnight(now.diff(now.startOf('day'), 'minute'));
-      };
+    const computeMinutes = () => {
+      if (localToARTOffsetMinutes !== 0) return getARTMinutesFromMidnight();
+      const now = dayjs();
+      return now.diff(now.startOf('day'), 'minute');
+    };
 
-      // Update every minute
-      const intervalId = setInterval(updatePosition, 60000);
-      return () => clearInterval(intervalId);
-    }
-  }, [isModalOpen]);
+    const [minutesFromMidnight, setMinutesFromMidnight] = useState(computeMinutes);
 
-  const offsetPx = channelLabelWidth + (minutesFromMidnight * pixelsPerMinute);
+    useEffect(() => {
+      setMinutesFromMidnight(computeMinutes());
+      if (!isModalOpen) {
+        const intervalId = setInterval(() => {
+          setMinutesFromMidnight(computeMinutes());
+        }, 60000);
+        return () => clearInterval(intervalId);
+      }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    }, [isModalOpen, localToARTOffsetMinutes]);
 
-  return (
-    <Box
-      ref={ref}
-      position="absolute"
-      top={0}
-      left={`${offsetPx}px`}
-      sx={{
-        width: '2px',
-        height: '100%',
-        backgroundColor: '#f44336',
-        zIndex: 2,
-        clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`,
-        '&::after': {
-          content: '""',
-          position: 'absolute',
-          top: 0,
-          left: '-4px',
-          width: '10px',
-          height: '10px',
+    const offsetPx = channelLabelWidth + (minutesFromMidnight * pixelsPerMinute);
+
+    return (
+      <Box
+        ref={ref}
+        position="absolute"
+        top={0}
+        left={`${offsetPx}px`}
+        sx={{
+          width: '2px',
+          height: '100%',
           backgroundColor: '#f44336',
-          borderRadius: '50%',
-        },
-      }}
-    />
-  );
-});
+          zIndex: 2,
+          clipPath: `polygon(0 0, 100% 0, 100% 100%, 0 100%)`,
+          '&::after': {
+            content: '""',
+            position: 'absolute',
+            top: 0,
+            left: '-4px',
+            width: '10px',
+            height: '10px',
+            backgroundColor: '#f44336',
+            borderRadius: '50%',
+          },
+        }}
+      />
+    );
+  }
+);
 
 NowIndicator.displayName = 'NowIndicator';

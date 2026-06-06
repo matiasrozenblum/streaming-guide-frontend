@@ -1,7 +1,7 @@
 'use client';
 
-import { Box, Typography, Button } from '@mui/material';
-import { useRef, useEffect, useState, useCallback } from 'react';
+import { Box, Typography, Button, ToggleButtonGroup, ToggleButton } from '@mui/material';
+import { useRef, useEffect, useState, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import { ScheduleRow } from './ScheduleRow';
@@ -20,6 +20,8 @@ import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import Footer from './Footer';
+import { getLocalToARTOffsetMinutes, isArgentinaTz, localizeSchedule, getARTMinutesFromMidnight } from '@/utils/timezone';
+import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
 dayjs.extend(weekday);
 
@@ -34,8 +36,18 @@ interface Props {
 export const ScheduleGridDesktop = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement | null>(null);
-  const today = dayjs().format('dddd').toLowerCase();
-  const [selectedDay, setSelectedDay] = useState(today);
+
+  // Timezone: offset from ART in minutes (0 when user is in Argentina)
+  const offsetFromART = useMemo(() => getLocalToARTOffsetMinutes(), []);
+  const isArgentina = useMemo(() => isArgentinaTz(), []);
+  const [showLocalTime, setShowLocalTime] = useState(true);
+
+  // "today" tracks the current day in the active display mode
+  const today = showLocalTime
+    ? dayjs().format('dddd').toLowerCase()
+    : getBuenosAiresDayOfWeek();
+
+  const [selectedDay, setSelectedDay] = useState(() => dayjs().format('dddd').toLowerCase());
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
@@ -45,6 +57,22 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
 
+  // Localized schedules: converted from ART to local time when showLocalTime is true
+  const effectiveOffset = showLocalTime ? offsetFromART : 0;
+  const localizedSchedules = useMemo(
+    () => schedules.map(s => localizeSchedule(s, effectiveOffset)),
+    [schedules, effectiveOffset],
+  );
+  const localizedNextWeekMonday = useMemo(
+    () => (nextWeekMondaySchedules ?? []).map(s => localizeSchedule(s, effectiveOffset)),
+    [nextWeekMondaySchedules, effectiveOffset],
+  );
+
+  // For TimeHeader: highlight the ART current hour in ARG mode
+  const effectiveCurrentHour = showLocalTime
+    ? undefined
+    : Math.floor(getARTMinutesFromMidnight() / 60);
+
   // IntersectionObserver para el botón 'En vivo'
   const { ref: observerRef, inView } = useInView({ threshold: 0 });
   useEffect(() => {
@@ -53,13 +81,14 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
 
   // Scroll al momento actual
   const scrollToNow = useCallback(() => {
-    const now = dayjs();
-    const minutes = now.hour() * 60 + now.minute();
+    const minutes = showLocalTime
+      ? dayjs().hour() * 60 + dayjs().minute()
+      : getARTMinutesFromMidnight();
     scrollRef.current?.scrollTo({
       left: minutes * pixelsPerMinute - 240,
       behavior: 'smooth',
     });
-  }, [pixelsPerMinute]);
+  }, [pixelsPerMinute, showLocalTime]);
 
   useEffect(() => {
     if (isToday) scrollToNow();
@@ -124,16 +153,16 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
     );
   }
 
-  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
+  const schedulesForDay = localizedSchedules.filter(s => s.day_of_week === selectedDay);
 
   const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
   // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
   // Falls back to current week's monday schedules (correct for non-overridden programs).
   const overflowSource =
-    selectedDay === 'sunday' && nextWeekMondaySchedules && nextWeekMondaySchedules.length > 0
-      ? nextWeekMondaySchedules
-      : schedules;
+    selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
+      ? localizedNextWeekMonday
+      : localizedSchedules;
 
   const schedulesForOverflow = overflowSource.filter(s => {
     if (s.day_of_week !== nextDay) return false;
@@ -220,6 +249,22 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
             {day.label}
           </Button>
         ))}
+        {!isArgentina && (
+          <ToggleButtonGroup
+            value={showLocalTime ? 'local' : 'arg'}
+            exclusive
+            onChange={(_, v) => { if (v !== null) setShowLocalTime(v === 'local'); }}
+            size="small"
+            sx={{ ml: 1, height: '40px' }}
+          >
+            <ToggleButton value="local" sx={{ textTransform: 'none', px: 1.5 }}>
+              Hora local
+            </ToggleButton>
+            <ToggleButton value="arg" sx={{ textTransform: 'none', px: 1.5 }}>
+              Hora ARG
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
         {!inView && (
           <Button
             onClick={() => {
@@ -314,8 +359,13 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
-          <TimeHeader isMobile={false} />
-          {isToday && <NowIndicator ref={nowIndicatorRef} />}
+          <TimeHeader isMobile={false} currentHourOverride={effectiveCurrentHour} />
+          {isToday && (
+            <NowIndicator
+              ref={nowIndicatorRef}
+              localToARTOffsetMinutes={showLocalTime ? 0 : offsetFromART}
+            />
+          )}
           {visibleChannels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}

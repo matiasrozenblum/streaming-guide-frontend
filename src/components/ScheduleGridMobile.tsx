@@ -1,8 +1,8 @@
 'use client';
 
-import { Box, Typography, Button, Fab } from '@mui/material';
+import { Box, Typography, Button, Fab, ToggleButtonGroup, ToggleButton } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import CategoryTabs from './CategoryTabs';
@@ -19,6 +19,8 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import Footer from './Footer';
+import { getLocalToARTOffsetMinutes, isArgentinaTz, localizeSchedule, getARTMinutesFromMidnight } from '@/utils/timezone';
+import { getBuenosAiresDayOfWeek } from '@/utils/date';
 
 interface Props {
   channels: Channel[];
@@ -31,8 +33,17 @@ interface Props {
 export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
-  const today = dayjs().format('dddd').toLowerCase();
-  const [selectedDay, setSelectedDay] = useState(today);
+
+  // Timezone
+  const offsetFromART = useMemo(() => getLocalToARTOffsetMinutes(), []);
+  const isArgentina = useMemo(() => isArgentinaTz(), []);
+  const [showLocalTime, setShowLocalTime] = useState(true);
+
+  const today = showLocalTime
+    ? dayjs().format('dddd').toLowerCase()
+    : getBuenosAiresDayOfWeek();
+
+  const [selectedDay, setSelectedDay] = useState(() => dayjs().format('dddd').toLowerCase());
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
   const [containerWidth, setContainerWidth] = useState<number>(0);
@@ -46,6 +57,21 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const typedSession = session as SessionWithToken | null;
   const { streamersEnabled } = useStreamersConfig();
 
+  // Localized schedules
+  const effectiveOffset = showLocalTime ? offsetFromART : 0;
+  const localizedSchedules = useMemo(
+    () => schedules.map(s => localizeSchedule(s, effectiveOffset)),
+    [schedules, effectiveOffset],
+  );
+  const localizedNextWeekMonday = useMemo(
+    () => (nextWeekMondaySchedules ?? []).map(s => localizeSchedule(s, effectiveOffset)),
+    [nextWeekMondaySchedules, effectiveOffset],
+  );
+
+  const effectiveCurrentHour = showLocalTime
+    ? undefined
+    : Math.floor(getARTMinutesFromMidnight() / 60);
+
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
     { label: 'M', value: 'tuesday' },
@@ -57,11 +83,11 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   ];
 
   const scrollToNow = useCallback(() => {
-    const now = dayjs();
-    const minutesFromStart = now.hour() * 60 + now.minute();
-    const scrollPosition = minutesFromStart * pixelsPerMinute - 120;
-    scrollRef.current?.scrollTo({ left: scrollPosition, behavior: 'smooth' });
-  }, [pixelsPerMinute]);
+    const minutes = showLocalTime
+      ? dayjs().hour() * 60 + dayjs().minute()
+      : getARTMinutesFromMidnight();
+    scrollRef.current?.scrollTo({ left: minutes * pixelsPerMinute - 120, behavior: 'smooth' });
+  }, [pixelsPerMinute, showLocalTime]);
 
   const checkNowIndicatorVisibility = useCallback(() => {
     const indicator = nowIndicatorRef.current;
@@ -117,16 +143,16 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     );
   }
 
-  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
+  const schedulesForDay = localizedSchedules.filter(s => s.day_of_week === selectedDay);
 
   const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
   // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
   // Falls back to current week's monday schedules (correct for non-overridden programs).
   const overflowSource =
-    selectedDay === 'sunday' && nextWeekMondaySchedules && nextWeekMondaySchedules.length > 0
-      ? nextWeekMondaySchedules
-      : schedules;
+    selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
+      ? localizedNextWeekMonday
+      : localizedSchedules;
 
   const schedulesForOverflow = overflowSource.filter(s => {
     if (s.day_of_week !== nextDay) return false;
@@ -175,6 +201,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         gap={1}
         pl={1}
         pb={2}
+        alignItems="center"
         sx={{
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
@@ -206,6 +233,22 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             {day.label}
           </Button>
         ))}
+        {!isArgentina && (
+          <ToggleButtonGroup
+            value={showLocalTime ? 'local' : 'arg'}
+            exclusive
+            onChange={(_, v) => { if (v !== null) setShowLocalTime(v === 'local'); }}
+            size="small"
+            sx={{ ml: 'auto', height: '36px', flexShrink: 0 }}
+          >
+            <ToggleButton value="local" sx={{ textTransform: 'none', px: 1 }}>
+              Local
+            </ToggleButton>
+            <ToggleButton value="arg" sx={{ textTransform: 'none', px: 1 }}>
+              ARG
+            </ToggleButton>
+          </ToggleButtonGroup>
+        )}
       </Box>
 
       {/* Category tabs */}
@@ -271,8 +314,13 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
-          <TimeHeader isMobile={true} />
-          {isToday && <NowIndicator ref={nowIndicatorRef} />}
+          <TimeHeader isMobile={true} currentHourOverride={effectiveCurrentHour} />
+          {isToday && (
+            <NowIndicator
+              ref={nowIndicatorRef}
+              localToARTOffsetMinutes={showLocalTime ? 0 : offsetFromART}
+            />
+          )}
           {visibleChannels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
