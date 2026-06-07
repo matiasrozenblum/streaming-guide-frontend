@@ -53,6 +53,13 @@ export function localizeSchedule<
 >(schedule: T, offsetMinutes: number): T {
   if (offsetMinutes === 0) return schedule;
 
+  // 24/7 programs (00:00–23:59) are always on — converting them produces a visual gap
+  // because the "early" local-day portion lives in the previous day's overflow.
+  // These programs are timezone-agnostic by definition: show them as 00:00–23:59 everywhere.
+  if (schedule.start_time.startsWith('00:00') && schedule.end_time.startsWith('23:59')) {
+    return schedule;
+  }
+
   const { time: localStart, dayShift } = addMinutesToTimeStr(schedule.start_time, offsetMinutes);
   const { time: localEnd } = addMinutesToTimeStr(schedule.end_time, offsetMinutes);
 
