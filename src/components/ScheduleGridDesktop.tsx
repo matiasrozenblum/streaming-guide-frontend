@@ -157,10 +157,12 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
 
   const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
-  // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
-  // Falls back to current week's monday schedules (correct for non-overridden programs).
+  // On Sundays in ART-time mode (effectiveOffset === 0), prefer nextWeekMondaySchedules because
+  // the current week's Monday data doesn't include next-week overrides.
+  // In local-timezone mode with a non-zero offset, programs that shifted into Monday are already
+  // in localizedSchedules — using nextWeekMondaySchedules would miss them.
   const overflowSource =
-    selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
+    effectiveOffset === 0 && selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
       ? localizedNextWeekMonday
       : localizedSchedules;
 
