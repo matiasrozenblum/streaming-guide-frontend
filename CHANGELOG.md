@@ -17,6 +17,25 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.20.0] - 2026-06-08
+
+### Added
+- Timezone adaptation: schedule grid now displays program times in the user's local timezone
+- `src/utils/timezone.ts` with `localizeSchedule`, `getLocalToARTOffsetMinutes` utilities
+- Day-of-week shift handling: programs that cross local midnight appear on the correct local day
+- Overflow zone correctly populated for non-Argentina timezones (fixed source selection)
+
+### Changed
+- `ScheduleGridDesktop` and `ScheduleGridMobile` apply ART→local conversion before filtering
+- `NowIndicator` and scroll-to-now always reference local time (no change for Argentina users)
+- `splitLongProgram` fixed for cross-midnight programs: block boundaries now computed with absolute minutes to avoid visual overlaps
+
+### Fixed
+- 24/7 programs (`00:00–23:59`) skipped from timezone conversion — shown as full-day in all timezones to avoid the gap caused by day-shift
+- Overflow zone for non-Argentina users used `nextWeekMondaySchedules` instead of `localizedSchedules`, causing empty overflow on timezone-shifted Sundays
+
+---
+
 ## [1.19.2] - 2026-06-06
 
 ### Fixed

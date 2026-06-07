@@ -13,10 +13,6 @@ export function getLocalToARTOffsetMinutes(): number {
   return getLocalUTCOffsetMinutes() - ART_UTC_OFFSET_MINUTES;
 }
 
-/** True when the user's device is already in the Argentina timezone. */
-export function isArgentinaTz(): boolean {
-  return getLocalToARTOffsetMinutes() === 0;
-}
 
 function shiftDay(day: string, shift: number): string {
   const idx = DAY_ORDER.indexOf(day as DayOfWeek);
@@ -71,14 +67,3 @@ export function localizeSchedule<
   };
 }
 
-/**
- * Given the current local time, return the equivalent minutes-from-midnight in
- * the ART timezone. Used to position the NowIndicator and scroll-to-now when
- * the grid is showing ART (unconverted) schedules.
- */
-export function getARTMinutesFromMidnight(): number {
-  const now = new Date();
-  const localMin = now.getHours() * 60 + now.getMinutes();
-  const offset = getLocalToARTOffsetMinutes();
-  return ((localMin - offset) % (24 * 60) + 24 * 60) % (24 * 60);
-}
