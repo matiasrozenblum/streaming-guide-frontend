@@ -144,11 +144,15 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
 
   const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
-  // For Argentina users (offsetFromART === 0) viewing Sunday, prefer nextWeekMondaySchedules
-  // because the current week's Monday data doesn't include next-week overrides.
-  // For other timezones, programs that shifted into local Monday are already in localizedSchedules.
+  // Sunday overflow always uses nextWeekMondaySchedules (localized).
+  // The overflow shows the start of the NEXT local day (Monday), which semantically belongs
+  // to the upcoming week — same convention as Argentina where Sunday overflow shows next-week
+  // Monday data. For large timezone offsets, next-week Monday programs land outside the
+  // 00:00–04:00 overflow window, so the overflow is intentionally empty; programs from
+  // the current-week's ART Sunday that shift into local Monday already appear in Monday's
+  // main view and should not duplicate into Sunday's overflow.
   const overflowSource =
-    offsetFromART === 0 && selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
+    selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
       ? localizedNextWeekMonday
       : localizedSchedules;
 
