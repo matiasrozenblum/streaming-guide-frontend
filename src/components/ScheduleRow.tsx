@@ -351,7 +351,16 @@ export const ScheduleRow = ({
               }
             }
 
-            const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+            let currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            // For full-day programs forced live client-side, the displayed ART-day schedule
+            // may carry a playlist URL instead of the actual live stream URL. Look up the
+            // live URL via the programId secondary index populated in HomeClient.
+            if (isLive && fullDayScheduleIds.has(p.scheduleId)) {
+              const programId = p.id.includes('-block-') ? p.id.split('-block-')[0] : p.id;
+              const programLive = liveStatus[`p:${programId}`];
+              if (programLive?.stream_url) currentStreamUrl = programLive.stream_url;
+            }
 
             const laneIndex = laneAssignments.get(`${p.scheduleId}|${p.id}`);
             const hasTimeOverlap = laneIndex !== undefined;

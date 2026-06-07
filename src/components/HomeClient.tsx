@@ -74,6 +74,11 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             is_live: sch.program.is_live,
             stream_url: sch.program.stream_url,
           };
+          // Secondary index by programId so non-ART users can find the live stream URL
+          // even when the displayed schedule belongs to a different ART day.
+          if (sch.program.is_live && sch.program.stream_url) {
+            map[`p:${sch.program.id}`] = { is_live: true, stream_url: sch.program.stream_url };
+          }
         })
       );
     }
@@ -215,6 +220,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               is_live: sch.program.is_live,
               stream_url: sch.program.stream_url,
             };
+            if (sch.program.is_live && sch.program.stream_url) {
+              liveMap[`p:${sch.program.id}`] = { is_live: true, stream_url: sch.program.stream_url };
+            }
           })
         );
 
