@@ -38,17 +38,20 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     const blocks: Program[] = [];
     const numBlocks = Math.ceil(duration / maxBlockDuration);
     const actualBlockDuration = Math.ceil(duration / numBlocks);
+    // For cross-midnight programs use absolute end minutes so block boundaries don't collapse
+    const absoluteEnd = rawDuration < 0 ? endMinutes + 1440 : endMinutes;
 
     for (let i = 0; i < numBlocks; i++) {
       const blockStart = startMinutes + (i * actualBlockDuration);
-      const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
+      const absBlockEnd = Math.min(blockStart + actualBlockDuration, absoluteEnd);
+      // Wrap end time back into 0-1439 range; start may exceed 1440 for overflow-zone positioning
+      const blockEnd = absBlockEnd >= 1440 ? absBlockEnd - 1440 : absBlockEnd;
 
       blocks.push({
         ...program,
-        id: `${program.id}-block-${i}`, // Unique ID for each block
+        id: `${program.id}-block-${i}`,
         start_time: formatTime(blockStart),
         end_time: formatTime(blockEnd),
-        // Preserve the original program's live status for all blocks
         is_live: program.is_live,
       });
     }
