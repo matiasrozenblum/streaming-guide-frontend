@@ -238,6 +238,15 @@ export const ScheduleRow = ({
   // Precompute split programs once
   const allSplitPrograms = programs.flatMap(p => splitLongProgram(p, isMobile));
 
+  // 24/7 programs (00:00–23:59) are exempt from timezone conversion, so their ART
+  // schedule ID may not be the one the backend marks live outside ART hours. Since
+  // they are always streaming, force the LIVE badge client-side when viewing today.
+  const fullDayScheduleIds = new Set(
+    programs
+      .filter(p => p.start_time === '00:00' && p.end_time === '23:59')
+      .map(p => p.scheduleId)
+  );
+
   // Helper: convert "HH:MM" to minutes since midnight
   const parseTimeMin = (timeStr: string) => {
     const [h, m] = timeStr.split(':').map(Number);
@@ -324,6 +333,10 @@ export const ScheduleRow = ({
           {allSplitPrograms.map((p) => {
             const currentLiveStatus = liveStatus[p.scheduleId];
             let isLive = currentLiveStatus?.is_live ?? p.is_live ?? false;
+
+            if (!isLive && isToday && fullDayScheduleIds.has(p.scheduleId)) {
+              isLive = true;
+            }
 
             // Cross-midnight programs (end < start in minutes) have a known backend detection
             // bug: the time-window check fails because end_time minutes < start_time minutes.
