@@ -72,6 +72,7 @@ export default function ProgramsPage() {
     youtube_url: '',
     style_override: '',
     is_visible: true,
+    is_premiere: false,
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -126,6 +127,7 @@ export default function ProgramsPage() {
         youtube_url: program.youtube_url || '',
         style_override: program.style_override || '',
         is_visible: program.is_visible ?? true,
+        is_premiere: program.is_premiere ?? false,
       });
     } else {
       setEditingProgram(null);
@@ -137,6 +139,7 @@ export default function ProgramsPage() {
         youtube_url: '',
         style_override: '',
         is_visible: true,
+        is_premiere: false,
       });
     }
     setOpenDialog(true);
@@ -153,6 +156,7 @@ export default function ProgramsPage() {
       youtube_url: '',
       style_override: '',
       is_visible: true,
+      is_premiere: false,
     });
     setPendingSchedules([]);
     setPendingPanelistIds([]);
@@ -393,7 +397,16 @@ export default function ProgramsPage() {
               }
               label="Visible (mostrar en grilla)"
             />
-            
+            <FormControlLabel
+              control={
+                <Checkbox
+                  checked={!!formData.is_premiere}
+                  onChange={(e) => setFormData({ ...formData, is_premiere: e.target.checked })}
+                />
+              }
+              label="Es estreno (YouTube premiere)"
+            />
+
             {/* Schedule Management Section */}
             <ProgramSchedulesSection
               programId={editingProgram?.id || null}
