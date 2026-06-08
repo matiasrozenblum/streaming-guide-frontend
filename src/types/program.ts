@@ -15,4 +15,5 @@ export interface Program {
   channel_name?: string;
   style_override?: string | null;
   is_visible?: boolean;
+  is_premiere?: boolean;
 }

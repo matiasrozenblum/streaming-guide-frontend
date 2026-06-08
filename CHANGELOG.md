@@ -8,6 +8,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- Add `is_premiere` field to Program type and backoffice programs form (feature/premiere-support)
+- Add "Buscar estreno en vivo" action button to backoffice channels table with `/channels/:id/fetch-premiere` API proxy (feature/premiere-support)
 
 ### Changed
 
