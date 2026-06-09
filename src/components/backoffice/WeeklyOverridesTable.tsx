@@ -32,6 +32,8 @@ import {
   InputLabel,
   Select,
   Autocomplete,
+  FormControlLabel,
+  Checkbox,
 } from '@mui/material';
 import {
   Add,
@@ -117,6 +119,7 @@ export function WeeklyOverridesTable() {
       channelId: 0,
       imageUrl: '',
       stream_url: '',
+      is_premiere: false,
     },
   });
   const [error, setError] = useState<string | null>(null);
@@ -230,6 +233,7 @@ export function WeeklyOverridesTable() {
         channelId: 0,
         imageUrl: '',
         stream_url: '',
+        is_premiere: false,
       },
     });
     setOpenDialog(true);
@@ -252,6 +256,7 @@ export function WeeklyOverridesTable() {
         channelId: 0,
         imageUrl: '',
         stream_url: '',
+        is_premiere: false,
       },
     });
     setOpenDialog(true);
@@ -278,6 +283,7 @@ export function WeeklyOverridesTable() {
         channelId: 0,
         imageUrl: '',
         stream_url: '',
+        is_premiere: false,
       },
     });
   };
@@ -303,6 +309,7 @@ export function WeeklyOverridesTable() {
           channelId: number;
           imageUrl?: string;
           stream_url?: string;
+          is_premiere?: boolean;
         };
       }
 
@@ -408,12 +415,14 @@ export function WeeklyOverridesTable() {
         channelId: override.specialProgram.channelId || 0,
         imageUrl: override.specialProgram.imageUrl || '',
         stream_url: override.specialProgram.stream_url || '',
+        is_premiere: override.specialProgram.is_premiere ?? false,
       } : {
         name: '',
         description: '',
         channelId: 0,
         imageUrl: '',
         stream_url: '',
+        is_premiere: false,
       },
     });
     
@@ -1083,6 +1092,7 @@ export function WeeklyOverridesTable() {
                   channelId: 0,
                   imageUrl: '',
                   stream_url: '',
+                  is_premiere: false,
                 },
               });
               setOpenDialog(true);
@@ -1438,6 +1448,18 @@ export function WeeklyOverridesTable() {
                   fullWidth
                   placeholder="https://www.youtube.com/playlist?list=PL... o https://www.youtube.com/watch?v=..."
                   helperText="URL de YouTube playlist o video para el programa especial"
+                />
+                <FormControlLabel
+                  control={
+                    <Checkbox
+                      checked={!!formData.specialProgram.is_premiere}
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        specialProgram: { ...formData.specialProgram, is_premiere: e.target.checked },
+                      })}
+                    />
+                  }
+                  label="Es estreno (YouTube premiere)"
                 />
               </Box>
             )}
