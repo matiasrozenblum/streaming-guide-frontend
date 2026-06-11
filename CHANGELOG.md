@@ -5,7 +5,8 @@ Todas las modificaciones importantes de este proyecto se documentarán en este a
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
-## [Unreleased]
+
+## [1.21.0] - 2026-06-11
 
 ### Added
 - Full-page skeleton loading screen (`HomePageSkeleton`) replaces the bare spinner shown during initial hydration. Matches the site layout: header bar, banner, day-selector pills, category tabs, time header, and 8 channel rows with program block placeholders. Uses deterministic block positions to avoid SSR hydration mismatches.
