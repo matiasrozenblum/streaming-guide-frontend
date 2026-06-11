@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, IconButton, useMediaQuery } from '@mui/material';
+import { Box, IconButton, Tooltip, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
@@ -224,17 +224,23 @@ export const YouTubeGlobalPlayer = () => {
           flexShrink: 0,
         }}>
           {minimized ? (
-            <IconButton aria-label="Maximizar reproductor" onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
-              <CropSquareIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Maximizar reproductor" arrow>
+              <IconButton aria-label="Maximizar reproductor" onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+                <CropSquareIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           ) : (
-            <IconButton aria-label="Minimizar reproductor" onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
-              <CropSquareIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Minimizar reproductor" arrow>
+              <IconButton aria-label="Minimizar reproductor" onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+                <CropSquareIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           )}
-          <IconButton aria-label="Cerrar reproductor" onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
+          <Tooltip title="Cerrar reproductor" arrow>
+            <IconButton aria-label="Cerrar reproductor" onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+              <CloseIcon fontSize="small" />
+            </IconButton>
+          </Tooltip>
         </Box>
 
         <Box sx={{ 
