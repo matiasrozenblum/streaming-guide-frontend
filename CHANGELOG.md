@@ -8,8 +8,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-- Add `is_premiere` field to Program type and backoffice programs form (feature/premiere-support)
-- Add "Buscar estreno en vivo" action button to backoffice channels table with `/channels/:id/fetch-premiere` API proxy (feature/premiere-support)
 
 ### Changed
 
@@ -19,13 +17,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.20.0] - 2026-06-08
+## [1.20.0] - 2026-06-10
 
 ### Added
 - Timezone adaptation: schedule grid now displays program times in the user's local timezone
 - `src/utils/timezone.ts` with `localizeSchedule`, `getLocalToARTOffsetMinutes` utilities
 - Day-of-week shift handling: programs that cross local midnight appear on the correct local day
 - Overflow zone correctly populated for non-Argentina timezones (fixed source selection)
+- `is_premiere?: boolean` field in `Program` type with checkbox "Es estreno" in backoffice programs form (create/edit)
+- `is_premiere?: boolean` in `WeeklyOverride.specialProgram` type with checkbox "Es estreno" in weekly overrides form for Programas Especiales
+- "Buscar estreno en vivo" action button (`PlayCircleOutlined`) in backoffice channels table
+- `POST /api/channels/[id]/fetch-premiere` Next.js proxy route
 
 ### Changed
 - `ScheduleGridDesktop` and `ScheduleGridMobile` apply ART→local conversion before filtering
