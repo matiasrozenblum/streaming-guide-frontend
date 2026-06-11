@@ -23,14 +23,13 @@ export const TimeHeader = ({ isModalOpen, isMobile }: Props) => {
   useEffect(() => {
     if (!isModalOpen) {
       const updateCurrentHour = () => {
-        const newHour = dayjs().hour();
-        setCurrentHour(newHour);
+        setCurrentHour(dayjs().hour());
       };
 
       const intervalId = setInterval(updateCurrentHour, 60000);
       return () => clearInterval(intervalId);
     }
-  }, [currentHour, isModalOpen]);
+  }, [isModalOpen]);
 
   return (
     <Box

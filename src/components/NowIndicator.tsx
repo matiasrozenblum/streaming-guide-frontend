@@ -21,7 +21,6 @@ export const NowIndicator = forwardRef<HTMLDivElement, Props>(({ isModalOpen }, 
         setMinutesFromMidnight(now.diff(now.startOf('day'), 'minute'));
       };
 
-      // Update every minute
       const intervalId = setInterval(updatePosition, 60000);
       return () => clearInterval(intervalId);
     }

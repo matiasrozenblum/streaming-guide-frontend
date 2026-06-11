@@ -2,7 +2,7 @@
 
 import { Box, Typography, Button, Fab } from '@mui/material';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import { useEffect, useState, useRef, useCallback } from 'react';
+import { useEffect, useState, useRef, useCallback, useMemo } from 'react';
 import dayjs from 'dayjs';
 import { TimeHeader } from './TimeHeader';
 import CategoryTabs from './CategoryTabs';
@@ -19,6 +19,7 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import { SessionWithToken } from '@/types/session';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import Footer from './Footer';
+import { getLocalToARTOffsetMinutes, localizeSchedule } from '@/utils/timezone';
 
 interface Props {
   channels: Channel[];
@@ -31,7 +32,12 @@ interface Props {
 export const ScheduleGridMobile = ({ channels, schedules, categories, categoriesEnabled, nextWeekMondaySchedules }: Props) => {
   const scrollRef = useRef<HTMLDivElement>(null);
   const nowIndicatorRef = useRef<HTMLDivElement>(null);
+
+  // Offset from ART in minutes (0 when user is already in Argentina timezone)
+  const offsetFromART = useMemo(() => getLocalToARTOffsetMinutes(), []);
+
   const today = dayjs().format('dddd').toLowerCase();
+
   const [selectedDay, setSelectedDay] = useState(today);
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [showScrollButton, setShowScrollButton] = useState(false);
@@ -46,6 +52,16 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const typedSession = session as SessionWithToken | null;
   const { streamersEnabled } = useStreamersConfig();
 
+  // Schedules converted from ART to the user's local timezone
+  const localizedSchedules = useMemo(
+    () => schedules.map(s => localizeSchedule(s, offsetFromART)),
+    [schedules, offsetFromART],
+  );
+  const localizedNextWeekMonday = useMemo(
+    () => (nextWeekMondaySchedules ?? []).map(s => localizeSchedule(s, offsetFromART)),
+    [nextWeekMondaySchedules, offsetFromART],
+  );
+
   const daysOfWeek = [
     { label: 'L', value: 'monday' },
     { label: 'M', value: 'tuesday' },
@@ -58,9 +74,8 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
 
   const scrollToNow = useCallback(() => {
     const now = dayjs();
-    const minutesFromStart = now.hour() * 60 + now.minute();
-    const scrollPosition = minutesFromStart * pixelsPerMinute - 120;
-    scrollRef.current?.scrollTo({ left: scrollPosition, behavior: 'smooth' });
+    const minutes = now.hour() * 60 + now.minute();
+    scrollRef.current?.scrollTo({ left: minutes * pixelsPerMinute - 120, behavior: 'smooth' });
   }, [pixelsPerMinute]);
 
   const checkNowIndicatorVisibility = useCallback(() => {
@@ -117,16 +132,21 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
     );
   }
 
-  const schedulesForDay = schedules.filter(s => s.day_of_week === selectedDay);
+  const schedulesForDay = localizedSchedules.filter(s => s.day_of_week === selectedDay);
 
   const nextDay = DAY_ORDER[(DAY_ORDER.indexOf(selectedDay as DayOfWeek) + 1) % 7];
 
-  // On Sundays, prefer nextWeekMondaySchedules (has next-week overrides) over current week's monday data.
-  // Falls back to current week's monday schedules (correct for non-overridden programs).
+  // Sunday overflow always uses nextWeekMondaySchedules (localized).
+  // The overflow shows the start of the NEXT local day (Monday), which semantically belongs
+  // to the upcoming week — same convention as Argentina where Sunday overflow shows next-week
+  // Monday data. For large timezone offsets, next-week Monday programs land outside the
+  // 00:00–04:00 overflow window, so the overflow is intentionally empty; programs from
+  // the current-week's ART Sunday that shift into local Monday already appear in Monday's
+  // main view and should not duplicate into Sunday's overflow.
   const overflowSource =
-    selectedDay === 'sunday' && nextWeekMondaySchedules && nextWeekMondaySchedules.length > 0
-      ? nextWeekMondaySchedules
-      : schedules;
+    selectedDay === 'sunday' && localizedNextWeekMonday.length > 0
+      ? localizedNextWeekMonday
+      : localizedSchedules;
 
   const schedulesForOverflow = overflowSource.filter(s => {
     if (s.day_of_week !== nextDay) return false;
@@ -175,6 +195,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
         gap={1}
         pl={1}
         pb={2}
+        alignItems="center"
         sx={{
           backdropFilter: 'blur(8px)',
           overflowX: 'auto',
