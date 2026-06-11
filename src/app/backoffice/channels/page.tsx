@@ -33,6 +33,7 @@ import {
   ArrowUpward,
   ArrowDownward,
   Refresh as RefreshIcon,
+  PlayCircleOutlined,
 } from '@mui/icons-material';
 import { Channel, Category } from '@/types/channel';
 import Image from 'next/image';
@@ -57,6 +58,7 @@ export default function ChannelsPage() {
   const [savingOrder, setSavingOrder] = useState(false);
   const [loadingConfigs, setLoadingConfigs] = useState(false);
   const [clearingCache, setClearingCache] = useState<number | null>(null);
+  const [fetchingPremiere, setFetchingPremiere] = useState<number | null>(null);
   const [uploadingLogo, setUploadingLogo] = useState(false);
   const [logoPreview, setLogoPreview] = useState<string | null>(null);
 
@@ -283,6 +285,38 @@ export default function ChannelsPage() {
     }
   };
 
+  const handleFetchPremiere = async (channel: Channel) => {
+    if (!channel.youtube_channel_id) {
+      setError('El canal no tiene YouTube configurado');
+      return;
+    }
+    try {
+      setFetchingPremiere(channel.id);
+      const res = await fetch(`/api/channels/${channel.id}/fetch-premiere`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      if (!res.ok) {
+        const body = await res.json().catch(() => null);
+        throw new Error(body?.message || 'Error al buscar estreno');
+      }
+      const data = await res.json();
+      const found = data.results?.filter((r: { found: boolean }) => r.found) ?? [];
+      const notFound = data.results?.filter((r: { found: boolean }) => !r.found) ?? [];
+      if (found.length > 0) {
+        setSuccess(`Estreno encontrado para: ${found.map((r: { programName: string }) => r.programName).join(', ')}`);
+      } else if (notFound.length > 0) {
+        setError(`No se encontró estreno en vivo para: ${notFound.map((r: { programName: string }) => r.programName).join(', ')}`);
+      } else {
+        setError('No hay programas en vivo en este momento para este canal');
+      }
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : 'Error al buscar estreno');
+    } finally {
+      setFetchingPremiere(null);
+    }
+  };
+
   const handleLogoFileSelect = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
@@ -444,6 +478,20 @@ export default function ChannelsPage() {
                             color="secondary"
                           >
                             <RefreshIcon />
+                          </IconButton>
+                        </span>
+                      </Tooltip>
+                    )}
+                    {channel.handle && (
+                      <Tooltip title="Buscar estreno en vivo">
+                        <span>
+                          <IconButton
+                            aria-label="Buscar estreno en vivo"
+                            onClick={() => handleFetchPremiere(channel)}
+                            disabled={fetchingPremiere === channel.id}
+                            color="primary"
+                          >
+                            <PlayCircleOutlined />
                           </IconButton>
                         </span>
                       </Tooltip>

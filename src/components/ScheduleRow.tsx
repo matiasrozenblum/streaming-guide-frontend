@@ -38,17 +38,20 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     const blocks: Program[] = [];
     const numBlocks = Math.ceil(duration / maxBlockDuration);
     const actualBlockDuration = Math.ceil(duration / numBlocks);
+    // For cross-midnight programs use absolute end minutes so block boundaries don't collapse
+    const absoluteEnd = rawDuration < 0 ? endMinutes + 1440 : endMinutes;
 
     for (let i = 0; i < numBlocks; i++) {
       const blockStart = startMinutes + (i * actualBlockDuration);
-      const blockEnd = Math.min(blockStart + actualBlockDuration, endMinutes);
+      const absBlockEnd = Math.min(blockStart + actualBlockDuration, absoluteEnd);
+      // Wrap end time back into 0-1439 range; start may exceed 1440 for overflow-zone positioning
+      const blockEnd = absBlockEnd >= 1440 ? absBlockEnd - 1440 : absBlockEnd;
 
       blocks.push({
         ...program,
-        id: `${program.id}-block-${i}`, // Unique ID for each block
+        id: `${program.id}-block-${i}`,
         start_time: formatTime(blockStart),
         end_time: formatTime(blockEnd),
-        // Preserve the original program's live status for all blocks
         is_live: program.is_live,
       });
     }
@@ -235,6 +238,15 @@ export const ScheduleRow = ({
   // Precompute split programs once
   const allSplitPrograms = programs.flatMap(p => splitLongProgram(p, isMobile));
 
+  // 24/7 programs (00:00–23:59) are exempt from timezone conversion, so their ART
+  // schedule ID may not be the one the backend marks live outside ART hours. Since
+  // they are always streaming, force the LIVE badge client-side when viewing today.
+  const fullDayScheduleIds = new Set(
+    programs
+      .filter(p => p.start_time === '00:00' && p.end_time === '23:59')
+      .map(p => p.scheduleId)
+  );
+
   // Helper: convert "HH:MM" to minutes since midnight
   const parseTimeMin = (timeStr: string) => {
     const [h, m] = timeStr.split(':').map(Number);
@@ -322,6 +334,10 @@ export const ScheduleRow = ({
             const currentLiveStatus = liveStatus[p.scheduleId];
             let isLive = currentLiveStatus?.is_live ?? p.is_live ?? false;
 
+            if (!isLive && isToday && fullDayScheduleIds.has(p.scheduleId)) {
+              isLive = true;
+            }
+
             // Cross-midnight programs (end < start in minutes) have a known backend detection
             // bug: the time-window check fails because end_time minutes < start_time minutes.
             // Detect airing state client-side when backend returns false and program has a stream.
@@ -335,7 +351,16 @@ export const ScheduleRow = ({
               }
             }
 
-            const currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+            let currentStreamUrl = currentLiveStatus?.stream_url || p.stream_url;
+
+            // For full-day programs forced live client-side, the displayed ART-day schedule
+            // may carry a playlist URL instead of the actual live stream URL. Look up the
+            // live URL via the programId secondary index populated in HomeClient.
+            if (isLive && fullDayScheduleIds.has(p.scheduleId)) {
+              const programId = p.id.includes('-block-') ? p.id.split('-block-')[0] : p.id;
+              const programLive = liveStatus[`p:${programId}`];
+              if (programLive?.stream_url) currentStreamUrl = programLive.stream_url;
+            }
 
             const laneIndex = laneAssignments.get(`${p.scheduleId}|${p.id}`);
             const hasTimeOverlap = laneIndex !== undefined;
