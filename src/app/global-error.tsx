@@ -5,7 +5,6 @@
 // Fonts and styles are embedded directly — do not rely on globals.css being loaded.
 
 export default function GlobalError({
-    error: _error,
     reset,
 }: {
     error: Error & { digest?: string };
