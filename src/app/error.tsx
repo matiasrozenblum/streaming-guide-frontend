@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 
 export default function Error({
     error,
@@ -13,71 +14,103 @@ export default function Error({
         console.error('Unhandled app error:', error);
     }, [error]);
 
-    return (
-        <div className="min-h-[70vh] flex flex-col items-center justify-center p-6 text-center">
-            <div className="max-w-sm w-full flex flex-col items-center gap-6">
-                {/* Logo – theme-aware */}
-                <div>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src="/img/text.png"
-                        alt="La Guía del Streaming"
-                        className="h-8 w-auto dark:hidden"
-                    />
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                        src="/img/text-white.png"
-                        alt="La Guía del Streaming"
-                        className="h-8 w-auto hidden dark:block"
-                    />
-                </div>
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
 
-                {/* Icon */}
-                <div className="w-20 h-20 bg-amber-100 dark:bg-amber-900/30 rounded-full flex items-center justify-center">
+    return (
+        <Box
+            sx={{
+                minHeight: '100dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 3,
+                background: isDark
+                    ? 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'
+                    : 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)',
+            }}
+        >
+            <Box
+                sx={{
+                    maxWidth: 380,
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                    textAlign: 'center',
+                }}
+            >
+                {/* Logo */}
+                <Box
+                    component="img"
+                    src={isDark ? '/img/text-white.png' : '/img/text.png'}
+                    alt="La Guía del Streaming"
+                    sx={{ height: 36, width: 'auto' }}
+                />
+
+                {/* Icon – amber wifi ring */}
+                <Box
+                    sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                    }}
+                >
                     <svg
-                        className="w-10 h-10 text-amber-500 dark:text-amber-400"
+                        width="40"
+                        height="40"
                         fill="none"
-                        stroke="currentColor"
+                        stroke="#f59e0b"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
                         viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
                     >
-                        <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={1.5}
-                            d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0"
-                        />
+                        <path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
                     </svg>
-                </div>
+                </Box>
 
                 {/* Text */}
-                <div className="space-y-2">
-                    <h1 className="text-2xl font-bold text-gray-900 dark:text-white">
+                <Box>
+                    <Typography variant="h5" fontWeight={700} gutterBottom>
                         Problemas técnicos
-                    </h1>
-                    <p className="text-gray-500 dark:text-gray-400 text-base leading-relaxed">
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
                         Estamos teniendo inconvenientes técnicos.
                         <br />
                         El sitio estará disponible nuevamente en breve.
-                    </p>
-                </div>
+                    </Typography>
+                </Box>
 
-                {/* Actions */}
-                <div className="flex flex-col gap-3 w-full">
-                    <button
+                {/* Buttons */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        fullWidth
                         onClick={() => reset()}
-                        className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-900"
+                        sx={{ borderRadius: 3, py: 1.5, fontWeight: 600 }}
                     >
                         Intentar de nuevo
-                    </button>
-                    <button
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        fullWidth
                         onClick={() => window.location.reload()}
-                        className="w-full py-3 px-4 bg-transparent border border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-300 font-medium rounded-xl hover:bg-gray-50 dark:hover:bg-gray-800 transition-colors focus:outline-none focus:ring-2 focus:ring-gray-300 focus:ring-offset-2"
+                        sx={{ borderRadius: 3, py: 1.5, fontWeight: 600 }}
                     >
                         Recargar página
-                    </button>
-                </div>
-            </div>
-        </div>
+                    </Button>
+                </Box>
+            </Box>
+        </Box>
     );
 }
