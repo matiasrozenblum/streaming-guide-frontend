@@ -1,7 +1,8 @@
 'use client';
 
 import { createContext, useContext, useEffect, useState, useMemo } from 'react';
-import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, CircularProgress, Components } from '@mui/material';
+import { ThemeProvider as MuiThemeProvider, createTheme, Theme, Box, Components } from '@mui/material';
+import { HomePageSkeleton } from '@/components/HomePageSkeleton';
 import type { ThemeOptions } from '@mui/material/styles';
 import { event as gaEvent } from '@/lib/gtag';
 
@@ -174,15 +175,11 @@ export const CustomThemeProvider = ({ children }: { children: React.ReactNode })
 
   if (!mounted) {
     return (
-      <Box 
-        display="flex" 
-        justifyContent="center" 
-        alignItems="center" 
-        minHeight="100dvh"
-        sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#0f172a' }}
-      >
-        <CircularProgress />
-      </Box>
+      <MuiThemeProvider theme={theme}>
+        <Box sx={{ height: '100dvh', overflow: 'hidden' }}>
+          <HomePageSkeleton />
+        </Box>
+      </MuiThemeProvider>
     );
   }
 

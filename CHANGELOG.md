@@ -8,12 +8,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
-
-### Changed
+- Full-page skeleton loading screen (`HomePageSkeleton`) replaces the bare spinner shown during initial hydration. Matches the site layout: header bar, banner, day-selector pills, category tabs, time header, and 8 channel rows with program block placeholders. Uses deterministic block positions to avoid SSR hydration mismatches.
+- `src/app/loading.tsx`: Next.js streaming fallback — on cold starts the skeleton is sent to the browser immediately while `page.tsx` awaits backend data, eliminating the blank-tab experience.
+- `src/app/global-error.tsx`: standalone error page (provides its own `<html>`/`<body>`) for cases where the root layout itself fails (e.g. broken deploy). Embeds Inter font and all styles inline; uses `prefers-color-scheme` for dark mode since the layout's ThemeProvider is unavailable.
 
 ### Fixed
-
-### Deleted
+- Error page (`src/app/error.tsx`) rewritten with MUI components to match the site's design system (gradient background, Inter typography, themed buttons). Previous Tailwind-based version rendered unstyled because Tailwind's PostCSS pipeline does not compile classes for Next.js special-route files in this project's setup.
+- `ThemeContext` loading state: replaced `<CircularProgress />` with `<HomePageSkeleton />` wrapped in `MuiThemeProvider`, so the brief hydration phase renders a recognizable layout instead of a blank spinner.
 
 ---
 

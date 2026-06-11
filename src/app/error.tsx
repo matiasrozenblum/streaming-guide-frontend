@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
+import { Box, Typography, Button, useTheme } from '@mui/material';
 
 export default function Error({
     error,
@@ -10,40 +11,106 @@ export default function Error({
     reset: () => void;
 }) {
     useEffect(() => {
-        // Log the error
         console.error('Unhandled app error:', error);
     }, [error]);
 
+    const theme = useTheme();
+    const isDark = theme.palette.mode === 'dark';
+
     return (
-        <div className="min-h-[70vh] flex flex-col flex-1 items-center justify-center p-4 text-center">
-            <div className="max-w-md w-full bg-white dark:bg-gray-800 p-8 rounded-2xl shadow-lg border border-gray-100 dark:border-gray-700">
-                <div className="w-16 h-16 bg-red-100 dark:bg-red-900/30 rounded-full flex items-center justify-center mx-auto mb-6">
-                    <svg
-                        className="w-8 h-8 text-red-600 dark:text-red-400"
-                        fill="none"
-                        stroke="currentColor"
-                        viewBox="0 0 24 24"
-                        xmlns="http://www.w3.org/2000/svg"
-                    >
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
-                    </svg>
-                </div>
+        <Box
+            sx={{
+                minHeight: '100dvh',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                p: 3,
+                background: isDark
+                    ? 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'
+                    : 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)',
+            }}
+        >
+            <Box
+                sx={{
+                    maxWidth: 380,
+                    width: '100%',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    gap: 3,
+                    textAlign: 'center',
+                }}
+            >
+                {/* Logo */}
+                <Box
+                    component="img"
+                    src={isDark ? '/img/text-white.png' : '/img/text.png'}
+                    alt="La Guía del Streaming"
+                    sx={{ height: 36, width: 'auto' }}
+                />
 
-                <h2 className="text-2xl font-bold text-gray-900 dark:text-white mb-2">
-                    ¡Algo salió mal!
-                </h2>
-
-                <p className="text-gray-600 dark:text-gray-400 mb-8">
-                    Ocurrió un error inesperado de conexión o al cargar la página.
-                </p>
-
-                <button
-                    onClick={() => reset()}
-                    className="w-full py-3 px-4 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-xl transition-colors shadow-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 dark:focus:ring-offset-gray-800"
+                {/* Icon – amber wifi ring */}
+                <Box
+                    sx={{
+                        width: 80,
+                        height: 80,
+                        bgcolor: isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        flexShrink: 0,
+                    }}
                 >
-                    Intentar de nuevo
-                </button>
-            </div>
-        </div>
+                    <svg
+                        width="40"
+                        height="40"
+                        fill="none"
+                        stroke="#f59e0b"
+                        strokeWidth="1.5"
+                        strokeLinecap="round"
+                        strokeLinejoin="round"
+                        viewBox="0 0 24 24"
+                    >
+                        <path d="M8.111 16.404a5.5 5.5 0 017.778 0M12 20h.01m-7.08-7.071c3.904-3.905 10.236-3.905 14.141 0M1.394 9.393c5.857-5.857 15.355-5.857 21.213 0" />
+                    </svg>
+                </Box>
+
+                {/* Text */}
+                <Box>
+                    <Typography variant="h5" fontWeight={700} gutterBottom>
+                        Problemas técnicos
+                    </Typography>
+                    <Typography variant="body1" color="text.secondary">
+                        Estamos teniendo inconvenientes técnicos.
+                        <br />
+                        El sitio estará disponible nuevamente en breve.
+                    </Typography>
+                </Box>
+
+                {/* Buttons */}
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1.5, width: '100%' }}>
+                    <Button
+                        variant="contained"
+                        size="large"
+                        fullWidth
+                        onClick={() => reset()}
+                        sx={{ borderRadius: 3, py: 1.5, fontWeight: 600 }}
+                    >
+                        Intentar de nuevo
+                    </Button>
+                    <Button
+                        variant="outlined"
+                        size="large"
+                        fullWidth
+                        onClick={() => window.location.reload()}
+                        sx={{ borderRadius: 3, py: 1.5, fontWeight: 600 }}
+                    >
+                        Recargar página
+                    </Button>
+                </Box>
+            </Box>
+        </Box>
     );
 }
