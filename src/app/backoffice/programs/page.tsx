@@ -179,9 +179,9 @@ export default function ProgramsPage() {
           return aName.localeCompare(bName, 'es');
         }
         case 'created_desc':
-          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+          return b.id - a.id;
         case 'created_asc':
-          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+          return a.id - b.id;
         default:
           return 0;
       }
