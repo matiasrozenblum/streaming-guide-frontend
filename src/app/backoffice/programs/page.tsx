@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import {
   Box,
   Button,
@@ -11,6 +11,7 @@ import {
   TableContainer,
   TableHead,
   TableRow,
+  TablePagination,
   Typography,
   IconButton,
   Dialog,
@@ -28,15 +29,18 @@ import {
   FormControlLabel,
   Checkbox,
   Tooltip,
+  InputAdornment,
 } from '@mui/material';
 import {
   Add as AddIcon,
   Edit as EditIcon,
   Delete as DeleteIcon,
   Group as GroupIcon,
+  Search as SearchIcon,
 } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
+import { Schedule as ScheduleType } from '@/types/schedule';
 import Image from 'next/image';
 import ProgramPanelistsDialog from '@/components/backoffice/ProgramPanelistsDialog';
 import { ProgramSchedulesSection } from '@/components/backoffice/ProgramSchedulesSection';
@@ -54,8 +58,9 @@ interface PendingSchedule {
   specificDate?: string;
 }
 
+type ScheduleFilterValue = 'all' | 'with' | 'without';
+
 export default function ProgramsPage() {
-  // Forzar sesión y redirigir si no está autenticado
   const { status, session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
 
@@ -80,12 +85,27 @@ export default function ProgramsPage() {
   const [pendingSchedules, setPendingSchedules] = useState<PendingSchedule[]>([]);
   const [pendingPanelistIds, setPendingPanelistIds] = useState<number[]>([]);
 
+  // Search / sort / filter / pagination
+  const [searchTerm, setSearchTerm] = useState('');
+  const [sortBy, setSortBy] = useState('name_asc');
+  const [scheduleFilter, setScheduleFilter] = useState<ScheduleFilterValue>('all');
+  const [page, setPage] = useState(0);
+  const [rowsPerPage, setRowsPerPage] = useState(25);
+  const [programIdsWithSchedules, setProgramIdsWithSchedules] = useState<Set<number>>(new Set());
+  const [schedulesLoaded, setSchedulesLoaded] = useState(false);
+
   useEffect(() => {
     if (status === 'authenticated') {
       fetchPrograms();
       fetchChannels();
+      fetchSchedulesForFilter();
     }
   }, [status]);
+
+  // Reset to first page whenever search/sort/filter changes
+  useEffect(() => {
+    setPage(0);
+  }, [searchTerm, sortBy, scheduleFilter]);
 
   const fetchPrograms = async () => {
     try {
@@ -115,6 +135,63 @@ export default function ProgramsPage() {
       setChannels([]);
     }
   };
+
+  const fetchSchedulesForFilter = async () => {
+    try {
+      const res = await fetch('/api/schedules?raw=true');
+      if (!res.ok) return;
+      const data = (await res.json()) as ScheduleType[];
+      setProgramIdsWithSchedules(new Set(data.map(s => s.program.id)));
+      setSchedulesLoaded(true);
+    } catch {
+      // silently fail — schedule filter will stay disabled
+    }
+  };
+
+  const filteredPrograms = useMemo(() => {
+    const lowerSearch = searchTerm.toLowerCase();
+
+    const filtered = programs.filter(p => {
+      if (searchTerm) {
+        const channelName = channels.find(c => c.id === p.channel_id)?.name ?? '';
+        if (
+          !p.name.toLowerCase().includes(lowerSearch) &&
+          !channelName.toLowerCase().includes(lowerSearch)
+        ) return false;
+      }
+      if (scheduleFilter !== 'all' && schedulesLoaded) {
+        const hasSchedules = programIdsWithSchedules.has(p.id);
+        if (scheduleFilter === 'with' && !hasSchedules) return false;
+        if (scheduleFilter === 'without' && hasSchedules) return false;
+      }
+      return true;
+    });
+
+    return [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case 'name_asc':
+          return a.name.localeCompare(b.name, 'es');
+        case 'name_desc':
+          return b.name.localeCompare(a.name, 'es');
+        case 'channel': {
+          const aName = channels.find(c => c.id === a.channel_id)?.name ?? '';
+          const bName = channels.find(c => c.id === b.channel_id)?.name ?? '';
+          return aName.localeCompare(bName, 'es');
+        }
+        case 'created_desc':
+          return new Date(b.created_at).getTime() - new Date(a.created_at).getTime();
+        case 'created_asc':
+          return new Date(a.created_at).getTime() - new Date(b.created_at).getTime();
+        default:
+          return 0;
+      }
+    });
+  }, [programs, channels, searchTerm, sortBy, scheduleFilter, programIdsWithSchedules, schedulesLoaded]);
+
+  const paginatedPrograms = filteredPrograms.slice(
+    page * rowsPerPage,
+    (page + 1) * rowsPerPage,
+  );
 
   const handleOpenDialog = (program?: Program) => {
     if (program) {
@@ -179,14 +256,11 @@ export default function ProgramsPage() {
       });
       const body = await res.json();
       if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el programa');
-      
-      // If creating a new program and there are pending schedules, create them
+
       if (!editingProgram && pendingSchedules.length > 0 && typedSession?.accessToken) {
         const newProgramId = body.id;
         const channelId = parseInt(formData.channel_id);
-        
         try {
-          // Use bulk creation endpoint
           const bulkData = {
             programId: newProgramId.toString(),
             channelId: channelId.toString(),
@@ -199,7 +273,6 @@ export default function ProgramsPage() {
               ...(s.specificDate && { specificDate: s.specificDate }),
             })),
           };
-          
           const scheduleRes = await fetch('/api/schedules/bulk', {
             method: 'POST',
             headers: {
@@ -208,12 +281,10 @@ export default function ProgramsPage() {
             },
             body: JSON.stringify(bulkData),
           });
-          
           if (!scheduleRes.ok) {
             const scheduleBody = await scheduleRes.json().catch(() => ({}));
             throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
           }
-          
           setSuccess(`Programa creado correctamente con ${pendingSchedules.length} horario(s)`);
         } catch (scheduleErr) {
           console.error('Error creating schedules:', scheduleErr);
@@ -221,12 +292,9 @@ export default function ProgramsPage() {
         }
       }
 
-      // If creating a new program and there are pending panelists, add them
       if (!editingProgram && pendingPanelistIds.length > 0 && typedSession?.accessToken) {
         const newProgramId = body.id;
-        
         try {
-          // Add panelists to the program
           const panelistPromises = pendingPanelistIds.map(panelistId =>
             fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
               method: 'POST',
@@ -236,9 +304,7 @@ export default function ProgramsPage() {
               },
             })
           );
-          
           await Promise.all(panelistPromises);
-          
           const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
           setSuccess(`Programa creado correctamente${scheduleMsg} con ${pendingPanelistIds.length} panelista(s)`);
         } catch (panelistErr) {
@@ -249,8 +315,10 @@ export default function ProgramsPage() {
       } else if (!pendingSchedules.length && !pendingPanelistIds.length) {
         setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
       }
-      
+
       await fetchPrograms();
+      // Refresh schedule filter data after creating a program (it may now have schedules)
+      fetchSchedulesForFilter();
       handleCloseDialog();
     } catch (err: unknown) {
       console.error('Error saving program:', err);
@@ -267,6 +335,7 @@ export default function ProgramsPage() {
         throw new Error(body?.details || 'Error al eliminar el programa');
       }
       await fetchPrograms();
+      fetchSchedulesForFilter();
       setSuccess('Programa eliminado correctamente');
     } catch (err: unknown) {
       console.error('Error deleting program:', err);
@@ -305,6 +374,49 @@ export default function ProgramsPage() {
         </Button>
       </Box>
 
+      {/* Toolbar: search + sort + schedule filter */}
+      <Box sx={{ display: 'flex', gap: 2, mb: 2, flexWrap: 'wrap', alignItems: 'center' }}>
+        <TextField
+          label="Buscar por nombre o canal"
+          variant="outlined"
+          size="small"
+          value={searchTerm}
+          onChange={e => setSearchTerm(e.target.value)}
+          InputProps={{
+            startAdornment: (
+              <InputAdornment position="start">
+                <SearchIcon fontSize="small" />
+              </InputAdornment>
+            ),
+          }}
+          sx={{ flexGrow: 1, minWidth: 220 }}
+        />
+        <FormControl size="small" sx={{ minWidth: 180 }}>
+          <InputLabel>Ordenar por</InputLabel>
+          <Select value={sortBy} onChange={e => setSortBy(e.target.value)} label="Ordenar por">
+            <MenuItem value="name_asc">Nombre A→Z</MenuItem>
+            <MenuItem value="name_desc">Nombre Z→A</MenuItem>
+            <MenuItem value="channel">Canal A→Z</MenuItem>
+            <MenuItem value="created_desc">Más recientes</MenuItem>
+            <MenuItem value="created_asc">Más antiguos</MenuItem>
+          </Select>
+        </FormControl>
+        <Tooltip title={!schedulesLoaded ? 'Cargando datos de horarios…' : ''} arrow>
+          <FormControl size="small" sx={{ minWidth: 160 }} disabled={!schedulesLoaded}>
+            <InputLabel>Horarios</InputLabel>
+            <Select
+              value={scheduleFilter}
+              onChange={e => setScheduleFilter(e.target.value as ScheduleFilterValue)}
+              label="Horarios"
+            >
+              <MenuItem value="all">Todos</MenuItem>
+              <MenuItem value="with">Con horarios</MenuItem>
+              <MenuItem value="without">Sin horarios</MenuItem>
+            </Select>
+          </FormControl>
+        </Tooltip>
+      </Box>
+
       <TableContainer component={Paper}>
         <Table>
           <TableHead>
@@ -318,7 +430,7 @@ export default function ProgramsPage() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {programs.map(program => {
+            {paginatedPrograms.map(program => {
               const channel = channels.find(c => c.id === program.channel_id);
               return (
                 <TableRow key={program.id}>
@@ -371,6 +483,20 @@ export default function ProgramsPage() {
             })}
           </TableBody>
         </Table>
+        <TablePagination
+          component="div"
+          count={filteredPrograms.length}
+          page={page}
+          onPageChange={(_, newPage) => setPage(newPage)}
+          rowsPerPage={rowsPerPage}
+          onRowsPerPageChange={e => {
+            setRowsPerPage(parseInt(e.target.value, 10));
+            setPage(0);
+          }}
+          rowsPerPageOptions={[10, 25, 50, 100]}
+          labelRowsPerPage="Por página:"
+          labelDisplayedRows={({ from, to, count }) => `${from}–${to} de ${count}`}
+        />
       </TableContainer>
 
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
@@ -407,14 +533,12 @@ export default function ProgramsPage() {
               label="Es estreno (YouTube premiere)"
             />
 
-            {/* Schedule Management Section */}
             <ProgramSchedulesSection
               programId={editingProgram?.id || null}
               channelId={formData.channel_id ? parseInt(formData.channel_id) : null}
               onSchedulesChange={setPendingSchedules}
             />
-            
-            {/* Panelist Management Section */}
+
             <ProgramPanelistsSection
               programId={editingProgram?.id || null}
               onPanelistsChange={setPendingPanelistIds}
