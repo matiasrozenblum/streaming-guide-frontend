@@ -7,6 +7,9 @@ import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { ZapCard } from './ZapCard';
+import { ZapSidePanel } from './ZapSidePanel';
+
+const PLAYER_HEIGHT_DESKTOP = 500;
 
 function getLogoBg(bg?: string | null): React.CSSProperties {
   if (!bg) return { backgroundColor: '#FFFFFF' };
@@ -39,17 +42,14 @@ export const YouTubeGlobalPlayer = () => {
   const margin = 20;
   const paddingCompensation = 32;
 
-  // Collapse zap list when minimizing
   useEffect(() => {
     if (minimized) setZapOpen(false);
   }, [minimized]);
 
-  // Reset zap state when player closes
   useEffect(() => {
     if (!open) setZapOpen(false);
   }, [open]);
 
-  // Compute above/below channel lists
   const { aboveItems, belowItems } = useMemo(() => {
     const currentId = playerData?.channelInfo?.channelId;
     if (!currentId) return { aboveItems: [], belowItems: [] };
@@ -147,8 +147,7 @@ export const YouTubeGlobalPlayer = () => {
   if (!open || !playerData) return null;
 
   // Build embed src
-  // NOTE: Do NOT add enablejsapi=1 — this flag causes periodic heartbeat postMessages
-  // that freeze the player after ~3 minutes if no YouTube API handler responds.
+  // NOTE: Do NOT add enablejsapi=1 — causes heartbeat postMessages that freeze player after ~3 min.
   let src = '';
   if (playerData.service === 'youtube') {
     const baseUrl = `https://www.youtube.com/embed/${playerData.embedPath}`;
@@ -164,20 +163,23 @@ export const YouTubeGlobalPlayer = () => {
 
   const getDimensions = () => {
     if (minimized) return { width: minimizedWidth, height: minimizedHeight };
-    if (isMobile) {
-      return { width: '95%', height: isStreamingService ? '54vh' : '52vh' };
-    }
-    return { width: '80%', maxWidth: 800, height: 500 };
+    if (isMobile) return { width: '95%', height: isStreamingService ? '54vh' : '52vh' };
+    return { width: '80%', maxWidth: 800, height: PLAYER_HEIGHT_DESKTOP };
   };
 
   const dimensions = getDimensions();
 
-  // Border radius for the player box changes based on which cards are visible
-  const upperVisible = zapOpen && aboveItems.length > 0 && !minimized;
-  const lowerVisible = zapOpen && belowItems.length > 0 && !minimized;
-  const topRadius = upperVisible ? 0 : minimized ? 12 : 12;
-  const bottomRadius = lowerVisible ? 0 : minimized ? 12 : 12;
-  const playerBorderRadius = `${topRadius}px ${topRadius}px ${bottomRadius}px ${bottomRadius}px`;
+  // Desktop: side panel to the left → player left border becomes flat when panel open
+  // Mobile: cards above/below → player top/bottom become flat when respective card visible
+  const sidePanelOpen = !isMobile && zapOpen && hasZapItems && !minimized;
+  const upperVisible = isMobile && zapOpen && aboveItems.length > 0 && !minimized;
+  const lowerVisible = isMobile && zapOpen && belowItems.length > 0 && !minimized;
+
+  const playerBorderRadius = minimized
+    ? '12px'
+    : isMobile
+      ? `${upperVisible ? 0 : 12}px ${upperVisible ? 0 : 12}px ${lowerVisible ? 0 : 12}px ${lowerVisible ? 0 : 12}px`
+      : `${sidePanelOpen ? 0 : 12}px 12px 12px ${sidePanelOpen ? 0 : 12}px`;
 
   const channelInfo = playerData.channelInfo;
 
@@ -187,12 +189,7 @@ export const YouTubeGlobalPlayer = () => {
       {!minimized && (
         <Box
           onClick={closePlayer}
-          sx={{
-            position: 'fixed',
-            inset: 0,
-            bgcolor: 'rgba(0,0,0,0.75)',
-            zIndex: 1999,
-          }}
+          sx={{ position: 'fixed', inset: 0, bgcolor: 'rgba(0,0,0,0.75)', zIndex: 1999 }}
         />
       )}
 
@@ -209,13 +206,13 @@ export const YouTubeGlobalPlayer = () => {
             left: 0,
             width: '100vw',
             height: '100dvh',
-            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            backgroundColor: 'rgba(0,0,0,0.2)',
             zIndex: 1999,
           }}
         />
       )}
 
-      {/* Outer wrapper: positions the full stack (cards + player) */}
+      {/* Outer wrapper */}
       <Box
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -229,32 +226,42 @@ export const YouTubeGlobalPlayer = () => {
           maxWidth: (dimensions as { maxWidth?: number }).maxWidth,
           zIndex: 2000,
           display: 'flex',
-          flexDirection: 'column',
+          // Desktop: row (side panel left + player right)
+          // Mobile: column (card above + player + card below)
+          flexDirection: !minimized && !isMobile ? 'row' : 'column',
           userSelect: 'none',
           cursor: dragging ? 'grabbing' : 'default',
         }}
       >
-        {/* Upper zap card */}
-        {!minimized && (
-          <ZapCard
-            items={aboveItems}
-            position="above"
-            isOpen={zapOpen}
+        {/* Desktop: side panel (left of player) */}
+        {!minimized && !isMobile && (
+          <ZapSidePanel
+            aboveItems={aboveItems}
+            belowItems={belowItems}
+            isOpen={sidePanelOpen}
+            playerHeight={PLAYER_HEIGHT_DESKTOP}
             onZap={zapToChannel}
           />
+        )}
+
+        {/* Mobile: upper card */}
+        {!minimized && isMobile && (
+          <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={zapToChannel} />
         )}
 
         {/* Player box */}
         <Box
           sx={{
             bgcolor: '#1E293B',
-            borderRadius: minimized ? 3 : playerBorderRadius,
+            borderRadius: playerBorderRadius,
             boxShadow: 24,
             p: isMobile && !minimized ? 1 : 2,
             overflow: 'hidden',
             display: 'flex',
             flexDirection: 'column',
             height: dimensions.height,
+            // On desktop the player is the flex "main" area
+            flex: !minimized && !isMobile ? '1 1 auto' : undefined,
             transition: 'border-radius 200ms ease',
           }}
         >
@@ -268,7 +275,7 @@ export const YouTubeGlobalPlayer = () => {
               flexShrink: 0,
             }}
           >
-            {/* Zap toggle (only when maximized and zap items exist) */}
+            {/* Zap toggle */}
             {!minimized && hasZapItems && (
               <IconButton
                 aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
@@ -283,7 +290,7 @@ export const YouTubeGlobalPlayer = () => {
               </IconButton>
             )}
 
-            {/* Channel mini-logo + name (maximized only) */}
+            {/* Channel mini-logo + name */}
             {!minimized && channelInfo && (
               <>
                 <Box
@@ -326,7 +333,6 @@ export const YouTubeGlobalPlayer = () => {
 
             <Box sx={{ flex: 1 }} />
 
-            {/* Minimize / maximize */}
             <IconButton
               aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
               onClick={minimized ? maximizePlayer : minimizePlayer}
@@ -336,7 +342,6 @@ export const YouTubeGlobalPlayer = () => {
               <CropSquareIcon fontSize="small" />
             </IconButton>
 
-            {/* Close */}
             <IconButton
               aria-label="Cerrar reproductor"
               onClick={closePlayer}
@@ -348,15 +353,7 @@ export const YouTubeGlobalPlayer = () => {
           </Box>
 
           {/* iframe */}
-          <Box
-            sx={{
-              flexGrow: 1,
-              width: '100%',
-              borderRadius: 2,
-              overflow: 'hidden',
-              minHeight: 0,
-            }}
-          >
+          <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden', minHeight: 0 }}>
             <iframe
               width="100%"
               height="100%"
@@ -369,14 +366,9 @@ export const YouTubeGlobalPlayer = () => {
           </Box>
         </Box>
 
-        {/* Lower zap card */}
-        {!minimized && (
-          <ZapCard
-            items={belowItems}
-            position="below"
-            isOpen={zapOpen}
-            onZap={zapToChannel}
-          />
+        {/* Mobile: lower card */}
+        {!minimized && isMobile && (
+          <ZapCard items={belowItems} position="below" isOpen={zapOpen} onZap={zapToChannel} />
         )}
       </Box>
     </>
