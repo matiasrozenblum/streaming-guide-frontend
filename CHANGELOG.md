@@ -6,6 +6,13 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.22.0] - 2026-06-14
+
+### Added
+- Backoffice programs page: live search by name or channel, sort selector (name A→Z / Z→A, channel A→Z, newest / oldest by id), schedule filter (all / with schedules / without schedules), and client-side pagination (10/25/50/100 per page).
+
+---
+
 ## [1.21.0] - 2026-06-11
 
 ### Added

@@ -1,19 +1,37 @@
 'use client';
 
-import { Box, IconButton, useMediaQuery } from '@mui/material';
+import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
+import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
-import { useEffect, useRef, useState, useCallback } from 'react';
-import { useTheme } from '@mui/material/styles';
+import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
+import { ZapCard } from './ZapCard';
+
+function getLogoBg(bg?: string | null): React.CSSProperties {
+  if (!bg) return { backgroundColor: '#FFFFFF' };
+  if (bg.startsWith('linear-gradient')) return { background: bg };
+  if (bg.includes('gradient')) return { backgroundColor: '#FFFFFF' };
+  return { backgroundColor: bg };
+}
 
 export const YouTubeGlobalPlayer = () => {
-  const { playerData, open, minimized, closePlayer, minimizePlayer, maximizePlayer } = useYouTubePlayer();
+  const {
+    playerData,
+    open,
+    minimized,
+    zapList,
+    closePlayer,
+    minimizePlayer,
+    maximizePlayer,
+    zapToChannel,
+  } = useYouTubePlayer();
+
   const isMobile = useMediaQuery('(max-width:600px)');
-  const theme = useTheme();
   const containerRef = useRef<HTMLDivElement>(null);
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [dragging, setDragging] = useState(false);
+  const [zapOpen, setZapOpen] = useState(false);
   const offset = useRef({ x: 0, y: 0 });
 
   const minimizedWidth = isMobile ? 300 : 340;
@@ -21,79 +39,97 @@ export const YouTubeGlobalPlayer = () => {
   const margin = 20;
   const paddingCompensation = 32;
 
-  const buttonBgColor = theme.palette.mode === 'dark' ? '#1e293b' : '#f5f5f5';
+  // Collapse zap list when minimizing
+  useEffect(() => {
+    if (minimized) setZapOpen(false);
+  }, [minimized]);
 
-  const moveTo = useCallback((clientX: number, clientY: number) => {
-    if (!dragging) return;
-    
-    const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
-    const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
-    
-    setPosition({ x: clampedX, y: clampedY });
-  }, [dragging, minimizedWidth, minimizedHeight]);
-  
+  // Reset zap state when player closes
+  useEffect(() => {
+    if (!open) setZapOpen(false);
+  }, [open]);
+
+  // Compute above/below channel lists
+  const { aboveItems, belowItems } = useMemo(() => {
+    const currentId = playerData?.channelInfo?.channelId;
+    if (!currentId) return { aboveItems: [], belowItems: [] };
+
+    const idx = zapList.findIndex((z) => z.id === currentId);
+    if (idx === -1) return { aboveItems: [], belowItems: zapList.filter((z) => z.videoUrl !== null) };
+
+    const above = zapList.slice(0, idx).filter((z) => z.videoUrl !== null);
+    const below = zapList.slice(idx + 1).filter((z) => z.videoUrl !== null);
+    return { aboveItems: above, belowItems: below };
+  }, [zapList, playerData?.channelInfo?.channelId]);
+
+  const hasZapItems = aboveItems.length > 0 || belowItems.length > 0;
+
+  const moveTo = useCallback(
+    (clientX: number, clientY: number) => {
+      if (!dragging) return;
+      const clampedX = Math.max(0, Math.min(clientX - offset.current.x, window.innerWidth - minimizedWidth));
+      const clampedY = Math.max(0, Math.min(clientY - offset.current.y, window.innerHeight - minimizedHeight));
+      setPosition({ x: clampedX, y: clampedY });
+    },
+    [dragging, minimizedWidth, minimizedHeight],
+  );
+
   const handleMouseUp = useCallback(() => {
-    if (dragging) {
-      setDragging(false);
-    }
+    if (dragging) setDragging(false);
   }, [dragging]);
-  
-  const handleMouseMove = useCallback((e: MouseEvent) => {
-    moveTo(e.clientX, e.clientY);
-  }, [moveTo]);
-  
-  const handleTouchMove = useCallback((e: TouchEvent) => {
-    if (!dragging) return;
-    e.preventDefault();
-    const touch = e.touches[0];
-    moveTo(touch.clientX, touch.clientY);
-  }, [dragging, moveTo]);
+
+  const handleMouseMove = useCallback(
+    (e: MouseEvent) => moveTo(e.clientX, e.clientY),
+    [moveTo],
+  );
+
+  const handleTouchMove = useCallback(
+    (e: TouchEvent) => {
+      if (!dragging) return;
+      e.preventDefault();
+      const touch = e.touches[0];
+      moveTo(touch.clientX, touch.clientY);
+    },
+    [dragging, moveTo],
+  );
 
   useEffect(() => {
     if (minimized) {
-      if (isMobile) {
-        setPosition({
-          x: (window.innerWidth - minimizedWidth) / 2,
-          y: window.innerHeight - minimizedHeight - margin - paddingCompensation,
-        });
-      } else {
-        setPosition({
-          x: window.innerWidth - minimizedWidth - margin,
-          y: window.innerHeight - minimizedHeight - margin - paddingCompensation,
-        });
-      }
+      setPosition(
+        isMobile
+          ? {
+              x: (window.innerWidth - minimizedWidth) / 2,
+              y: window.innerHeight - minimizedHeight - margin - paddingCompensation,
+            }
+          : {
+              x: window.innerWidth - minimizedWidth - margin,
+              y: window.innerHeight - minimizedHeight - margin - paddingCompensation,
+            },
+      );
     }
   }, [minimized, isMobile, minimizedWidth, minimizedHeight]);
 
   const handleMouseDown = (e: React.MouseEvent<HTMLDivElement>) => {
+    if (!minimized) return;
     if ((e.target as HTMLElement).closest('button')) return;
     setDragging(true);
-    offset.current = {
-      x: e.clientX - position.x,
-      y: e.clientY - position.y,
-    };
+    offset.current = { x: e.clientX - position.x, y: e.clientY - position.y };
   };
 
   const handleTouchStart = (e: React.TouchEvent<HTMLDivElement>) => {
+    if (!minimized) return;
     if ((e.target as HTMLElement).closest('button')) return;
     const touch = e.touches[0];
     setDragging(true);
-    offset.current = {
-      x: touch.clientX - position.x,
-      y: touch.clientY - position.y,
-    };
+    offset.current = { x: touch.clientX - position.x, y: touch.clientY - position.y };
   };
 
   useEffect(() => {
-    if (!open) return;
-
-    if (dragging) {
-      window.addEventListener('mousemove', handleMouseMove);
-      window.addEventListener('mouseup', handleMouseUp);
-      window.addEventListener('touchmove', handleTouchMove, { passive: false });
-      window.addEventListener('touchend', handleMouseUp);
-    }
-
+    if (!open || !dragging) return;
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    window.addEventListener('touchmove', handleTouchMove, { passive: false });
+    window.addEventListener('touchend', handleMouseUp);
     return () => {
       window.removeEventListener('mousemove', handleMouseMove);
       window.removeEventListener('mouseup', handleMouseUp);
@@ -103,94 +139,83 @@ export const YouTubeGlobalPlayer = () => {
   }, [dragging, open, handleMouseMove, handleMouseUp, handleTouchMove]);
 
   useEffect(() => {
-    const handleTouchMove = (e: TouchEvent) => {
-      e.preventDefault();
-    };
-  
-    if (dragging) {
-      document.addEventListener('touchmove', handleTouchMove, { passive: false });
-    }
-  
-    return () => {
-      document.removeEventListener('touchmove', handleTouchMove);
-    };
+    const handler = (e: TouchEvent) => e.preventDefault();
+    if (dragging) document.addEventListener('touchmove', handler, { passive: false });
+    return () => document.removeEventListener('touchmove', handler);
   }, [dragging]);
 
   if (!open || !playerData) return null;
 
-  // Build embed URL based on service type
-  // NOTE: Do NOT add enablejsapi=1 — this flag enables the YouTube IFrame API and
-  // causes the player to send periodic heartbeat postMessages to the parent frame.
-  // Since this component has no YouTube API code to respond, the player detects an
-  // unresponsive channel after ~3 minutes and freezes/blanks the video.
+  // Build embed src
+  // NOTE: Do NOT add enablejsapi=1 — this flag causes periodic heartbeat postMessages
+  // that freeze the player after ~3 minutes if no YouTube API handler responds.
   let src = '';
   if (playerData.service === 'youtube') {
     const baseUrl = `https://www.youtube.com/embed/${playerData.embedPath}`;
-    src = playerData.embedPath.includes('?')
-      ? `${baseUrl}&autoplay=1`
-      : `${baseUrl}?autoplay=1`;
+    src = playerData.embedPath.includes('?') ? `${baseUrl}&autoplay=1` : `${baseUrl}?autoplay=1`;
   } else if (playerData.service === 'twitch') {
-    // Twitch embed requires parent domain for security
     const parent = typeof window !== 'undefined' ? window.location.hostname : '';
     src = `https://player.twitch.tv/?channel=${playerData.embedPath}&parent=${parent}&autoplay=true`;
   } else if (playerData.service === 'kick') {
     src = `https://player.kick.com/${playerData.embedPath}?autoplay=true`;
   }
 
-  // Determine if this is a streaming service (Twitch/Kick) that benefits from larger mobile popup
   const isStreamingService = playerData.service === 'twitch' || playerData.service === 'kick';
-  
-  // Calculate responsive dimensions
-  const getPopupDimensions = () => {
-    if (minimized) {
-      return {
-        width: minimizedWidth,
-        height: minimizedHeight,
-      };
-    }
-    
+
+  const getDimensions = () => {
+    if (minimized) return { width: minimizedWidth, height: minimizedHeight };
     if (isMobile) {
-      // Mobile: 95% width, height calculated to maintain ~16:9 aspect ratio
-      // Account for padding (8px top + 8px bottom = 16px) and controls (~40px)
-      // For 95% width, approximate 16:9 height would be: width * (9/16)
-      // Using viewport width as reference: vw * 0.95 * (9/16) ≈ 53.4vw
-      // But we use vh for consistency, targeting ~50-55vh for better aspect ratio
-      return {
-        width: '95%',
-        height: isStreamingService ? '54vh' : '52vh',
-      };
+      return { width: '95%', height: isStreamingService ? '54vh' : '52vh' };
     }
-    
-    // Desktop: keep current dimensions
-    return {
-      width: '80%',
-      maxWidth: 800,
-      height: 500,
-    };
+    return { width: '80%', maxWidth: 800, height: 500 };
   };
 
-  const dimensions = getPopupDimensions();
+  const dimensions = getDimensions();
+
+  // Border radius for the player box changes based on which cards are visible
+  const upperVisible = zapOpen && aboveItems.length > 0 && !minimized;
+  const lowerVisible = zapOpen && belowItems.length > 0 && !minimized;
+  const topRadius = upperVisible ? 0 : minimized ? 12 : 12;
+  const bottomRadius = lowerVisible ? 0 : minimized ? 12 : 12;
+  const playerBorderRadius = `${topRadius}px ${topRadius}px ${bottomRadius}px ${bottomRadius}px`;
+
+  const channelInfo = playerData.channelInfo;
 
   return (
     <>
-      {minimized && dragging && (
-         <Box
-         onTouchStart={(e) => e.preventDefault()}
-         onTouchMove={(e) => e.preventDefault()}
-         onTouchEnd={(e) => e.preventDefault()}
-         onMouseDown={(e) => e.preventDefault()}
-         sx={{
-           position: 'fixed',
-           top: 0,
-           left: 0,
-           width: '100vw',
-           height: '100dvh',
-           backgroundColor: 'rgba(0, 0, 0, 0.2)',
-           zIndex: 1999,
-         }}
-       />
+      {/* Dark overlay for maximized state */}
+      {!minimized && (
+        <Box
+          onClick={closePlayer}
+          sx={{
+            position: 'fixed',
+            inset: 0,
+            bgcolor: 'rgba(0,0,0,0.75)',
+            zIndex: 1999,
+          }}
+        />
       )}
 
+      {/* Drag capture overlay (minimized + dragging) */}
+      {minimized && dragging && (
+        <Box
+          onTouchStart={(e) => e.preventDefault()}
+          onTouchMove={(e) => e.preventDefault()}
+          onTouchEnd={(e) => e.preventDefault()}
+          onMouseDown={(e) => e.preventDefault()}
+          sx={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100dvh',
+            backgroundColor: 'rgba(0, 0, 0, 0.2)',
+            zIndex: 1999,
+          }}
+        />
+      )}
+
+      {/* Outer wrapper: positions the full stack (cards + player) */}
       <Box
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -201,59 +226,158 @@ export const YouTubeGlobalPlayer = () => {
           left: minimized ? position.x : '50%',
           transform: minimized ? 'none' : 'translate(-50%, -50%)',
           width: dimensions.width,
-          maxWidth: dimensions.maxWidth,
-          height: dimensions.height,
-          bgcolor: 'background.paper',
-          borderRadius: 3,
-          boxShadow: 24,
-          p: isMobile && !minimized ? 1 : 2, // Reduced padding on mobile (8px vs 16px)
-          overflow: 'hidden',
+          maxWidth: (dimensions as { maxWidth?: number }).maxWidth,
           zIndex: 2000,
-          userSelect: 'none',
-          cursor: dragging ? 'grabbing' : 'default',
           display: 'flex',
           flexDirection: 'column',
-          transition: 'all 0.3s ease',
+          userSelect: 'none',
+          cursor: dragging ? 'grabbing' : 'default',
         }}
       >
-        <Box sx={{ 
-          display: 'flex', 
-          justifyContent: 'flex-end', 
-          mb: isMobile && !minimized ? 0.5 : 1, 
-          gap: 1,
-          flexShrink: 0,
-        }}>
-          {minimized ? (
-            <IconButton aria-label="Maximizar reproductor" onClick={maximizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
+        {/* Upper zap card */}
+        {!minimized && (
+          <ZapCard
+            items={aboveItems}
+            position="above"
+            isOpen={zapOpen}
+            onZap={zapToChannel}
+          />
+        )}
+
+        {/* Player box */}
+        <Box
+          sx={{
+            bgcolor: '#1E293B',
+            borderRadius: minimized ? 3 : playerBorderRadius,
+            boxShadow: 24,
+            p: isMobile && !minimized ? 1 : 2,
+            overflow: 'hidden',
+            display: 'flex',
+            flexDirection: 'column',
+            height: dimensions.height,
+            transition: 'border-radius 200ms ease',
+          }}
+        >
+          {/* Controls bar */}
+          <Box
+            sx={{
+              display: 'flex',
+              alignItems: 'center',
+              mb: isMobile && !minimized ? 0.5 : 1,
+              gap: 0.5,
+              flexShrink: 0,
+            }}
+          >
+            {/* Zap toggle (only when maximized and zap items exist) */}
+            {!minimized && hasZapItems && (
+              <IconButton
+                aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
+                onClick={() => setZapOpen((v) => !v)}
+                size="small"
+                sx={{
+                  color: zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
+                  '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
+                }}
+              >
+                <FormatListBulletedIcon fontSize="small" />
+              </IconButton>
+            )}
+
+            {/* Channel mini-logo + name (maximized only) */}
+            {!minimized && channelInfo && (
+              <>
+                <Box
+                  sx={{
+                    width: 44,
+                    height: 22,
+                    borderRadius: '4px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...getLogoBg(channelInfo.channelBackgroundColor),
+                  }}
+                >
+                  {channelInfo.channelLogo && (
+                    <Box
+                      component="img"
+                      src={channelInfo.channelLogo}
+                      alt={channelInfo.channelName}
+                      sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
+                    />
+                  )}
+                </Box>
+                <Typography
+                  sx={{
+                    color: '#e2e8f0',
+                    fontSize: '13px',
+                    fontWeight: 600,
+                    overflow: 'hidden',
+                    textOverflow: 'ellipsis',
+                    whiteSpace: 'nowrap',
+                    maxWidth: 180,
+                  }}
+                >
+                  {channelInfo.channelName}
+                </Typography>
+              </>
+            )}
+
+            <Box sx={{ flex: 1 }} />
+
+            {/* Minimize / maximize */}
+            <IconButton
+              aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
+              onClick={minimized ? maximizePlayer : minimizePlayer}
+              size="small"
+              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+            >
               <CropSquareIcon fontSize="small" />
             </IconButton>
-          ) : (
-            <IconButton aria-label="Minimizar reproductor" onClick={minimizePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
-              <CropSquareIcon fontSize="small" />
+
+            {/* Close */}
+            <IconButton
+              aria-label="Cerrar reproductor"
+              onClick={closePlayer}
+              size="small"
+              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+            >
+              <CloseIcon fontSize="small" />
             </IconButton>
-          )}
-          <IconButton aria-label="Cerrar reproductor" onClick={closePlayer} size="small" sx={{ bgcolor: buttonBgColor }}>
-            <CloseIcon fontSize="small" />
-          </IconButton>
+          </Box>
+
+          {/* iframe */}
+          <Box
+            sx={{
+              flexGrow: 1,
+              width: '100%',
+              borderRadius: 2,
+              overflow: 'hidden',
+              minHeight: 0,
+            }}
+          >
+            <iframe
+              width="100%"
+              height="100%"
+              src={src}
+              frameBorder="0"
+              allow="autoplay; encrypted-media"
+              allowFullScreen
+              style={{ borderRadius: 8 }}
+            />
+          </Box>
         </Box>
 
-        <Box sx={{ 
-          flexGrow: 1, 
-          width: '100%', 
-          borderRadius: 2, 
-          overflow: 'hidden',
-          minHeight: 0, // Important for flex children to shrink properly
-        }}>
-          <iframe
-            width="100%"
-            height="100%"
-            src={src}
-            frameBorder="0"
-            allow="autoplay; encrypted-media"
-            allowFullScreen
-            style={{ borderRadius: 8 }}
+        {/* Lower zap card */}
+        {!minimized && (
+          <ZapCard
+            items={belowItems}
+            position="below"
+            isOpen={zapOpen}
+            onZap={zapToChannel}
           />
-        </Box>
+        )}
       </Box>
     </>
   );
