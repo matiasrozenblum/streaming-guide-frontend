@@ -50,19 +50,25 @@ export const YouTubeGlobalPlayer = () => {
     if (!open) setZapOpen(false);
   }, [open]);
 
-  const { aboveItems, belowItems } = useMemo(() => {
+  const { aboveItems, belowItems, panelItems, currentChannelId } = useMemo(() => {
     const currentId = playerData?.channelInfo?.channelId;
-    if (!currentId) return { aboveItems: [], belowItems: [] };
+
+    // Desktop panel: unified list including the current channel, filtered to those with a videoUrl
+    // (current channel always included since it's actively playing)
+    const panelItems = zapList.filter((z) => z.videoUrl !== null || z.id === currentId);
+
+    if (!currentId) return { aboveItems: [], belowItems: [], panelItems, currentChannelId: undefined };
 
     const idx = zapList.findIndex((z) => z.id === currentId);
-    if (idx === -1) return { aboveItems: [], belowItems: zapList.filter((z) => z.videoUrl !== null) };
+    if (idx === -1) return { aboveItems: [], belowItems: zapList.filter((z) => z.videoUrl !== null), panelItems, currentChannelId: currentId };
 
+    // Mobile cards: split at current channel index (current channel itself not shown in cards)
     const above = zapList.slice(0, idx).filter((z) => z.videoUrl !== null);
     const below = zapList.slice(idx + 1).filter((z) => z.videoUrl !== null);
-    return { aboveItems: above, belowItems: below };
+    return { aboveItems: above, belowItems: below, panelItems, currentChannelId: currentId };
   }, [zapList, playerData?.channelInfo?.channelId]);
 
-  const hasZapItems = aboveItems.length > 0 || belowItems.length > 0;
+  const hasZapItems = panelItems.length > 1 || aboveItems.length > 0 || belowItems.length > 0;
 
   const moveTo = useCallback(
     (clientX: number, clientY: number) => {
@@ -222,6 +228,8 @@ export const YouTubeGlobalPlayer = () => {
       */}
       {!minimized && !isMobile && (
         <Box
+          onWheel={(e) => e.stopPropagation()}
+          onTouchMove={(e) => e.stopPropagation()}
           sx={{
             position: 'fixed',
             top: '50%',
@@ -236,8 +244,8 @@ export const YouTubeGlobalPlayer = () => {
           }}
         >
           <ZapSidePanel
-            aboveItems={aboveItems}
-            belowItems={belowItems}
+            items={panelItems}
+            currentId={currentChannelId}
             isOpen={sidePanelOpen}
             playerHeight={PLAYER_HEIGHT_DESKTOP}
             onZap={zapToChannel}

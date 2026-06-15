@@ -16,38 +16,35 @@ function getLogoBg(bg?: string | null): React.CSSProperties {
 }
 
 interface ZapSidePanelProps {
-  aboveItems: ZapItem[];
-  belowItems: ZapItem[];
+  items: ZapItem[];            // All channels in grid order (videoUrl !== null + current)
+  currentId: number | undefined;
   isOpen: boolean;
   playerHeight: number;
   onZap: (item: ZapItem) => void;
 }
 
 export const ZapSidePanel: React.FC<ZapSidePanelProps> = ({
-  aboveItems,
-  belowItems,
+  items,
+  currentId,
   isOpen,
-  playerHeight,
   onZap,
 }) => {
   const scrollRef = useRef<HTMLDivElement>(null);
-  const dividerRef = useRef<HTMLDivElement>(null);
+  const currentRowRef = useRef<HTMLDivElement>(null);
 
-  // When opened, scroll so that the divider (current position in list) is visible
+  // When opened, scroll so the current channel is centered in the panel
   useEffect(() => {
-    if (isOpen && scrollRef.current && dividerRef.current) {
-      const containerTop = scrollRef.current.getBoundingClientRect().top;
-      const dividerTop = dividerRef.current.getBoundingClientRect().top;
-      const offset = dividerTop - containerTop - playerHeight / 2 + ROW_HEIGHT;
-      scrollRef.current.scrollTop += offset;
+    if (isOpen && currentRowRef.current) {
+      currentRowRef.current.scrollIntoView({ block: 'center', behavior: 'instant' });
     }
-  }, [isOpen, playerHeight]);
-
-  const hasAbove = aboveItems.length > 0;
-  const hasBelow = belowItems.length > 0;
+  }, [isOpen]);
 
   return (
-    <Box sx={{ width: '100%', height: '100%' }}>
+    <Box
+      sx={{ width: '100%', height: '100%' }}
+      onWheel={(e) => e.stopPropagation()}
+      onTouchMove={(e) => e.stopPropagation()}
+    >
       <Box
         ref={scrollRef}
         sx={{
@@ -57,8 +54,11 @@ export const ZapSidePanel: React.FC<ZapSidePanelProps> = ({
           borderRadius: '12px 0 0 12px',
           overflowY: 'auto',
           overflowX: 'hidden',
+          overscrollBehavior: 'contain',
           display: 'flex',
           flexDirection: 'column',
+          pt: 0.5,
+          pb: 0.5,
           '&::-webkit-scrollbar': { width: '3px' },
           '&::-webkit-scrollbar-track': { background: 'transparent' },
           '&::-webkit-scrollbar-thumb': {
@@ -67,74 +67,57 @@ export const ZapSidePanel: React.FC<ZapSidePanelProps> = ({
           },
         }}
       >
-        {/* Above channels */}
-        {hasAbove && (
-          <Box sx={{ pt: 0.5 }}>
-            {aboveItems.map((item) => (
-              <ChannelRow key={item.id} item={item} onZap={onZap} />
-            ))}
-          </Box>
-        )}
-
-        {/* Divider indicating current channel position */}
-        <Box
-          ref={dividerRef}
-          sx={{
-            mx: 1,
-            my: 0.5,
-            borderTop: '1px solid rgba(255,255,255,0.15)',
-            position: 'relative',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-          }}
-        >
-          <Typography
-            sx={{
-              position: 'absolute',
-              bgcolor: PANEL_BG,
-              px: 0.75,
-              fontSize: '9px',
-              fontWeight: 700,
-              letterSpacing: '0.06em',
-              color: 'rgba(255,255,255,0.3)',
-              textTransform: 'uppercase',
-              whiteSpace: 'nowrap',
-            }}
-          >
-            Viendo ahora
-          </Typography>
-        </Box>
-
-        {/* Below channels */}
-        {hasBelow && (
-          <Box sx={{ pb: 0.5 }}>
-            {belowItems.map((item) => (
-              <ChannelRow key={item.id} item={item} onZap={onZap} />
-            ))}
-          </Box>
-        )}
+        {items.map((item) => {
+          const isCurrent = item.id === currentId;
+          return (
+            <ChannelRow
+              key={item.id}
+              item={item}
+              isCurrent={isCurrent}
+              currentRef={isCurrent ? currentRowRef : undefined}
+              onZap={onZap}
+            />
+          );
+        })}
       </Box>
     </Box>
   );
 };
 
-function ChannelRow({ item, onZap }: { item: ZapItem; onZap: (item: ZapItem) => void }) {
+function ChannelRow({
+  item,
+  isCurrent,
+  currentRef,
+  onZap,
+}: {
+  item: ZapItem;
+  isCurrent: boolean;
+  currentRef?: React.RefObject<HTMLDivElement | null>;
+  onZap: (item: ZapItem) => void;
+}) {
   return (
     <Box
-      onClick={() => onZap(item)}
+      ref={currentRef}
+      onClick={() => !isCurrent && onZap(item)}
       sx={{
         display: 'flex',
         alignItems: 'center',
         height: `${ROW_HEIGHT}px`,
         px: 1,
         gap: 1,
-        cursor: 'pointer',
-        bgcolor: item.isLive ? 'rgba(255,255,255,0.08)' : 'rgba(255,255,255,0.04)',
+        cursor: isCurrent ? 'default' : 'pointer',
+        bgcolor: isCurrent
+          ? 'rgba(59,130,246,0.18)'
+          : item.isLive
+            ? 'rgba(255,255,255,0.08)'
+            : 'rgba(255,255,255,0.04)',
         mx: '4px',
         my: '2px',
         borderRadius: '8px',
-        '&:hover': { bgcolor: 'rgba(255,255,255,0.13)' },
+        border: isCurrent ? '1px solid rgba(59,130,246,0.45)' : '1px solid transparent',
+        '&:hover': {
+          bgcolor: isCurrent ? 'rgba(59,130,246,0.18)' : 'rgba(255,255,255,0.13)',
+        },
         transition: 'background-color 150ms ease',
       }}
     >
@@ -165,22 +148,23 @@ function ChannelRow({ item, onZap }: { item: ZapItem; onZap: (item: ZapItem) => 
       {/* Text */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {item.isLive && (
+          {/* Current = blue dot, live = red dot */}
+          {(isCurrent || item.isLive) && (
             <Box
               sx={{
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
-                bgcolor: '#F44336',
+                bgcolor: isCurrent ? '#3b82f6' : '#F44336',
                 flexShrink: 0,
               }}
             />
           )}
           <Typography
             sx={{
-              color: '#e2e8f0',
+              color: isCurrent ? '#93c5fd' : '#e2e8f0',
               fontSize: '12px',
-              fontWeight: 600,
+              fontWeight: isCurrent ? 700 : 600,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
