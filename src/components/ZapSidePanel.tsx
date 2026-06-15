@@ -47,16 +47,7 @@ export const ZapSidePanel: React.FC<ZapSidePanelProps> = ({
   const hasBelow = belowItems.length > 0;
 
   return (
-    <Box
-      sx={{
-        maxWidth: isOpen ? `${PANEL_WIDTH}px` : 0,
-        overflow: 'hidden',
-        transition: 'max-width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
-        pointerEvents: isOpen ? 'auto' : 'none',
-        flexShrink: 0,
-        alignSelf: 'stretch',
-      }}
-    >
+    <Box sx={{ width: '100%', height: '100%' }}>
       <Box
         ref={scrollRef}
         sx={{

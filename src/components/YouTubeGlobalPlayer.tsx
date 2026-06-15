@@ -146,7 +146,7 @@ export const YouTubeGlobalPlayer = () => {
 
   if (!open || !playerData) return null;
 
-  // Build embed src
+  // Build embed src.
   // NOTE: Do NOT add enablejsapi=1 — causes heartbeat postMessages that freeze player after ~3 min.
   let src = '';
   if (playerData.service === 'youtube') {
@@ -169,9 +169,10 @@ export const YouTubeGlobalPlayer = () => {
 
   const dimensions = getDimensions();
 
-  // Desktop: side panel to the left → player left border becomes flat when panel open
-  // Mobile: cards above/below → player top/bottom become flat when respective card visible
+  // Side panel open state (desktop only)
   const sidePanelOpen = !isMobile && zapOpen && hasZapItems && !minimized;
+
+  // Mobile cards
   const upperVisible = isMobile && zapOpen && aboveItems.length > 0 && !minimized;
   const lowerVisible = isMobile && zapOpen && belowItems.length > 0 && !minimized;
 
@@ -212,7 +213,39 @@ export const YouTubeGlobalPlayer = () => {
         />
       )}
 
-      {/* Outer wrapper */}
+      {/*
+        Desktop side panel: separate fixed element, positioned so its right edge
+        aligns with the player's left edge.
+        Player center: left 50%, translate(-50%). Player half-width = min(40vw, 400px).
+        Player left edge from viewport right = 50vw + min(40vw, 400px).
+        → panel right: calc(50% + min(40vw, 400px))
+      */}
+      {!minimized && !isMobile && (
+        <Box
+          sx={{
+            position: 'fixed',
+            top: '50%',
+            right: 'calc(50% + min(40vw, 400px))',
+            transform: 'translateY(-50%)',
+            height: `${PLAYER_HEIGHT_DESKTOP}px`,
+            width: sidePanelOpen ? '200px' : 0,
+            overflow: 'hidden',
+            transition: 'width 280ms cubic-bezier(0.4, 0, 0.2, 1)',
+            pointerEvents: sidePanelOpen ? 'auto' : 'none',
+            zIndex: 2000,
+          }}
+        >
+          <ZapSidePanel
+            aboveItems={aboveItems}
+            belowItems={belowItems}
+            isOpen={sidePanelOpen}
+            playerHeight={PLAYER_HEIGHT_DESKTOP}
+            onZap={zapToChannel}
+          />
+        </Box>
+      )}
+
+      {/* Main player outer wrapper — always flex-column, same layout as pre-zap */}
       <Box
         ref={containerRef}
         onMouseDown={handleMouseDown}
@@ -226,25 +259,12 @@ export const YouTubeGlobalPlayer = () => {
           maxWidth: (dimensions as { maxWidth?: number }).maxWidth,
           zIndex: 2000,
           display: 'flex',
-          // Desktop: row (side panel left + player right)
-          // Mobile: column (card above + player + card below)
-          flexDirection: !minimized && !isMobile ? 'row' : 'column',
+          flexDirection: 'column',
           userSelect: 'none',
           cursor: dragging ? 'grabbing' : 'default',
         }}
       >
-        {/* Desktop: side panel (left of player) */}
-        {!minimized && !isMobile && (
-          <ZapSidePanel
-            aboveItems={aboveItems}
-            belowItems={belowItems}
-            isOpen={sidePanelOpen}
-            playerHeight={PLAYER_HEIGHT_DESKTOP}
-            onZap={zapToChannel}
-          />
-        )}
-
-        {/* Mobile: upper card */}
+        {/* Mobile: card above player */}
         {!minimized && isMobile && (
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={zapToChannel} />
         )}
@@ -260,8 +280,6 @@ export const YouTubeGlobalPlayer = () => {
             display: 'flex',
             flexDirection: 'column',
             height: dimensions.height,
-            // On desktop the player is the flex "main" area
-            flex: !minimized && !isMobile ? '1 1 auto' : undefined,
             transition: 'border-radius 200ms ease',
           }}
         >
@@ -366,7 +384,7 @@ export const YouTubeGlobalPlayer = () => {
           </Box>
         </Box>
 
-        {/* Mobile: lower card */}
+        {/* Mobile: card below player */}
         {!minimized && isMobile && (
           <ZapCard items={belowItems} position="below" isOpen={zapOpen} onZap={zapToChannel} />
         )}
