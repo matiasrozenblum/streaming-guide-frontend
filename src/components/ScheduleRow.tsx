@@ -82,6 +82,7 @@ interface Program {
 }
 
 interface Props {
+  channelId?: number;
   channelName: string;
   channelLogo?: string;
   channelBackgroundColor?: string | null;
@@ -91,6 +92,7 @@ interface Props {
 }
 
 export const ScheduleRow = ({
+  channelId,
   channelName,
   channelLogo,
   channelBackgroundColor,
@@ -376,7 +378,10 @@ export const ScheduleRow = ({
                   description={p.description}
                   panelists={p.panelists}
                   logo_url={p.logo_url}
+                  channelId={channelId}
                   channelName={channelName}
+                  channelLogo={channelLogo}
+                  channelBackgroundColor={channelBackgroundColor}
                   color={color}
                   isToday={isToday}
                   stream_url={currentStreamUrl}

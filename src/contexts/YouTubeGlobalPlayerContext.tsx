@@ -3,21 +3,34 @@
 import React, { createContext, useContext, useState } from 'react';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
+import type { ZapItem } from '@/types/zap';
+import { parseStreamUrl } from '@/utils/parseStreamUrl';
 
 export type StreamingService = 'youtube' | 'twitch' | 'kick';
 
+export interface ChannelInfo {
+  channelId: number;
+  channelName: string;
+  channelLogo?: string | null;
+  channelBackgroundColor?: string | null;
+}
+
 interface StreamingPlayerData {
   service: StreamingService;
-  embedPath: string; // For YouTube: videoId or "videoseries?list=PLAYLIST_ID", For Twitch/Kick: channel name
+  embedPath: string;
+  channelInfo?: ChannelInfo;
 }
 
 interface YouTubeGlobalPlayerContextType {
   playerData: StreamingPlayerData | null;
   open: boolean;
   minimized: boolean;
-  openVideo: (videoId: string) => void;
-  openPlaylist: (listId: string) => void;
-  openStream: (service: StreamingService, channelName: string) => void;
+  zapList: ZapItem[];
+  setZapList: (list: ZapItem[]) => void;
+  openVideo: (videoId: string, channelInfo?: ChannelInfo) => void;
+  openPlaylist: (listId: string, channelInfo?: ChannelInfo) => void;
+  openStream: (service: StreamingService, channelName: string, channelInfo?: ChannelInfo) => void;
+  zapToChannel: (item: ZapItem) => void;
   closePlayer: () => void;
   minimizePlayer: () => void;
   maximizePlayer: () => void;
@@ -29,24 +42,39 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
   const [playerData, setPlayerData] = useState<StreamingPlayerData | null>(null);
   const [open, setOpen] = useState(false);
   const [minimized, setMinimized] = useState(false);
+  const [zapList, setZapList] = useState<ZapItem[]>([]);
 
-  const openVideo = (id: string) => {
-    setPlayerData({ service: 'youtube', embedPath: id });
+  const openVideo = (id: string, channelInfo?: ChannelInfo) => {
+    setPlayerData({ service: 'youtube', embedPath: id, channelInfo });
     setOpen(true);
     setMinimized(false);
   };
 
-  const openPlaylist = (listId: string) => {
-    // "videoseries?list=" es exactamente lo que usaba /embed/videoseries?list=...
-    setPlayerData({ service: 'youtube', embedPath: `videoseries?list=${listId}` });
+  const openPlaylist = (listId: string, channelInfo?: ChannelInfo) => {
+    setPlayerData({ service: 'youtube', embedPath: `videoseries?list=${listId}`, channelInfo });
     setOpen(true);
     setMinimized(false);
   };
 
-  const openStream = (service: StreamingService, channelName: string) => {
-    setPlayerData({ service, embedPath: channelName });
+  const openStream = (service: StreamingService, channelName: string, channelInfo?: ChannelInfo) => {
+    setPlayerData({ service, embedPath: channelName, channelInfo });
     setOpen(true);
     setMinimized(false);
+  };
+
+  const zapToChannel = (item: ZapItem) => {
+    if (!item.videoUrl) return;
+    const parsed = parseStreamUrl(item.videoUrl);
+    if (!parsed) return;
+
+    const channelInfo: ChannelInfo = {
+      channelId: item.id,
+      channelName: item.name,
+      channelLogo: item.logoUrl,
+      channelBackgroundColor: item.backgroundColor,
+    };
+
+    setPlayerData({ service: parsed.service, embedPath: parsed.embedPath, channelInfo });
   };
 
   const closePlayer = () => {
@@ -57,20 +85,14 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
 
   const minimizePlayer = () => {
     setMinimized(true);
-    try { Clarity.event('minimize_youtube') } catch { /* Clarity not yet loaded */ }
-    gaEvent({
-      action: 'minimize_youtube',
-      params: {}
-    });
+    try { Clarity.event('minimize_youtube'); } catch { /* Clarity not yet loaded */ }
+    gaEvent({ action: 'minimize_youtube', params: {} });
   };
 
   const maximizePlayer = () => {
     setMinimized(false);
-    try { Clarity.event('maximize_youtube') } catch { /* Clarity not yet loaded */ }
-    gaEvent({
-      action: 'maximize_youtube',
-      params: {}
-    });
+    try { Clarity.event('maximize_youtube'); } catch { /* Clarity not yet loaded */ }
+    gaEvent({ action: 'maximize_youtube', params: {} });
   };
 
   return (
@@ -79,9 +101,12 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         playerData,
         open,
         minimized,
+        zapList,
+        setZapList,
         openVideo,
         openPlaylist,
         openStream,
+        zapToChannel,
         closePlayer,
         minimizePlayer,
         maximizePlayer,

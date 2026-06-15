@@ -11,12 +11,14 @@ import { api } from '@/services/api';
 import { bannersApi } from '@/services/banners';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 import { useThemeContext } from '@/contexts/ThemeContext';
+import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
 import BannerCarousel from '@/components/BannerCarousel';
 import type { ChannelWithSchedules, Category } from '@/types/channel';
 import type { Schedule } from '@/types/schedule';
 import type { Banner } from '@/types/banner';
+import type { ZapItem } from '@/types/zap';
 import Header from './Header';
 import BottomNavigation from './BottomNavigation';
 import { useDeviceId } from '@/hooks/useDeviceId';
@@ -24,6 +26,8 @@ import { event as gaEvent } from '@/lib/gtag';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { isBeforeInBuenosAires, getNextMondayDate } from '@/utils/date';
+import { parseStreamUrl } from '@/utils/parseStreamUrl';
+import dayjs from 'dayjs';
 
 
 const HolidayDialog = dynamic(() => import('@/components/HolidayDialog'), { ssr: false });
@@ -62,7 +66,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const bannerContainerRef = useRef<HTMLDivElement>(null);
 
   const { mode } = useThemeContext();
-  const { setLiveStatuses } = useLiveStatus();
+  const { setLiveStatuses, liveStatus } = useLiveStatus();
+  const { setZapList } = useYouTubePlayer();
 
   // Populate live status context with initial data synchronously
   const initialLiveMap = useMemo(() => {
@@ -193,6 +198,60 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   );
 
   const showSkeleton = flattened.length === 0;
+
+  // Build the channel list used by the zapping feature in the player
+  const zapList = useMemo((): ZapItem[] => {
+    const today = dayjs().format('dddd').toLowerCase();
+
+    return channelsWithSchedules.map(cws => {
+      const { channel, schedules } = cws;
+
+      let videoUrl: string | null = null;
+      let isLive = false;
+      let programName: string | null = null;
+
+      // Prefer a currently-live program from today's schedules
+      const todaySchedules = schedules.filter(s => s.day_of_week === today);
+      for (const s of todaySchedules) {
+        const liveData = liveStatus[s.id.toString()];
+        const streamUrl = liveData?.stream_url || s.program.stream_url;
+        const live = liveData?.is_live ?? s.program.is_live;
+        if (streamUrl && live) {
+          videoUrl = streamUrl;
+          isLive = true;
+          programName = s.program.name;
+          break;
+        }
+      }
+
+      // Fall back to any schedule that has a stream URL
+      if (!videoUrl) {
+        for (const s of schedules) {
+          if (s.program.stream_url) {
+            videoUrl = s.program.stream_url;
+            break;
+          }
+        }
+      }
+
+      const service = videoUrl ? (parseStreamUrl(videoUrl)?.service ?? null) : null;
+
+      return {
+        id: channel.id,
+        name: channel.name,
+        logoUrl: channel.logo_url,
+        backgroundColor: channel.background_color,
+        videoUrl,
+        service,
+        isLive,
+        programName,
+      };
+    });
+  }, [channelsWithSchedules, liveStatus]);
+
+  useEffect(() => {
+    setZapList(zapList);
+  }, [zapList, setZapList]);
 
   useEffect(() => {
     if (!deviceId) return; // Only wait for deviceId

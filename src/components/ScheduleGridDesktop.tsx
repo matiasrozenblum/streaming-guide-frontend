@@ -340,6 +340,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
           {visibleChannels.map((channel, idx) => (
             <ScheduleRow
               key={channel.id}
+              channelId={channel.id}
               channelName={channel.name}
               channelLogo={channel.logo_url || undefined}
               channelBackgroundColor={channel.background_color}
