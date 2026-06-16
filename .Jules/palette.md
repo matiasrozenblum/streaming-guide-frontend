@@ -2,3 +2,6 @@
 **Learning:** Found a recurring accessibility pattern in authentication and profile components where icon-only buttons for toggling password visibility (using Visibility/VisibilityOff icons) lacked `aria-label` attributes. This prevents screen readers from understanding the button's purpose and state.
 **Action:** Always ensure that icon-only buttons, specifically those dealing with sensitive or functional inputs like password visibility, have dynamic `aria-label` attributes that reflect the action (e.g., 'Mostrar contraseña' vs 'Ocultar contraseña').
 ## 2024-01-01 - Initializing Palette Journal\n**Learning:** This repo frequently uses MUI components and uses Spanish for the interface.\n**Action:** Use Spanish for aria-labels to maintain consistency. e.g. 'Editar' instead of 'Edit'.
+## 2024-05-15 - Missing tooltips on YouTube global player controls
+**Learning:** Found that the YouTube global player controls (maximize, minimize, close) lacked Tooltips. While they have `aria-label`s for screen readers, sighted users on desktop would benefit from visual tooltips explaining the ambiguous icon actions.
+**Action:** When adding icon-only `IconButton` components to an interface, especially those grouped tightly together, always wrap them in a Material UI `<Tooltip>` to ensure both screen reader accessibility and clear visual cues for sighted users.
