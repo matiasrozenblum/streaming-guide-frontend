@@ -52,19 +52,20 @@ export const YouTubeGlobalPlayer = () => {
 
   const { aboveItems, belowItems, panelItems, currentChannelId } = useMemo(() => {
     const currentId = playerData?.channelInfo?.channelId;
+    // Only channels currently airing live are zappable — the current channel is
+    // always included regardless of its live state, since it's actively playing.
+    const isZappable = (z: typeof zapList[number]) => (z.isLive && z.videoUrl !== null) || z.id === currentId;
 
-    // Desktop panel: unified list including the current channel, filtered to those with a videoUrl
-    // (current channel always included since it's actively playing)
-    const panelItems = zapList.filter((z) => z.videoUrl !== null || z.id === currentId);
+    const panelItems = zapList.filter(isZappable);
 
     if (!currentId) return { aboveItems: [], belowItems: [], panelItems, currentChannelId: undefined };
 
     const idx = zapList.findIndex((z) => z.id === currentId);
-    if (idx === -1) return { aboveItems: [], belowItems: zapList.filter((z) => z.videoUrl !== null), panelItems, currentChannelId: currentId };
+    if (idx === -1) return { aboveItems: [], belowItems: zapList.filter(isZappable), panelItems, currentChannelId: currentId };
 
     // Mobile cards: split at current channel index (current channel itself not shown in cards)
-    const above = zapList.slice(0, idx).filter((z) => z.videoUrl !== null);
-    const below = zapList.slice(idx + 1).filter((z) => z.videoUrl !== null);
+    const above = zapList.slice(0, idx).filter(isZappable);
+    const below = zapList.slice(idx + 1).filter(isZappable);
     return { aboveItems: above, belowItems: below, panelItems, currentChannelId: currentId };
   }, [zapList, playerData?.channelInfo?.channelId]);
 
