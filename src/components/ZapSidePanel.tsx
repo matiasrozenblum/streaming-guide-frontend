@@ -5,7 +5,7 @@ import { Box, Typography } from '@mui/material';
 import type { ZapItem } from '@/types/zap';
 
 const PANEL_WIDTH = 200;
-const ROW_HEIGHT = 60;
+const ROW_HEIGHT = 76;
 const PANEL_BG = '#1E293B';
 
 function getLogoBg(bg?: string | null): React.CSSProperties {
@@ -124,9 +124,9 @@ function ChannelRow({
       {/* Logo */}
       <Box
         sx={{
-          width: 52,
-          height: 26,
-          borderRadius: '5px',
+          width: 60,
+          height: 32,
+          borderRadius: '6px',
           overflow: 'hidden',
           flexShrink: 0,
           display: 'flex',
@@ -163,7 +163,7 @@ function ChannelRow({
           <Typography
             sx={{
               color: isCurrent ? '#93c5fd' : '#e2e8f0',
-              fontSize: '12px',
+              fontSize: '13px',
               fontWeight: isCurrent ? 700 : 600,
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -177,7 +177,7 @@ function ChannelRow({
           <Typography
             sx={{
               color: '#64748b',
-              fontSize: '10px',
+              fontSize: '11px',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
