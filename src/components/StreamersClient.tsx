@@ -33,9 +33,11 @@ import { Streamer, StreamingService } from '@/types/streamer';
 import { Category } from '@/types/channel';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
 import { getColorForChannel } from '@/utils/colors';
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, useMemo } from 'react';
 import { extractTwitchChannel, extractKickChannel } from '@/utils/extractStreamChannel';
 import { extractVideoId } from '@/utils/extractVideoId';
+import type { ZapItem } from '@/types/zap';
+import type { ChannelInfo } from '@/contexts/YouTubeGlobalPlayerContext';
 
 const MotionBox = motion(Box);
 const MotionCard = motion(Card);
@@ -95,7 +97,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
   // Use prop if provided, otherwise fall back to hook for backward compatibility
   const streamersConfigHook = useStreamersConfig();
   const finalStreamersEnabled = streamersEnabled ?? streamersConfigHook.streamersEnabled;
-  const { openVideo, openStream } = useYouTubePlayer();
+  const { openVideo, openStream, setZapList } = useYouTubePlayer();
   const [streamers, setStreamers] = useState<Streamer[]>(initialStreamers || []);
   // Only show loading if we have no initial data at all (undefined/null, not empty array)
   const [loading, setLoading] = useState(!initialStreamers);
@@ -163,6 +165,40 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       console.error('Error fetching subscriptions:', err);
     }
   };
+
+  // Build zap list from live streamers and push it into the global player context.
+  // Cleared on unmount so the channels page can restore its own list.
+  const streamerZapList = useMemo<ZapItem[]>(() => {
+    return streamers
+      .filter(s => s.is_live)
+      .map(s => {
+        // Pick the first active service URL
+        const activeServiceName = s.active_services?.[0];
+        const activeService = activeServiceName
+          ? s.services.find(sv => sv.service === activeServiceName)
+          : s.services[0];
+        const videoUrl = activeService?.url ?? null;
+        const service = activeService
+          ? (activeService.service.toLowerCase() as 'youtube' | 'twitch' | 'kick')
+          : null;
+        return {
+          id: s.id,
+          name: s.name,
+          logoUrl: s.logo_url,
+          backgroundColor: null,
+          videoUrl,
+          service,
+          isLive: true,
+          programName: null,
+          logoShape: 'square' as const,
+        };
+      });
+  }, [streamers]);
+
+  useEffect(() => {
+    setZapList(streamerZapList);
+    return () => setZapList([]);
+  }, [streamerZapList, setZapList]);
 
   useEffect(() => {
     // Only fetch if we truly have no initial data (undefined/null) AND haven't fetched yet
@@ -261,7 +297,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
         category: 'streamer',
         streamer_name: streamer.name,
         streamer_id: streamer.id,
-        platform: service, // 'twitch', 'kick', 'youtube'
+        platform: service,
       },
       userData: typedSession?.user
     });
@@ -278,25 +314,27 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       }
     }
 
+    const channelInfo: ChannelInfo = {
+      channelId: streamer.id,
+      channelName: streamer.name,
+      channelLogo: streamer.logo_url,
+      channelBackgroundColor: null,
+    };
+
     if (service === StreamingService.YOUTUBE) {
-      // For YouTube, extract video ID and use openVideo
-      // Note: YouTube only supports embedding videos, not channel pages
       const videoId = extractVideoId(url);
       if (videoId && !videoId.startsWith('http') && !videoId.includes('@')) {
-        // It's a valid video ID - use it
-        openVideo(videoId);
+        openVideo(videoId, channelInfo);
       }
-      // If it's a channel URL, we can't embed it directly
-      // The URL should be a video URL for embedding to work
     } else if (service === StreamingService.TWITCH) {
       const channelName = extractTwitchChannel(url);
       if (channelName) {
-        openStream('twitch', channelName);
+        openStream('twitch', channelName, channelInfo);
       }
     } else if (service === StreamingService.KICK) {
       const channelName = extractKickChannel(url);
       if (channelName) {
-        openStream('kick', channelName);
+        openStream('kick', channelName, channelInfo);
       }
     }
   };

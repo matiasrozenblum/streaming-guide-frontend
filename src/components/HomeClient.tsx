@@ -251,6 +251,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
 
   useEffect(() => {
     setZapList(zapList);
+    return () => setZapList([]);
   }, [zapList, setZapList]);
 
   useEffect(() => {

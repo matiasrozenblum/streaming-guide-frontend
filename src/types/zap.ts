@@ -7,4 +7,5 @@ export interface ZapItem {
   service: 'youtube' | 'twitch' | 'kick' | null;
   isLive: boolean;
   programName?: string | null;
+  logoShape?: 'rect' | 'square';
 }
