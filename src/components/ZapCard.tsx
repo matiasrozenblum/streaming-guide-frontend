@@ -9,10 +9,10 @@ const MAX_VISIBLE_ROWS = 2;
 const CARD_MAX_HEIGHT = ROW_HEIGHT * MAX_VISIBLE_ROWS;
 const CARD_BG = '#1E293B';
 
-function getLogoBg(bg?: string | null): React.CSSProperties {
-  if (!bg) return { backgroundColor: '#FFFFFF' };
+function getLogoBg(bg?: string | null, square?: boolean): React.CSSProperties {
+  if (!bg) return { backgroundColor: square ? '#1e293b' : '#FFFFFF' };
   if (bg.startsWith('linear-gradient')) return { background: bg };
-  if (bg.includes('gradient')) return { backgroundColor: '#FFFFFF' };
+  if (bg.includes('gradient')) return { backgroundColor: square ? '#1e293b' : '#FFFFFF' };
   return { backgroundColor: bg };
 }
 
@@ -84,33 +84,38 @@ export const ZapCard: React.FC<ZapCardProps> = ({ items, position, isOpen, onZap
               transition: 'background-color 150ms ease',
             }}
           >
-            {/* Channel logo */}
-            <Box
-              sx={{
-                width: 72,
-                height: 36,
-                borderRadius: '6px',
-                overflow: 'hidden',
-                flexShrink: 0,
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                ...getLogoBg(item.backgroundColor),
-              }}
-            >
-              {item.logoUrl && (
+            {/* Logo */}
+            {(() => {
+              const isSquare = item.logoShape === 'square';
+              return (
                 <Box
-                  component="img"
-                  src={item.logoUrl}
-                  alt={item.name}
                   sx={{
-                    width: '100%',
-                    height: '100%',
-                    objectFit: 'contain',
+                    width: isSquare ? 48 : 72,
+                    height: isSquare ? 48 : 36,
+                    borderRadius: isSquare ? '8px' : '6px',
+                    overflow: 'hidden',
+                    flexShrink: 0,
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    ...getLogoBg(item.backgroundColor, isSquare),
                   }}
-                />
-              )}
-            </Box>
+                >
+                  {item.logoUrl && (
+                    <Box
+                      component="img"
+                      src={item.logoUrl}
+                      alt={item.name}
+                      sx={{
+                        width: '100%',
+                        height: '100%',
+                        objectFit: isSquare ? 'cover' : 'contain',
+                      }}
+                    />
+                  )}
+                </Box>
+              );
+            })()}
 
             {/* Channel name + program */}
             <Box sx={{ flex: 1, minWidth: 0 }}>
