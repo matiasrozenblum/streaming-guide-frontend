@@ -8,8 +8,8 @@ import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX } from '@/constants/layout'
 import { OpenInNew, Notifications } from '@mui/icons-material';
 import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
+import { parseStreamUrl } from '@/utils/parseStreamUrl';
 import { event as gaEvent } from '@/lib/gtag';
-import { extractVideoId } from '@/utils/extractVideoId';
 import { tokens } from '@/design-system/tokens';
 import { Text, BaseButton } from '@/design-system/components';
 import { api } from '@/services/api';
@@ -37,7 +37,10 @@ interface Props {
   panelists?: { id: string; name: string }[];
   logo_url?: string;
   color?: string;
+  channelId?: number;
   channelName: string;
+  channelLogo?: string | null;
+  channelBackgroundColor?: string | null;
   isToday?: boolean;
   is_live?: boolean;
   stream_url?: string | null;
@@ -61,7 +64,10 @@ export const ProgramBlock: React.FC<Props> = ({
   panelists,
   logo_url,
   color = '#2196F3',
+  channelId,
   channelName,
+  channelLogo,
+  channelBackgroundColor,
   isToday,
   is_live,
   stream_url,
@@ -85,7 +91,7 @@ export const ProgramBlock: React.FC<Props> = ({
   const bellRef = useRef<HTMLButtonElement>(null);
   const [isOn, setIsOn] = useState(subscribed);
   const [isLoading, setIsLoading] = useState(false);
-  const { openVideo, openPlaylist } = useYouTubePlayer();
+  const { openVideo, openPlaylist, openStream } = useYouTubePlayer();
   const { subscribeAndRegister, isPWAInstalled } = usePush();
   const { openTooltip: globalOpenTooltip, closeTooltip: globalCloseTooltip, isTooltipOpen } = useTooltip();
   // Removed showSecondaryStreams - no longer needed
@@ -99,7 +105,8 @@ export const ProgramBlock: React.FC<Props> = ({
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
-  const tooltipId = `program-${id}`;
+  // Include start time so two slots of the same program get distinct tooltip IDs
+  const tooltipId = `program-${id}-${start}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
   // Style override logic
@@ -188,20 +195,22 @@ export const ProgramBlock: React.FC<Props> = ({
       userData: typedSession?.user
     });
 
-    try {
-      const url = new URL(streamUrl);
-      const listId = url.searchParams.get('list');
-      if (listId) {
-        openPlaylist(listId);
-        return;
-      }
-    } catch {
-      // Ignorar URL inválida
-    }
+    const channelInfo = channelId
+      ? { channelId, channelName, channelLogo, channelBackgroundColor }
+      : undefined;
 
-    const videoId = extractVideoId(streamUrl);
-    if (videoId) {
-      openVideo(videoId);
+    const parsed = parseStreamUrl(streamUrl);
+    if (!parsed) return;
+
+    if (parsed.service === 'youtube') {
+      if (parsed.embedPath.startsWith('videoseries?list=')) {
+        const listId = parsed.embedPath.replace('videoseries?list=', '');
+        openPlaylist(listId, channelInfo);
+      } else {
+        openVideo(parsed.embedPath, channelInfo);
+      }
+    } else {
+      openStream(parsed.service, parsed.embedPath, channelInfo);
     }
   };
 
