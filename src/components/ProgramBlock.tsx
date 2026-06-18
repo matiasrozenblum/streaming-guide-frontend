@@ -102,7 +102,6 @@ export const ProgramBlock: React.FC<Props> = ({
   const [showIOSPushSnackbar, setShowIOSPushSnackbar] = useState(false);
   const blockRef = useRef<HTMLDivElement>(null);
   const anchorRef = useRef<HTMLDivElement>(null);
-  const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
   // Include start time so two slots of the same program get distinct tooltip IDs
@@ -382,15 +381,6 @@ export const ProgramBlock: React.FC<Props> = ({
     }
   };
 
-  useEffect(() => {
-    if (!blockRef.current) return;
-    const handleResize = () => {
-      setBlockWidth(blockRef.current ? blockRef.current.offsetWidth : null);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
 
   // Update anchor position based on mouse position (desktop) or center (mobile)
   useEffect(() => {
@@ -436,22 +426,22 @@ export const ProgramBlock: React.FC<Props> = ({
     pillLabel = '¡Hoy!';
   }
 
-  if (blockWidth !== null) {
-    if (blockWidth < 90) {
-      pillFontSize = '0.7rem';
-      pillPx = 0.5;
-      pillPy = 0;
-      pillTop = 3;
-      pillLeft = 3;
-      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
-    } else if (blockWidth < 130) {
-      pillFontSize = '0.76rem';
-      pillPx = 0.7;
-      pillPy = 0.05;
-      pillTop = 4;
-      pillLeft = 4;
-      pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
-    }
+  // Use widthPx (pure calculation) instead of blockWidth (DOM measurement)
+  // to avoid incorrect readings at mount time before layout resolves.
+  if (widthPx < 90) {
+    pillFontSize = '0.7rem';
+    pillPx = 0.5;
+    pillPy = 0;
+    pillTop = 3;
+    pillLeft = 3;
+    pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
+  } else if (widthPx < 130) {
+    pillFontSize = '0.76rem';
+    pillPx = 0.7;
+    pillPy = 0.05;
+    pillTop = 4;
+    pillLeft = 4;
+    pillLabel = overrideType === 'time_change' ? '¡Hoy!' : pillLabel;
   }
 
   // Contenido del tooltip
@@ -740,7 +730,7 @@ export const ProgramBlock: React.FC<Props> = ({
                         zIndex: 5,
                         pointerEvents: 'none',
                         whiteSpace: 'nowrap',
-                        maxWidth: blockWidth ? `${Math.floor(blockWidth * 0.8)}px` : '80%',
+                        maxWidth: `${Math.floor(widthPx * 0.8)}px`,
                         textOverflow: 'ellipsis',
                         overflow: 'hidden',
                       }}
