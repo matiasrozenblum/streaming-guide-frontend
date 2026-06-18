@@ -148,14 +148,14 @@ function ChannelRow({
       {/* Text */}
       <Box sx={{ flex: 1, minWidth: 0 }}>
         <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5 }}>
-          {/* Current = blue dot, live = red dot */}
+          {/* Always red live dot — current channel is always live */}
           {(isCurrent || item.isLive) && (
             <Box
               sx={{
                 width: 5,
                 height: 5,
                 borderRadius: '50%',
-                bgcolor: isCurrent ? '#3b82f6' : '#F44336',
+                bgcolor: '#F44336',
                 flexShrink: 0,
               }}
             />
