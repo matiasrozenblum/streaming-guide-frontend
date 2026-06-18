@@ -105,7 +105,8 @@ export const ProgramBlock: React.FC<Props> = ({
   const [blockWidth, setBlockWidth] = useState<number | null>(null);
   const [mousePosition, setMousePosition] = useState<{ x: number; y: number } | null>(null);
 
-  const tooltipId = `program-${id}`;
+  // Include start time so two slots of the same program get distinct tooltip IDs
+  const tooltipId = `program-${id}-${start}`;
   const isTooltipOpenForThis = isTooltipOpen(tooltipId);
 
   // Style override logic
