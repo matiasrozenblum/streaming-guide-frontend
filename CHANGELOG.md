@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.23.1] - 2026-06-18
+
+### Fixed
+- Weekly override pill indicator ("¡Hoy!" / "¡Especial!") was showing only the first character (e.g. "e") because pill font size, padding and `maxWidth` were all computed from `blockWidth`, a DOM-measured `offsetWidth` that returned an incorrect (near-zero) value at mount time before layout resolved. Opening DevTools triggered a resize that re-measured correctly, confirming the root cause. Fixed by replacing `blockWidth` with `widthPx` (a pure calculation always available) throughout the pill sizing logic; also removed the now-dead `blockWidth` state and its `resize` listener.
+- Weekly override dot vs. pill decision: condition included `totalMultipleStreams > 1` which forced the dot indicator even on wide blocks that shared a lane with another program. Replaced with `widthPx < 100` so the decision is based solely on the block's computed pixel width.
+
+---
+
 ## [1.23.0] - 2026-06-18
 
 ### Added
