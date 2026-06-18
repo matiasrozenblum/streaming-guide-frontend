@@ -159,7 +159,11 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const schedulesForOverflow = overflowSource.filter(s => {
     if (s.day_of_week !== nextDay) return false;
     const [h, m] = s.start_time.split(':').map(Number);
-    return (h * 60 + m) < OVERFLOW_MINUTES;
+    const startMin = h * 60 + m;
+    // Exclude start_time="00:00": midnight-boundary programs sit flush against
+    // the right edge of cross-midnight current-day blocks and look duplicated.
+    // They belong to the next day's own view, not to the current day's overflow.
+    return startMin > 0 && startMin < OVERFLOW_MINUTES;
   });
 
   const getSchedulesForChannel = (id: number) => [
