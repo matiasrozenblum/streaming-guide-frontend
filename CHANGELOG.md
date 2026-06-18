@@ -6,6 +6,24 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.23.0] - 2026-06-18
+
+### Added
+- **Zapping between channels in the video player**: when the player is open and maximized, a toggle button (≡) reveals a side panel (desktop) or cards above/below (mobile) listing all currently-live channels. Clicking any channel zaps to it without closing the player.
+  - Desktop: `ZapSidePanel` — fixed-position sidebar to the left of the player (200 px wide, slides in/out with a 280 ms transition). Shows all live channels in grid order; the currently-playing channel is highlighted with a blue border and bold text. Auto-scrolls to center the current channel on open.
+  - Mobile: `ZapCard` — collapsible cards above/below the player showing up to 2 live channels from each direction. Animated with `max-height` transition.
+  - New `ZapItem` type (`src/types/zap.ts`) and `parseStreamUrl` utility (`src/utils/parseStreamUrl.ts`) to detect YouTube / Twitch / Kick URLs.
+  - `YouTubeGlobalPlayerContext` extended with `zapList`, `setZapList`, and `zapToChannel`.
+  - `HomeClient` derives the zap list from `channelsWithSchedules` + `liveStatus` (live channels only; current channel always included).
+  - Channel mini-logo and name shown in the player controls bar.
+
+### Fixed
+- Overflow zone: programs with `start_time = "00:00"` on the next day are no longer injected into the current day's overflow zone. They appeared flush against the right edge of cross-midnight blocks (which end at 24:00), creating a visual duplicate. These programs now only appear when viewing their own day. (`ScheduleGridDesktop`, `ScheduleGridMobile`)
+- Overflow zone: added `positionOffset` to the React `Fragment` key in `ScheduleRow` (`scheduleId|programId|positionOffset`). The same schedule could appear as an overflow block (positionOffset=1440) on day X and as a current-day block (positionOffset=0) on day X+1 — React reused the component instance, causing the previous day's block color to persist via the `background-color` CSS transition.
+- Double tooltip on same-program multiple slots: `tooltipId` in `ProgramBlock` was keyed by `program.id`, shared across all schedule entries for the same program. Hovering either slot opened both tooltips simultaneously. Fixed by including `start_time` in the ID (`program-${id}-${start}`).
+
+---
+
 ## [1.22.0] - 2026-06-14
 
 ### Added

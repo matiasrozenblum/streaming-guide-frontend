@@ -699,7 +699,7 @@ export const ProgramBlock: React.FC<Props> = ({
                   </Box>
                 )}
                 {isWeeklyOverride && (
-                  (isMobile || duration < 120 || (totalMultipleStreams && totalMultipleStreams > 1)) ? (
+                  (isMobile || widthPx < 100) ? (
                     <Box
                       sx={{
                         position: 'absolute',
