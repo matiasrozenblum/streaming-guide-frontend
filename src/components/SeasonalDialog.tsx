@@ -5,6 +5,7 @@ import {
   IconButton,
   useTheme,
   Typography,
+  Tooltip,
 } from '@mui/material'
 import CloseIcon from '@mui/icons-material/Close'
 
@@ -38,20 +39,22 @@ const SeasonalDialog: React.FC<Props> = ({ open, onClose }) => {
         sx: { backgroundColor: 'rgba(0,0,0,0.4)' },
       }}
     >
-      <IconButton
-        onClick={onClose}
-        size="small"
-        aria-label="Cerrar"
-        sx={{
-          position: 'absolute',
-          top: 1,
-          right: 1,
-          color: theme.palette.text.secondary,
-          '&:hover': { color: theme.palette.text.primary },
-        }}
-      >
-        <CloseIcon fontSize="small" />
-      </IconButton>
+      <Tooltip title="Cerrar">
+        <IconButton
+          onClick={onClose}
+          size="small"
+          aria-label="Cerrar"
+          sx={{
+            position: 'absolute',
+            top: 1,
+            right: 1,
+            color: theme.palette.text.secondary,
+            '&:hover': { color: theme.palette.text.primary },
+          }}
+        >
+          <CloseIcon fontSize="small" />
+        </IconButton>
+      </Tooltip>
 
       <DialogContent sx={{ p: 0, pt: { xs: 1, sm: 1 } }}>
         <Typography
