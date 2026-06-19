@@ -37,15 +37,6 @@ export const YouTubeGlobalPlayer = () => {
   const [zapOpen, setZapOpen] = useState(false);
   const offset = useRef({ x: 0, y: 0 });
 
-  // Kick auto-retry: reload the iframe every KICK_RETRY_DELAY_MS until the player
-  // signals it's working (postMessage from kick.com) or MAX_KICK_RETRIES is reached.
-  const [kickIframeKey, setKickIframeKey] = useState(0);
-  const kickRetryTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const kickRetryCount = useRef(0);
-  const kickSucceeded = useRef(false);
-  const MAX_KICK_RETRIES = 3;
-  const KICK_RETRY_DELAY_MS = 4000;
-
   const minimizedWidth = isMobile ? 300 : 340;
   const minimizedHeight = isMobile ? 170 : 200;
   const margin = 20;
@@ -159,55 +150,6 @@ export const YouTubeGlobalPlayer = () => {
     if (dragging) document.addEventListener('touchmove', handler, { passive: false });
     return () => document.removeEventListener('touchmove', handler);
   }, [dragging]);
-
-  // Kick auto-retry: when a Kick stream opens, reload the iframe every
-  // KICK_RETRY_DELAY_MS up to MAX_KICK_RETRIES times. If the Kick player
-  // emits a postMessage we consider it successfully started and stop.
-  useEffect(() => {
-    if (!open || playerData?.service !== 'kick') {
-      if (kickRetryTimer.current) clearTimeout(kickRetryTimer.current);
-      kickRetryCount.current = 0;
-      kickSucceeded.current = false;
-      setKickIframeKey(0);
-      return;
-    }
-
-    kickRetryCount.current = 0;
-    kickSucceeded.current = false;
-    setKickIframeKey(0);
-
-    const scheduleRetry = () => {
-      if (kickRetryTimer.current) clearTimeout(kickRetryTimer.current);
-      kickRetryTimer.current = setTimeout(() => {
-        if (kickSucceeded.current) return;
-        kickRetryCount.current += 1;
-        setKickIframeKey((k) => k + 1);
-        if (kickRetryCount.current < MAX_KICK_RETRIES) scheduleRetry();
-      }, KICK_RETRY_DELAY_MS);
-    };
-
-    scheduleRetry();
-
-    return () => {
-      if (kickRetryTimer.current) clearTimeout(kickRetryTimer.current);
-    };
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, playerData?.service, playerData?.embedPath]);
-
-  // Stop retrying once Kick's player emits any postMessage (sign it's running)
-  useEffect(() => {
-    const handleKickMessage = (e: MessageEvent) => {
-      if (typeof e.origin === 'string' && e.origin.includes('kick.com')) {
-        kickSucceeded.current = true;
-        if (kickRetryTimer.current) {
-          clearTimeout(kickRetryTimer.current);
-          kickRetryTimer.current = null;
-        }
-      }
-    };
-    window.addEventListener('message', handleKickMessage);
-    return () => window.removeEventListener('message', handleKickMessage);
-  }, []);
 
   if (!open || !playerData) return null;
 
@@ -447,7 +389,6 @@ export const YouTubeGlobalPlayer = () => {
           {/* iframe */}
           <Box sx={{ flexGrow: 1, width: '100%', borderRadius: 2, overflow: 'hidden', minHeight: 0 }}>
             <iframe
-              key={playerData.service === 'kick' ? kickIframeKey : undefined}
               width="100%"
               height="100%"
               src={src}
