@@ -319,6 +319,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
       channelName: streamer.name,
       channelLogo: streamer.logo_url,
       channelBackgroundColor: null,
+      logoShape: 'square',
     };
 
     if (service === StreamingService.YOUTUBE) {

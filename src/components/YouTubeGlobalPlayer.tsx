@@ -317,31 +317,38 @@ export const YouTubeGlobalPlayer = () => {
               </IconButton>
             )}
 
-            {/* Channel mini-logo + name */}
+            {/* Channel / streamer mini-logo + name */}
             {!minimized && channelInfo && (
               <>
-                <Box
-                  sx={{
-                    width: 44,
-                    height: 22,
-                    borderRadius: '4px',
-                    overflow: 'hidden',
-                    flexShrink: 0,
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    ...getLogoBg(channelInfo.channelBackgroundColor),
-                  }}
-                >
-                  {channelInfo.channelLogo && (
+                {(() => {
+                  const isSquare = channelInfo.logoShape === 'square';
+                  return (
                     <Box
-                      component="img"
-                      src={channelInfo.channelLogo}
-                      alt={channelInfo.channelName}
-                      sx={{ width: '100%', height: '100%', objectFit: 'contain' }}
-                    />
-                  )}
-                </Box>
+                      sx={{
+                        width: isSquare ? 28 : 44,
+                        height: 28,
+                        borderRadius: isSquare ? '6px' : '4px',
+                        overflow: 'hidden',
+                        flexShrink: 0,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        ...(isSquare
+                          ? { backgroundColor: '#1e293b' }
+                          : getLogoBg(channelInfo.channelBackgroundColor)),
+                      }}
+                    >
+                      {channelInfo.channelLogo && (
+                        <Box
+                          component="img"
+                          src={channelInfo.channelLogo}
+                          alt={channelInfo.channelName}
+                          sx={{ width: '100%', height: '100%', objectFit: isSquare ? 'cover' : 'contain' }}
+                        />
+                      )}
+                    </Box>
+                  );
+                })()}
                 <Typography
                   sx={{
                     color: '#e2e8f0',

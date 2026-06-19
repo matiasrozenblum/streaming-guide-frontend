@@ -13,6 +13,7 @@ export interface ChannelInfo {
   channelName: string;
   channelLogo?: string | null;
   channelBackgroundColor?: string | null;
+  logoShape?: 'rect' | 'square';
 }
 
 interface StreamingPlayerData {
@@ -72,6 +73,7 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       channelName: item.name,
       channelLogo: item.logoUrl,
       channelBackgroundColor: item.backgroundColor,
+      logoShape: item.logoShape,
     };
 
     setPlayerData({ service: parsed.service, embedPath: parsed.embedPath, channelInfo });
