@@ -30,6 +30,7 @@ import {
   Checkbox,
   Tooltip,
   InputAdornment,
+  Chip,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -72,7 +73,8 @@ export default function ProgramsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    channel_id: '',
+    channel_id: '',       // used when editing an existing program
+    channel_ids: [] as string[], // used when creating (supports multi-select)
     logo_url: '',
     youtube_url: '',
     style_override: '',
@@ -200,6 +202,7 @@ export default function ProgramsPage() {
         name: program.name,
         description: program.description || '',
         channel_id: String(program.channel_id),
+        channel_ids: [],
         logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
         style_override: program.style_override || '',
@@ -212,6 +215,7 @@ export default function ProgramsPage() {
         name: '',
         description: '',
         channel_id: '',
+        channel_ids: [],
         logo_url: '',
         youtube_url: '',
         style_override: '',
@@ -229,6 +233,7 @@ export default function ProgramsPage() {
       name: '',
       description: '',
       channel_id: '',
+      channel_ids: [],
       logo_url: '',
       youtube_url: '',
       style_override: '',
@@ -241,83 +246,136 @@ export default function ProgramsPage() {
 
   const handleSubmit = async () => {
     try {
-      const url = editingProgram
-        ? `/api/programs/${editingProgram.id}`
-        : '/api/programs';
-      const method = editingProgram ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          channel_id: parseInt(formData.channel_id),
-          style_override: formData.style_override || null,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el programa');
+      if (editingProgram) {
+        // Edit existing program — single channel, same as before
+        const res = await fetch(`/api/programs/${editingProgram.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_id: parseInt(formData.channel_id),
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al actualizar el programa');
+        setSuccess('Programa actualizado correctamente');
+      } else if (formData.channel_ids.length > 1) {
+        // Bulk create: multiple channels → single API call, no panelists
+        const scheduleItems = pendingSchedules.map(s => ({
+          startTime: s.startTime,
+          endTime: s.endTime,
+          scheduleType: s.scheduleType || 'weekly',
+          ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
+          ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
+          ...(s.specificDate && { specificDate: s.specificDate }),
+        }));
+        const res = await fetch('/api/programs/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_ids: formData.channel_ids.map(Number),
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+            ...(scheduleItems.length > 0 && { schedules: scheduleItems }),
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al crear los programas');
+        const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+        setSuccess(`${formData.channel_ids.length} programas creados correctamente${scheduleMsg}`);
+      } else {
+        // Single channel create — existing flow
+        const channelId = parseInt(formData.channel_ids[0] ?? formData.channel_id);
+        const res = await fetch('/api/programs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_id: channelId,
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al crear el programa');
 
-      if (!editingProgram && pendingSchedules.length > 0 && typedSession?.accessToken) {
         const newProgramId = body.id;
-        const channelId = parseInt(formData.channel_id);
-        try {
-          const bulkData = {
-            programId: newProgramId.toString(),
-            channelId: channelId.toString(),
-            schedules: pendingSchedules.map(s => ({
-              startTime: s.startTime,
-              endTime: s.endTime,
-              scheduleType: s.scheduleType || 'weekly',
-              ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
-              ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
-              ...(s.specificDate && { specificDate: s.specificDate }),
-            })),
-          };
-          const scheduleRes = await fetch('/api/schedules/bulk', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${typedSession.accessToken}`,
-            },
-            body: JSON.stringify(bulkData),
-          });
-          if (!scheduleRes.ok) {
-            const scheduleBody = await scheduleRes.json().catch(() => ({}));
-            throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
-          }
-          setSuccess(`Programa creado correctamente con ${pendingSchedules.length} horario(s)`);
-        } catch (scheduleErr) {
-          console.error('Error creating schedules:', scheduleErr);
-          setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
-        }
-      }
 
-      if (!editingProgram && pendingPanelistIds.length > 0 && typedSession?.accessToken) {
-        const newProgramId = body.id;
-        try {
-          const panelistPromises = pendingPanelistIds.map(panelistId =>
-            fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
+        if (pendingSchedules.length > 0 && typedSession?.accessToken) {
+          try {
+            const bulkData = {
+              programId: newProgramId.toString(),
+              channelId: channelId.toString(),
+              schedules: pendingSchedules.map(s => ({
+                startTime: s.startTime,
+                endTime: s.endTime,
+                scheduleType: s.scheduleType || 'weekly',
+                ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
+                ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
+                ...(s.specificDate && { specificDate: s.specificDate }),
+              })),
+            };
+            const scheduleRes = await fetch('/api/schedules/bulk', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${typedSession.accessToken}`,
               },
-            })
-          );
-          await Promise.all(panelistPromises);
-          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
-          setSuccess(`Programa creado correctamente${scheduleMsg} con ${pendingPanelistIds.length} panelista(s)`);
-        } catch (panelistErr) {
-          console.error('Error adding panelists:', panelistErr);
-          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
-          setSuccess(`Programa creado correctamente${scheduleMsg}, pero hubo un error al agregar algunos panelistas`);
+              body: JSON.stringify(bulkData),
+            });
+            if (!scheduleRes.ok) {
+              const scheduleBody = await scheduleRes.json().catch(() => ({}));
+              throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
+            }
+          } catch (scheduleErr) {
+            console.error('Error creating schedules:', scheduleErr);
+            setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
+            await fetchPrograms();
+            fetchSchedulesForFilter();
+            handleCloseDialog();
+            return;
+          }
         }
-      } else if (!pendingSchedules.length && !pendingPanelistIds.length) {
-        setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
+
+        if (pendingPanelistIds.length > 0 && typedSession?.accessToken) {
+          try {
+            await Promise.all(
+              pendingPanelistIds.map(panelistId =>
+                fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${typedSession.accessToken}`,
+                  },
+                })
+              )
+            );
+          } catch (panelistErr) {
+            console.error('Error adding panelists:', panelistErr);
+          }
+        }
+
+        const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+        const panelistMsg = pendingPanelistIds.length > 0 ? ` con ${pendingPanelistIds.length} panelista(s)` : '';
+        setSuccess(`Programa creado correctamente${scheduleMsg}${panelistMsg}`);
       }
 
       await fetchPrograms();
-      // Refresh schedule filter data after creating a program (it may now have schedules)
       fetchSchedulesForFilter();
       handleCloseDialog();
     } catch (err: unknown) {
@@ -505,12 +563,43 @@ export default function ProgramsPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
             <TextField label="Nombre" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} fullWidth required />
             <TextField label="Descripción" multiline rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} fullWidth />
-            <FormControl fullWidth>
-              <InputLabel>Canal</InputLabel>
-              <Select value={formData.channel_id} onChange={e => setFormData({ ...formData, channel_id: e.target.value as string })} label="Canal">
-                {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
-              </Select>
-            </FormControl>
+            {editingProgram ? (
+              <FormControl fullWidth>
+                <InputLabel>Canal</InputLabel>
+                <Select
+                  value={formData.channel_id}
+                  onChange={e => setFormData({ ...formData, channel_id: e.target.value as string })}
+                  label="Canal"
+                >
+                  {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
+                </Select>
+              </FormControl>
+            ) : (
+              <FormControl fullWidth>
+                <InputLabel>Canales</InputLabel>
+                <Select
+                  multiple
+                  value={formData.channel_ids}
+                  onChange={e => setFormData({ ...formData, channel_ids: e.target.value as string[] })}
+                  label="Canales"
+                  renderValue={(selected) => (
+                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                      {(selected as string[]).map(id => {
+                        const ch = channels.find(c => String(c.id) === id);
+                        return <Chip key={id} label={ch?.name ?? id} size="small" />;
+                      })}
+                    </Box>
+                  )}
+                >
+                  {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
+                </Select>
+                {formData.channel_ids.length > 1 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                    Se crearán {formData.channel_ids.length} programas independientes (uno por canal)
+                  </Typography>
+                )}
+              </FormControl>
+            )}
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
             <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
@@ -535,7 +624,11 @@ export default function ProgramsPage() {
 
             <ProgramSchedulesSection
               programId={editingProgram?.id || null}
-              channelId={formData.channel_id ? parseInt(formData.channel_id) : null}
+              channelId={
+                editingProgram
+                  ? (formData.channel_id ? parseInt(formData.channel_id) : null)
+                  : (formData.channel_ids[0] ? parseInt(formData.channel_ids[0]) : null)
+              }
               onSchedulesChange={setPendingSchedules}
             />
 

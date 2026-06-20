@@ -6,6 +6,16 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.24.0] - 2026-06-18
+
+### Fixed
+- Zapping panel on `/streamers` page was showing channels instead of streamers. `StreamersClient` now registers a live-streamers-only zap list (cleared on unmount), while `HomeClient` clears its channel list on unmount, so each page owns the zap list while active.
+- Zapping panel and mobile cards now render streamer logos as square (44×44 / 48×48 with `objectFit: cover` and dark fallback background) instead of the rectangular channel logo dimensions.
+- Player header mini-logo is now square (28×28) when showing a streamer, matching the zap panel style.
+- `handleServiceClick` in `StreamersClient` now passes `channelInfo` (streamer id/name/logo) to `openStream`/`openVideo`, so the player header and current-item highlighting work correctly when opening from the streamers page.
+
+---
+
 ## [1.23.1] - 2026-06-18
 
 ### Fixed

@@ -127,6 +127,7 @@ export function WeeklyOverridesTable() {
   const [channels, setChannels] = useState<{ id: number; name: string }[]>([]);
   const [editingOverride, setEditingOverride] = useState<WeeklyOverride | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [specialChannelIds, setSpecialChannelIds] = useState<number[]>([]);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -269,6 +270,7 @@ export function WeeklyOverridesTable() {
     setEditingOverride(null);
     setIsEditMode(false);
     setPanelistSearchTerm('');
+    setSpecialChannelIds([]);
     setFormData({
       targetWeek: 'current',
       overrideType: 'cancel',
@@ -292,6 +294,45 @@ export function WeeklyOverridesTable() {
     if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create' && !isEditMode) return;
 
     try {
+      // Bulk path: special program (create) + multiple channels + not editing
+      if (formData.overrideType === 'create' && !isEditMode && specialChannelIds.length > 1) {
+        const bulkPayload = {
+          channel_ids: specialChannelIds,
+          targetWeek: formData.targetWeek,
+          overrideType: 'create' as const,
+          newStartTime: formData.newStartTime,
+          newEndTime: formData.newEndTime,
+          newDayOfWeek: formData.newDayOfWeek,
+          reason: formData.reason,
+          createdBy: typedSession?.user?.name || 'Admin',
+          ...(formData.panelistIds.length > 0 && { panelistIds: formData.panelistIds }),
+          specialProgram: {
+            name: formData.specialProgram.name,
+            description: formData.specialProgram.description || undefined,
+            imageUrl: formData.specialProgram.imageUrl || undefined,
+            stream_url: formData.specialProgram.stream_url || undefined,
+            is_premiere: formData.specialProgram.is_premiere,
+          },
+        };
+        const response = await fetch('/api/weekly-overrides/bulk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${typedSession?.accessToken}`,
+          },
+          body: JSON.stringify(bulkPayload),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al crear los programas especiales');
+        }
+        setSuccess(`${specialChannelIds.length} programas especiales creados correctamente`);
+        handleCloseDialog();
+        await fetchData();
+        return;
+      }
+
+      // Single-channel or edit path (existing logic)
       interface OverridePayload {
         targetWeek: 'current' | 'next';
         overrideType: 'cancel' | 'time_change' | 'reschedule' | 'create';
@@ -313,6 +354,12 @@ export function WeeklyOverridesTable() {
         };
       }
 
+      // For single-channel create, use the first (and only) specialChannelId if set
+      const singleChannelId =
+        formData.overrideType === 'create' && !isEditMode && specialChannelIds.length === 1
+          ? specialChannelIds[0]
+          : formData.specialProgram.channelId;
+
       const payload: OverridePayload = {
         targetWeek: formData.targetWeek,
         overrideType: formData.overrideType,
@@ -325,9 +372,8 @@ export function WeeklyOverridesTable() {
         }),
         ...(formData.overrideType === 'create' && {
           newDayOfWeek: formData.newDayOfWeek,
-          specialProgram: formData.specialProgram,
+          specialProgram: { ...formData.specialProgram, channelId: singleChannelId },
         }),
-        // For edit mode, use the existing override's IDs; for create mode, use selected entities
         ...(isEditMode && editingOverride ? {
           ...(editingOverride.scheduleId && { scheduleId: editingOverride.scheduleId }),
           ...(editingOverride.programId && { programId: editingOverride.programId }),
@@ -346,12 +392,12 @@ export function WeeklyOverridesTable() {
         createdBy: typedSession?.user?.name || 'Admin',
       };
 
-      const url = isEditMode && editingOverride 
+      const url = isEditMode && editingOverride
         ? `/api/weekly-overrides/${editingOverride.id}`
         : '/api/weekly-overrides';
-      
+
       const method = isEditMode ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -1078,6 +1124,8 @@ export function WeeklyOverridesTable() {
             onClick={() => {
               setSelectedSchedule(null);
               setSelectedProgram(null);
+              setIsEditMode(false);
+              setSpecialChannelIds([]);
               setFormData({
                 targetWeek: 'current',
                 overrideType: 'create',
@@ -1406,26 +1454,53 @@ export function WeeklyOverridesTable() {
                   rows={2}
                 />
                 
-                {/* Channel selection dropdown */}
-                <FormControl fullWidth required>
-                  <InputLabel id="special-program-channel-label">Canal</InputLabel>
-                  <Select
-                    labelId="special-program-channel-label"
-                    value={formData.specialProgram.channelId}
-                    label="Canal"
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      specialProgram: { ...formData.specialProgram, channelId: Number(e.target.value) }
-                    })}
-                  >
-                    {channels.map((channel) => (
-                      <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
-                    ))}
-                  </Select>
-                  <Typography variant="caption" color="text.secondary">
-                    Selecciona el canal donde se emitirá el programa
-                  </Typography>
-                </FormControl>
+                {/* Channel selection — multi-select when not editing */}
+                {isEditMode ? (
+                  <FormControl fullWidth required>
+                    <InputLabel id="special-program-channel-label">Canal</InputLabel>
+                    <Select
+                      labelId="special-program-channel-label"
+                      value={formData.specialProgram.channelId}
+                      label="Canal"
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        specialProgram: { ...formData.specialProgram, channelId: Number(e.target.value) }
+                      })}
+                    >
+                      {channels.map((channel) => (
+                        <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <FormControl fullWidth required>
+                    <InputLabel id="special-program-channels-label">Canales</InputLabel>
+                    <Select
+                      labelId="special-program-channels-label"
+                      multiple
+                      value={specialChannelIds}
+                      label="Canales"
+                      onChange={(e) => setSpecialChannelIds(e.target.value as number[])}
+                      renderValue={(selected) => (
+                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
+                          {(selected as number[]).map(id => {
+                            const ch = channels.find(c => c.id === id);
+                            return <Chip key={id} label={ch?.name ?? id} size="small" />;
+                          })}
+                        </Box>
+                      )}
+                    >
+                      {channels.map((channel) => (
+                        <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
+                      ))}
+                    </Select>
+                    {specialChannelIds.length > 1 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                        Se crearán {specialChannelIds.length} programas especiales independientes (uno por canal)
+                      </Typography>
+                    )}
+                  </FormControl>
+                )}
                 
                 <TextField
                   label="URL de imagen (opcional)"
