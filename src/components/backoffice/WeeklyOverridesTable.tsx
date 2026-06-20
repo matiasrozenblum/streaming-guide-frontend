@@ -129,6 +129,10 @@ export function WeeklyOverridesTable() {
   const [isEditMode, setIsEditMode] = useState(false);
   const [specialChannelIds, setSpecialChannelIds] = useState<number[]>([]);
 
+  // Multi-select & bulk delete for special programs
+  const [selectedOverrideIds, setSelectedOverrideIds] = useState<Set<string>>(new Set());
+  const [confirmBulkOverrideDeleteOpen, setConfirmBulkOverrideDeleteOpen] = useState(false);
+
   // Fetch data
   const fetchData = useCallback(async () => {
     if (!typedSession?.accessToken) return;
@@ -514,6 +518,58 @@ export function WeeklyOverridesTable() {
     } catch (err) {
       console.error('Error during reset:', err);
       setError('Error durante el reset');
+    }
+  };
+
+  // Special-program multi-select helpers
+  const specialProgramOverrides = [...currentWeekOverrides, ...nextWeekOverrides].filter(
+    o => o.overrideType === 'create',
+  );
+
+  const allSpecialSelected =
+    specialProgramOverrides.length > 0 &&
+    specialProgramOverrides.every(o => selectedOverrideIds.has(o.id));
+
+  const someSpecialSelected =
+    specialProgramOverrides.some(o => selectedOverrideIds.has(o.id)) && !allSpecialSelected;
+
+  const handleToggleOverride = (id: string) => {
+    setSelectedOverrideIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllSpecial = () => {
+    if (allSpecialSelected) {
+      setSelectedOverrideIds(new Set());
+    } else {
+      setSelectedOverrideIds(new Set(specialProgramOverrides.map(o => o.id)));
+    }
+  };
+
+  const handleBulkOverrideDelete = async () => {
+    setConfirmBulkOverrideDeleteOpen(false);
+    try {
+      await Promise.all(
+        [...selectedOverrideIds].map(id =>
+          fetch(`/api/weekly-overrides/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${typedSession?.accessToken}` },
+          }),
+        ),
+      );
+      setSuccess(`${selectedOverrideIds.size} programa(s) especial(es) eliminado(s) correctamente`);
+      setSelectedOverrideIds(new Set());
+      await fetchData();
+    } catch (err) {
+      console.error('Error bulk deleting overrides:', err);
+      setError('Error al eliminar los programas especiales seleccionados');
     }
   };
 
@@ -1160,6 +1216,14 @@ export function WeeklyOverridesTable() {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      indeterminate={someSpecialSelected}
+                      checked={allSpecialSelected}
+                      onChange={handleSelectAllSpecial}
+                    />
+                  </TableCell>
                   <TableCell>Programa</TableCell>
                   <TableCell>Canal</TableCell>
                   <TableCell>Horario</TableCell>
@@ -1169,11 +1233,17 @@ export function WeeklyOverridesTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {[...currentWeekOverrides, ...nextWeekOverrides]
-                  .filter(override => override.overrideType === 'create')
+                {specialProgramOverrides
                   .map((override) => {
                     return (
-                      <TableRow key={override.id}>
+                      <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            size="small"
+                            checked={selectedOverrideIds.has(override.id)}
+                            onChange={() => handleToggleOverride(override.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Typography variant="body2" fontWeight="bold">
                             {override.specialProgram?.name || 'Programa especial'}
@@ -1659,6 +1729,82 @@ export function WeeklyOverridesTable() {
           {error || success}
         </Alert>
       </Snackbar>
+
+      {/* Floating bulk-action bar for special programs */}
+      {currentTab === 4 && selectedOverrideIds.size > 0 && (
+        <Paper
+          elevation={8}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderRadius: 3,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''} especial{selectedOverrideIds.size !== 1 ? 'es' : ''} seleccionado{selectedOverrideIds.size !== 1 ? 's' : ''}
+          </Typography>
+          <Button variant="text" size="small" onClick={() => setSelectedOverrideIds(new Set())}>
+            Deseleccionar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            startIcon={<Delete />}
+            onClick={() => setConfirmBulkOverrideDeleteOpen(true)}
+          >
+            Eliminar seleccionados
+          </Button>
+        </Paper>
+      )}
+
+      {/* Bulk delete confirmation dialog for special programs */}
+      <Dialog
+        open={confirmBulkOverrideDeleteOpen}
+        onClose={() => setConfirmBulkOverrideDeleteOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Eliminar programas especiales</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar los siguientes {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''} especial{selectedOverrideIds.size !== 1 ? 'es' : ''}?
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {[...selectedOverrideIds].map(id => {
+              const o = specialProgramOverrides.find(sp => sp.id === id);
+              const ch = channels.find(c => c.id === o?.specialProgram?.channelId);
+              return (
+                <li key={id}>
+                  <Typography variant="body2">
+                    <strong>{o?.specialProgram?.name ?? id}</strong>
+                    {ch ? ` — ${ch.name}` : o?.specialProgram?.channelId ? ` — Canal ID: ${o.specialProgram.channelId}` : ''}
+                    {o && (
+                      <Typography component="span" variant="caption" color="text.secondary">
+                        {' '}({o.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'Semana actual' : 'Próxima semana'}, {getDayLabel(o.newDayOfWeek || '')} {formatTime(o.newStartTime || '')}-{formatTime(o.newEndTime || '')})
+                      </Typography>
+                    )}
+                  </Typography>
+                </li>
+              );
+            })}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmBulkOverrideDeleteOpen(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleBulkOverrideDelete}>
+            Eliminar {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 } 
