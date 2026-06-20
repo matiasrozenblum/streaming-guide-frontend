@@ -521,17 +521,22 @@ export function WeeklyOverridesTable() {
     }
   };
 
-  // Special-program multi-select helpers
+  // Multi-select helpers (shared across tabs 0, 1, 4)
   const specialProgramOverrides = [...currentWeekOverrides, ...nextWeekOverrides].filter(
     o => o.overrideType === 'create',
   );
 
-  const allSpecialSelected =
-    specialProgramOverrides.length > 0 &&
-    specialProgramOverrides.every(o => selectedOverrideIds.has(o.id));
+  const visibleOverrides =
+    currentTab === 0 ? currentWeekOverrides :
+    currentTab === 1 ? nextWeekOverrides :
+    currentTab === 4 ? specialProgramOverrides :
+    [];
 
-  const someSpecialSelected =
-    specialProgramOverrides.some(o => selectedOverrideIds.has(o.id)) && !allSpecialSelected;
+  const allVisibleSelected =
+    visibleOverrides.length > 0 && visibleOverrides.every(o => selectedOverrideIds.has(o.id));
+
+  const someVisibleSelected =
+    visibleOverrides.some(o => selectedOverrideIds.has(o.id)) && !allVisibleSelected;
 
   const handleToggleOverride = (id: string) => {
     setSelectedOverrideIds(prev => {
@@ -545,11 +550,11 @@ export function WeeklyOverridesTable() {
     });
   };
 
-  const handleSelectAllSpecial = () => {
-    if (allSpecialSelected) {
+  const handleSelectAllVisible = () => {
+    if (allVisibleSelected) {
       setSelectedOverrideIds(new Set());
     } else {
-      setSelectedOverrideIds(new Set(specialProgramOverrides.map(o => o.id)));
+      setSelectedOverrideIds(new Set(visibleOverrides.map(o => o.id)));
     }
   };
 
@@ -564,12 +569,12 @@ export function WeeklyOverridesTable() {
           }),
         ),
       );
-      setSuccess(`${selectedOverrideIds.size} programa(s) especial(es) eliminado(s) correctamente`);
+      setSuccess(`${selectedOverrideIds.size} cambio(s) eliminado(s) correctamente`);
       setSelectedOverrideIds(new Set());
       await fetchData();
     } catch (err) {
       console.error('Error bulk deleting overrides:', err);
-      setError('Error al eliminar los programas especiales seleccionados');
+      setError('Error al eliminar los cambios seleccionados');
     }
   };
 
@@ -673,7 +678,7 @@ export function WeeklyOverridesTable() {
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+        <Tabs value={currentTab} onChange={(_, newValue) => { setCurrentTab(newValue); setSelectedOverrideIds(new Set()); }}>
           <Tab 
             label={`Semana Actual (${currentWeekOverrides.length} cambios)`} 
             sx={{ fontWeight: 600, color: 'text.primary' }}
@@ -703,6 +708,14 @@ export function WeeklyOverridesTable() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={someVisibleSelected}
+                    checked={allVisibleSelected}
+                    onChange={handleSelectAllVisible}
+                  />
+                </TableCell>
                 <TableCell>Programa</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
@@ -717,9 +730,16 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
-                  <TableRow key={override.id}>
+                  <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedOverrideIds.has(override.id)}
+                        onChange={() => handleToggleOverride(override.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
@@ -806,6 +826,14 @@ export function WeeklyOverridesTable() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={someVisibleSelected}
+                    checked={allVisibleSelected}
+                    onChange={handleSelectAllVisible}
+                  />
+                </TableCell>
                 <TableCell>Programa</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
@@ -820,9 +848,16 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
-                  <TableRow key={override.id}>
+                  <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedOverrideIds.has(override.id)}
+                        onChange={() => handleToggleOverride(override.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
@@ -1219,9 +1254,9 @@ export function WeeklyOverridesTable() {
                   <TableCell padding="checkbox">
                     <Checkbox
                       size="small"
-                      indeterminate={someSpecialSelected}
-                      checked={allSpecialSelected}
-                      onChange={handleSelectAllSpecial}
+                      indeterminate={someVisibleSelected}
+                      checked={allVisibleSelected}
+                      onChange={handleSelectAllVisible}
                     />
                   </TableCell>
                   <TableCell>Programa</TableCell>
@@ -1730,8 +1765,8 @@ export function WeeklyOverridesTable() {
         </Alert>
       </Snackbar>
 
-      {/* Floating bulk-action bar for special programs */}
-      {currentTab === 4 && selectedOverrideIds.size > 0 && (
+      {/* Floating bulk-action bar (tabs 0, 1, 4) */}
+      {[0, 1, 4].includes(currentTab) && selectedOverrideIds.size > 0 && (
         <Paper
           elevation={8}
           sx={{
@@ -1749,7 +1784,7 @@ export function WeeklyOverridesTable() {
           }}
         >
           <Typography variant="body2" fontWeight={600}>
-            {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''} especial{selectedOverrideIds.size !== 1 ? 'es' : ''} seleccionado{selectedOverrideIds.size !== 1 ? 's' : ''}
+            {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''} seleccionado{selectedOverrideIds.size !== 1 ? 's' : ''}
           </Typography>
           <Button variant="text" size="small" onClick={() => setSelectedOverrideIds(new Set())}>
             Deseleccionar
@@ -1766,32 +1801,49 @@ export function WeeklyOverridesTable() {
         </Paper>
       )}
 
-      {/* Bulk delete confirmation dialog for special programs */}
+      {/* Bulk delete confirmation dialog */}
       <Dialog
         open={confirmBulkOverrideDeleteOpen}
         onClose={() => setConfirmBulkOverrideDeleteOpen(false)}
         maxWidth="sm"
         fullWidth
       >
-        <DialogTitle>Eliminar programas especiales</DialogTitle>
+        <DialogTitle>Eliminar cambios semanales</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            ¿Estás seguro que querés eliminar los siguientes {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''} especial{selectedOverrideIds.size !== 1 ? 'es' : ''}?
+            ¿Estás seguro que querés eliminar los siguientes {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''}?
           </Typography>
           <Box component="ul" sx={{ m: 0, pl: 2 }}>
             {[...selectedOverrideIds].map(id => {
-              const o = specialProgramOverrides.find(sp => sp.id === id);
-              const ch = channels.find(c => c.id === o?.specialProgram?.channelId);
+              const allOverrides = [...currentWeekOverrides, ...nextWeekOverrides];
+              const o = allOverrides.find(ov => ov.id === id);
+              if (!o) return <li key={id}><Typography variant="body2">{id}</Typography></li>;
+
+              const programName =
+                o.overrideType === 'create'
+                  ? o.specialProgram?.name || 'Programa especial'
+                  : programs.find(p => p.id === o.programId)?.name ||
+                    schedules.find(s => s.id === o.scheduleId)?.program.name ||
+                    'Programa desconocido';
+
+              const channelName =
+                o.overrideType === 'create'
+                  ? channels.find(c => c.id === o.specialProgram?.channelId)?.name || `Canal ID: ${o.specialProgram?.channelId || 'N/A'}`
+                  : programs.find(p => p.id === o.programId)?.channel_name ||
+                    schedules.find(s => s.id === o.scheduleId)?.program.channel?.name ||
+                    '';
+
+              const typeLabel = getOverrideLabel(o.overrideType);
+              const weekLabel = o.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'Semana actual' : 'Próxima semana';
+
               return (
                 <li key={id}>
                   <Typography variant="body2">
-                    <strong>{o?.specialProgram?.name ?? id}</strong>
-                    {ch ? ` — ${ch.name}` : o?.specialProgram?.channelId ? ` — Canal ID: ${o.specialProgram.channelId}` : ''}
-                    {o && (
-                      <Typography component="span" variant="caption" color="text.secondary">
-                        {' '}({o.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'Semana actual' : 'Próxima semana'}, {getDayLabel(o.newDayOfWeek || '')} {formatTime(o.newStartTime || '')}-{formatTime(o.newEndTime || '')})
-                      </Typography>
-                    )}
+                    <strong>{programName}</strong>
+                    {channelName ? ` — ${channelName}` : ''}
+                    <Typography component="span" variant="caption" color="text.secondary">
+                      {` · ${typeLabel} · ${weekLabel}`}
+                    </Typography>
                   </Typography>
                 </li>
               );
@@ -1801,7 +1853,7 @@ export function WeeklyOverridesTable() {
         <DialogActions>
           <Button onClick={() => setConfirmBulkOverrideDeleteOpen(false)}>Cancelar</Button>
           <Button variant="contained" color="error" onClick={handleBulkOverrideDelete}>
-            Eliminar {selectedOverrideIds.size} programa{selectedOverrideIds.size !== 1 ? 's' : ''}
+            Eliminar {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''}
           </Button>
         </DialogActions>
       </Dialog>
