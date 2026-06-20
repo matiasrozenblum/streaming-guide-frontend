@@ -27,6 +27,7 @@ import {
   InputLabel,
   Pagination,
   SelectChangeEvent,
+  Tooltip,
 } from '@mui/material';
 import { Edit, Delete, Add, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { User } from '@/types/user';
@@ -357,25 +358,33 @@ export function UsersTable() {
           
           {/* Page Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              aria-label="Página anterior"
-              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
-              disabled={currentPage <= 1}
-              size="small"
-            >
-              <NavigateBefore />
-            </IconButton>
+            <Tooltip title="Página anterior" arrow placement="top">
+              <span>
+                <IconButton
+                  aria-label="Página anterior"
+                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  size="small"
+                >
+                  <NavigateBefore />
+                </IconButton>
+              </span>
+            </Tooltip>
             <Typography variant="body2" color="text.primary">
               Página {currentPage} de {totalPages}
             </Typography>
-            <IconButton
-              aria-label="Página siguiente"
-              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              size="small"
-            >
-              <NavigateNext />
-            </IconButton>
+            <Tooltip title="Página siguiente" arrow placement="top">
+              <span>
+                <IconButton
+                  aria-label="Página siguiente"
+                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  size="small"
+                >
+                  <NavigateNext />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
           
           <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
@@ -426,12 +435,16 @@ export function UsersTable() {
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
-                      <Edit />
-                    </IconButton>
-                    <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
-                      <Delete />
-                    </IconButton>
+                    <Tooltip title="Editar usuario" arrow>
+                      <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar usuario" arrow>
+                      <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>
