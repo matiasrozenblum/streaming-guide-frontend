@@ -39,6 +39,7 @@ import {
   Delete as DeleteIcon,
   Group as GroupIcon,
   Search as SearchIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
@@ -88,6 +89,10 @@ export default function ProgramsPage() {
   const [pendingSchedules, setPendingSchedules] = useState<PendingSchedule[]>([]);
   const [pendingPanelistIds, setPendingPanelistIds] = useState<number[]>([]);
 
+  // Multi-select & bulk delete
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+
   // Search / sort / filter / pagination
   const [searchTerm, setSearchTerm] = useState('');
   const [sortBy, setSortBy] = useState('name_asc');
@@ -105,9 +110,10 @@ export default function ProgramsPage() {
     }
   }, [status]);
 
-  // Reset to first page whenever search/sort/filter changes
+  // Reset to first page and clear selection whenever search/sort/filter changes
   useEffect(() => {
     setPage(0);
+    setSelectedIds(new Set());
   }, [searchTerm, sortBy, scheduleFilter]);
 
   const fetchPrograms = async () => {
@@ -402,6 +408,57 @@ export default function ProgramsPage() {
     }
   };
 
+  const handleToggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const allPageSelected =
+    paginatedPrograms.length > 0 &&
+    paginatedPrograms.every(p => selectedIds.has(p.id));
+
+  const somePageSelected =
+    paginatedPrograms.some(p => selectedIds.has(p.id)) && !allPageSelected;
+
+  const handleSelectAllPage = () => {
+    if (allPageSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        paginatedPrograms.forEach(p => next.delete(p.id));
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        paginatedPrograms.forEach(p => next.add(p.id));
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setConfirmBulkDeleteOpen(false);
+    try {
+      await Promise.all(
+        [...selectedIds].map(id => fetch(`/api/programs/${id}`, { method: 'DELETE' }))
+      );
+      setSelectedIds(new Set());
+      await fetchPrograms();
+      fetchSchedulesForFilter();
+      setSuccess(`${selectedIds.size} programa(s) eliminado(s) correctamente`);
+    } catch (err: unknown) {
+      console.error('Error bulk deleting programs:', err);
+      setError('Error al eliminar los programas seleccionados');
+    }
+  };
+
   const handleCloseSnackbar = () => {
     setError(null);
     setSuccess(null);
@@ -480,7 +537,14 @@ export default function ProgramsPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Logo</TableCell>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  indeterminate={somePageSelected}
+                  checked={allPageSelected}
+                  onChange={handleSelectAllPage}
+                />
+              </TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Canal</TableCell>
               <TableCell>YouTube</TableCell>
@@ -492,11 +556,17 @@ export default function ProgramsPage() {
             {paginatedPrograms.map(program => {
               const channel = channels.find(c => c.id === program.channel_id);
               return (
-                <TableRow key={program.id}>
-                  <TableCell>
-                    {program.logo_url && (
-                      <Image unoptimized src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
-                    )}
+                <TableRow
+                  key={program.id}
+                  selected={selectedIds.has(program.id)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={selectedIds.has(program.id)}
+                      onChange={() => handleToggleSelect(program.id)}
+                    />
                   </TableCell>
                   <TableCell>{program.name}</TableCell>
                   <TableCell>
@@ -661,6 +731,79 @@ export default function ProgramsPage() {
       <Snackbar open={!!error || !!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert severity={error ? 'error' : 'success'} onClose={handleCloseSnackbar}>{error || success}</Alert>
       </Snackbar>
+
+      {/* Floating bulk-action bar */}
+      {selectedIds.size > 0 && (
+        <Paper
+          elevation={8}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderRadius: 3,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+          </Typography>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Deseleccionar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            startIcon={<DeleteSweepIcon />}
+            onClick={() => setConfirmBulkDeleteOpen(true)}
+          >
+            Eliminar seleccionados
+          </Button>
+        </Paper>
+      )}
+
+      {/* Bulk delete confirmation dialog */}
+      <Dialog open={confirmBulkDeleteOpen} onClose={() => setConfirmBulkDeleteOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Eliminar programas</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar los siguientes {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''}?
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {[...selectedIds].map(id => {
+              const p = programs.find(pr => pr.id === id);
+              const ch = channels.find(c => c.id === p?.channel_id);
+              return (
+                <li key={id}>
+                  <Typography variant="body2">
+                    <strong>{p?.name ?? `#${id}`}</strong>
+                    {ch ? ` — ${ch.name}` : ''}
+                  </Typography>
+                </li>
+              );
+            })}
+          </Box>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Esta acción eliminará también todos los horarios y overrides asociados.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmBulkDeleteOpen(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleBulkDelete}>
+            Eliminar {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
