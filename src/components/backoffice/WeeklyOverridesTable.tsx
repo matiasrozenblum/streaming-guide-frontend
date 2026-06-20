@@ -1473,33 +1473,39 @@ export function WeeklyOverridesTable() {
                     </Select>
                   </FormControl>
                 ) : (
-                  <FormControl fullWidth required>
-                    <InputLabel id="special-program-channels-label">Canales</InputLabel>
-                    <Select
-                      labelId="special-program-channels-label"
+                  <Box>
+                    <Autocomplete
                       multiple
-                      value={specialChannelIds}
-                      label="Canales"
-                      onChange={(e) => setSpecialChannelIds(e.target.value as number[])}
-                      renderValue={(selected) => (
-                        <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                          {(selected as number[]).map(id => {
-                            const ch = channels.find(c => c.id === id);
-                            return <Chip key={id} label={ch?.name ?? id} size="small" />;
-                          })}
-                        </Box>
+                      disableCloseOnSelect
+                      options={channels}
+                      getOptionLabel={(ch) => ch.name}
+                      value={channels.filter(ch => specialChannelIds.includes(ch.id))}
+                      onChange={(_, newValue) => setSpecialChannelIds(newValue.map(ch => ch.id))}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Canales" placeholder={specialChannelIds.length === 0 ? 'Seleccionar canales…' : ''} required />
                       )}
-                    >
-                      {channels.map((channel) => (
-                        <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
-                      ))}
-                    </Select>
+                      renderTags={(value, getTagProps) =>
+                        value.map((ch, index) => {
+                          const { key, ...tagProps } = getTagProps({ index });
+                          return <Chip key={key} label={ch.name} size="small" {...tagProps} />;
+                        })
+                      }
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox size="small" checked={selected} sx={{ mr: 1 }} />
+                          {option.name}
+                        </li>
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      limitTags={4}
+                      fullWidth
+                    />
                     {specialChannelIds.length > 1 && (
-                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                         Se crearán {specialChannelIds.length} programas especiales independientes (uno por canal)
                       </Typography>
                     )}
-                  </FormControl>
+                  </Box>
                 )}
                 
                 <TextField

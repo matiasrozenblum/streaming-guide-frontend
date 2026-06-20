@@ -31,6 +31,7 @@ import {
   Tooltip,
   InputAdornment,
   Chip,
+  Autocomplete,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -575,30 +576,41 @@ export default function ProgramsPage() {
                 </Select>
               </FormControl>
             ) : (
-              <FormControl fullWidth>
-                <InputLabel>Canales</InputLabel>
-                <Select
+              <Box>
+                <Autocomplete
                   multiple
-                  value={formData.channel_ids}
-                  onChange={e => setFormData({ ...formData, channel_ids: e.target.value as string[] })}
-                  label="Canales"
-                  renderValue={(selected) => (
-                    <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 0.5 }}>
-                      {(selected as string[]).map(id => {
-                        const ch = channels.find(c => String(c.id) === id);
-                        return <Chip key={id} label={ch?.name ?? id} size="small" />;
-                      })}
-                    </Box>
+                  disableCloseOnSelect
+                  options={channels}
+                  getOptionLabel={(ch) => ch.name}
+                  value={channels.filter(ch => formData.channel_ids.includes(String(ch.id)))}
+                  onChange={(_, newValue) =>
+                    setFormData({ ...formData, channel_ids: newValue.map(ch => String(ch.id)) })
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} label="Canales" placeholder={formData.channel_ids.length === 0 ? 'Seleccionar canales…' : ''} />
                   )}
-                >
-                  {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
-                </Select>
+                  renderTags={(value, getTagProps) =>
+                    value.map((ch, index) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return <Chip key={key} label={ch.name} size="small" {...tagProps} />;
+                    })
+                  }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox size="small" checked={selected} sx={{ mr: 1 }} />
+                      {option.name}
+                    </li>
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  limitTags={4}
+                  fullWidth
+                />
                 {formData.channel_ids.length > 1 && (
-                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5 }}>
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
                     Se crearán {formData.channel_ids.length} programas independientes (uno por canal)
                   </Typography>
                 )}
-              </FormControl>
+              </Box>
             )}
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
