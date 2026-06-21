@@ -127,6 +127,11 @@ export function WeeklyOverridesTable() {
   const [channels, setChannels] = useState<{ id: number; name: string }[]>([]);
   const [editingOverride, setEditingOverride] = useState<WeeklyOverride | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
+  const [specialChannelIds, setSpecialChannelIds] = useState<number[]>([]);
+
+  // Multi-select & bulk delete for special programs
+  const [selectedOverrideIds, setSelectedOverrideIds] = useState<Set<string>>(new Set());
+  const [confirmBulkOverrideDeleteOpen, setConfirmBulkOverrideDeleteOpen] = useState(false);
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -269,6 +274,7 @@ export function WeeklyOverridesTable() {
     setEditingOverride(null);
     setIsEditMode(false);
     setPanelistSearchTerm('');
+    setSpecialChannelIds([]);
     setFormData({
       targetWeek: 'current',
       overrideType: 'cancel',
@@ -292,6 +298,45 @@ export function WeeklyOverridesTable() {
     if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create' && !isEditMode) return;
 
     try {
+      // Bulk path: special program (create) + multiple channels + not editing
+      if (formData.overrideType === 'create' && !isEditMode && specialChannelIds.length > 1) {
+        const bulkPayload = {
+          channel_ids: specialChannelIds,
+          targetWeek: formData.targetWeek,
+          overrideType: 'create' as const,
+          newStartTime: formData.newStartTime,
+          newEndTime: formData.newEndTime,
+          newDayOfWeek: formData.newDayOfWeek,
+          reason: formData.reason,
+          createdBy: typedSession?.user?.name || 'Admin',
+          ...(formData.panelistIds.length > 0 && { panelistIds: formData.panelistIds }),
+          specialProgram: {
+            name: formData.specialProgram.name,
+            description: formData.specialProgram.description || undefined,
+            imageUrl: formData.specialProgram.imageUrl || undefined,
+            stream_url: formData.specialProgram.stream_url || undefined,
+            is_premiere: formData.specialProgram.is_premiere,
+          },
+        };
+        const response = await fetch('/api/weekly-overrides/bulk', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${typedSession?.accessToken}`,
+          },
+          body: JSON.stringify(bulkPayload),
+        });
+        if (!response.ok) {
+          const errorData = await response.json();
+          throw new Error(errorData.message || 'Error al crear los programas especiales');
+        }
+        setSuccess(`${specialChannelIds.length} programas especiales creados correctamente`);
+        handleCloseDialog();
+        await fetchData();
+        return;
+      }
+
+      // Single-channel or edit path (existing logic)
       interface OverridePayload {
         targetWeek: 'current' | 'next';
         overrideType: 'cancel' | 'time_change' | 'reschedule' | 'create';
@@ -313,6 +358,12 @@ export function WeeklyOverridesTable() {
         };
       }
 
+      // For single-channel create, use the first (and only) specialChannelId if set
+      const singleChannelId =
+        formData.overrideType === 'create' && !isEditMode && specialChannelIds.length === 1
+          ? specialChannelIds[0]
+          : formData.specialProgram.channelId;
+
       const payload: OverridePayload = {
         targetWeek: formData.targetWeek,
         overrideType: formData.overrideType,
@@ -325,9 +376,8 @@ export function WeeklyOverridesTable() {
         }),
         ...(formData.overrideType === 'create' && {
           newDayOfWeek: formData.newDayOfWeek,
-          specialProgram: formData.specialProgram,
+          specialProgram: { ...formData.specialProgram, channelId: singleChannelId },
         }),
-        // For edit mode, use the existing override's IDs; for create mode, use selected entities
         ...(isEditMode && editingOverride ? {
           ...(editingOverride.scheduleId && { scheduleId: editingOverride.scheduleId }),
           ...(editingOverride.programId && { programId: editingOverride.programId }),
@@ -346,12 +396,12 @@ export function WeeklyOverridesTable() {
         createdBy: typedSession?.user?.name || 'Admin',
       };
 
-      const url = isEditMode && editingOverride 
+      const url = isEditMode && editingOverride
         ? `/api/weekly-overrides/${editingOverride.id}`
         : '/api/weekly-overrides';
-      
+
       const method = isEditMode ? 'PUT' : 'POST';
-      
+
       const response = await fetch(url, {
         method,
         headers: {
@@ -471,6 +521,63 @@ export function WeeklyOverridesTable() {
     }
   };
 
+  // Multi-select helpers (shared across tabs 0, 1, 4)
+  const specialProgramOverrides = [...currentWeekOverrides, ...nextWeekOverrides].filter(
+    o => o.overrideType === 'create',
+  );
+
+  const visibleOverrides =
+    currentTab === 0 ? currentWeekOverrides :
+    currentTab === 1 ? nextWeekOverrides :
+    currentTab === 4 ? specialProgramOverrides :
+    [];
+
+  const allVisibleSelected =
+    visibleOverrides.length > 0 && visibleOverrides.every(o => selectedOverrideIds.has(o.id));
+
+  const someVisibleSelected =
+    visibleOverrides.some(o => selectedOverrideIds.has(o.id)) && !allVisibleSelected;
+
+  const handleToggleOverride = (id: string) => {
+    setSelectedOverrideIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const handleSelectAllVisible = () => {
+    if (allVisibleSelected) {
+      setSelectedOverrideIds(new Set());
+    } else {
+      setSelectedOverrideIds(new Set(visibleOverrides.map(o => o.id)));
+    }
+  };
+
+  const handleBulkOverrideDelete = async () => {
+    setConfirmBulkOverrideDeleteOpen(false);
+    try {
+      await Promise.all(
+        [...selectedOverrideIds].map(id =>
+          fetch(`/api/weekly-overrides/${id}`, {
+            method: 'DELETE',
+            headers: { Authorization: `Bearer ${typedSession?.accessToken}` },
+          }),
+        ),
+      );
+      setSuccess(`${selectedOverrideIds.size} cambio(s) eliminado(s) correctamente`);
+      setSelectedOverrideIds(new Set());
+      await fetchData();
+    } catch (err) {
+      console.error('Error bulk deleting overrides:', err);
+      setError('Error al eliminar los cambios seleccionados');
+    }
+  };
+
   // Helper functions
   const formatTime = (time: string) => {
     if (!time) return '';
@@ -571,7 +678,7 @@ export function WeeklyOverridesTable() {
 
       {/* Tabs */}
       <Box sx={{ borderBottom: 1, borderColor: 'divider', mb: 2 }}>
-        <Tabs value={currentTab} onChange={(_, newValue) => setCurrentTab(newValue)}>
+        <Tabs value={currentTab} onChange={(_, newValue) => { setCurrentTab(newValue); setSelectedOverrideIds(new Set()); }}>
           <Tab 
             label={`Semana Actual (${currentWeekOverrides.length} cambios)`} 
             sx={{ fontWeight: 600, color: 'text.primary' }}
@@ -601,6 +708,14 @@ export function WeeklyOverridesTable() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={someVisibleSelected}
+                    checked={allVisibleSelected}
+                    onChange={handleSelectAllVisible}
+                  />
+                </TableCell>
                 <TableCell>Programa</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
@@ -615,9 +730,16 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
-                  <TableRow key={override.id}>
+                  <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedOverrideIds.has(override.id)}
+                        onChange={() => handleToggleOverride(override.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
@@ -704,6 +826,14 @@ export function WeeklyOverridesTable() {
           <Table>
             <TableHead>
               <TableRow>
+                <TableCell padding="checkbox">
+                  <Checkbox
+                    size="small"
+                    indeterminate={someVisibleSelected}
+                    checked={allVisibleSelected}
+                    onChange={handleSelectAllVisible}
+                  />
+                </TableCell>
                 <TableCell>Programa</TableCell>
                 <TableCell>Tipo</TableCell>
                 <TableCell>Horario Original</TableCell>
@@ -718,9 +848,16 @@ export function WeeklyOverridesTable() {
                 const schedule = override.scheduleId ? schedules.find(s => s.id === override.scheduleId) : null;
                 const program = override.programId ? programs.find(p => p.id === override.programId) : null;
                 const Icon = getOverrideIcon(override.overrideType);
-                
+
                 return (
-                  <TableRow key={override.id}>
+                  <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                    <TableCell padding="checkbox">
+                      <Checkbox
+                        size="small"
+                        checked={selectedOverrideIds.has(override.id)}
+                        onChange={() => handleToggleOverride(override.id)}
+                      />
+                    </TableCell>
                     <TableCell>
                       <Typography variant="body2" fontWeight="bold">
                         {override.overrideType === 'create' 
@@ -1078,6 +1215,8 @@ export function WeeklyOverridesTable() {
             onClick={() => {
               setSelectedSchedule(null);
               setSelectedProgram(null);
+              setIsEditMode(false);
+              setSpecialChannelIds([]);
               setFormData({
                 targetWeek: 'current',
                 overrideType: 'create',
@@ -1112,6 +1251,14 @@ export function WeeklyOverridesTable() {
             <Table>
               <TableHead>
                 <TableRow>
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      indeterminate={someVisibleSelected}
+                      checked={allVisibleSelected}
+                      onChange={handleSelectAllVisible}
+                    />
+                  </TableCell>
                   <TableCell>Programa</TableCell>
                   <TableCell>Canal</TableCell>
                   <TableCell>Horario</TableCell>
@@ -1121,11 +1268,17 @@ export function WeeklyOverridesTable() {
                 </TableRow>
               </TableHead>
               <TableBody>
-                {[...currentWeekOverrides, ...nextWeekOverrides]
-                  .filter(override => override.overrideType === 'create')
+                {specialProgramOverrides
                   .map((override) => {
                     return (
-                      <TableRow key={override.id}>
+                      <TableRow key={override.id} selected={selectedOverrideIds.has(override.id)}>
+                        <TableCell padding="checkbox">
+                          <Checkbox
+                            size="small"
+                            checked={selectedOverrideIds.has(override.id)}
+                            onChange={() => handleToggleOverride(override.id)}
+                          />
+                        </TableCell>
                         <TableCell>
                           <Typography variant="body2" fontWeight="bold">
                             {override.specialProgram?.name || 'Programa especial'}
@@ -1406,26 +1559,59 @@ export function WeeklyOverridesTable() {
                   rows={2}
                 />
                 
-                {/* Channel selection dropdown */}
-                <FormControl fullWidth required>
-                  <InputLabel id="special-program-channel-label">Canal</InputLabel>
-                  <Select
-                    labelId="special-program-channel-label"
-                    value={formData.specialProgram.channelId}
-                    label="Canal"
-                    onChange={(e) => setFormData({
-                      ...formData,
-                      specialProgram: { ...formData.specialProgram, channelId: Number(e.target.value) }
-                    })}
-                  >
-                    {channels.map((channel) => (
-                      <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
-                    ))}
-                  </Select>
-                  <Typography variant="caption" color="text.secondary">
-                    Selecciona el canal donde se emitirá el programa
-                  </Typography>
-                </FormControl>
+                {/* Channel selection — multi-select when not editing */}
+                {isEditMode ? (
+                  <FormControl fullWidth required>
+                    <InputLabel id="special-program-channel-label">Canal</InputLabel>
+                    <Select
+                      labelId="special-program-channel-label"
+                      value={formData.specialProgram.channelId}
+                      label="Canal"
+                      onChange={(e) => setFormData({
+                        ...formData,
+                        specialProgram: { ...formData.specialProgram, channelId: Number(e.target.value) }
+                      })}
+                    >
+                      {channels.map((channel) => (
+                        <MenuItem key={channel.id} value={channel.id}>{channel.name}</MenuItem>
+                      ))}
+                    </Select>
+                  </FormControl>
+                ) : (
+                  <Box>
+                    <Autocomplete
+                      multiple
+                      disableCloseOnSelect
+                      options={channels}
+                      getOptionLabel={(ch) => ch.name}
+                      value={channels.filter(ch => specialChannelIds.includes(ch.id))}
+                      onChange={(_, newValue) => setSpecialChannelIds(newValue.map(ch => ch.id))}
+                      renderInput={(params) => (
+                        <TextField {...params} label="Canales" placeholder={specialChannelIds.length === 0 ? 'Seleccionar canales…' : ''} required />
+                      )}
+                      renderTags={(value, getTagProps) =>
+                        value.map((ch, index) => {
+                          const { key, ...tagProps } = getTagProps({ index });
+                          return <Chip key={key} label={ch.name} size="small" {...tagProps} />;
+                        })
+                      }
+                      renderOption={(props, option, { selected }) => (
+                        <li {...props}>
+                          <Checkbox size="small" checked={selected} sx={{ mr: 1 }} />
+                          {option.name}
+                        </li>
+                      )}
+                      isOptionEqualToValue={(option, value) => option.id === value.id}
+                      limitTags={4}
+                      fullWidth
+                    />
+                    {specialChannelIds.length > 1 && (
+                      <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                        Se crearán {specialChannelIds.length} programas especiales independientes (uno por canal)
+                      </Typography>
+                    )}
+                  </Box>
+                )}
                 
                 <TextField
                   label="URL de imagen (opcional)"
@@ -1578,6 +1764,99 @@ export function WeeklyOverridesTable() {
           {error || success}
         </Alert>
       </Snackbar>
+
+      {/* Floating bulk-action bar (tabs 0, 1, 4) */}
+      {[0, 1, 4].includes(currentTab) && selectedOverrideIds.size > 0 && (
+        <Paper
+          elevation={8}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderRadius: 3,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''} seleccionado{selectedOverrideIds.size !== 1 ? 's' : ''}
+          </Typography>
+          <Button variant="text" size="small" onClick={() => setSelectedOverrideIds(new Set())}>
+            Deseleccionar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            startIcon={<Delete />}
+            onClick={() => setConfirmBulkOverrideDeleteOpen(true)}
+          >
+            Eliminar seleccionados
+          </Button>
+        </Paper>
+      )}
+
+      {/* Bulk delete confirmation dialog */}
+      <Dialog
+        open={confirmBulkOverrideDeleteOpen}
+        onClose={() => setConfirmBulkOverrideDeleteOpen(false)}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Eliminar cambios semanales</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar los siguientes {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''}?
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {[...selectedOverrideIds].map(id => {
+              const allOverrides = [...currentWeekOverrides, ...nextWeekOverrides];
+              const o = allOverrides.find(ov => ov.id === id);
+              if (!o) return <li key={id}><Typography variant="body2">{id}</Typography></li>;
+
+              const programName =
+                o.overrideType === 'create'
+                  ? o.specialProgram?.name || 'Programa especial'
+                  : programs.find(p => p.id === o.programId)?.name ||
+                    schedules.find(s => s.id === o.scheduleId)?.program.name ||
+                    'Programa desconocido';
+
+              const channelName =
+                o.overrideType === 'create'
+                  ? channels.find(c => c.id === o.specialProgram?.channelId)?.name || `Canal ID: ${o.specialProgram?.channelId || 'N/A'}`
+                  : programs.find(p => p.id === o.programId)?.channel_name ||
+                    schedules.find(s => s.id === o.scheduleId)?.program.channel?.name ||
+                    '';
+
+              const typeLabel = getOverrideLabel(o.overrideType);
+              const weekLabel = o.weekStartDate === currentWeekOverrides[0]?.weekStartDate ? 'Semana actual' : 'Próxima semana';
+
+              return (
+                <li key={id}>
+                  <Typography variant="body2">
+                    <strong>{programName}</strong>
+                    {channelName ? ` — ${channelName}` : ''}
+                    <Typography component="span" variant="caption" color="text.secondary">
+                      {` · ${typeLabel} · ${weekLabel}`}
+                    </Typography>
+                  </Typography>
+                </li>
+              );
+            })}
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmBulkOverrideDeleteOpen(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleBulkOverrideDelete}>
+            Eliminar {selectedOverrideIds.size} cambio{selectedOverrideIds.size !== 1 ? 's' : ''}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 } 

@@ -30,6 +30,8 @@ import {
   Checkbox,
   Tooltip,
   InputAdornment,
+  Chip,
+  Autocomplete,
 } from '@mui/material';
 import {
   Add as AddIcon,
@@ -37,6 +39,7 @@ import {
   Delete as DeleteIcon,
   Group as GroupIcon,
   Search as SearchIcon,
+  DeleteSweep as DeleteSweepIcon,
 } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
@@ -72,7 +75,8 @@ export default function ProgramsPage() {
   const [formData, setFormData] = useState({
     name: '',
     description: '',
-    channel_id: '',
+    channel_id: '',       // used when editing an existing program
+    channel_ids: [] as string[], // used when creating (supports multi-select)
     logo_url: '',
     youtube_url: '',
     style_override: '',
@@ -84,6 +88,10 @@ export default function ProgramsPage() {
   const [openPanelistsDialog, setOpenPanelistsDialog] = useState(false);
   const [pendingSchedules, setPendingSchedules] = useState<PendingSchedule[]>([]);
   const [pendingPanelistIds, setPendingPanelistIds] = useState<number[]>([]);
+
+  // Multi-select & bulk delete
+  const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
+  const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
   // Search / sort / filter / pagination
   const [searchTerm, setSearchTerm] = useState('');
@@ -102,9 +110,10 @@ export default function ProgramsPage() {
     }
   }, [status]);
 
-  // Reset to first page whenever search/sort/filter changes
+  // Reset to first page and clear selection whenever search/sort/filter changes
   useEffect(() => {
     setPage(0);
+    setSelectedIds(new Set());
   }, [searchTerm, sortBy, scheduleFilter]);
 
   const fetchPrograms = async () => {
@@ -200,6 +209,7 @@ export default function ProgramsPage() {
         name: program.name,
         description: program.description || '',
         channel_id: String(program.channel_id),
+        channel_ids: [],
         logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
         style_override: program.style_override || '',
@@ -212,6 +222,7 @@ export default function ProgramsPage() {
         name: '',
         description: '',
         channel_id: '',
+        channel_ids: [],
         logo_url: '',
         youtube_url: '',
         style_override: '',
@@ -229,6 +240,7 @@ export default function ProgramsPage() {
       name: '',
       description: '',
       channel_id: '',
+      channel_ids: [],
       logo_url: '',
       youtube_url: '',
       style_override: '',
@@ -241,83 +253,136 @@ export default function ProgramsPage() {
 
   const handleSubmit = async () => {
     try {
-      const url = editingProgram
-        ? `/api/programs/${editingProgram.id}`
-        : '/api/programs';
-      const method = editingProgram ? 'PATCH' : 'POST';
-      const res = await fetch(url, {
-        method,
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          channel_id: parseInt(formData.channel_id),
-          style_override: formData.style_override || null,
-        }),
-      });
-      const body = await res.json();
-      if (!res.ok) throw new Error(body.details || body.error || 'Error al guardar el programa');
+      if (editingProgram) {
+        // Edit existing program — single channel, same as before
+        const res = await fetch(`/api/programs/${editingProgram.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_id: parseInt(formData.channel_id),
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al actualizar el programa');
+        setSuccess('Programa actualizado correctamente');
+      } else if (formData.channel_ids.length > 1) {
+        // Bulk create: multiple channels → single API call, no panelists
+        const scheduleItems = pendingSchedules.map(s => ({
+          startTime: s.startTime,
+          endTime: s.endTime,
+          scheduleType: s.scheduleType || 'weekly',
+          ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
+          ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
+          ...(s.specificDate && { specificDate: s.specificDate }),
+        }));
+        const res = await fetch('/api/programs/bulk', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_ids: formData.channel_ids.map(Number),
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+            ...(scheduleItems.length > 0 && { schedules: scheduleItems }),
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al crear los programas');
+        const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+        setSuccess(`${formData.channel_ids.length} programas creados correctamente${scheduleMsg}`);
+      } else {
+        // Single channel create — existing flow
+        const channelId = parseInt(formData.channel_ids[0] ?? formData.channel_id);
+        const res = await fetch('/api/programs', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            name: formData.name,
+            description: formData.description,
+            channel_id: channelId,
+            logo_url: formData.logo_url,
+            youtube_url: formData.youtube_url,
+            style_override: formData.style_override || null,
+            is_visible: formData.is_visible,
+            is_premiere: formData.is_premiere,
+          }),
+        });
+        const body = await res.json();
+        if (!res.ok) throw new Error(body.details || body.error || 'Error al crear el programa');
 
-      if (!editingProgram && pendingSchedules.length > 0 && typedSession?.accessToken) {
         const newProgramId = body.id;
-        const channelId = parseInt(formData.channel_id);
-        try {
-          const bulkData = {
-            programId: newProgramId.toString(),
-            channelId: channelId.toString(),
-            schedules: pendingSchedules.map(s => ({
-              startTime: s.startTime,
-              endTime: s.endTime,
-              scheduleType: s.scheduleType || 'weekly',
-              ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
-              ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
-              ...(s.specificDate && { specificDate: s.specificDate }),
-            })),
-          };
-          const scheduleRes = await fetch('/api/schedules/bulk', {
-            method: 'POST',
-            headers: {
-              'Content-Type': 'application/json',
-              'Authorization': `Bearer ${typedSession.accessToken}`,
-            },
-            body: JSON.stringify(bulkData),
-          });
-          if (!scheduleRes.ok) {
-            const scheduleBody = await scheduleRes.json().catch(() => ({}));
-            throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
-          }
-          setSuccess(`Programa creado correctamente con ${pendingSchedules.length} horario(s)`);
-        } catch (scheduleErr) {
-          console.error('Error creating schedules:', scheduleErr);
-          setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
-        }
-      }
 
-      if (!editingProgram && pendingPanelistIds.length > 0 && typedSession?.accessToken) {
-        const newProgramId = body.id;
-        try {
-          const panelistPromises = pendingPanelistIds.map(panelistId =>
-            fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
+        if (pendingSchedules.length > 0 && typedSession?.accessToken) {
+          try {
+            const bulkData = {
+              programId: newProgramId.toString(),
+              channelId: channelId.toString(),
+              schedules: pendingSchedules.map(s => ({
+                startTime: s.startTime,
+                endTime: s.endTime,
+                scheduleType: s.scheduleType || 'weekly',
+                ...(s.dayOfWeek && { dayOfWeek: s.dayOfWeek }),
+                ...(s.weekNumberInMonth && { weekNumberInMonth: parseInt(s.weekNumberInMonth, 10) }),
+                ...(s.specificDate && { specificDate: s.specificDate }),
+              })),
+            };
+            const scheduleRes = await fetch('/api/schedules/bulk', {
               method: 'POST',
               headers: {
                 'Content-Type': 'application/json',
                 'Authorization': `Bearer ${typedSession.accessToken}`,
               },
-            })
-          );
-          await Promise.all(panelistPromises);
-          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
-          setSuccess(`Programa creado correctamente${scheduleMsg} con ${pendingPanelistIds.length} panelista(s)`);
-        } catch (panelistErr) {
-          console.error('Error adding panelists:', panelistErr);
-          const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
-          setSuccess(`Programa creado correctamente${scheduleMsg}, pero hubo un error al agregar algunos panelistas`);
+              body: JSON.stringify(bulkData),
+            });
+            if (!scheduleRes.ok) {
+              const scheduleBody = await scheduleRes.json().catch(() => ({}));
+              throw new Error(scheduleBody.details || scheduleBody.error || 'Error al crear los horarios');
+            }
+          } catch (scheduleErr) {
+            console.error('Error creating schedules:', scheduleErr);
+            setSuccess('Programa creado correctamente, pero hubo un error al crear algunos horarios');
+            await fetchPrograms();
+            fetchSchedulesForFilter();
+            handleCloseDialog();
+            return;
+          }
         }
-      } else if (!pendingSchedules.length && !pendingPanelistIds.length) {
-        setSuccess(editingProgram ? 'Programa actualizado correctamente' : 'Programa creado correctamente');
+
+        if (pendingPanelistIds.length > 0 && typedSession?.accessToken) {
+          try {
+            await Promise.all(
+              pendingPanelistIds.map(panelistId =>
+                fetch(`/api/panelists/${panelistId}/programs/${newProgramId}`, {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                    'Authorization': `Bearer ${typedSession.accessToken}`,
+                  },
+                })
+              )
+            );
+          } catch (panelistErr) {
+            console.error('Error adding panelists:', panelistErr);
+          }
+        }
+
+        const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
+        const panelistMsg = pendingPanelistIds.length > 0 ? ` con ${pendingPanelistIds.length} panelista(s)` : '';
+        setSuccess(`Programa creado correctamente${scheduleMsg}${panelistMsg}`);
       }
 
       await fetchPrograms();
-      // Refresh schedule filter data after creating a program (it may now have schedules)
       fetchSchedulesForFilter();
       handleCloseDialog();
     } catch (err: unknown) {
@@ -340,6 +405,57 @@ export default function ProgramsPage() {
     } catch (err: unknown) {
       console.error('Error deleting program:', err);
       setError(err instanceof Error ? err.message : 'Error al eliminar el programa');
+    }
+  };
+
+  const handleToggleSelect = (id: number) => {
+    setSelectedIds(prev => {
+      const next = new Set(prev);
+      if (next.has(id)) {
+        next.delete(id);
+      } else {
+        next.add(id);
+      }
+      return next;
+    });
+  };
+
+  const allPageSelected =
+    paginatedPrograms.length > 0 &&
+    paginatedPrograms.every(p => selectedIds.has(p.id));
+
+  const somePageSelected =
+    paginatedPrograms.some(p => selectedIds.has(p.id)) && !allPageSelected;
+
+  const handleSelectAllPage = () => {
+    if (allPageSelected) {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        paginatedPrograms.forEach(p => next.delete(p.id));
+        return next;
+      });
+    } else {
+      setSelectedIds(prev => {
+        const next = new Set(prev);
+        paginatedPrograms.forEach(p => next.add(p.id));
+        return next;
+      });
+    }
+  };
+
+  const handleBulkDelete = async () => {
+    setConfirmBulkDeleteOpen(false);
+    try {
+      await Promise.all(
+        [...selectedIds].map(id => fetch(`/api/programs/${id}`, { method: 'DELETE' }))
+      );
+      setSelectedIds(new Set());
+      await fetchPrograms();
+      fetchSchedulesForFilter();
+      setSuccess(`${selectedIds.size} programa(s) eliminado(s) correctamente`);
+    } catch (err: unknown) {
+      console.error('Error bulk deleting programs:', err);
+      setError('Error al eliminar los programas seleccionados');
     }
   };
 
@@ -421,7 +537,14 @@ export default function ProgramsPage() {
         <Table>
           <TableHead>
             <TableRow>
-              <TableCell>Logo</TableCell>
+              <TableCell padding="checkbox">
+                <Checkbox
+                  size="small"
+                  indeterminate={somePageSelected}
+                  checked={allPageSelected}
+                  onChange={handleSelectAllPage}
+                />
+              </TableCell>
               <TableCell>Nombre</TableCell>
               <TableCell>Canal</TableCell>
               <TableCell>YouTube</TableCell>
@@ -433,11 +556,17 @@ export default function ProgramsPage() {
             {paginatedPrograms.map(program => {
               const channel = channels.find(c => c.id === program.channel_id);
               return (
-                <TableRow key={program.id}>
-                  <TableCell>
-                    {program.logo_url && (
-                      <Image unoptimized src={program.logo_url} alt={program.name} width={50} height={50} style={{ objectFit: 'contain' }} />
-                    )}
+                <TableRow
+                  key={program.id}
+                  selected={selectedIds.has(program.id)}
+                  sx={{ cursor: 'pointer' }}
+                >
+                  <TableCell padding="checkbox">
+                    <Checkbox
+                      size="small"
+                      checked={selectedIds.has(program.id)}
+                      onChange={() => handleToggleSelect(program.id)}
+                    />
                   </TableCell>
                   <TableCell>{program.name}</TableCell>
                   <TableCell>
@@ -505,12 +634,54 @@ export default function ProgramsPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, pt: 2 }}>
             <TextField label="Nombre" value={formData.name} onChange={e => setFormData({ ...formData, name: e.target.value })} fullWidth required />
             <TextField label="Descripción" multiline rows={3} value={formData.description} onChange={e => setFormData({ ...formData, description: e.target.value })} fullWidth />
-            <FormControl fullWidth>
-              <InputLabel>Canal</InputLabel>
-              <Select value={formData.channel_id} onChange={e => setFormData({ ...formData, channel_id: e.target.value as string })} label="Canal">
-                {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
-              </Select>
-            </FormControl>
+            {editingProgram ? (
+              <FormControl fullWidth>
+                <InputLabel>Canal</InputLabel>
+                <Select
+                  value={formData.channel_id}
+                  onChange={e => setFormData({ ...formData, channel_id: e.target.value as string })}
+                  label="Canal"
+                >
+                  {channels.map(ch => <MenuItem key={ch.id} value={String(ch.id)}>{ch.name}</MenuItem>)}
+                </Select>
+              </FormControl>
+            ) : (
+              <Box>
+                <Autocomplete
+                  multiple
+                  disableCloseOnSelect
+                  options={channels}
+                  getOptionLabel={(ch) => ch.name}
+                  value={channels.filter(ch => formData.channel_ids.includes(String(ch.id)))}
+                  onChange={(_, newValue) =>
+                    setFormData({ ...formData, channel_ids: newValue.map(ch => String(ch.id)) })
+                  }
+                  renderInput={(params) => (
+                    <TextField {...params} label="Canales" placeholder={formData.channel_ids.length === 0 ? 'Seleccionar canales…' : ''} />
+                  )}
+                  renderTags={(value, getTagProps) =>
+                    value.map((ch, index) => {
+                      const { key, ...tagProps } = getTagProps({ index });
+                      return <Chip key={key} label={ch.name} size="small" {...tagProps} />;
+                    })
+                  }
+                  renderOption={(props, option, { selected }) => (
+                    <li {...props}>
+                      <Checkbox size="small" checked={selected} sx={{ mr: 1 }} />
+                      {option.name}
+                    </li>
+                  )}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  limitTags={4}
+                  fullWidth
+                />
+                {formData.channel_ids.length > 1 && (
+                  <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
+                    Se crearán {formData.channel_ids.length} programas independientes (uno por canal)
+                  </Typography>
+                )}
+              </Box>
+            )}
             <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
             <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
@@ -535,7 +706,11 @@ export default function ProgramsPage() {
 
             <ProgramSchedulesSection
               programId={editingProgram?.id || null}
-              channelId={formData.channel_id ? parseInt(formData.channel_id) : null}
+              channelId={
+                editingProgram
+                  ? (formData.channel_id ? parseInt(formData.channel_id) : null)
+                  : (formData.channel_ids[0] ? parseInt(formData.channel_ids[0]) : null)
+              }
               onSchedulesChange={setPendingSchedules}
             />
 
@@ -556,6 +731,79 @@ export default function ProgramsPage() {
       <Snackbar open={!!error || !!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
         <Alert severity={error ? 'error' : 'success'} onClose={handleCloseSnackbar}>{error || success}</Alert>
       </Snackbar>
+
+      {/* Floating bulk-action bar */}
+      {selectedIds.size > 0 && (
+        <Paper
+          elevation={8}
+          sx={{
+            position: 'fixed',
+            bottom: 32,
+            left: '50%',
+            transform: 'translateX(-50%)',
+            px: 3,
+            py: 1.5,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 2,
+            borderRadius: 3,
+            zIndex: 1300,
+          }}
+        >
+          <Typography variant="body2" fontWeight={600}>
+            {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''} seleccionado{selectedIds.size !== 1 ? 's' : ''}
+          </Typography>
+          <Button
+            variant="text"
+            size="small"
+            onClick={() => setSelectedIds(new Set())}
+          >
+            Deseleccionar
+          </Button>
+          <Button
+            variant="contained"
+            color="error"
+            size="small"
+            startIcon={<DeleteSweepIcon />}
+            onClick={() => setConfirmBulkDeleteOpen(true)}
+          >
+            Eliminar seleccionados
+          </Button>
+        </Paper>
+      )}
+
+      {/* Bulk delete confirmation dialog */}
+      <Dialog open={confirmBulkDeleteOpen} onClose={() => setConfirmBulkDeleteOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle>Eliminar programas</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar los siguientes {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''}?
+          </Typography>
+          <Box component="ul" sx={{ m: 0, pl: 2 }}>
+            {[...selectedIds].map(id => {
+              const p = programs.find(pr => pr.id === id);
+              const ch = channels.find(c => c.id === p?.channel_id);
+              return (
+                <li key={id}>
+                  <Typography variant="body2">
+                    <strong>{p?.name ?? `#${id}`}</strong>
+                    {ch ? ` — ${ch.name}` : ''}
+                  </Typography>
+                </li>
+              );
+            })}
+          </Box>
+          <Alert severity="warning" sx={{ mt: 2 }}>
+            Esta acción eliminará también todos los horarios y overrides asociados.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmBulkDeleteOpen(false)}>Cancelar</Button>
+          <Button variant="contained" color="error" onClick={handleBulkDelete}>
+            Eliminar {selectedIds.size} programa{selectedIds.size !== 1 ? 's' : ''}
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }
