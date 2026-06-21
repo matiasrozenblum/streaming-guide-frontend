@@ -6,7 +6,7 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
-## [Unreleased]
+## [1.25.0] - 2026-06-20
 
 ### Added
 
