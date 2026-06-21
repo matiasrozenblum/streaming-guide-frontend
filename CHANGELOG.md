@@ -6,6 +6,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [Unreleased]
+
+### Added
+
+- **Creación de programas en múltiples canales**: el selector de canal en el formulario de nuevo programa es ahora un `Autocomplete` multi-select. Con 2+ canales seleccionados se llama a `POST /api/programs/bulk` y se crean N programas independientes en una sola acción.
+- **Creación de programas especiales en múltiples canales**: el selector de canal en el tab "Programas Especiales" también es multi-select; con 2+ canales se llama a `POST /api/weekly-overrides/bulk`.
+- **Borrado masivo de programas**: la columna "Logo" (sin uso) fue reemplazada por una columna de checkbox. Al seleccionar ≥1 programa aparece una barra flotante con la opción de eliminar, con diálogo de confirmación que lista `nombre — canal` de cada programa.
+- **Borrado masivo de cambios semanales**: misma mecánica de checkbox + barra flotante + diálogo de confirmación en los tabs "Semana Actual", "Próxima Semana" y "Programas Especiales". La selección se limpia automáticamente al cambiar de tab.
+
 ## [1.24.0] - 2026-06-18
 
 ### Fixed
