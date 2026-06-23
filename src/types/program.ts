@@ -16,4 +16,5 @@ export interface Program {
   style_override?: string | null;
   is_visible?: boolean;
   is_premiere?: boolean;
+  link_group_id?: string | null;
 }

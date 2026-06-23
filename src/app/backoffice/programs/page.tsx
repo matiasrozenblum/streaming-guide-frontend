@@ -40,6 +40,7 @@ import {
   Group as GroupIcon,
   Search as SearchIcon,
   DeleteSweep as DeleteSweepIcon,
+  Link as LinkIcon,
 } from '@mui/icons-material';
 import { Program } from '@/types/program';
 import { Channel } from '@/types/channel';
@@ -92,6 +93,9 @@ export default function ProgramsPage() {
   // Multi-select & bulk delete
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+
+  // Linked-program delete dialog
+  const [linkedDeleteDialog, setLinkedDeleteDialog] = useState<{ open: boolean; program: Program | null }>({ open: false, program: null });
 
   // Search / sort / filter / pagination
   const [searchTerm, setSearchTerm] = useState('');
@@ -273,7 +277,7 @@ export default function ProgramsPage() {
         if (!res.ok) throw new Error(body.details || body.error || 'Error al actualizar el programa');
         setSuccess('Programa actualizado correctamente');
       } else if (formData.channel_ids.length > 1) {
-        // Bulk create: multiple channels → single API call, no panelists
+        // Bulk create: multiple channels → linked programs
         const scheduleItems = pendingSchedules.map(s => ({
           startTime: s.startTime,
           endTime: s.endTime,
@@ -295,12 +299,14 @@ export default function ProgramsPage() {
             is_visible: formData.is_visible,
             is_premiere: formData.is_premiere,
             ...(scheduleItems.length > 0 && { schedules: scheduleItems }),
+            ...(pendingPanelistIds.length > 0 && { panelist_ids: pendingPanelistIds }),
           }),
         });
         const body = await res.json();
         if (!res.ok) throw new Error(body.details || body.error || 'Error al crear los programas');
         const scheduleMsg = pendingSchedules.length > 0 ? ` con ${pendingSchedules.length} horario(s)` : '';
-        setSuccess(`${formData.channel_ids.length} programas creados correctamente${scheduleMsg}`);
+        const panelistMsg = pendingPanelistIds.length > 0 ? ` con ${pendingPanelistIds.length} panelista(s)` : '';
+        setSuccess(`${formData.channel_ids.length} programas vinculados creados correctamente${scheduleMsg}${panelistMsg}`);
       } else {
         // Single channel create — existing flow
         const channelId = parseInt(formData.channel_ids[0] ?? formData.channel_id);
@@ -391,17 +397,26 @@ export default function ProgramsPage() {
     }
   };
 
-  const handleDelete = async (id: number) => {
-    if (!confirm('¿Estás seguro que deseas eliminar este programa?')) return;
+  const handleDelete = (program: Program) => {
+    if (program.link_group_id) {
+      setLinkedDeleteDialog({ open: true, program });
+    } else {
+      handleDeleteConfirmed(program.id, false);
+    }
+  };
+
+  const handleDeleteConfirmed = async (id: number, deleteLinked: boolean) => {
+    setLinkedDeleteDialog({ open: false, program: null });
     try {
-      const res = await fetch(`/api/programs/${id}`, { method: 'DELETE' });
+      const url = deleteLinked ? `/api/programs/${id}?deleteLinked=true` : `/api/programs/${id}`;
+      const res = await fetch(url, { method: 'DELETE' });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         throw new Error(body?.details || 'Error al eliminar el programa');
       }
       await fetchPrograms();
       fetchSchedulesForFilter();
-      setSuccess('Programa eliminado correctamente');
+      setSuccess(deleteLinked ? 'Programas vinculados eliminados correctamente' : 'Programa eliminado correctamente');
     } catch (err: unknown) {
       console.error('Error deleting program:', err);
       setError(err instanceof Error ? err.message : 'Error al eliminar el programa');
@@ -568,7 +583,16 @@ export default function ProgramsPage() {
                       onChange={() => handleToggleSelect(program.id)}
                     />
                   </TableCell>
-                  <TableCell>{program.name}</TableCell>
+                  <TableCell>
+                    <Box display="flex" alignItems="center" gap={0.5}>
+                      {program.link_group_id && (
+                        <Tooltip title="Programa vinculado" arrow>
+                          <LinkIcon fontSize="small" color="primary" />
+                        </Tooltip>
+                      )}
+                      {program.name}
+                    </Box>
+                  </TableCell>
                   <TableCell>
                     <Box display="flex" alignItems="center" gap={1}>
                       {channel?.logo_url && (
@@ -599,7 +623,7 @@ export default function ProgramsPage() {
                       <IconButton aria-label="Editar programa" onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar programa" arrow>
-                      <IconButton aria-label="Eliminar programa" onClick={() => handleDelete(program.id)}><DeleteIcon /></IconButton>
+                      <IconButton aria-label="Eliminar programa" onClick={() => handleDelete(program)}><DeleteIcon /></IconButton>
                     </Tooltip>
                     <Tooltip title="Gestionar panelistas" arrow>
                       <IconButton aria-label="Gestionar panelistas" onClick={() => { setEditingProgram(program); handleOpenPanelistsDialog(); }}>
@@ -677,7 +701,7 @@ export default function ProgramsPage() {
                 />
                 {formData.channel_ids.length > 1 && (
                   <Typography variant="caption" color="text.secondary" sx={{ mt: 0.5, display: 'block' }}>
-                    Se crearán {formData.channel_ids.length} programas independientes (uno por canal)
+                    Se crearán {formData.channel_ids.length} programas vinculados (uno por canal). Cambios en cualquiera se propagan a todos.
                   </Typography>
                 )}
               </Box>
@@ -771,6 +795,28 @@ export default function ProgramsPage() {
           </Button>
         </Paper>
       )}
+
+      {/* Linked-program delete dialog */}
+      <Dialog open={linkedDeleteDialog.open} onClose={() => setLinkedDeleteDialog({ open: false, program: null })} maxWidth="sm" fullWidth>
+        <DialogTitle>Eliminar programa vinculado</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            <strong>{linkedDeleteDialog.program?.name}</strong> está vinculado a otro/s canal/es. ¿Qué querés eliminar?
+          </Typography>
+          <Alert severity="warning">
+            Eliminar todos los vinculados borrará también los horarios y overrides de cada uno.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setLinkedDeleteDialog({ open: false, program: null })}>Cancelar</Button>
+          <Button onClick={() => handleDeleteConfirmed(linkedDeleteDialog.program!.id, false)}>
+            Solo este canal
+          </Button>
+          <Button variant="contained" color="error" onClick={() => handleDeleteConfirmed(linkedDeleteDialog.program!.id, true)}>
+            Eliminar todos los vinculados
+          </Button>
+        </DialogActions>
+      </Dialog>
 
       {/* Bulk delete confirmation dialog */}
       <Dialog open={confirmBulkDeleteOpen} onClose={() => setConfirmBulkDeleteOpen(false)} maxWidth="sm" fullWidth>

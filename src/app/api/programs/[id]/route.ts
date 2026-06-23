@@ -89,14 +89,16 @@ export async function DELETE(
 ) {
   try {
     const token = await requireAccessToken(request);
-    
+
     if (!token) {
       console.error('No authentication token found');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/programs/${id}`, {
+    const deleteLinked = request.nextUrl.searchParams.get('deleteLinked');
+    const url = `${process.env.NEXT_PUBLIC_API_URL}/programs/${id}${deleteLinked === 'true' ? '?deleteLinked=true' : ''}`;
+    const response = await fetch(url, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
