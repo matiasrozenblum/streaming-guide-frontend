@@ -62,7 +62,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
-  const [bannerVisible, setBannerVisible] = useState(true);
+  const [bannerScrollOffset, setBannerScrollOffset] = useState(0);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
 
   const { mode } = useThemeContext();
@@ -120,33 +120,18 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled, banners.length]);
 
-  // Grid scroll detection for banner hide/show - optimized with capture phase and hysteresis
+  // Grid scroll detection: track scroll offset to slide banner off the top naturally
   useEffect(() => {
     const handleScroll = (e: Event) => {
       const target = e.target as HTMLElement;
-
-      // Only process scroll events originating from our schedule grid
       if (target && target.getAttribute && target.getAttribute('data-schedule-grid')) {
-        const currentScrollY = target.scrollTop;
-
-        setBannerVisible(prev => {
-          if (currentScrollY > 20 && prev) {
-            // Only hide if content would still overflow after banner is removed.
-            // Prevents the loop: banner hides → content fits → scrollTop resets to 0 → banner shows → repeat.
-            const bannerHeight = bannerContainerRef.current?.offsetHeight ?? 0;
-            const wouldStillOverflow = target.scrollHeight > target.clientHeight + bannerHeight;
-            if (!wouldStillOverflow) return prev;
-            return false;
-          }
-          if (currentScrollY <= 5 && !prev) return true;
-          return prev;
-        });
+        const bannerH = bannerContainerRef.current?.offsetHeight ?? 0;
+        const offset = Math.min(Math.max(target.scrollTop, 0), bannerH);
+        setBannerScrollOffset(offset);
       }
     };
 
-    // Use capture phase to catch non-bubbling scroll events from descendants
     document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-
     return () => {
       document.removeEventListener('scroll', handleScroll, { capture: true });
     };
@@ -392,82 +377,21 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             minHeight: 0
           }}
         >
-          {/* CSS Keyframes for banner and grid animations */}
-          <Box
-            component="style"
-            dangerouslySetInnerHTML={{
-              __html: `
-                @keyframes bannerHide {
-                  from {
-                    transform: scaleY(1);
-                    opacity: 1;
-                    max-height: 200px;
-                  }
-                  to {
-                    transform: scaleY(0);
-                    opacity: 0;
-                    max-height: 0;
-                  }
-                }
-                @keyframes bannerShow {
-                  from {
-                    transform: scaleY(0);
-                    opacity: 0;
-                    max-height: 0;
-                  }
-                  to {
-                    transform: scaleY(1);
-                    opacity: 1;
-                    max-height: 200px;
-                  }
-                }
-                @media (max-width: 600px) {
-                  @keyframes bannerHide {
-                    from {
-                      transform: scaleY(1);
-                      opacity: 1;
-                      max-height: 132px;
-                    }
-                    to {
-                      transform: scaleY(0);
-                      opacity: 0;
-                      max-height: 0;
-                    }
-                  }
-                  @keyframes bannerShow {
-                    from {
-                      transform: scaleY(0);
-                      opacity: 0;
-                      max-height: 0;
-                    }
-                    to {
-                      transform: scaleY(1);
-                      opacity: 1;
-                      max-height: 132px;
-                    }
-                  }
-                }
-              `,
-            }}
-          />
-
-          {/* Banner Carousel - Always render when enabled, animate with keyframes */}
+          {/* Banner Carousel - slides off the top naturally as the grid scrolls */}
           {streamersEnabled && banners.length > 0 && (
-            <Box
-              ref={bannerContainerRef}
-              sx={{
-                position: 'relative',
-                pb: { xs: 1, sm: 0 }, // 12px bottom padding for mobile only
-                pt: { md: 2, lg: 2 }, // 16px top padding for desktop only
-                overflow: 'hidden',
-                transformOrigin: 'top',
-                animation: bannerVisible
-                  ? 'bannerShow 0.3s ease-in-out forwards'
-                  : 'bannerHide 0.3s ease-in-out forwards',
-                maxHeight: bannerVisible ? { xs: '132px', sm: '200px' } : '0',
-              }}
-            >
-              <BannerCarousel banners={banners} />
+            <Box sx={{ overflow: 'hidden' }}>
+              <Box
+                ref={bannerContainerRef}
+                sx={{
+                  position: 'relative',
+                  pb: { xs: 1, sm: 0 },
+                  pt: { md: 2, lg: 2 },
+                  transform: `translateY(-${bannerScrollOffset}px)`,
+                  marginBottom: `-${bannerScrollOffset}px`,
+                }}
+              >
+                <BannerCarousel banners={banners} />
+              </Box>
             </Box>
           )}
 
@@ -477,9 +401,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               flex: 1,
               minHeight: 0,
               backdropFilter: 'blur(8px)',
-              animation: bannerVisible
-                ? 'gridMoveDown 0.3s ease-in-out forwards'
-                : 'gridMoveUp 0.3s ease-in-out forwards',
               display: 'flex',
               flexDirection: 'column',
             }}
