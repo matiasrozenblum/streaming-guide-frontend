@@ -2,3 +2,6 @@
 **Learning:** Found a recurring accessibility pattern in authentication and profile components where icon-only buttons for toggling password visibility (using Visibility/VisibilityOff icons) lacked `aria-label` attributes. This prevents screen readers from understanding the button's purpose and state.
 **Action:** Always ensure that icon-only buttons, specifically those dealing with sensitive or functional inputs like password visibility, have dynamic `aria-label` attributes that reflect the action (e.g., 'Mostrar contraseña' vs 'Ocultar contraseña').
 ## 2024-01-01 - Initializing Palette Journal\n**Learning:** This repo frequently uses MUI components and uses Spanish for the interface.\n**Action:** Use Spanish for aria-labels to maintain consistency. e.g. 'Editar' instead of 'Edit'.
+## 2024-06-20 - Adding Tooltips to IconButtons
+**Learning:** Icon-only buttons (like pagination controls and action icons in tables) often lack immediate visual context for sighted users, and if disabled without a `span` wrapper, their tooltips won't fire in Material-UI.
+**Action:** Always wrap `IconButton` components in `<Tooltip>` for better UX. If the button can enter a `disabled` state (e.g. pagination bounds), ensure the `<IconButton>` is wrapped inside a generic HTML tag like `<span>` so that the Tooltip still triggers and explains the disabled state if needed.
