@@ -56,6 +56,10 @@ import type { WeeklyOverride } from '@/types/schedule';
 import type { Program } from '@/types/program';
 import type { Panelist } from '@/types/panelist';
 import { useTheme } from '@mui/material/styles';
+import ConflictResolutionDialog, {
+  type ConflictInfo,
+  type ConflictResolution,
+} from './ConflictResolutionDialog';
 
 // Types
 interface WeeklyStats {
@@ -132,6 +136,14 @@ export function WeeklyOverridesTable() {
   // Multi-select & bulk delete for special programs
   const [selectedOverrideIds, setSelectedOverrideIds] = useState<Set<string>>(new Set());
   const [confirmBulkOverrideDeleteOpen, setConfirmBulkOverrideDeleteOpen] = useState(false);
+
+  // Conflict resolution dialog
+  const [conflictDialogOpen, setConflictDialogOpen] = useState(false);
+  const [pendingConflicts, setPendingConflicts] = useState<ConflictInfo[]>([]);
+  const [conflictLinkedName, setConflictLinkedName] = useState('');
+  const [conflictLinkedNewStart, setConflictLinkedNewStart] = useState<string | undefined>();
+  const [conflictLinkedNewEnd, setConflictLinkedNewEnd] = useState<string | undefined>();
+  const [conflictTargetWeek, setConflictTargetWeek] = useState<'current' | 'next'>('current');
 
   // Fetch data
   const fetchData = useCallback(async () => {
@@ -416,12 +428,59 @@ export function WeeklyOverridesTable() {
         throw new Error(errorData.message || `Error al ${isEditMode ? 'actualizar' : 'crear'} el cambio`);
       }
 
+      // Capture context before closing (state resets on close)
+      const linkedName = isEditMode && editingOverride
+        ? schedules.find(s => s.id === editingOverride.scheduleId)?.program?.name
+          || programs.find(p => p.id === editingOverride.programId)?.name
+          || 'Programa'
+        : selectedSchedule?.program?.name || selectedProgram?.name || 'Programa';
+      const capturedNewStart = formData.newStartTime;
+      const capturedNewEnd = formData.newEndTime;
+      const capturedTargetWeek = formData.targetWeek;
+
+      const responseData = await response.json().catch(() => ({}));
+
       setSuccess(`Cambio semanal ${isEditMode ? 'actualizado' : 'creado'} correctamente`);
       handleCloseDialog();
       await fetchData();
+
+      if (responseData.conflicts && responseData.conflicts.length > 0) {
+        setPendingConflicts(responseData.conflicts);
+        setConflictLinkedName(linkedName);
+        setConflictLinkedNewStart(capturedNewStart || undefined);
+        setConflictLinkedNewEnd(capturedNewEnd || undefined);
+        setConflictTargetWeek(capturedTargetWeek);
+        setConflictDialogOpen(true);
+      }
     } catch (err) {
       console.error('Error creating override:', err);
       setError(err instanceof Error ? err.message : 'Error al crear el cambio');
+    }
+  };
+
+  const handleConflictSubmit = async (resolutions: ConflictResolution[]) => {
+    const activeResolutions = resolutions.filter((r) => r.action !== 'keep');
+    setConflictDialogOpen(false);
+    setPendingConflicts([]);
+    if (activeResolutions.length === 0) return;
+    try {
+      const response = await fetch('/api/weekly-overrides/resolve-conflicts', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          Authorization: `Bearer ${typedSession?.accessToken}`,
+        },
+        body: JSON.stringify({
+          targetWeek: conflictTargetWeek,
+          resolutions: activeResolutions,
+        }),
+      });
+      if (!response.ok) throw new Error('Error al resolver conflictos');
+      const data = await response.json();
+      setSuccess(`Conflictos resueltos: ${data.resolved} modificación(es) aplicada(s)`);
+      await fetchData();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Error al resolver conflictos');
     }
   };
 
@@ -1857,6 +1916,18 @@ export function WeeklyOverridesTable() {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Conflict resolution dialog */}
+      <ConflictResolutionDialog
+        open={conflictDialogOpen}
+        conflicts={pendingConflicts}
+        targetWeek={conflictTargetWeek}
+        linkedProgramName={conflictLinkedName}
+        linkedProgramNewStart={conflictLinkedNewStart}
+        linkedProgramNewEnd={conflictLinkedNewEnd}
+        onClose={() => { setConflictDialogOpen(false); setPendingConflicts([]); }}
+        onSubmit={handleConflictSubmit}
+      />
     </Box>
   );
 } 
