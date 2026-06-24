@@ -62,8 +62,8 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
-  const [bannerScrollOffset, setBannerScrollOffset] = useState(0);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const bannerOuterRef = useRef<HTMLDivElement>(null);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses, liveStatus } = useLiveStatus();
@@ -120,15 +120,17 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled, banners.length]);
 
-  // Grid scroll detection: track scroll offset to slide banner off the top naturally
+  // Grid scroll detection: slide banner off the top via direct DOM mutation (no React re-render)
   useEffect(() => {
     const handleScroll = (e: Event) => {
       const target = e.target as HTMLElement;
-      if (target && target.getAttribute && target.getAttribute('data-schedule-grid')) {
-        const bannerH = bannerContainerRef.current?.offsetHeight ?? 0;
-        const offset = Math.min(Math.max(target.scrollTop, 0), bannerH);
-        setBannerScrollOffset(offset);
-      }
+      if (!target?.getAttribute?.('data-schedule-grid')) return;
+      const inner = bannerContainerRef.current;
+      if (!inner) return;
+      const bannerH = inner.offsetHeight;
+      const offset = Math.min(Math.max(target.scrollTop, 0), bannerH);
+      inner.style.transform = `translateY(-${offset}px)`;
+      inner.style.marginBottom = `-${offset}px`;
     };
 
     document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
@@ -377,17 +379,16 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             minHeight: 0
           }}
         >
-          {/* Banner Carousel - slides off the top naturally as the grid scrolls */}
+          {/* Banner Carousel - slides off the top naturally as the grid scrolls (DOM-driven, no React re-render) */}
           {streamersEnabled && banners.length > 0 && (
-            <Box sx={{ overflow: 'hidden' }}>
+            <Box ref={bannerOuterRef} sx={{ overflow: 'hidden' }}>
               <Box
                 ref={bannerContainerRef}
                 sx={{
                   position: 'relative',
                   pb: { xs: 1, sm: 0 },
                   pt: { md: 2, lg: 2 },
-                  transform: `translateY(-${bannerScrollOffset}px)`,
-                  marginBottom: `-${bannerScrollOffset}px`,
+                  willChange: 'transform',
                 }}
               >
                 <BannerCarousel banners={banners} />
