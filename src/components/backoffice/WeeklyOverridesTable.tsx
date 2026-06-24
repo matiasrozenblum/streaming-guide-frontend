@@ -342,9 +342,22 @@ export function WeeklyOverridesTable() {
           const errorData = await response.json();
           throw new Error(errorData.message || 'Error al crear los programas especiales');
         }
+        const capturedSpecialName = formData.specialProgram.name;
+        const capturedNewStart = formData.newStartTime;
+        const capturedNewEnd = formData.newEndTime;
+        const capturedTargetWeek = formData.targetWeek;
+        const bulkResponseData = await response.json().catch(() => ({}));
         setSuccess(`${specialChannelIds.length} programas especiales creados correctamente`);
         handleCloseDialog();
         await fetchData();
+        if (bulkResponseData.conflicts && bulkResponseData.conflicts.length > 0) {
+          setPendingConflicts(bulkResponseData.conflicts);
+          setConflictLinkedName(capturedSpecialName);
+          setConflictLinkedNewStart(capturedNewStart || undefined);
+          setConflictLinkedNewEnd(capturedNewEnd || undefined);
+          setConflictTargetWeek(capturedTargetWeek);
+          setConflictDialogOpen(true);
+        }
         return;
       }
 
