@@ -54,5 +54,6 @@ export interface WeeklyOverride {
     imageUrl?: string;
     stream_url?: string;
     is_premiere?: boolean;
+    channel?: { id: number; name: string; [key: string]: unknown };
   };
 }

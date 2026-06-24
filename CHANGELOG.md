@@ -14,6 +14,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Creación de programas especiales en múltiples canales**: el selector de canal en el tab "Programas Especiales" también es multi-select; con 2+ canales se llama a `POST /api/weekly-overrides/bulk`.
 - **Borrado masivo de programas**: la columna "Logo" (sin uso) fue reemplazada por una columna de checkbox. Al seleccionar ≥1 programa aparece una barra flotante con la opción de eliminar, con diálogo de confirmación que lista `nombre — canal` de cada programa.
 - **Borrado masivo de cambios semanales**: misma mecánica de checkbox + barra flotante + diálogo de confirmación en los tabs "Semana Actual", "Próxima Semana" y "Programas Especiales". La selección se limpia automáticamente al cambiar de tab.
+- **Programas linkeados — UI de backoffice**: ícono de vínculo en la tabla de programas cuando un programa tiene `link_group_id`. Diálogo de confirmación de borrado advierte que eliminar un programa linkeado no afecta al resto del grupo.
+- **Diálogo de resolución de conflictos** (`ConflictResolutionDialog`): tras crear o editar un weekly override, si el backend detecta solapamientos en la grilla se muestra automáticamente un diálogo que lista cada conflicto agrupado por canal, con sugerencia automática de acción (ajustar horario o cancelar) y pickers de tiempo editables. Las resoluciones se envían a `POST /api/weekly-overrides/resolve-conflicts`.
+
+### Fixed
+
+- El tab "Programas Especiales" de weekly overrides ahora muestra el nombre del canal en vez del ID numérico para overrides de tipo `create`.
+- **Banner web — scroll en dos fases**: el banner ahora se desplaza hacia arriba y desaparece completamente antes de que la grilla empiece a moverse, replicando el comportamiento de la app nativa. El offset del banner se actualiza mediante mutación directa del DOM (sin re-renders de React) para evitar fricción en el scroll.
+- Fondo del área de over-scroll (bounce) ahora coincide con el color de fondo del tema (oscuro `#0f172a` / claro `#f8fafc`) en lugar de mostrar blanco.
 
 ## [1.24.0] - 2026-06-18
 

@@ -62,8 +62,9 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [showHoliday, setShowHoliday] = useState(initialData.holiday);
   const [showSeasonal, setShowSeasonal] = useState(isSeasonActive);
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
-  const [bannerVisible, setBannerVisible] = useState(true);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
+  const bannerOuterRef = useRef<HTMLDivElement>(null);
+  const bannerOffsetRef = useRef(0);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses, liveStatus } = useLiveStatus();
@@ -89,6 +90,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     return map;
   }, [initialData.weekSchedules]);
+
+  // Keep html background in sync with theme so overscroll bounce area matches
+  useEffect(() => {
+    document.documentElement.style.backgroundColor =
+      mode === 'dark' ? '#0f172a' : '#f8fafc';
+  }, [mode]);
 
   // Set initial live statuses immediately
   useEffect(() => {
@@ -120,67 +127,60 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled, banners.length]);
 
-  // Grid scroll detection for banner hide/show - optimized with capture phase and hysteresis
-  useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-
-      // Only process scroll events originating from our schedule grid
-      if (target && target.getAttribute && target.getAttribute('data-schedule-grid')) {
-        const currentScrollY = target.scrollTop;
-
-        setBannerVisible(prev => {
-          if (currentScrollY > 20 && prev) {
-            // Only hide if content would still overflow after banner is removed.
-            // Prevents the loop: banner hides → content fits → scrollTop resets to 0 → banner shows → repeat.
-            const bannerHeight = bannerContainerRef.current?.offsetHeight ?? 0;
-            const wouldStillOverflow = target.scrollHeight > target.clientHeight + bannerHeight;
-            if (!wouldStillOverflow) return prev;
-            return false;
-          }
-          if (currentScrollY <= 5 && !prev) return true;
-          return prev;
-        });
-      }
-    };
-
-    // Use capture phase to catch non-bubbling scroll events from descendants
-    document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-
-    return () => {
-      document.removeEventListener('scroll', handleScroll, { capture: true });
-    };
-  }, []);
-
-  // Forward wheel events from anywhere on the page to the grid
+  // Two-phase scroll: banner slides off first, then grid scrolls.
+  // Fully DOM-driven (no React re-renders in the hot path).
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // ignore horizontal
+
       const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
       if (!scheduleGrid) return;
 
-      // Check if the event target is already inside the grid or its children
-      const target = e.target as HTMLElement;
-      if (scheduleGrid.contains(target)) {
-        // Let the grid handle its own scroll
-        return;
-      }
+      const inner = bannerContainerRef.current;
+      const bannerH = inner?.offsetHeight ?? 0;
+      const currentOffset = bannerOffsetRef.current;
+      const insideGrid = scheduleGrid.contains(e.target as HTMLElement);
 
-      // Check if we're scrolling vertically (deltaY)
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        // Prevent default page scroll
-        e.preventDefault();
-
-        // Forward the scroll to the grid
-        scheduleGrid.scrollTop += e.deltaY;
+      if (e.deltaY > 0) {
+        // ── Scrolling down ──
+        if (currentOffset < bannerH) {
+          // Phase 1: consume delta for banner; block grid scroll
+          e.preventDefault();
+          const newOffset = Math.min(currentOffset + e.deltaY, bannerH);
+          bannerOffsetRef.current = newOffset;
+          if (inner) {
+            inner.style.transform = `translateY(-${newOffset}px)`;
+            inner.style.marginBottom = `-${newOffset}px`;
+          }
+        } else if (!insideGrid) {
+          // Phase 2: banner gone, forward to grid
+          e.preventDefault();
+          scheduleGrid.scrollTop += e.deltaY;
+        }
+        // else: insideGrid + banner gone → native scroll handles it
+      } else {
+        // ── Scrolling up ──
+        if (scheduleGrid.scrollTop > 0) {
+          // Grid still scrolled — let it scroll up first
+          if (!insideGrid) {
+            e.preventDefault();
+            scheduleGrid.scrollTop += e.deltaY;
+          }
+        } else if (currentOffset > 0) {
+          // Grid at top — restore banner
+          e.preventDefault();
+          const newOffset = Math.max(currentOffset + e.deltaY, 0);
+          bannerOffsetRef.current = newOffset;
+          if (inner) {
+            inner.style.transform = `translateY(-${newOffset}px)`;
+            inner.style.marginBottom = `-${newOffset}px`;
+          }
+        }
       }
     };
 
-    // Add wheel event listener to the window
     window.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-    };
+    return () => window.removeEventListener('wheel', handleWheel);
   }, []);
 
   // Derive flat lists for grid
@@ -392,82 +392,20 @@ export default function HomeClient({ initialData }: HomeClientProps) {
             minHeight: 0
           }}
         >
-          {/* CSS Keyframes for banner and grid animations */}
-          <Box
-            component="style"
-            dangerouslySetInnerHTML={{
-              __html: `
-                @keyframes bannerHide {
-                  from {
-                    transform: scaleY(1);
-                    opacity: 1;
-                    max-height: 200px;
-                  }
-                  to {
-                    transform: scaleY(0);
-                    opacity: 0;
-                    max-height: 0;
-                  }
-                }
-                @keyframes bannerShow {
-                  from {
-                    transform: scaleY(0);
-                    opacity: 0;
-                    max-height: 0;
-                  }
-                  to {
-                    transform: scaleY(1);
-                    opacity: 1;
-                    max-height: 200px;
-                  }
-                }
-                @media (max-width: 600px) {
-                  @keyframes bannerHide {
-                    from {
-                      transform: scaleY(1);
-                      opacity: 1;
-                      max-height: 132px;
-                    }
-                    to {
-                      transform: scaleY(0);
-                      opacity: 0;
-                      max-height: 0;
-                    }
-                  }
-                  @keyframes bannerShow {
-                    from {
-                      transform: scaleY(0);
-                      opacity: 0;
-                      max-height: 0;
-                    }
-                    to {
-                      transform: scaleY(1);
-                      opacity: 1;
-                      max-height: 132px;
-                    }
-                  }
-                }
-              `,
-            }}
-          />
-
-          {/* Banner Carousel - Always render when enabled, animate with keyframes */}
+          {/* Banner Carousel - slides off the top naturally as the grid scrolls (DOM-driven, no React re-render) */}
           {streamersEnabled && banners.length > 0 && (
-            <Box
-              ref={bannerContainerRef}
-              sx={{
-                position: 'relative',
-                pb: { xs: 1, sm: 0 }, // 12px bottom padding for mobile only
-                pt: { md: 2, lg: 2 }, // 16px top padding for desktop only
-                overflow: 'hidden',
-                transformOrigin: 'top',
-                animation: bannerVisible
-                  ? 'bannerShow 0.3s ease-in-out forwards'
-                  : 'bannerHide 0.3s ease-in-out forwards',
-                maxHeight: bannerVisible ? { xs: '132px', sm: '200px' } : '0',
-              }}
-            >
-              <BannerCarousel banners={banners} />
+            <Box ref={bannerOuterRef} sx={{ overflow: 'hidden' }}>
+              <Box
+                ref={bannerContainerRef}
+                sx={{
+                  position: 'relative',
+                  pb: { xs: 1, sm: 0 },
+                  pt: { md: 2, lg: 2 },
+                  willChange: 'transform',
+                }}
+              >
+                <BannerCarousel banners={banners} />
+              </Box>
             </Box>
           )}
 
@@ -477,9 +415,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
               flex: 1,
               minHeight: 0,
               backdropFilter: 'blur(8px)',
-              animation: bannerVisible
-                ? 'gridMoveDown 0.3s ease-in-out forwards'
-                : 'gridMoveUp 0.3s ease-in-out forwards',
               display: 'flex',
               flexDirection: 'column',
             }}
