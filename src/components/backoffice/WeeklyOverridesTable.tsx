@@ -821,7 +821,10 @@ export function WeeklyOverridesTable() {
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {override.overrideType === 'create'
-                          ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
+                          ? override.specialProgram?.channel?.name
+                            || channels.find(c => c.id === override.specialProgram?.channelId)?.name
+                            || override.specialProgram?.channelId?.toString()
+                            || 'Sin canal'
                           : program?.channel_name || schedule?.program.channel?.name || 'Sin canal'
                         }
                       </Typography>
@@ -939,7 +942,10 @@ export function WeeklyOverridesTable() {
                       </Typography>
                       <Typography variant="caption" color="text.secondary">
                         {override.overrideType === 'create'
-                          ? `Canal ID: ${override.specialProgram?.channelId || 'N/A'}`
+                          ? override.specialProgram?.channel?.name
+                            || channels.find(c => c.id === override.specialProgram?.channelId)?.name
+                            || override.specialProgram?.channelId?.toString()
+                            || 'Sin canal'
                           : program?.channel_name || schedule?.program.channel?.name || 'Sin canal'
                         }
                       </Typography>
@@ -1363,7 +1369,10 @@ export function WeeklyOverridesTable() {
                         </TableCell>
                         <TableCell>
                           <Typography variant="body2">
-                            Canal ID: {override.specialProgram?.channelId || 'N/A'}
+                            {override.specialProgram?.channel?.name
+                              || channels.find(c => c.id === override.specialProgram?.channelId)?.name
+                              || override.specialProgram?.channelId?.toString()
+                              || 'Sin canal'}
                           </Typography>
                         </TableCell>
                         <TableCell>
