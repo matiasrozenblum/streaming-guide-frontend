@@ -91,6 +91,12 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     return map;
   }, [initialData.weekSchedules]);
 
+  // Keep html background in sync with theme so overscroll bounce area matches
+  useEffect(() => {
+    document.documentElement.style.backgroundColor =
+      mode === 'dark' ? '#0f172a' : '#f8fafc';
+  }, [mode]);
+
   // Set initial live statuses immediately
   useEffect(() => {
     setLiveStatuses(initialLiveMap);
