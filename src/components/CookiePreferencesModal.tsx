@@ -17,6 +17,7 @@ import {
   AccordionDetails,
   useTheme,
   useMediaQuery,
+  Tooltip,
 } from '@mui/material';
 import { 
   Close as CloseIcon, 
@@ -141,9 +142,11 @@ export function CookiePreferencesModal() {
           <Typography variant="h6" component="h2" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
             🍪 Configuración de Cookies
           </Typography>
-          <IconButton aria-label="Cerrar preferencias de cookies" onClick={closePreferences} size="small" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
-            <CloseIcon />
-          </IconButton>
+          <Tooltip title="Cerrar preferencias de cookies">
+            <IconButton aria-label="Cerrar preferencias de cookies" onClick={closePreferences} size="small" sx={{ color: mode === 'light' ? '#000000' : '#ffffff' }}>
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
         </Box>
       </DialogTitle>
 
