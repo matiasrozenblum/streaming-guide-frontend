@@ -64,6 +64,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const [banners, setBanners] = useState<Banner[]>(initialData.banners || []);
   const bannerContainerRef = useRef<HTMLDivElement>(null);
   const bannerOuterRef = useRef<HTMLDivElement>(null);
+  const bannerOffsetRef = useRef(0);
 
   const { mode } = useThemeContext();
   const { setLiveStatuses, liveStatus } = useLiveStatus();
@@ -120,54 +121,60 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     fetchBanners();
   }, [streamersEnabled, banners.length]);
 
-  // Grid scroll detection: slide banner off the top via direct DOM mutation (no React re-render)
-  useEffect(() => {
-    const handleScroll = (e: Event) => {
-      const target = e.target as HTMLElement;
-      if (!target?.getAttribute?.('data-schedule-grid')) return;
-      const inner = bannerContainerRef.current;
-      if (!inner) return;
-      const bannerH = inner.offsetHeight;
-      const offset = Math.min(Math.max(target.scrollTop, 0), bannerH);
-      inner.style.transform = `translateY(-${offset}px)`;
-      inner.style.marginBottom = `-${offset}px`;
-    };
-
-    document.addEventListener('scroll', handleScroll, { capture: true, passive: true });
-    return () => {
-      document.removeEventListener('scroll', handleScroll, { capture: true });
-    };
-  }, []);
-
-  // Forward wheel events from anywhere on the page to the grid
+  // Two-phase scroll: banner slides off first, then grid scrolls.
+  // Fully DOM-driven (no React re-renders in the hot path).
   useEffect(() => {
     const handleWheel = (e: WheelEvent) => {
+      if (Math.abs(e.deltaY) <= Math.abs(e.deltaX)) return; // ignore horizontal
+
       const scheduleGrid = document.querySelector('[data-schedule-grid]') as HTMLElement;
       if (!scheduleGrid) return;
 
-      // Check if the event target is already inside the grid or its children
-      const target = e.target as HTMLElement;
-      if (scheduleGrid.contains(target)) {
-        // Let the grid handle its own scroll
-        return;
-      }
+      const inner = bannerContainerRef.current;
+      const bannerH = inner?.offsetHeight ?? 0;
+      const currentOffset = bannerOffsetRef.current;
+      const insideGrid = scheduleGrid.contains(e.target as HTMLElement);
 
-      // Check if we're scrolling vertically (deltaY)
-      if (Math.abs(e.deltaY) > Math.abs(e.deltaX)) {
-        // Prevent default page scroll
-        e.preventDefault();
-
-        // Forward the scroll to the grid
-        scheduleGrid.scrollTop += e.deltaY;
+      if (e.deltaY > 0) {
+        // ── Scrolling down ──
+        if (currentOffset < bannerH) {
+          // Phase 1: consume delta for banner; block grid scroll
+          e.preventDefault();
+          const newOffset = Math.min(currentOffset + e.deltaY, bannerH);
+          bannerOffsetRef.current = newOffset;
+          if (inner) {
+            inner.style.transform = `translateY(-${newOffset}px)`;
+            inner.style.marginBottom = `-${newOffset}px`;
+          }
+        } else if (!insideGrid) {
+          // Phase 2: banner gone, forward to grid
+          e.preventDefault();
+          scheduleGrid.scrollTop += e.deltaY;
+        }
+        // else: insideGrid + banner gone → native scroll handles it
+      } else {
+        // ── Scrolling up ──
+        if (scheduleGrid.scrollTop > 0) {
+          // Grid still scrolled — let it scroll up first
+          if (!insideGrid) {
+            e.preventDefault();
+            scheduleGrid.scrollTop += e.deltaY;
+          }
+        } else if (currentOffset > 0) {
+          // Grid at top — restore banner
+          e.preventDefault();
+          const newOffset = Math.max(currentOffset + e.deltaY, 0);
+          bannerOffsetRef.current = newOffset;
+          if (inner) {
+            inner.style.transform = `translateY(-${newOffset}px)`;
+            inner.style.marginBottom = `-${newOffset}px`;
+          }
+        }
       }
     };
 
-    // Add wheel event listener to the window
     window.addEventListener('wheel', handleWheel, { passive: false });
-
-    return () => {
-      window.removeEventListener('wheel', handleWheel);
-    };
+    return () => window.removeEventListener('wheel', handleWheel);
   }, []);
 
   // Derive flat lists for grid
