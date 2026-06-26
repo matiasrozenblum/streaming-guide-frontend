@@ -166,7 +166,9 @@ const SubscriptionTile = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative'
+          position: 'relative',
+          filter: isInactive ? 'grayscale(1)' : 'none',
+          transition: 'filter 0.2s',
         }}
       >
         {imageUrl ? (
@@ -179,8 +181,6 @@ const SubscriptionTile = ({
               height: '100%',
               objectFit: isStreamer ? 'cover' : 'contain',
               p: isStreamer ? 0 : 0.5,
-              filter: isInactive ? 'grayscale(1)' : 'none',
-              transition: 'filter 0.2s',
             }}
           />
         ) : (
