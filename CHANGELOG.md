@@ -6,6 +6,14 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.27.0] - 2026-06-26
+
+### Added
+
+- **Distinción visual de programas inactivos en Mis favoritos**: los programas suscriptos que tienen `is_visible=false` o sin horarios activos ahora se muestran en escala de grises (logo + fondo) con opacidad reducida y un chip "Sin emisión" con ícono de pausa. Los programas inactivos se ordenan al final de la lista. La suscripción se conserva para que se reactive automáticamente si el programa vuelve a emitir.
+
+---
+
 ## [1.26.0] - 2026-06-23
 
 ### Added

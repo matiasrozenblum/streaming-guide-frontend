@@ -3,19 +3,20 @@ import { requireAccessToken } from '@/utils/auth-server';
 
 export async function PUT(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
     const token = await requireAccessToken(request);
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
+    const overrideId = id.join('/');
     const body = await request.json();
-    
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${id}`, {
+
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${overrideId}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -42,17 +43,18 @@ export async function PUT(
 
 export async function DELETE(
   request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
+  { params }: { params: Promise<{ id: string[] }> }
 ) {
   try {
     const token = await requireAccessToken(request);
-    
+
     if (!token) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     const { id } = await params;
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${id}`, {
+    const overrideId = id.join('/');
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${overrideId}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
@@ -75,4 +77,4 @@ export async function DELETE(
     console.error('Error deleting weekly override:', error);
     return NextResponse.json({ error: 'Failed to delete weekly override' }, { status: 500 });
   }
-} 
+}
