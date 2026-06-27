@@ -422,7 +422,7 @@ export function WeeklyOverridesTable() {
       };
 
       const url = isEditMode && editingOverride
-        ? `/api/weekly-overrides/${editingOverride.id}`
+        ? `/api/weekly-overrides/${encodeURIComponent(editingOverride.id)}`
         : '/api/weekly-overrides';
 
       const method = isEditMode ? 'PUT' : 'POST';
@@ -501,7 +501,7 @@ export function WeeklyOverridesTable() {
     if (!confirm('¿Estás seguro de que deseas eliminar este cambio?')) return;
 
     try {
-      const response = await fetch(`/api/weekly-overrides/${overrideId}`, {
+      const response = await fetch(`/api/weekly-overrides/${encodeURIComponent(overrideId)}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${typedSession?.accessToken}` },
       });
@@ -524,7 +524,7 @@ export function WeeklyOverridesTable() {
     
     // Populate form with existing data
     setFormData({
-      targetWeek: override.weekStartDate === getWeekStartDate('current') ? 'current' : 'next',
+      targetWeek: override.weekStartDate.substring(0, 10) === getWeekStartDate('current') ? 'current' : 'next',
       overrideType: override.overrideType,
       newStartTime: override.newStartTime || '',
       newEndTime: override.newEndTime || '',
@@ -635,7 +635,7 @@ export function WeeklyOverridesTable() {
     try {
       await Promise.all(
         [...selectedOverrideIds].map(id =>
-          fetch(`/api/weekly-overrides/${id}`, {
+          fetch(`/api/weekly-overrides/${encodeURIComponent(id)}`, {
             method: 'DELETE',
             headers: { Authorization: `Bearer ${typedSession?.accessToken}` },
           }),
@@ -675,17 +675,16 @@ export function WeeklyOverridesTable() {
   const getWeekStartDate = (targetWeek: 'current' | 'next'): string => {
     const now = new Date();
     const currentDay = now.getDay();
-    const daysToMonday = currentDay === 0 ? 6 : currentDay - 1; // Sunday = 0, Monday = 1
-    
-    if (targetWeek === 'current') {
-      const monday = new Date(now);
-      monday.setDate(now.getDate() - daysToMonday);
-      return monday.toISOString().split('T')[0];
-    } else {
-      const nextMonday = new Date(now);
-      nextMonday.setDate(now.getDate() - daysToMonday + 7);
-      return nextMonday.toISOString().split('T')[0];
-    }
+    const daysToMonday = currentDay === 0 ? 6 : currentDay - 1;
+
+    const monday = new Date(now);
+    monday.setDate(now.getDate() - daysToMonday + (targetWeek === 'next' ? 7 : 0));
+
+    // Use local date parts to avoid UTC offset shifting the date (e.g. AR is UTC-3)
+    const year = monday.getFullYear();
+    const month = String(monday.getMonth() + 1).padStart(2, '0');
+    const day = String(monday.getDate()).padStart(2, '0');
+    return `${year}-${month}-${day}`;
   };
 
   const getDayLabel = (day: string) => {
