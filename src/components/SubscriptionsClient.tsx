@@ -12,9 +12,11 @@ import {
   Tooltip,
   Alert,
   CircularProgress,
+  Chip,
 } from '@mui/material';
 import {
   ArrowBack,
+  PauseCircle,
 } from '@mui/icons-material';
 import { Streamer, StreamingService } from '@/types/streamer';
 
@@ -70,6 +72,9 @@ export interface UserSubscription {
     name: string;
     description?: string;
     logoUrl?: string;
+    logo_url?: string;
+    is_visible: boolean;
+    has_active_schedules: boolean;
     channel: {
       id: number;
       name: string;
@@ -90,6 +95,7 @@ const SubscriptionTile = ({
   imageUrl,
   imageColor,
   isStreamer,
+  isInactive,
   activeDeleteId,
   onToggleDelete,
   onDelete,
@@ -104,6 +110,7 @@ const SubscriptionTile = ({
   imageUrl?: string,
   imageColor?: string,
   isStreamer?: boolean,
+  isInactive?: boolean,
   activeDeleteId: string | number | null,
   onToggleDelete: (id: string | number) => void,
   onDelete: (e: React.MouseEvent) => void,
@@ -128,16 +135,17 @@ const SubscriptionTile = ({
         if (showDelete) onToggleDelete(id);
       }}
       sx={{
-        height: 80, // Compact fixed height
+        height: 80,
         display: 'flex',
         alignItems: 'center',
-        background: mode === 'light' ? '#ffffff' : '#1e293b', // Darker surface
+        background: mode === 'light' ? '#ffffff' : '#1e293b',
         borderRadius: 2,
         border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
         overflow: 'hidden',
         cursor: 'pointer',
         position: 'relative',
         transition: 'all 0.2s',
+        opacity: isInactive ? 0.6 : 1,
         '@media (hover: hover) and (pointer: fine)': {
           '&:hover .delete-btn': { opacity: '1 !important' }
         },
@@ -158,7 +166,9 @@ const SubscriptionTile = ({
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          position: 'relative'
+          position: 'relative',
+          filter: isInactive ? 'grayscale(1)' : 'none',
+          transition: 'filter 0.2s',
         }}
       >
         {imageUrl ? (
@@ -169,8 +179,8 @@ const SubscriptionTile = ({
             sx={{
               width: '100%',
               height: '100%',
-              objectFit: isStreamer ? 'cover' : 'contain', // Streamers use cover, Programs use contain
-              p: isStreamer ? 0 : 0.5 // Streamers have no padding, channels have 4px padding
+              objectFit: isStreamer ? 'cover' : 'contain',
+              p: isStreamer ? 0 : 0.5,
             }}
           />
         ) : (
@@ -192,6 +202,23 @@ const SubscriptionTile = ({
           <Box display="flex" alignItems="center" gap={1} overflow="hidden">
             {subtitle}
           </Box>
+        )}
+
+        {isInactive && (
+          <Chip
+            icon={<PauseCircle />}
+            label="Sin emisión"
+            size="small"
+            sx={{
+              height: 17,
+              alignSelf: 'flex-start',
+              bgcolor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)',
+              color: 'text.disabled',
+              border: 'none',
+              '& .MuiChip-icon': { fontSize: '0.7rem', color: 'text.disabled', ml: 0.5 },
+              '& .MuiChip-label': { px: 0.75, fontSize: '0.65rem', fontWeight: 500 },
+            }}
+          />
         )}
 
         {/* Small Service Icons for Streamers */}
@@ -506,25 +533,37 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     >
                       {subscriptions.length > 0 ? (
                         <Grid container spacing={2}>
-                          {subscriptions.map((subscription) => (
-                            <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={subscription.id}>
-                              <SubscriptionTile
-                                id={subscription.id}
-                                activeDeleteId={activeDeleteId}
-                                onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
-                                title={subscription.program.name}
-                                subtitle={
-                                  <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
-                                    en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
-                                  </Typography>
-                                }
-                                imageUrl={subscription.program.channel.logo_url}
-                                imageColor={subscription.program.channel.background_color || '#ffffff'}
-                                onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
-                                deleteTooltip="Cancelar suscripción"
-                              />
-                            </Grid>
-                          ))}
+                          {[...subscriptions]
+                            .sort((a, b) => {
+                              const aInactive = !a.program.is_visible || !a.program.has_active_schedules;
+                              const bInactive = !b.program.is_visible || !b.program.has_active_schedules;
+                              if (aInactive && !bInactive) return 1;
+                              if (!aInactive && bInactive) return -1;
+                              return 0;
+                            })
+                            .map((subscription) => {
+                              const isInactive = !subscription.program.is_visible || !subscription.program.has_active_schedules;
+                              return (
+                                <Grid size={{ xs: 12, sm: 6, md: 4, lg: 3 }} key={subscription.id}>
+                                  <SubscriptionTile
+                                    id={subscription.id}
+                                    activeDeleteId={activeDeleteId}
+                                    onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
+                                    title={subscription.program.name}
+                                    isInactive={isInactive}
+                                    subtitle={
+                                      <Typography variant="body2" color="text.secondary" sx={{ fontSize: '0.85rem' }}>
+                                        en <Box component="span" fontWeight={600} color="text.primary">{subscription.program.channel.name.toUpperCase()}</Box>
+                                      </Typography>
+                                    }
+                                    imageUrl={subscription.program.channel.logo_url}
+                                    imageColor={subscription.program.channel.background_color || '#ffffff'}
+                                    onDelete={(e) => { e.stopPropagation(); removeSubscription(subscription.id); }}
+                                    deleteTooltip="Cancelar suscripción"
+                                  />
+                                </Grid>
+                              );
+                            })}
                         </Grid>
                       ) : (
                         <Typography variant="body2" color="text.secondary" sx={{ px: 1 }}>No tienes suscripciones a programas.</Typography>
