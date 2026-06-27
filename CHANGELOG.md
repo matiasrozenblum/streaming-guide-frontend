@@ -6,6 +6,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.27.1] - 2026-06-27
+
+### Fixed
+
+- **Backoffice weekly overrides — semana objetivo incorrecta al editar**: al abrir el diálogo de edición después de las 21 hs (AR, UTC-3), `getWeekStartDate` devolvía la fecha incorrecta porque `toISOString()` convertía a UTC y cruzaba al día siguiente. Se reemplazó por partes locales (`getFullYear/getMonth/getDate`). Adicionalmente la comparación usa `substring(0, 10)` para tolerancia de formatos con timestamp.
+- **Backoffice weekly overrides — 404 al editar/eliminar programas linkeados**: los IDs de programas linkeados con `/` en el nombre (e.g. "GHANA / PANAMÁ") rompían el routing URL. Se reemplazó la ruta API `[id]` por un catch-all `[...id]` que reconstruye el ID con los segmentos, y se usa `encodeURIComponent` al llamar al backend para que Express los trate como un único parámetro.
+
+---
+
 ## [1.27.0] - 2026-06-26
 
 ### Added
