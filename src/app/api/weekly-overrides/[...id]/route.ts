@@ -16,7 +16,7 @@ export async function PUT(
     const overrideId = id.join('/');
     const body = await request.json();
 
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${overrideId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${encodeURIComponent(overrideId)}`, {
       method: 'PUT',
       headers: {
         'Content-Type': 'application/json',
@@ -54,7 +54,7 @@ export async function DELETE(
 
     const { id } = await params;
     const overrideId = id.join('/');
-    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${overrideId}`, {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/weekly-overrides/${encodeURIComponent(overrideId)}`, {
       method: 'DELETE',
       headers: {
         'Authorization': `Bearer ${token}`,
