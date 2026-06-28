@@ -1801,18 +1801,19 @@ export function WeeklyOverridesTable() {
           <Button
             onClick={handleSubmit}
             variant="contained"
-            startIcon={isSubmitting ? undefined : (isEditMode ? <Edit /> : <Add />)}
             disabled={
               isSubmitting ||
               (formData.overrideType !== 'cancel' &&
               (!formData.newStartTime || !formData.newEndTime ||
                (formData.overrideType === 'reschedule' && !formData.newDayOfWeek)))
             }
+            sx={{ position: 'relative' }}
           >
-            {isSubmitting
-              ? <CircularProgress size={20} color="inherit" />
-              : (isEditMode ? 'Actualizar Cambio' : 'Crear Cambio')
-            }
+            <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              {isEditMode ? <Edit fontSize="small" /> : <Add fontSize="small" />}
+              {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
+            </Box>
+            {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
           </Button>
         </DialogActions>
       </Dialog>

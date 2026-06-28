@@ -732,8 +732,11 @@ export default function ProgramsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting}>
-            {isSubmitting ? <CircularProgress size={20} color="inherit" /> : (editingProgram ? 'Actualizar' : 'Crear')}
+          <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting} sx={{ position: 'relative' }}>
+            <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible' }}>
+              {editingProgram ? 'Actualizar' : 'Crear'}
+            </Box>
+            {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
           </Button>
         </DialogActions>
       </Dialog>
