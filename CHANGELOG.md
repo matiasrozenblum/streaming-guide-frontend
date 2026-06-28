@@ -6,6 +6,15 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [1.27.2] - 2026-06-28
+
+### Changed
+
+- **Backoffice — limpieza de campos no utilizados en dialogs**: se eliminaron del formulario de programas los campos `logo_url` y `style_override` (incluyendo la columna "Estilo especial" de la tabla), del formulario de panelistas el campo `avatar_url` (incluyendo la columna "Avatar" de la tabla), y del formulario de weekly overrides el campo `motivo` (incluyendo la columna "Motivo" de ambas tablas). Estos campos permanecen en la DB y el backend, simplemente dejan de mostrarse/enviarse desde la UI.
+- **Backoffice — feedback visual al guardar**: los botones de submit de los dialogs de programas, panelistas y weekly overrides ahora muestran un spinner interno (`CircularProgress`) y se deshabilitan mientras la petición está en curso, evitando dobles envíos.
+
+---
+
 ## [1.27.1] - 2026-06-27
 
 ### Fixed
