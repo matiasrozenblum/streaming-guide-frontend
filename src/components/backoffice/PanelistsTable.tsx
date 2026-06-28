@@ -294,8 +294,11 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained" disabled={isSubmitting}>
-              {isSubmitting ? <CircularProgress size={20} color="inherit" /> : (editingPanelist ? 'Save' : 'Add')}
+            <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ position: 'relative' }}>
+              <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible' }}>
+                {editingPanelist ? 'Save' : 'Add'}
+              </Box>
+              {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
             </Button>
           </DialogActions>
         </form>
