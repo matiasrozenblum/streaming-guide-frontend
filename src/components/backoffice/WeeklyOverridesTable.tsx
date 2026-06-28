@@ -115,7 +115,6 @@ export function WeeklyOverridesTable() {
     newStartTime: '',
     newEndTime: '',
     newDayOfWeek: '',
-    reason: '',
     panelistIds: [] as number[],
     specialProgram: {
       name: '',
@@ -132,6 +131,7 @@ export function WeeklyOverridesTable() {
   const [editingOverride, setEditingOverride] = useState<WeeklyOverride | null>(null);
   const [isEditMode, setIsEditMode] = useState(false);
   const [specialChannelIds, setSpecialChannelIds] = useState<number[]>([]);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
   // Multi-select & bulk delete for special programs
   const [selectedOverrideIds, setSelectedOverrideIds] = useState<Set<string>>(new Set());
@@ -242,7 +242,6 @@ export function WeeklyOverridesTable() {
       newStartTime: schedule.start_time,
       newEndTime: schedule.end_time,
       newDayOfWeek: schedule.day_of_week,
-      reason: '',
       panelistIds: [],
       specialProgram: {
         name: '',
@@ -265,7 +264,6 @@ export function WeeklyOverridesTable() {
       newStartTime: '',
       newEndTime: '',
       newDayOfWeek: '',
-      reason: '',
       panelistIds: program.panelists?.map(p => p.id) || [],
       specialProgram: {
         name: '',
@@ -293,7 +291,6 @@ export function WeeklyOverridesTable() {
       newStartTime: '',
       newEndTime: '',
       newDayOfWeek: '',
-      reason: '',
       panelistIds: [],
       specialProgram: {
         name: '',
@@ -310,6 +307,7 @@ export function WeeklyOverridesTable() {
     if (!selectedSchedule && !selectedProgram && formData.overrideType !== 'create' && !isEditMode) return;
 
     try {
+      setIsSubmitting(true);
       // Bulk path: special program (create) + multiple channels + not editing
       if (formData.overrideType === 'create' && !isEditMode && specialChannelIds.length > 1) {
         const bulkPayload = {
@@ -319,7 +317,6 @@ export function WeeklyOverridesTable() {
           newStartTime: formData.newStartTime,
           newEndTime: formData.newEndTime,
           newDayOfWeek: formData.newDayOfWeek,
-          reason: formData.reason,
           createdBy: typedSession?.user?.name || 'Admin',
           ...(formData.panelistIds.length > 0 && { panelistIds: formData.panelistIds }),
           specialProgram: {
@@ -368,7 +365,6 @@ export function WeeklyOverridesTable() {
         newStartTime?: string;
         newEndTime?: string;
         newDayOfWeek?: string;
-        reason?: string;
         createdBy?: string;
         scheduleId?: number;
         programId?: number;
@@ -417,7 +413,6 @@ export function WeeklyOverridesTable() {
         ...(formData.panelistIds.length > 0 && {
           panelistIds: formData.panelistIds,
         }),
-        reason: formData.reason,
         createdBy: typedSession?.user?.name || 'Admin',
       };
 
@@ -468,6 +463,8 @@ export function WeeklyOverridesTable() {
     } catch (err) {
       console.error('Error creating override:', err);
       setError(err instanceof Error ? err.message : 'Error al crear el cambio');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -529,7 +526,6 @@ export function WeeklyOverridesTable() {
       newStartTime: override.newStartTime || '',
       newEndTime: override.newEndTime || '',
       newDayOfWeek: override.newDayOfWeek || '',
-      reason: override.reason || '',
       panelistIds: override.panelistIds || [],
       specialProgram: override.specialProgram ? {
         name: override.specialProgram.name || '',
@@ -792,7 +788,6 @@ export function WeeklyOverridesTable() {
                 <TableCell>Horario Original</TableCell>
                 <TableCell>Cambio</TableCell>
                 <TableCell>Panelistas</TableCell>
-                <TableCell>Motivo</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -875,7 +870,6 @@ export function WeeklyOverridesTable() {
                         <Typography variant="body2" color="text.secondary">—</Typography>
                       )}
                     </TableCell>
-                    <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
@@ -913,7 +907,6 @@ export function WeeklyOverridesTable() {
                 <TableCell>Horario Original</TableCell>
                 <TableCell>Cambio</TableCell>
                 <TableCell>Panelistas</TableCell>
-                <TableCell>Motivo</TableCell>
                 <TableCell>Acciones</TableCell>
               </TableRow>
             </TableHead>
@@ -996,7 +989,6 @@ export function WeeklyOverridesTable() {
                         <Typography variant="body2" color="text.secondary">—</Typography>
                       )}
                     </TableCell>
-                    <TableCell>{override.reason || '—'}</TableCell>
                     <TableCell>
                       <Box sx={{ display: 'flex', gap: 1 }}>
                         <IconButton aria-label="Editar" onClick={() => handleEdit(override)} color="primary">
@@ -1300,7 +1292,6 @@ export function WeeklyOverridesTable() {
                 newStartTime: '',
                 newEndTime: '',
                 newDayOfWeek: '',
-                reason: '',
                 panelistIds: [],
                 specialProgram: {
                   name: '',
@@ -1801,32 +1792,28 @@ export function WeeklyOverridesTable() {
               </>
             )}
 
-            <TextField
-              label="Motivo del cambio"
-              value={formData.reason}
-              onChange={(e) => setFormData({ ...formData, reason: e.target.value })}
-              fullWidth
-              multiline
-              rows={2}
-              placeholder="Ej: Programa especial por día festivo, cambio de horario por evento, etc."
-            />
           </Box>
         </DialogContent>
         <DialogActions sx={{ p: 3, gap: 1 }}>
           <Button onClick={handleCloseDialog} variant="outlined">
             Cancelar
           </Button>
-          <Button 
-            onClick={handleSubmit} 
-            variant="contained" 
-            startIcon={isEditMode ? <Edit /> : <Add />}
+          <Button
+            onClick={handleSubmit}
+            variant="contained"
             disabled={
-              formData.overrideType !== 'cancel' && 
-              (!formData.newStartTime || !formData.newEndTime || 
-               (formData.overrideType === 'reschedule' && !formData.newDayOfWeek))
+              isSubmitting ||
+              (formData.overrideType !== 'cancel' &&
+              (!formData.newStartTime || !formData.newEndTime ||
+               (formData.overrideType === 'reschedule' && !formData.newDayOfWeek)))
             }
+            sx={{ position: 'relative' }}
           >
-            {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
+            <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible', display: 'flex', alignItems: 'center', gap: 0.75 }}>
+              {isEditMode ? <Edit fontSize="small" /> : <Add fontSize="small" />}
+              {isEditMode ? 'Actualizar Cambio' : 'Crear Cambio'}
+            </Box>
+            {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
           </Button>
         </DialogActions>
       </Dialog>

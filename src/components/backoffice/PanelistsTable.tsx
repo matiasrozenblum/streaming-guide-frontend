@@ -20,12 +20,12 @@ import {
   Typography,
   Chip,
   Autocomplete,
+  CircularProgress,
   useTheme,
 } from '@mui/material';
 import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
 import { Program } from '@/types/program';
-import Image from 'next/image';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 
@@ -41,7 +41,8 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const [openDialog, setOpenDialog] = useState(false);
   const [openProgramsDialog, setOpenProgramsDialog] = useState(false);
   const [editingPanelist, setEditingPanelist] = useState<Panelist | null>(null);
-  const [formData, setFormData] = useState({ name: '', avatar_url: '' });
+  const [formData, setFormData] = useState({ name: '' });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [selectedPrograms, setSelectedPrograms] = useState<Program[]>([]);
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
@@ -85,14 +86,11 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleOpenDialog = (panelist?: Panelist) => {
     if (panelist) {
       setEditingPanelist(panelist);
-      setFormData({
-        name: panelist.name,
-        avatar_url: panelist.avatar_url || '',
-      });
+      setFormData({ name: panelist.name });
       setSelectedPrograms(panelist.programs || []);
     } else {
       setEditingPanelist(null);
-      setFormData({ name: '', avatar_url: '' });
+      setFormData({ name: '' });
       setSelectedPrograms([]);
     }
     setOpenDialog(true);
@@ -107,7 +105,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleCloseDialog = () => {
     setOpenDialog(false);
     setEditingPanelist(null);
-    setFormData({ name: '', avatar_url: '' });
+    setFormData({ name: '' });
     setSelectedPrograms([]);
   };
 
@@ -120,6 +118,7 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
+      setIsSubmitting(true);
       const url = editingPanelist
         ? `/api/panelists/${editingPanelist.id}`
         : `/api/panelists`;
@@ -141,6 +140,8 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
     } catch (error) {
       onError('Error saving panelist');
       console.error('Error:', error);
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -240,7 +241,6 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
           <TableHead>
             <TableRow>
               <TableCell>Name</TableCell>
-              <TableCell>Avatar</TableCell>
               <TableCell>Programs</TableCell>
               <TableCell>Actions</TableCell>
             </TableRow>
@@ -249,18 +249,6 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
             {filteredPanelists.map(panelist => (
               <TableRow key={panelist.id}>
                 <TableCell>{panelist.name}</TableCell>
-                <TableCell>
-                  {panelist.avatar_url && (
-                    <Image
-                      unoptimized
-                      src={panelist.avatar_url}
-                      alt={panelist.name}
-                      width={50}
-                      height={50}
-                      style={{ objectFit: 'cover' }}
-                    />
-                  )}
-                </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                     {panelist.programs?.map(program => (
@@ -303,18 +291,14 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
               onChange={e => setFormData({ ...formData, name: e.target.value })}
               required
             />
-            <TextField
-              margin="dense"
-              label="Avatar URL"
-              fullWidth
-              value={formData.avatar_url}
-              onChange={e => setFormData({ ...formData, avatar_url: e.target.value })}
-            />
           </DialogContent>
           <DialogActions>
             <Button onClick={handleCloseDialog}>Cancel</Button>
-            <Button type="submit" variant="contained">
-              {editingPanelist ? 'Save' : 'Add'}
+            <Button type="submit" variant="contained" disabled={isSubmitting} sx={{ position: 'relative' }}>
+              <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible' }}>
+                {editingPanelist ? 'Save' : 'Add'}
+              </Box>
+              {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
             </Button>
           </DialogActions>
         </form>
