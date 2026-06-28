@@ -80,14 +80,6 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
         >
           <Image
             unoptimized
-            src="/img/logo.png"
-            alt="La Guía del Streaming"
-            width={44}
-            height={44}
-            style={{ marginRight: '8px', objectFit: 'contain' }}
-          />
-          <Image
-            unoptimized
             src={mode === 'light' ? '/img/text.png' : '/img/text-white.png'}
             alt="La Guía del Streaming"
             width={120}

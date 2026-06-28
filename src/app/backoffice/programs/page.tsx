@@ -78,12 +78,11 @@ export default function ProgramsPage() {
     description: '',
     channel_id: '',       // used when editing an existing program
     channel_ids: [] as string[], // used when creating (supports multi-select)
-    logo_url: '',
     youtube_url: '',
-    style_override: '',
     is_visible: true,
     is_premiere: false,
   });
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [openPanelistsDialog, setOpenPanelistsDialog] = useState(false);
@@ -93,6 +92,9 @@ export default function ProgramsPage() {
   // Multi-select & bulk delete
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
+
+  // Single-program delete confirmation dialog
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<{ open: boolean; program: Program | null }>({ open: false, program: null });
 
   // Linked-program delete dialog
   const [linkedDeleteDialog, setLinkedDeleteDialog] = useState<{ open: boolean; program: Program | null }>({ open: false, program: null });
@@ -214,9 +216,7 @@ export default function ProgramsPage() {
         description: program.description || '',
         channel_id: String(program.channel_id),
         channel_ids: [],
-        logo_url: program.logo_url || '',
         youtube_url: program.youtube_url || '',
-        style_override: program.style_override || '',
         is_visible: program.is_visible ?? true,
         is_premiere: program.is_premiere ?? false,
       });
@@ -227,9 +227,7 @@ export default function ProgramsPage() {
         description: '',
         channel_id: '',
         channel_ids: [],
-        logo_url: '',
         youtube_url: '',
-        style_override: '',
         is_visible: true,
         is_premiere: false,
       });
@@ -245,9 +243,7 @@ export default function ProgramsPage() {
       description: '',
       channel_id: '',
       channel_ids: [],
-      logo_url: '',
       youtube_url: '',
-      style_override: '',
       is_visible: true,
       is_premiere: false,
     });
@@ -257,6 +253,7 @@ export default function ProgramsPage() {
 
   const handleSubmit = async () => {
     try {
+      setIsSubmitting(true);
       if (editingProgram) {
         // Edit existing program — single channel, same as before
         const res = await fetch(`/api/programs/${editingProgram.id}`, {
@@ -266,9 +263,7 @@ export default function ProgramsPage() {
             name: formData.name,
             description: formData.description,
             channel_id: parseInt(formData.channel_id),
-            logo_url: formData.logo_url,
             youtube_url: formData.youtube_url,
-            style_override: formData.style_override || null,
             is_visible: formData.is_visible,
             is_premiere: formData.is_premiere,
           }),
@@ -293,9 +288,7 @@ export default function ProgramsPage() {
             name: formData.name,
             description: formData.description,
             channel_ids: formData.channel_ids.map(Number),
-            logo_url: formData.logo_url,
             youtube_url: formData.youtube_url,
-            style_override: formData.style_override || null,
             is_visible: formData.is_visible,
             is_premiere: formData.is_premiere,
             ...(scheduleItems.length > 0 && { schedules: scheduleItems }),
@@ -317,9 +310,7 @@ export default function ProgramsPage() {
             name: formData.name,
             description: formData.description,
             channel_id: channelId,
-            logo_url: formData.logo_url,
             youtube_url: formData.youtube_url,
-            style_override: formData.style_override || null,
             is_visible: formData.is_visible,
             is_premiere: formData.is_premiere,
           }),
@@ -394,6 +385,8 @@ export default function ProgramsPage() {
     } catch (err: unknown) {
       console.error('Error saving program:', err);
       setError(err instanceof Error ? err.message : 'Error al guardar el programa');
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -401,7 +394,7 @@ export default function ProgramsPage() {
     if (program.link_group_id) {
       setLinkedDeleteDialog({ open: true, program });
     } else {
-      handleDeleteConfirmed(program.id, false);
+      setConfirmDeleteDialog({ open: true, program });
     }
   };
 
@@ -563,7 +556,6 @@ export default function ProgramsPage() {
               <TableCell>Nombre</TableCell>
               <TableCell>Canal</TableCell>
               <TableCell>YouTube</TableCell>
-              <TableCell>Estilo especial</TableCell>
               <TableCell>Acciones</TableCell>
             </TableRow>
           </TableHead>
@@ -617,7 +609,6 @@ export default function ProgramsPage() {
                       'Sin enlace'
                     )}
                   </TableCell>
-                  <TableCell>{program.style_override || '-'}</TableCell>
                   <TableCell>
                     <Tooltip title="Editar programa" arrow>
                       <IconButton aria-label="Editar programa" onClick={() => handleOpenDialog(program)}><EditIcon /></IconButton>
@@ -706,9 +697,7 @@ export default function ProgramsPage() {
                 )}
               </Box>
             )}
-            <TextField label="URL del logo" value={formData.logo_url} onChange={e => setFormData({ ...formData, logo_url: e.target.value })} fullWidth />
             <TextField label="URL de YouTube" value={formData.youtube_url} onChange={e => setFormData({ ...formData, youtube_url: e.target.value })} fullWidth />
-            <TextField label="Estilo especial (opcional)" value={formData.style_override} onChange={e => setFormData({ ...formData, style_override: e.target.value })} fullWidth placeholder="boca, river, etc." />
             <FormControlLabel
               control={
                 <Checkbox
@@ -746,7 +735,12 @@ export default function ProgramsPage() {
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog}>Cancelar</Button>
-          <Button onClick={handleSubmit} variant="contained">{editingProgram ? 'Actualizar' : 'Crear'}</Button>
+          <Button onClick={handleSubmit} variant="contained" disabled={isSubmitting} sx={{ position: 'relative' }}>
+            <Box sx={{ visibility: isSubmitting ? 'hidden' : 'visible' }}>
+              {editingProgram ? 'Actualizar' : 'Crear'}
+            </Box>
+            {isSubmitting && <CircularProgress size={20} color="inherit" sx={{ position: 'absolute' }} />}
+          </Button>
         </DialogActions>
       </Dialog>
 
@@ -814,6 +808,36 @@ export default function ProgramsPage() {
           </Button>
           <Button variant="contained" color="error" onClick={() => handleDeleteConfirmed(linkedDeleteDialog.program!.id, true)}>
             Eliminar todos los vinculados
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Single-program delete confirmation dialog */}
+      <Dialog open={confirmDeleteDialog.open} onClose={() => setConfirmDeleteDialog({ open: false, program: null })} maxWidth="sm" fullWidth>
+        <DialogTitle>Eliminar programa</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar <strong>{confirmDeleteDialog.program?.name}</strong>
+            {channels.find(c => c.id === confirmDeleteDialog.program?.channel_id)?.name
+              ? ` (${channels.find(c => c.id === confirmDeleteDialog.program?.channel_id)?.name})`
+              : ''}
+            ?
+          </Typography>
+          <Alert severity="warning">
+            Esta acción eliminará también todos los horarios y overrides asociados.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteDialog({ open: false, program: null })}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              setConfirmDeleteDialog({ open: false, program: null });
+              handleDeleteConfirmed(confirmDeleteDialog.program!.id, false);
+            }}
+          >
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>
