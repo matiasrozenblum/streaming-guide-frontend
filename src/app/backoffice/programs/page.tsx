@@ -93,6 +93,9 @@ export default function ProgramsPage() {
   const [selectedIds, setSelectedIds] = useState<Set<number>>(new Set());
   const [confirmBulkDeleteOpen, setConfirmBulkDeleteOpen] = useState(false);
 
+  // Single-program delete confirmation dialog
+  const [confirmDeleteDialog, setConfirmDeleteDialog] = useState<{ open: boolean; program: Program | null }>({ open: false, program: null });
+
   // Linked-program delete dialog
   const [linkedDeleteDialog, setLinkedDeleteDialog] = useState<{ open: boolean; program: Program | null }>({ open: false, program: null });
 
@@ -391,7 +394,7 @@ export default function ProgramsPage() {
     if (program.link_group_id) {
       setLinkedDeleteDialog({ open: true, program });
     } else {
-      handleDeleteConfirmed(program.id, false);
+      setConfirmDeleteDialog({ open: true, program });
     }
   };
 
@@ -805,6 +808,36 @@ export default function ProgramsPage() {
           </Button>
           <Button variant="contained" color="error" onClick={() => handleDeleteConfirmed(linkedDeleteDialog.program!.id, true)}>
             Eliminar todos los vinculados
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Single-program delete confirmation dialog */}
+      <Dialog open={confirmDeleteDialog.open} onClose={() => setConfirmDeleteDialog({ open: false, program: null })} maxWidth="sm" fullWidth>
+        <DialogTitle>Eliminar programa</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            ¿Estás seguro que querés eliminar <strong>{confirmDeleteDialog.program?.name}</strong>
+            {channels.find(c => c.id === confirmDeleteDialog.program?.channel_id)?.name
+              ? ` (${channels.find(c => c.id === confirmDeleteDialog.program?.channel_id)?.name})`
+              : ''}
+            ?
+          </Typography>
+          <Alert severity="warning">
+            Esta acción eliminará también todos los horarios y overrides asociados.
+          </Alert>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteDialog({ open: false, program: null })}>Cancelar</Button>
+          <Button
+            variant="contained"
+            color="error"
+            onClick={() => {
+              setConfirmDeleteDialog({ open: false, program: null });
+              handleDeleteConfirmed(confirmDeleteDialog.program!.id, false);
+            }}
+          >
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>
