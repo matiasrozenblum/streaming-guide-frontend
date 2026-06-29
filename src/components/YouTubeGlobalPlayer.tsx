@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, IconButton, Typography, useMediaQuery } from '@mui/material';
+import { Box, IconButton, Typography, useMediaQuery, Tooltip } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import CropSquareIcon from '@mui/icons-material/CropSquare';
 import FormatListBulletedIcon from '@mui/icons-material/FormatListBulleted';
@@ -304,17 +304,19 @@ export const YouTubeGlobalPlayer = () => {
           >
             {/* Zap toggle */}
             {!minimized && hasZapItems && (
-              <IconButton
-                aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
-                onClick={() => setZapOpen((v) => !v)}
-                size="small"
-                sx={{
-                  color: zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
-                  '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
-                }}
-              >
-                <FormatListBulletedIcon fontSize="small" />
-              </IconButton>
+              <Tooltip title={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'} placement="top">
+                <IconButton
+                  aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
+                  onClick={() => setZapOpen((v) => !v)}
+                  size="small"
+                  sx={{
+                    color: zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
+                    '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
+                  }}
+                >
+                  <FormatListBulletedIcon fontSize="small" />
+                </IconButton>
+              </Tooltip>
             )}
 
             {/* Channel / streamer mini-logo + name */}
@@ -367,23 +369,27 @@ export const YouTubeGlobalPlayer = () => {
 
             <Box sx={{ flex: 1 }} />
 
-            <IconButton
-              aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
-              onClick={minimized ? maximizePlayer : minimizePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CropSquareIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'} placement="top">
+              <IconButton
+                aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
+                onClick={minimized ? maximizePlayer : minimizePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CropSquareIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
 
-            <IconButton
-              aria-label="Cerrar reproductor"
-              onClick={closePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+            <Tooltip title="Cerrar reproductor" placement="top">
+              <IconButton
+                aria-label="Cerrar reproductor"
+                onClick={closePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
           </Box>
 
           {/* iframe */}
