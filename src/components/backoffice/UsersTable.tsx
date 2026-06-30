@@ -415,12 +415,12 @@ export function UsersTable() {
                 <TableCell>{user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Button size="small" onClick={() => setManagingDevicesForUser(user)}>
+                  <Button size="small" aria-label={`Ver ${user.devices?.length || 0} dispositivos de ${user.email}`} onClick={() => setManagingDevicesForUser(user)}>
                     Ver ({user.devices?.length || 0})
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button size="small" onClick={() => setManagingSubsForUser(user)}>
+                  <Button size="small" aria-label={`Ver ${user.subscriptions?.length || 0} suscripciones de ${user.email}`} onClick={() => setManagingSubsForUser(user)}>
                     Ver ({user.subscriptions?.length || 0})
                   </Button>
                 </TableCell>
