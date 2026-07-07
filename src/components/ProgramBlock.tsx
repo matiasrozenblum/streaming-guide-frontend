@@ -535,28 +535,30 @@ export const ProgramBlock: React.FC<Props> = ({
           </Text>
         )}
         <Tooltip title={isOn ? "Desactivar notificación" : "Activar notificación"} arrow>
-          <IconButton
-            size="small"
-            aria-label={isOn ? "Desactivar notificación" : "Activar notificación"}
-            onClick={handleBellClick}
-            ref={bellRef}
-            sx={{
-              color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
-            }}
-            disabled={isLoading}
-          >
-            {isLoading ? (
-              <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
-                <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
-                  <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
-                    <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
-                  </circle>
-                </svg>
-              </Box>
-            ) : (
-              <Notifications color={isOn ? "primary" : "disabled"} />
-            )}
-          </IconButton>
+          <span>
+            <IconButton
+              size="small"
+              aria-label={isOn ? "Desactivar notificación" : "Activar notificación"}
+              onClick={handleBellClick}
+              ref={bellRef}
+              sx={{
+                color: isLoading ? undefined : (isOn ? 'primary.main' : 'action.disabled'),
+              }}
+              disabled={isLoading}
+            >
+              {isLoading ? (
+                <Box sx={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: 24, width: 24 }}>
+                  <svg width="20" height="20" viewBox="0 0 40 40" style={{ display: 'block' }}>
+                    <circle cx="20" cy="20" r="18" stroke="#1976d2" strokeWidth="4" fill="none" strokeDasharray="90" strokeDashoffset="60">
+                      <animateTransform attributeName="transform" type="rotate" from="0 20 20" to="360 20 20" dur="1s" repeatCount="indefinite" />
+                    </circle>
+                  </svg>
+                </Box>
+              ) : (
+                <Notifications color={isOn ? "primary" : "disabled"} />
+              )}
+            </IconButton>
+          </span>
         </Tooltip>
       </Box>
     </Box>
