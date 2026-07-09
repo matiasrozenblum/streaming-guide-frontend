@@ -184,6 +184,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
         return {
           id: s.id,
           name: s.name,
+          kind: 'streamer' as const,
           logoUrl: s.logo_url,
           backgroundColor: null,
           videoUrl,

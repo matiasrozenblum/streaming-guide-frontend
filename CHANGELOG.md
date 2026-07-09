@@ -6,6 +6,18 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [Unreleased]
+
+---
+
+## [1.28.0] - 2026-07-09
+
+### Added
+- **Tracking zapping**: se agrega el evento `zap_use` (GA4 + PostHog + Datadog) al cambiar de canal/streamer desde el panel de zapping, con propiedades `direction`, `from_name`, `from_kind`, `from_service`, `target_name`, `target_kind`, `target_service`, `target_program` y `target_is_live`, alineado con el schema del evento equivalente en mobile
+- **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId
+
+---
+
 ## [1.27.2] - 2026-06-28
 
 ### Changed
