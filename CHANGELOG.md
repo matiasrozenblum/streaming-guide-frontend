@@ -6,12 +6,25 @@ El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 
+## [Unreleased]
+
+### Added
+- **Tracking zapping**: se agrega el evento `zap_use` (GA4 + PostHog + Datadog) al cambiar de canal/streamer desde el panel de zapping, con propiedades `direction`, `from_name`, `from_kind`, `from_service`, `target_name`, `target_kind`, `target_service`, `target_program` y `target_is_live`, alineado con el schema del evento equivalente en mobile (`feature/subscribed-by-jwt`)
+- **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId (`feature/subscribed-by-jwt`)
+
+---
+
 ## [1.27.2] - 2026-06-28
 
 ### Changed
 
 - **Backoffice — limpieza de campos no utilizados en dialogs**: se eliminaron del formulario de programas los campos `logo_url` y `style_override` (incluyendo la columna "Estilo especial" de la tabla), del formulario de panelistas el campo `avatar_url` (incluyendo la columna "Avatar" de la tabla), y del formulario de weekly overrides el campo `motivo` (incluyendo la columna "Motivo" de ambas tablas). Estos campos permanecen en la DB y el backend, simplemente dejan de mostrarse/enviarse desde la UI.
-- **Backoffice — feedback visual al guardar**: los botones de submit de los dialogs de programas, panelistas y weekly overrides ahora muestran un spinner interno (`CircularProgress`) y se deshabilitan mientras la petición está en curso, evitando dobles envíos.
+- **Backoffice — feedback visual al guardar**: los botones de submit de los dialogs de programas, panelistas y weekly overrides ahora muestran un spinner interno (`CircularProgress`) y se deshabilitan mientras la petición está en curso, evitando dobles envíos. El botón mantiene su tamaño original durante el estado de carga (spinner superpuesto con `position: absolute`, texto oculto con `visibility: hidden`).
+- **Backoffice — logo duplicado en sidebar**: se eliminó la imagen `logo.png` redundante del sidebar; la imagen `text-white.png` / `text.png` ya incluye el logo y el texto juntos.
+
+### Fixed
+
+- **Backoffice programas — confirmación antes de eliminar**: el botón de eliminar (trash) en la tabla de programas ahora muestra un diálogo de confirmación con el nombre del programa y el canal al que pertenece, con opciones de confirmar o cancelar, antes de proceder con el borrado.
 
 ---
 

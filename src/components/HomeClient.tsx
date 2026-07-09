@@ -239,6 +239,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       return {
         id: channel.id,
         name: channel.name,
+        kind: 'channel' as const,
         logoUrl: channel.logo_url,
         backgroundColor: channel.background_color,
         videoUrl,

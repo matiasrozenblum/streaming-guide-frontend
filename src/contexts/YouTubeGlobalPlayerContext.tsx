@@ -76,7 +76,28 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
       logoShape: item.logoShape,
     };
 
+    const currentIdx = zapList.findIndex(z => z.id === playerData?.channelInfo?.channelId);
+    const targetIdx = zapList.findIndex(z => z.id === item.id);
+    const direction = currentIdx === -1 || targetIdx > currentIdx ? 'next' : 'prev';
+    const fromItem = currentIdx !== -1 ? zapList[currentIdx] : null;
+
     setPlayerData({ service: parsed.service, embedPath: parsed.embedPath, channelInfo });
+
+    try { Clarity.event('zap_use'); } catch { /* Clarity not yet loaded */ }
+    gaEvent({
+      action: 'zap_use',
+      params: {
+        direction,
+        from_name: playerData?.channelInfo?.channelName ?? undefined,
+        from_kind: fromItem?.kind ?? undefined,
+        from_service: playerData?.service ?? undefined,
+        target_name: item.name,
+        target_kind: item.kind,
+        target_service: parsed.service ?? undefined,
+        target_program: item.programName ?? undefined,
+        target_is_live: item.isLive,
+      },
+    });
   };
 
   const closePlayer = () => {
