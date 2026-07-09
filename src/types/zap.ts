@@ -1,6 +1,7 @@
 export interface ZapItem {
   id: number;
   name: string;
+  kind: 'channel' | 'streamer';
   logoUrl?: string | null;
   backgroundColor?: string | null;
   videoUrl: string | null;
