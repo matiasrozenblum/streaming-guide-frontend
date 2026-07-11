@@ -10,6 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.28.1] - 2026-07-11
+
+### Fixed
+- **Datadog RUM — excluir tráfico de admins**: se agrega `beforeSend` al `datadogRum.init()` que descarta cualquier evento RUM cuya `view.url` contenga `/backoffice`, y también cualquier evento generado por usuarios con rol `admin` navegando el sitio público. Se agrega `setDatadogUser()` llamado desde `ConditionalTrackingLoader` al cargar la sesión, que propaga el rol a Datadog y actualiza el flag de `beforeSend`, resolviendo la race condition donde Datadog se inicializaba antes de que la sesión estuviera disponible
+
+---
+
 ## [1.28.0] - 2026-07-09
 
 ### Added
