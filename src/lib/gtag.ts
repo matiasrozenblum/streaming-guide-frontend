@@ -1,5 +1,6 @@
 import posthog from 'posthog-js';
 import { datadogRum } from '@datadog/browser-rum';
+import type { RumEvent } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
@@ -29,6 +30,10 @@ export function initDatadogRum(): void {
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
+      beforeSend: (event: RumEvent) => {
+        if ((event.view?.url ?? '').includes('/backoffice')) return false;
+        return true;
+      },
     });
     datadogRum.startSessionReplayRecording();
     datadogInited = true;

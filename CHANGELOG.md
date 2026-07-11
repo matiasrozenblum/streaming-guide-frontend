@@ -12,6 +12,9 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Tracking zapping**: se agrega el evento `zap_use` (GA4 + PostHog + Datadog) al cambiar de canal/streamer desde el panel de zapping, con propiedades `direction`, `from_name`, `from_kind`, `from_service`, `target_name`, `target_kind`, `target_service`, `target_program` y `target_is_live`, alineado con el schema del evento equivalente en mobile (`feature/subscribed-by-jwt`)
 - **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId (`feature/subscribed-by-jwt`)
 
+### Fixed
+- **Datadog RUM — excluir tráfico de backoffice**: se agrega `beforeSend` al `datadogRum.init()` que descarta cualquier evento RUM cuya `view.url` contenga `/backoffice`, eliminando el conteo de page views de admins del dashboard y del billing de Datadog (`fix/datadog-exclude-backoffice`)
+
 ---
 
 ## [1.27.2] - 2026-06-28
