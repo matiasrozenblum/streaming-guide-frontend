@@ -13,7 +13,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId (`feature/subscribed-by-jwt`)
 
 ### Fixed
-- **Datadog RUM — excluir tráfico de backoffice**: se agrega `beforeSend` al `datadogRum.init()` que descarta cualquier evento RUM cuya `view.url` contenga `/backoffice`, eliminando el conteo de page views de admins del dashboard y del billing de Datadog (`fix/datadog-exclude-backoffice`)
+- **Datadog RUM — excluir tráfico de admins**: se agrega `beforeSend` al `datadogRum.init()` que descarta cualquier evento RUM cuya `view.url` contenga `/backoffice`, y también cualquier evento generado por usuarios con rol `admin` navegando el sitio público. Se agrega `setDatadogUser()` llamado desde `ConditionalTrackingLoader` al cargar la sesión, que propaga el rol a Datadog y actualiza el flag de `beforeSend`, resolviendo la race condition donde Datadog se inicializaba antes de que la sesión estuviera disponible (`fix/datadog-exclude-backoffice`)
 
 ---
 
