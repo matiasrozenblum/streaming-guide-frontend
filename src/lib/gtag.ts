@@ -1,11 +1,15 @@
 import posthog from 'posthog-js';
 import { datadogRum } from '@datadog/browser-rum';
+import type { RumEvent } from '@datadog/browser-rum';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
-// Module-level flag — avoids calling datadogRum.getInitConfiguration() which
+// Module-level flags — avoids calling datadogRum.getInitConfiguration() which
 // throws a TrustedScript CSP error in Next.js on some browsers.
 let datadogInited = false;
+// Captured by beforeSend closure; updated when session loads so admin events
+// are dropped even if Datadog initialized before the session was available.
+let isAdminSession = false;
 
 export function initDatadogRum(): void {
   if (datadogInited) return;
@@ -29,11 +33,23 @@ export function initDatadogRum(): void {
       trackResources: true,
       trackLongTasks: true,
       defaultPrivacyLevel: 'mask-user-input',
+      beforeSend: (event: RumEvent) => {
+        if ((event.view?.url ?? '').includes('/backoffice')) return false;
+        if (isAdminSession) return false;
+        return true;
+      },
     });
     datadogRum.startSessionReplayRecording();
     datadogInited = true;
   } catch (e) {
     console.warn('[Datadog] init FAILED:', e);
+  }
+}
+
+export function setDatadogUser(role: string): void {
+  isAdminSession = role === 'admin';
+  if (datadogInited) {
+    datadogRum.setUser({ role });
   }
 }
 
