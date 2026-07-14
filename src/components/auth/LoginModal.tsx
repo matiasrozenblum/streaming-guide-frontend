@@ -434,6 +434,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
+                    aria-label={socialLoginPending ? 'Conectando con Google' : 'Conectate con Google'}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -481,6 +482,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
+                    aria-label={socialLoginPending ? 'Conectando con Apple' : 'Conectate con Apple'}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
