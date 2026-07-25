@@ -8,9 +8,27 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.29.0] - 2026-07-25
+
 ### Added
-- **Tracking zapping**: se agrega el evento `zap_use` (GA4 + PostHog + Datadog) al cambiar de canal/streamer desde el panel de zapping, con propiedades `direction`, `from_name`, `from_kind`, `from_service`, `target_name`, `target_kind`, `target_service`, `target_program` y `target_is_live`, alineado con el schema del evento equivalente en mobile (`feature/subscribed-by-jwt`)
-- **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId (`feature/subscribed-by-jwt`)
+- **Zapping tutorial — 2 tooltips de onboarding**: al abrir el reproductor por primera vez aparece un tooltip que apunta al botón de zapping con el texto "¿Sabías que podés hacer zapping?"; al abrir el panel de zapping por primera vez aparece un segundo tooltip que indica que se puede cambiar de canal tocando uno de los canales en vivo. Los tooltips se persisten en `localStorage` (claves `tooltip_zapping_player_v1` y `tooltip_zapping_panel_v1`) y, si el usuario está autenticado, se sincronizan con el backend vía `POST /users/me/seen-features` para no repetirse en otros dispositivos ni en otros navegadores del mismo usuario.
+
+---
+
+## [1.28.1] - 2026-07-11
+
+### Fixed
+- **Datadog RUM — excluir tráfico de admins**: se agrega `beforeSend` al `datadogRum.init()` que descarta cualquier evento RUM cuya `view.url` contenga `/backoffice`, y también cualquier evento generado por usuarios con rol `admin` navegando el sitio público. Se agrega `setDatadogUser()` llamado desde `ConditionalTrackingLoader` al cargar la sesión, que propaga el rol a Datadog y actualiza el flag de `beforeSend`, resolviendo la race condition donde Datadog se inicializaba antes de que la sesión estuviera disponible
+
+---
+
+## [1.28.0] - 2026-07-09
+
+### Added
+- **Tracking zapping**: se agrega el evento `zap_use` (GA4 + PostHog + Datadog) al cambiar de canal/streamer desde el panel de zapping, con propiedades `direction`, `from_name`, `from_kind`, `from_service`, `target_name`, `target_kind`, `target_service`, `target_program` y `target_is_live`, alineado con el schema del evento equivalente en mobile
+- **Inyección de JWT en llamadas de schedule**: se agrega un request interceptor en `api.ts` que incluye automáticamente `Authorization: Bearer <token>` en todas las llamadas client-side cuando hay sesión activa, para que el backend resuelva el campo `subscribed` por userId en lugar de por deviceId
 
 ---
 

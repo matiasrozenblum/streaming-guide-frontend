@@ -2,7 +2,7 @@
 import { useEffect, useState } from 'react';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { GA_TRACKING_ID, initDatadogRum } from '@/lib/gtag';
+import { GA_TRACKING_ID, initDatadogRum, setDatadogUser } from '@/lib/gtag';
 import posthog from 'posthog-js';
 import type { SessionWithToken } from '@/types/session';
 
@@ -57,6 +57,14 @@ export function ConditionalTrackingLoader() {
     if (isAdmin) return;
     initDatadogRum();
   }, [isAdmin]);
+
+  // Propagate user role to Datadog as soon as the session is available.
+  // beforeSend uses this to drop events from admin users even when Datadog
+  // initialized before the session loaded (async race on first render).
+  useEffect(() => {
+    if (!typedSession?.user?.role) return;
+    setDatadogUser(typedSession.user.role);
+  }, [typedSession?.user?.role]);
 
   // Initialize Google Analytics when analytics consent is given (skip for admin users)
   useEffect(() => {
