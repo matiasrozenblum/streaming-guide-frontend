@@ -359,6 +359,7 @@ export const YouTubeGlobalPlayer = () => {
 
             {/* Channel / streamer mini-logo + name */}
             {!minimized && channelInfo && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: showPlayer ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: showPlayer ? 'none' : 'auto' }}>
               <>
                 {(() => {
                   const isSquare = channelInfo.logoShape === 'square';
@@ -403,27 +404,30 @@ export const YouTubeGlobalPlayer = () => {
                   {channelInfo.channelName}
                 </Typography>
               </>
+              </Box>
             )}
 
             <Box sx={{ flex: 1 }} />
 
-            <IconButton
-              aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
-              onClick={minimized ? maximizePlayer : minimizePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CropSquareIcon fontSize="small" />
-            </IconButton>
+            <Box sx={{ display: 'flex', opacity: showPlayer ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: showPlayer ? 'none' : 'auto' }}>
+              <IconButton
+                aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
+                onClick={minimized ? maximizePlayer : minimizePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CropSquareIcon fontSize="small" />
+              </IconButton>
 
-            <IconButton
-              aria-label="Cerrar reproductor"
-              onClick={closePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+              <IconButton
+                aria-label="Cerrar reproductor"
+                onClick={closePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Box>
 
           {/* iframe */}
