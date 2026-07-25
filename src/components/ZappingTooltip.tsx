@@ -59,14 +59,16 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
       size="small"
       onClick={onDismiss}
       sx={{
-        color: 'rgba(255,255,255,0.5)',
-        p: 0.25,
+        color: '#fff',
+        bgcolor: 'rgba(255,255,255,0.15)',
+        p: 0.5,
         flexShrink: 0,
-        mt: -0.25,
-        '&:hover': { color: '#fff' },
+        width: 28,
+        height: 28,
+        '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
       }}
     >
-      <CloseIcon sx={{ fontSize: 16 }} />
+      <CloseIcon sx={{ fontSize: 18 }} />
     </IconButton>
   </Box>
 );
