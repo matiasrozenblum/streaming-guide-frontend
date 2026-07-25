@@ -4,34 +4,24 @@ import { useCallback, useEffect, useState } from 'react';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 
-const KEYS = {
-  player: 'tooltip_zapping_player_v1',
-  panel: 'tooltip_zapping_panel_v1',
-} as const;
+const PLAYER_KEY = 'tooltip_zapping_player_v1';
 
 export function useZappingTooltip() {
   const { status } = useSessionContext();
   const [showPlayer, setShowPlayer] = useState(false);
-  const [showPanel, setShowPanel] = useState(false);
 
   useEffect(() => {
     if (typeof window === 'undefined') return;
-    if (!localStorage.getItem(KEYS.player)) setShowPlayer(true);
-    if (!localStorage.getItem(KEYS.panel)) setShowPanel(true);
+    if (!localStorage.getItem(PLAYER_KEY)) setShowPlayer(true);
   }, []);
 
-  const markSeen = useCallback(async (key: keyof typeof KEYS) => {
-    const storageKey = KEYS[key];
-    if (key === 'player') setShowPlayer(false);
-    else setShowPanel(false);
-    localStorage.setItem(storageKey, 'true');
+  const markPlayerSeen = useCallback(() => {
+    setShowPlayer(false);
+    localStorage.setItem(PLAYER_KEY, 'true');
     if (status === 'authenticated') {
-      api.post('/users/me/seen-features', { feature: storageKey }).catch(() => {});
+      api.post('/users/me/seen-features', { feature: PLAYER_KEY }).catch(() => {});
     }
   }, [status]);
 
-  const markPlayerSeen = useCallback(() => markSeen('player'), [markSeen]);
-  const markPanelSeen = useCallback(() => markSeen('panel'), [markSeen]);
-
-  return { showPlayer, showPanel, markPlayerSeen, markPanelSeen };
+  return { showPlayer, markPlayerSeen };
 }

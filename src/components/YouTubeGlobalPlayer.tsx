@@ -73,12 +73,7 @@ export const YouTubeGlobalPlayer = () => {
 
   const hasZapItems = panelItems.length > 1 || aboveItems.length > 0 || belowItems.length > 0;
 
-  const { showPlayer, showPanel, markPlayerSeen, markPanelSeen } = useZappingTooltip();
-
-  const handleZapToChannel = useCallback((item: Parameters<typeof zapToChannel>[0]) => {
-    zapToChannel(item);
-    if (showPanel) markPanelSeen();
-  }, [zapToChannel, showPanel, markPanelSeen]);
+  const { showPlayer, markPlayerSeen } = useZappingTooltip();
 
   const moveTo = useCallback(
     (clientX: number, clientY: number) => {
@@ -258,17 +253,8 @@ export const YouTubeGlobalPlayer = () => {
             currentId={currentChannelId}
             isOpen={sidePanelOpen}
             playerHeight={PLAYER_HEIGHT_DESKTOP}
-            onZap={handleZapToChannel}
+            onZap={zapToChannel}
           />
-          {sidePanelOpen && showPanel && (
-            <Box sx={{ position: 'absolute', top: 8, left: 8, right: 8, zIndex: 2001 }}>
-              <ZappingTooltip
-                text="Estos son los canales en vivo. ¡Tocá uno para cambiar de canal!"
-                onDismiss={markPanelSeen}
-                arrowDirection="none"
-              />
-            </Box>
-          )}
         </Box>
       )}
 
@@ -293,7 +279,7 @@ export const YouTubeGlobalPlayer = () => {
       >
         {/* Mobile: card above player */}
         {!minimized && isMobile && (
-          <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={handleZapToChannel} />
+          <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={zapToChannel} />
         )}
 
         {/* Desktop: Tooltip 1 — emerges from the LEFT of the zap button. The player box
@@ -309,6 +295,26 @@ export const YouTubeGlobalPlayer = () => {
                 text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
                 onDismiss={markPlayerSeen}
                 arrowDirection="right"
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Mobile: Tooltip 1 — sits ABOVE the player, arrow points down at the zap button.
+            While the tooltip shows, zap is closed so the "above" card is collapsed (0px),
+            hence the player top ≈ wrapper top. The button centre is ≈ x:23, y:8 (p:1 padding
+            + half small IconButton). We pin a zero-size anchor at the button's top edge and
+            grow the tooltip UPWARD (bottom:0). The down-arrow is anchored to the LEFT (the
+            button is near the left edge) so the tooltip extends rightward and stays on screen. */}
+        {showPlayer && !minimized && isMobile && hasZapItems && (
+          <Box sx={{ position: 'absolute', top: 6, left: 23, width: 0, height: 0, zIndex: 2100 }}>
+            <Box sx={{ position: 'absolute', bottom: 0, left: -30, width: 240 }}>
+              <ZappingTooltip
+                text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
+                onDismiss={markPlayerSeen}
+                arrowDirection="down"
+                arrowFrom="left"
+                arrowOffset={20}
               />
             </Box>
           </Box>
@@ -364,14 +370,6 @@ export const YouTubeGlobalPlayer = () => {
                 >
                   <FormatListBulletedIcon fontSize="small" />
                 </IconButton>
-                {showPlayer && isMobile && (
-                  <Box sx={{ position: 'absolute', top: '100%', left: 0, mt: 0.5, width: 220, zIndex: 2100 }}>
-                    <ZappingTooltip
-                      text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
-                      onDismiss={markPlayerSeen}
-                    />
-                  </Box>
-                )}
               </Box>
             )}
 
@@ -462,19 +460,9 @@ export const YouTubeGlobalPlayer = () => {
           </Box>
         </Box>
 
-        {/* Mobile: Tooltip 2 — appears between player and below-card when zap opens for first time */}
-        {!minimized && isMobile && showPanel && zapOpen && (belowItems.length > 0 || aboveItems.length > 0) && (
-          <Box sx={{ px: 1, pt: 0.5, zIndex: 2001 }}>
-            <ZappingTooltip
-              text="Estos son los canales en vivo. ¡Tocá uno para cambiar de canal!"
-              onDismiss={markPanelSeen}
-              arrowDirection="none"
-            />
-          </Box>
-        )}
         {/* Mobile: card below player */}
         {!minimized && isMobile && (
-          <ZapCard items={belowItems} position="below" isOpen={zapOpen} onZap={handleZapToChannel} />
+          <ZapCard items={belowItems} position="below" isOpen={zapOpen} onZap={zapToChannel} />
         )}
       </Box>
     </>
