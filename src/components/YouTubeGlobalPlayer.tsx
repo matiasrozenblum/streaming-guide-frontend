@@ -331,8 +331,17 @@ export const YouTubeGlobalPlayer = () => {
                   }}
                   size="small"
                   sx={{
-                    color: zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
+                    color: showPlayer ? '#3b82f6' : zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
                     '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
+                    ...(showPlayer && {
+                      '@keyframes zap-pulse': {
+                        '0%':   { boxShadow: '0 0 0 0 rgba(59,130,246,0.7)' },
+                        '70%':  { boxShadow: '0 0 0 8px rgba(59,130,246,0)' },
+                        '100%': { boxShadow: '0 0 0 0 rgba(59,130,246,0)' },
+                      },
+                      borderRadius: '50%',
+                      animation: 'zap-pulse 1.5s ease-out infinite',
+                    }),
                   }}
                 >
                   <FormatListBulletedIcon fontSize="small" />
@@ -340,7 +349,7 @@ export const YouTubeGlobalPlayer = () => {
                 {showPlayer && (
                   <Box sx={{ position: 'absolute', top: '100%', left: 0, mt: 0.5, width: 220, zIndex: 2100 }}>
                     <ZappingTooltip
-                      text="¿Sabías que podés hacer zapping? ¡Tocá este botón para ver los canales en vivo!"
+                      text="¿Sabías que podés hacer zapping? ¡Probalo acá!"
                       onDismiss={markPlayerSeen}
                     />
                   </Box>
