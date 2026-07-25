@@ -10,7 +10,7 @@ const KEYS = {
 } as const;
 
 export function useZappingTooltip() {
-  const { session } = useSessionContext();
+  const { status } = useSessionContext();
   const [showPlayer, setShowPlayer] = useState(false);
   const [showPanel, setShowPanel] = useState(false);
 
@@ -25,10 +25,10 @@ export function useZappingTooltip() {
     if (key === 'player') setShowPlayer(false);
     else setShowPanel(false);
     localStorage.setItem(storageKey, 'true');
-    if (session?.user) {
+    if (status === 'authenticated') {
       api.post('/users/me/seen-features', { feature: storageKey }).catch(() => {});
     }
-  }, [session]);
+  }, [status]);
 
   const markPlayerSeen = useCallback(() => markSeen('player'), [markSeen]);
   const markPanelSeen = useCallback(() => markSeen('panel'), [markSeen]);
