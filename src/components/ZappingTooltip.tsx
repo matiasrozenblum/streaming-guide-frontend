@@ -6,8 +6,8 @@ import CloseIcon from '@mui/icons-material/Close';
 interface ZappingTooltipProps {
   text: string;
   onDismiss: () => void;
-  /** 'up' = arrow at top pointing up, 'right' = arrow on right pointing right, 'none' = no arrow */
-  arrowDirection?: 'up' | 'right' | 'none';
+  /** 'up' = arrow at top, 'down' = arrow at bottom, 'right' = arrow on right, 'none' = no arrow */
+  arrowDirection?: 'up' | 'down' | 'right' | 'none';
 }
 
 const ARROW_COLOR = '#334155';
@@ -39,6 +39,19 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
           borderLeft: '10px solid transparent',
           borderRight: '10px solid transparent',
           borderBottom: `11px solid ${ARROW_COLOR}`,
+        },
+      }),
+      ...(arrowDirection === 'down' && {
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          bottom: -11,
+          right: 24,
+          width: 0,
+          height: 0,
+          borderLeft: '10px solid transparent',
+          borderRight: '10px solid transparent',
+          borderTop: `11px solid ${ARROW_COLOR}`,
         },
       }),
       ...(arrowDirection === 'right' && {
