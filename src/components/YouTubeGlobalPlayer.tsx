@@ -296,23 +296,22 @@ export const YouTubeGlobalPlayer = () => {
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={handleZapToChannel} />
         )}
 
-        {/* Desktop: Tooltip 1 — sits above the zap button, arrow points down at it.
-            Button center ≈ 32px from wrapper-left (p:2 padding + half small IconButton).
-            Arrow is at right:24 → its center is at (width - 34). With width 220 that is
-            186px from the tooltip's left, so left:-154 puts the arrow at x≈32px (button). */}
+        {/* Desktop: Tooltip 1 — emerges from the zap button. The player box has
+            overflow:hidden so the tooltip cannot live inside it; instead we pin a
+            zero-size anchor at the button's top edge (≈ x:31, y:6 from wrapper) and let
+            the tooltip grow UPWARD from it (bottom:0), so the down-arrow always touches
+            the button regardless of how many lines the text wraps to. The arrow sits at
+            right:24 of a 220px-wide tooltip → its centre is 186px from the tooltip's
+            left, so left:-186 aligns it with the anchor (the button's centre). */}
         {showPlayer && !minimized && !isMobile && hasZapItems && (
-          <Box sx={{
-            position: 'absolute',
-            top: -84,
-            left: -154,
-            width: 220,
-            zIndex: 2100,
-          }}>
-            <ZappingTooltip
-              text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
-              onDismiss={markPlayerSeen}
-              arrowDirection="down"
-            />
+          <Box sx={{ position: 'absolute', top: 6, left: 31, width: 0, height: 0, zIndex: 2100 }}>
+            <Box sx={{ position: 'absolute', bottom: 0, left: -186, width: 220 }}>
+              <ZappingTooltip
+                text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
+                onDismiss={markPlayerSeen}
+                arrowDirection="down"
+              />
+            </Box>
           </Box>
         )}
 
