@@ -6,17 +6,20 @@ import CloseIcon from '@mui/icons-material/Close';
 interface ZappingTooltipProps {
   text: string;
   onDismiss: () => void;
-  showArrow?: boolean;
+  /** 'up' = arrow at top pointing up, 'right' = arrow on right pointing right, 'none' = no arrow */
+  arrowDirection?: 'up' | 'right' | 'none';
 }
+
+const ARROW_COLOR = '#334155';
 
 export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
   text,
   onDismiss,
-  showArrow = true,
+  arrowDirection = 'up',
 }) => (
   <Box
     sx={{
-      bgcolor: '#334155',
+      bgcolor: ARROW_COLOR,
       border: 'none',
       borderRadius: '10px',
       p: 1.5,
@@ -25,7 +28,7 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
       gap: 1,
       boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
       position: 'relative',
-      ...(showArrow && {
+      ...(arrowDirection === 'up' && {
         '&::before': {
           content: '""',
           position: 'absolute',
@@ -35,7 +38,20 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
           height: 0,
           borderLeft: '10px solid transparent',
           borderRight: '10px solid transparent',
-          borderBottom: '11px solid #334155',
+          borderBottom: `11px solid ${ARROW_COLOR}`,
+        },
+      }),
+      ...(arrowDirection === 'right' && {
+        '&::before': {
+          content: '""',
+          position: 'absolute',
+          right: -11,
+          top: 14,
+          width: 0,
+          height: 0,
+          borderTop: '10px solid transparent',
+          borderBottom: '10px solid transparent',
+          borderLeft: `11px solid ${ARROW_COLOR}`,
         },
       }),
     }}
