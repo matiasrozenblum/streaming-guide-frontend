@@ -265,7 +265,7 @@ export const YouTubeGlobalPlayer = () => {
               <ZappingTooltip
                 text="Estos son los canales en vivo. ¡Tocá uno para cambiar de canal!"
                 onDismiss={markPanelSeen}
-                showArrow={false}
+                arrowDirection="none"
               />
             </Box>
           )}
@@ -308,7 +308,7 @@ export const YouTubeGlobalPlayer = () => {
             <ZappingTooltip
               text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
               onDismiss={markPlayerSeen}
-              showArrow={false}
+              arrowDirection="right"
             />
           </Box>
         )}
@@ -467,7 +467,7 @@ export const YouTubeGlobalPlayer = () => {
             <ZappingTooltip
               text="Estos son los canales en vivo. ¡Tocá uno para cambiar de canal!"
               onDismiss={markPanelSeen}
-              showArrow={false}
+              arrowDirection="none"
             />
           </Box>
         )}
