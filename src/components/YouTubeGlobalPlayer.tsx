@@ -314,7 +314,7 @@ export const YouTubeGlobalPlayer = () => {
                 onDismiss={markPlayerSeen}
                 arrowDirection="down"
                 arrowFrom="left"
-                arrowOffset={20}
+                arrowOffset={27}
               />
             </Box>
           </Box>
