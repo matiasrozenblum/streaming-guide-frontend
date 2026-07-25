@@ -296,19 +296,22 @@ export const YouTubeGlobalPlayer = () => {
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={handleZapToChannel} />
         )}
 
-        {/* Desktop: Tooltip 1 — arrow tip aligned to zap button (p:2 padding + half-button ≈ 32px inside) */}
+        {/* Desktop: Tooltip 1 — sits above the zap button, arrow points down at it.
+            Button center ≈ 32px from wrapper-left (p:2 padding + half small IconButton).
+            Arrow is at right:24 → its center is at (width - 34). With width 220 that is
+            186px from the tooltip's left, so left:-154 puts the arrow at x≈32px (button). */}
         {showPlayer && !minimized && !isMobile && hasZapItems && (
           <Box sx={{
             position: 'absolute',
-            right: 'calc(100% - 21px)',
-            top: 16,
-            width: 200,
+            top: -84,
+            left: -154,
+            width: 220,
             zIndex: 2100,
           }}>
             <ZappingTooltip
               text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
               onDismiss={markPlayerSeen}
-              arrowDirection="right"
+              arrowDirection="down"
             />
           </Box>
         )}
