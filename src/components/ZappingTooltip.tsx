@@ -16,7 +16,7 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
 }) => (
   <Box
     sx={{
-      bgcolor: '#1e293b',
+      bgcolor: '#334155',
       border: 'none',
       borderRadius: '10px',
       p: 1.5,
@@ -35,7 +35,7 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
           height: 0,
           borderLeft: '10px solid transparent',
           borderRight: '10px solid transparent',
-          borderBottom: '11px solid #1e293b',
+          borderBottom: '11px solid #334155',
         },
       }),
     }}
