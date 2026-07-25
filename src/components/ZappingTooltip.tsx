@@ -46,7 +46,7 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
           content: '""',
           position: 'absolute',
           right: -11,
-          top: 14,
+          top: 16,
           width: 0,
           height: 0,
           borderTop: '10px solid transparent',

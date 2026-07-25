@@ -296,11 +296,11 @@ export const YouTubeGlobalPlayer = () => {
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={handleZapToChannel} />
         )}
 
-        {/* Desktop: Tooltip 1 — absolute, anchored to left of the player container */}
+        {/* Desktop: Tooltip 1 — arrow tip aligned to zap button (p:2 padding + half-button ≈ 32px inside) */}
         {showPlayer && !minimized && !isMobile && hasZapItems && (
           <Box sx={{
             position: 'absolute',
-            right: 'calc(100% + 12px)',
+            right: 'calc(100% - 21px)',
             top: 16,
             width: 200,
             zIndex: 2100,
