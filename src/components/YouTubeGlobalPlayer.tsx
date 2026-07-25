@@ -272,23 +272,6 @@ export const YouTubeGlobalPlayer = () => {
         </Box>
       )}
 
-      {/* Desktop: Tooltip 1 — fixed to the left of the player, outside the transform container */}
-      {showPlayer && !minimized && !isMobile && hasZapItems && (
-        <Box sx={{
-          position: 'fixed',
-          top: 'calc(50% - 220px)',
-          right: 'calc(50% + min(40vw, 400px) + 16px)',
-          width: 220,
-          zIndex: 2100,
-        }}>
-          <ZappingTooltip
-            text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
-            onDismiss={markPlayerSeen}
-            showArrow={false}
-          />
-        </Box>
-      )}
-
       {/* Main player outer wrapper — always flex-column, same layout as pre-zap */}
       <Box
         ref={containerRef}
@@ -311,6 +294,23 @@ export const YouTubeGlobalPlayer = () => {
         {/* Mobile: card above player */}
         {!minimized && isMobile && (
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={handleZapToChannel} />
+        )}
+
+        {/* Desktop: Tooltip 1 — absolute, anchored to left of the player container */}
+        {showPlayer && !minimized && !isMobile && hasZapItems && (
+          <Box sx={{
+            position: 'absolute',
+            right: 'calc(100% + 12px)',
+            top: 16,
+            width: 200,
+            zIndex: 2100,
+          }}>
+            <ZappingTooltip
+              text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
+              onDismiss={markPlayerSeen}
+              showArrow={false}
+            />
+          </Box>
         )}
 
         {/* Player box */}
