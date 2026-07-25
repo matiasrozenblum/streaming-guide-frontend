@@ -349,7 +349,7 @@ export const YouTubeGlobalPlayer = () => {
                 {showPlayer && (
                   <Box sx={{ position: 'absolute', top: '100%', left: 0, mt: 0.5, width: 220, zIndex: 2100 }}>
                     <ZappingTooltip
-                      text="¿Sabías que podés hacer zapping? Tocá ☰ para ver los canales en vivo!"
+                      text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
                       onDismiss={markPlayerSeen}
                     />
                   </Box>
