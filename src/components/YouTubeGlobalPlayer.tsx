@@ -8,6 +8,8 @@ import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useEffect, useRef, useState, useCallback, useMemo } from 'react';
 import { ZapCard } from './ZapCard';
 import { ZapSidePanel } from './ZapSidePanel';
+import { ZappingTooltip } from './ZappingTooltip';
+import { useZappingTooltip } from '@/hooks/useZappingTooltip';
 
 const PLAYER_HEIGHT_DESKTOP = 500;
 
@@ -70,6 +72,8 @@ export const YouTubeGlobalPlayer = () => {
   }, [zapList, playerData?.channelInfo?.channelId]);
 
   const hasZapItems = panelItems.length > 1 || aboveItems.length > 0 || belowItems.length > 0;
+
+  const { showPlayer, markPlayerSeen } = useZappingTooltip();
 
   const moveTo = useCallback(
     (clientX: number, clientY: number) => {
@@ -278,6 +282,44 @@ export const YouTubeGlobalPlayer = () => {
           <ZapCard items={aboveItems} position="above" isOpen={zapOpen} onZap={zapToChannel} />
         )}
 
+        {/* Desktop: Tooltip 1 — emerges from the LEFT of the zap button. The player box
+            has overflow:hidden so the tooltip cannot live inside it; instead we pin a
+            zero-size anchor just left of the button (≈ x:6, y:5 from wrapper) and grow the
+            tooltip to the left of it (right:0). The right-pointing arrow (at top:16 of the
+            tooltip) then centres on the button (y:31) and its tip touches the button's
+            left edge (x:16), so it visually emerges from the button. */}
+        {showPlayer && !minimized && !isMobile && hasZapItems && (
+          <Box sx={{ position: 'absolute', top: 5, left: 6, width: 0, height: 0, zIndex: 2100 }}>
+            <Box sx={{ position: 'absolute', top: 0, right: 0, width: 220 }}>
+              <ZappingTooltip
+                text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
+                onDismiss={markPlayerSeen}
+                arrowDirection="right"
+              />
+            </Box>
+          </Box>
+        )}
+
+        {/* Mobile: Tooltip 1 — sits ABOVE the player, arrow points down at the zap button.
+            While the tooltip shows, zap is closed so the "above" card is collapsed (0px),
+            hence the player top ≈ wrapper top. The button centre is ≈ x:23, y:8 (p:1 padding
+            + half small IconButton). We pin a zero-size anchor at the button's top edge and
+            grow the tooltip UPWARD (bottom:0). The down-arrow is anchored to the LEFT (the
+            button is near the left edge) so the tooltip extends rightward and stays on screen. */}
+        {showPlayer && !minimized && isMobile && hasZapItems && (
+          <Box sx={{ position: 'absolute', top: 6, left: 23, width: 0, height: 0, zIndex: 2100 }}>
+            <Box sx={{ position: 'absolute', bottom: 0, left: -30, width: 240 }}>
+              <ZappingTooltip
+                text="¿Sabías que podés hacer zapping? ¡Hacé click acá!"
+                onDismiss={markPlayerSeen}
+                arrowDirection="down"
+                arrowFrom="left"
+                arrowOffset={27}
+              />
+            </Box>
+          </Box>
+        )}
+
         {/* Player box */}
         <Box
           sx={{
@@ -302,23 +344,38 @@ export const YouTubeGlobalPlayer = () => {
               flexShrink: 0,
             }}
           >
-            {/* Zap toggle */}
+            {/* Zap toggle + Tooltip 1 */}
             {!minimized && hasZapItems && (
-              <IconButton
-                aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
-                onClick={() => setZapOpen((v) => !v)}
-                size="small"
-                sx={{
-                  color: zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
-                  '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
-                }}
-              >
-                <FormatListBulletedIcon fontSize="small" />
-              </IconButton>
+              <Box sx={{ position: 'relative' }}>
+                <IconButton
+                  aria-label={zapOpen ? 'Cerrar lista de canales' : 'Abrir lista de canales'}
+                  onClick={() => {
+                    setZapOpen((v) => !v);
+                    if (showPlayer) markPlayerSeen();
+                  }}
+                  size="small"
+                  sx={{
+                    color: showPlayer ? '#3b82f6' : zapOpen ? '#3b82f6' : 'rgba(255,255,255,0.65)',
+                    '&:hover': { color: zapOpen ? '#60a5fa' : 'rgba(255,255,255,0.9)' },
+                    ...(showPlayer && {
+                      '@keyframes zap-ring': {
+                        '0%':   { boxShadow: '0 0 0 2px #3b82f6, 0 0 8px 2px rgba(59,130,246,0.45)' },
+                        '50%':  { boxShadow: '0 0 0 4px #60a5fa, 0 0 14px 4px rgba(59,130,246,0.25)' },
+                        '100%': { boxShadow: '0 0 0 2px #3b82f6, 0 0 8px 2px rgba(59,130,246,0.45)' },
+                      },
+                      borderRadius: '50%',
+                      animation: 'zap-ring 1.2s ease-in-out infinite',
+                    }),
+                  }}
+                >
+                  <FormatListBulletedIcon fontSize="small" />
+                </IconButton>
+              </Box>
             )}
 
             {/* Channel / streamer mini-logo + name */}
             {!minimized && channelInfo && (
+              <Box sx={{ display: 'flex', alignItems: 'center', gap: 0.5, opacity: showPlayer ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: showPlayer ? 'none' : 'auto' }}>
               <>
                 {(() => {
                   const isSquare = channelInfo.logoShape === 'square';
@@ -363,27 +420,30 @@ export const YouTubeGlobalPlayer = () => {
                   {channelInfo.channelName}
                 </Typography>
               </>
+              </Box>
             )}
 
             <Box sx={{ flex: 1 }} />
 
-            <IconButton
-              aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
-              onClick={minimized ? maximizePlayer : minimizePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CropSquareIcon fontSize="small" />
-            </IconButton>
+            <Box sx={{ display: 'flex', opacity: showPlayer ? 0.2 : 1, transition: 'opacity 0.3s ease', pointerEvents: showPlayer ? 'none' : 'auto' }}>
+              <IconButton
+                aria-label={minimized ? 'Maximizar reproductor' : 'Minimizar reproductor'}
+                onClick={minimized ? maximizePlayer : minimizePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CropSquareIcon fontSize="small" />
+              </IconButton>
 
-            <IconButton
-              aria-label="Cerrar reproductor"
-              onClick={closePlayer}
-              size="small"
-              sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
-            >
-              <CloseIcon fontSize="small" />
-            </IconButton>
+              <IconButton
+                aria-label="Cerrar reproductor"
+                onClick={closePlayer}
+                size="small"
+                sx={{ color: 'rgba(255,255,255,0.65)', '&:hover': { color: '#fff' } }}
+              >
+                <CloseIcon fontSize="small" />
+              </IconButton>
+            </Box>
           </Box>
 
           {/* iframe */}

@@ -10,6 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.29.0] - 2026-07-25
+
+### Added
+- **Zapping tutorial — 2 tooltips de onboarding**: al abrir el reproductor por primera vez aparece un tooltip que apunta al botón de zapping con el texto "¿Sabías que podés hacer zapping?"; al abrir el panel de zapping por primera vez aparece un segundo tooltip que indica que se puede cambiar de canal tocando uno de los canales en vivo. Los tooltips se persisten en `localStorage` (claves `tooltip_zapping_player_v1` y `tooltip_zapping_panel_v1`) y, si el usuario está autenticado, se sincronizan con el backend vía `POST /users/me/seen-features` para no repetirse en otros dispositivos ni en otros navegadores del mismo usuario.
+
+---
+
 ## [1.28.1] - 2026-07-11
 
 ### Fixed
