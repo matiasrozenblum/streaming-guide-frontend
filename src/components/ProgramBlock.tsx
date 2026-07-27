@@ -148,7 +148,10 @@ export const ProgramBlock: React.FC<Props> = ({
   if (offset >= 1440) {
     parsedEndWithDate = parsedEndWithDate.add(Math.floor(offset / 1440), 'day');
   }
-  const isPast = isToday && now.isAfter(parsedEndWithDate);
+  // A program still on air is not past, even once its scheduled block ended:
+  // it may be in overtime because its stream never stopped. Without this, the
+  // block renders greyed out (and its CTA muted) while it is actually live.
+  const isPast = isToday && now.isAfter(parsedEndWithDate) && !isLive;
 
   // Calculate background opacity as in the default style
   let backgroundOpacity = 0.15;
