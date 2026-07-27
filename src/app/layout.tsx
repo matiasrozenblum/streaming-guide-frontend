@@ -26,12 +26,35 @@ import { Analytics } from '@vercel/analytics/react';
 const inter = Inter({ subsets: ['latin'] });
 
 export const metadata: Metadata = {
+  metadataBase: new URL('https://laguiadelstreaming.com'),
   title: 'La Guía del Streaming',
   description: 'Guía de programación de streaming',
   manifest: '/manifest.json',
   icons: {
     icon: '/favicon.png',
     apple: '/icons/icon-192.png',
+  },
+  openGraph: {
+    type: 'website',
+    siteName: 'La Guía del Streaming',
+    title: 'La Guía del Streaming',
+    description: 'Guía de programación de streaming',
+    url: 'https://laguiadelstreaming.com',
+    locale: 'es_AR',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'La Guía del Streaming',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'La Guía del Streaming',
+    description: 'Guía de programación de streaming',
+    images: ['/og-image.png'],
   },
   appleWebApp: {
     capable: true,
