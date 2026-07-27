@@ -69,6 +69,27 @@ export const metadata: Metadata = {
   },
 };
 
+// Structured data identifying La Guía del Streaming itself (site logo/brand),
+// so search engines and AI overviews use our microphone logo — not a channel's.
+// Lives in the root layout, outside CustomThemeProvider, because that provider
+// renders a skeleton instead of children until it mounts on the client: anything
+// inside it never reaches the server-rendered HTML that non-JS crawlers read.
+const organizationJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'Organization',
+  name: 'La Guía del Streaming',
+  url: 'https://laguiadelstreaming.com',
+  logo: 'https://laguiadelstreaming.com/icons/icon-512.png',
+  sameAs: [] as string[],
+};
+
+const websiteJsonLd = {
+  '@context': 'https://schema.org',
+  '@type': 'WebSite',
+  name: 'La Guía del Streaming',
+  url: 'https://laguiadelstreaming.com',
+};
+
 export const viewport: Viewport = {
   width: 'device-width',
   initialScale: 1,
@@ -85,6 +106,14 @@ export default function RootLayout({
   return (
     <html lang="es" suppressHydrationWarning>
       <body suppressHydrationWarning className={inter.className}>
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+        />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{ __html: JSON.stringify(websiteJsonLd) }}
+        />
         <CookieConsentProvider>
           <SessionProviderWrapper>
             <PushProvider enabled={true} installPrompt={null}>
