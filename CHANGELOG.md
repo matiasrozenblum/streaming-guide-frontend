@@ -10,6 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.29.1] - 2026-07-27
+
+### Fixed
+- **SEO / AI overviews — logo de marca propio**: al buscar "la guía del streaming" en Google, la respuesta generada por IA mostraba el logo de un canal integrado (LACA stream) en lugar del nuestro, porque el único JSON-LD de la home era un `ItemList` donde cada canal figura como `Organization` y el sitio no declaraba ningún logo propio. Se agrega en `src/app/layout.tsx` un JSON-LD de `Organization` con `logo: /icons/icon-512.png` (la señal que Google/Gemini usan como logo de marca) más un JSON-LD de `WebSite`, y en el mismo archivo `metadataBase`, `openGraph` y `twitter` apuntando a un nuevo `public/og-image.png` de 1200×630 con la marca. El logo de `Organization` y la `og:image` se mantienen como assets distintos a propósito: el primero requiere un logo cuadrado/ajustado y la segunda una imagen apaisada para previews sociales. Los JSON-LD de marca se declaran en el layout raíz y no en la página: `CustomThemeProvider` renderiza un skeleton en lugar de sus children hasta montar en el cliente, así que todo lo que cuelga de la página no llega al HTML servido y solo lo ven los crawlers que ejecutan JS.
+
+---
+
 ## [1.29.0] - 2026-07-25
 
 ### Added
