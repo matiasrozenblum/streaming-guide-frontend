@@ -788,15 +788,15 @@ export function WeeklyOverridesTable() {
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
-            label="Crear Cambios" 
+            label="Cambiar una emisión" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
-            label="Cambios por Programa" 
+            label="Cambiar todas las emisiones" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
-            label="Programas Especiales" 
+            label="Nuevo programa" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
         </Tabs>
@@ -1529,103 +1529,6 @@ export function WeeklyOverridesTable() {
               </Typography>
             </Box>
 
-            {/* Panelist selection */}
-            {panelists.length > 0 && (
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-                <Typography variant="subtitle2" gutterBottom>
-                  Panelistas
-                </Typography>
-                <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
-                  <Autocomplete
-                    options={panelists.filter(panelist => !formData.panelistIds.includes(panelist.id))}
-                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
-                    inputValue={panelistSearchTerm}
-                    onInputChange={(_, newValue) => setPanelistSearchTerm(newValue)}
-                    onChange={(_, newValue) => {
-                      if (newValue && typeof newValue !== 'string') {
-                        setFormData({ ...formData, panelistIds: [...formData.panelistIds, newValue.id] });
-                        setPanelistSearchTerm('');
-                      }
-                    }}
-                    sx={{ flex: 1 }}
-                    renderInput={(params) => (
-                      <TextField
-                        {...params}
-                        label="Buscar o crear panelista"
-                        fullWidth
-                        sx={{ minWidth: 300 }}
-                      />
-                    )}
-                    renderOption={(props, option) => (
-                      <li {...props} key={typeof option === 'string' ? option : option.id}>
-                        {typeof option === 'string' ? option : option.name}
-                      </li>
-                    )}
-                    freeSolo
-                    disableClearable
-                  />
-                  {panelistSearchTerm && (
-                    <Button
-                      variant="contained"
-                      onClick={async () => {
-                        if (panelistSearchTerm.trim()) {
-                          try {
-                            // Create new panelist
-                            const createResponse = await fetch('/api/panelists', {
-                              method: 'POST',
-                              headers: {
-                                'Content-Type': 'application/json',
-                                Authorization: `Bearer ${typedSession?.accessToken}`,
-                              },
-                              body: JSON.stringify({ name: panelistSearchTerm.trim() }),
-                            });
-
-                            if (!createResponse.ok) throw new Error('Failed to create panelist');
-
-                            const newPanelist = await createResponse.json();
-                            
-                            // Update state
-                            setPanelists([...panelists, newPanelist]);
-                            setFormData({ ...formData, panelistIds: [...formData.panelistIds, newPanelist.id] });
-                            setPanelistSearchTerm('');
-                          } catch (error) {
-                            console.error('Error creating panelist:', error);
-                            setError('Error al crear el panelista');
-                          }
-                        }
-                      }}
-                      disabled={!panelistSearchTerm.trim()}
-                      sx={{ minWidth: 120 }}
-                    >
-                      Crear y Agregar
-                    </Button>
-                  )}
-                </Box>
-                
-                {/* Selected Panelists */}
-                <Box sx={{ mt: 2 }}>
-                  <Typography variant="subtitle2" gutterBottom>
-                    Panelistas Seleccionados
-                  </Typography>
-                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
-                    {formData.panelistIds.map((panelistId) => {
-                      const panelist = panelists.find(p => p.id === panelistId);
-                      return panelist ? (
-                        <Chip
-                          key={panelistId}
-                          label={panelist.name}
-                          onDelete={() => setFormData({ 
-                            ...formData, 
-                            panelistIds: formData.panelistIds.filter(id => id !== panelistId) 
-                          })}
-                        />
-                      ) : null;
-                    })}
-                  </Box>
-                </Box>
-              </Box>
-            )}
-
             {/* Special program fields for create overrides */}
             {formData.overrideType === 'create' && (
               <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
@@ -1877,6 +1780,103 @@ export function WeeklyOverridesTable() {
                   </FormControl>
                 )}
               </>
+            )}
+
+            {/* Panelist selection */}
+            {panelists.length > 0 && (
+              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                <Typography variant="subtitle2" gutterBottom>
+                  Panelistas
+                </Typography>
+                <Box sx={{ display: 'flex', gap: 1, width: '100%' }}>
+                  <Autocomplete
+                    options={panelists.filter(panelist => !formData.panelistIds.includes(panelist.id))}
+                    getOptionLabel={(option) => typeof option === 'string' ? option : option.name}
+                    inputValue={panelistSearchTerm}
+                    onInputChange={(_, newValue) => setPanelistSearchTerm(newValue)}
+                    onChange={(_, newValue) => {
+                      if (newValue && typeof newValue !== 'string') {
+                        setFormData({ ...formData, panelistIds: [...formData.panelistIds, newValue.id] });
+                        setPanelistSearchTerm('');
+                      }
+                    }}
+                    sx={{ flex: 1 }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Buscar o crear panelista"
+                        fullWidth
+                        sx={{ minWidth: 300 }}
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props} key={typeof option === 'string' ? option : option.id}>
+                        {typeof option === 'string' ? option : option.name}
+                      </li>
+                    )}
+                    freeSolo
+                    disableClearable
+                  />
+                  {panelistSearchTerm && (
+                    <Button
+                      variant="contained"
+                      onClick={async () => {
+                        if (panelistSearchTerm.trim()) {
+                          try {
+                            // Create new panelist
+                            const createResponse = await fetch('/api/panelists', {
+                              method: 'POST',
+                              headers: {
+                                'Content-Type': 'application/json',
+                                Authorization: `Bearer ${typedSession?.accessToken}`,
+                              },
+                              body: JSON.stringify({ name: panelistSearchTerm.trim() }),
+                            });
+
+                            if (!createResponse.ok) throw new Error('Failed to create panelist');
+
+                            const newPanelist = await createResponse.json();
+                            
+                            // Update state
+                            setPanelists([...panelists, newPanelist]);
+                            setFormData({ ...formData, panelistIds: [...formData.panelistIds, newPanelist.id] });
+                            setPanelistSearchTerm('');
+                          } catch (error) {
+                            console.error('Error creating panelist:', error);
+                            setError('Error al crear el panelista');
+                          }
+                        }
+                      }}
+                      disabled={!panelistSearchTerm.trim()}
+                      sx={{ minWidth: 120 }}
+                    >
+                      Crear y Agregar
+                    </Button>
+                  )}
+                </Box>
+                
+                {/* Selected Panelists */}
+                <Box sx={{ mt: 2 }}>
+                  <Typography variant="subtitle2" gutterBottom>
+                    Panelistas Seleccionados
+                  </Typography>
+                  <Box sx={{ display: 'flex', flexWrap: 'wrap', gap: 1 }}>
+                    {formData.panelistIds.map((panelistId) => {
+                      const panelist = panelists.find(p => p.id === panelistId);
+                      return panelist ? (
+                        <Chip
+                          key={panelistId}
+                          label={panelist.name}
+                          onDelete={() => setFormData({ 
+                            ...formData, 
+                            panelistIds: formData.panelistIds.filter(id => id !== panelistId) 
+                          })}
+                        />
+                      ) : null;
+                    })}
+                  </Box>
+                </Box>
+              </Box>
             )}
 
           </Box>
