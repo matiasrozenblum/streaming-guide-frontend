@@ -10,6 +10,7 @@ export interface Program {
   panelists?: Panelist[];
   logo_url?: string;
   youtube_url?: string;
+  stream_url?: string;
   created_at: string;
   updated_at: string;
   channel_name?: string;

@@ -32,6 +32,7 @@ import {
   InputLabel,
   Select,
   Autocomplete,
+  createFilterOptions,
   FormControlLabel,
   Checkbox,
 } from '@mui/material';
@@ -83,6 +84,23 @@ const DAYS_OF_WEEK = [
   { value: 'sunday', label: 'Domingo' },
 ];
 
+// Buscar por nombre de programa y también por canal: escribir "olga" lista sus
+// programas, no solo los que tienen "olga" en el título.
+const sourceProgramFilter = createFilterOptions<Program>({
+  stringify: (program) => `${program.name} ${program.channel_name ?? ''}`,
+});
+
+const EMPTY_SPECIAL_PROGRAM = {
+  name: '',
+  description: '',
+  channelId: 0,
+  imageUrl: '',
+  stream_url: '',
+  is_premiere: false,
+  style_override: null as string | null,
+  sourceProgramId: undefined as number | undefined,
+};
+
 const OVERRIDE_TYPES = [
   { value: 'cancel', label: 'Cancelar', icon: Cancel, color: 'error' as const },
   { value: 'time_change', label: 'Cambio de horario', icon: AccessTime, color: 'warning' as const },
@@ -116,14 +134,7 @@ export function WeeklyOverridesTable() {
     newEndTime: '',
     newDayOfWeek: '',
     panelistIds: [] as number[],
-    specialProgram: {
-      name: '',
-      description: '',
-      channelId: 0,
-      imageUrl: '',
-      stream_url: '',
-      is_premiere: false,
-    },
+    specialProgram: { ...EMPTY_SPECIAL_PROGRAM },
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
@@ -242,15 +253,11 @@ export function WeeklyOverridesTable() {
       newStartTime: schedule.start_time,
       newEndTime: schedule.end_time,
       newDayOfWeek: schedule.day_of_week,
-      panelistIds: [],
-      specialProgram: {
-        name: '',
-        description: '',
-        channelId: 0,
-        imageUrl: '',
-        stream_url: '',
-        is_premiere: false,
-      },
+      // Prellenados como en handleOpenProgramDialog: los panelistas del override
+      // reemplazan a los del programa, así que arrancar vacío hacía que sumar un
+      // invitado borrara al resto del panel sin avisar.
+      panelistIds: schedule.program.panelists?.map(p => p.id) || [],
+      specialProgram: { ...EMPTY_SPECIAL_PROGRAM },
     });
     setOpenDialog(true);
   };
@@ -265,16 +272,50 @@ export function WeeklyOverridesTable() {
       newEndTime: '',
       newDayOfWeek: '',
       panelistIds: program.panelists?.map(p => p.id) || [],
-      specialProgram: {
-        name: '',
-        description: '',
-        channelId: 0,
-        imageUrl: '',
-        stream_url: '',
-        is_premiere: false,
-      },
+      specialProgram: { ...EMPTY_SPECIAL_PROGRAM },
     });
     setOpenDialog(true);
+  };
+
+  // El programa base de un especial: una transmisión extra de un programa que ya
+  // existe arranca copiando su ficha en vez de retipearla.
+  const sourceProgram =
+    programs.find(p => p.id === formData.specialProgram.sourceProgramId) ?? null;
+
+  const handleSelectSourceProgram = (program: Program | null) => {
+    if (!program) {
+      // Se corta el vínculo pero se conserva lo cargado: el admin puede haber
+      // editado los campos después de copiarlos.
+      setFormData(prev => ({
+        ...prev,
+        specialProgram: { ...prev.specialProgram, sourceProgramId: undefined },
+      }));
+      return;
+    }
+
+    setFormData(prev => ({
+      ...prev,
+      panelistIds: program.panelists?.map(p => p.id) || [],
+      specialProgram: {
+        ...prev.specialProgram,
+        name: program.name,
+        description: program.description || '',
+        imageUrl: program.logo_url || '',
+        // La playlist de un programa se carga en "URL de YouTube" del backoffice
+        // de programas; stream_url queda de fallback.
+        stream_url: program.youtube_url || program.stream_url || '',
+        is_premiere: program.is_premiere ?? false,
+        style_override: program.style_override ?? null,
+        sourceProgramId: program.id,
+        channelId: program.channel_id ?? prev.specialProgram.channelId,
+      },
+    }));
+
+    // El canal del programa se propone solo si todavía no eligió ninguno, para
+    // no pisar una selección múltiple ya armada.
+    if (!isEditMode && specialChannelIds.length === 0 && program.channel_id) {
+      setSpecialChannelIds([program.channel_id]);
+    }
   };
 
   const handleCloseDialog = () => {
@@ -292,14 +333,7 @@ export function WeeklyOverridesTable() {
       newEndTime: '',
       newDayOfWeek: '',
       panelistIds: [],
-      specialProgram: {
-        name: '',
-        description: '',
-        channelId: 0,
-        imageUrl: '',
-        stream_url: '',
-        is_premiere: false,
-      },
+      specialProgram: { ...EMPTY_SPECIAL_PROGRAM },
     });
   };
 
@@ -325,6 +359,8 @@ export function WeeklyOverridesTable() {
             imageUrl: formData.specialProgram.imageUrl || undefined,
             stream_url: formData.specialProgram.stream_url || undefined,
             is_premiere: formData.specialProgram.is_premiere,
+            style_override: formData.specialProgram.style_override,
+            sourceProgramId: formData.specialProgram.sourceProgramId,
           },
         };
         const response = await fetch('/api/weekly-overrides/bulk', {
@@ -376,6 +412,8 @@ export function WeeklyOverridesTable() {
           imageUrl?: string;
           stream_url?: string;
           is_premiere?: boolean;
+          style_override?: string | null;
+          sourceProgramId?: number;
         };
       }
 
@@ -534,14 +572,9 @@ export function WeeklyOverridesTable() {
         imageUrl: override.specialProgram.imageUrl || '',
         stream_url: override.specialProgram.stream_url || '',
         is_premiere: override.specialProgram.is_premiere ?? false,
-      } : {
-        name: '',
-        description: '',
-        channelId: 0,
-        imageUrl: '',
-        stream_url: '',
-        is_premiere: false,
-      },
+        style_override: override.specialProgram.style_override ?? null,
+        sourceProgramId: override.specialProgram.sourceProgramId,
+      } : { ...EMPTY_SPECIAL_PROGRAM },
     });
     
     setOpenDialog(true);
@@ -1293,14 +1326,7 @@ export function WeeklyOverridesTable() {
                 newEndTime: '',
                 newDayOfWeek: '',
                 panelistIds: [],
-                specialProgram: {
-                  name: '',
-                  description: '',
-                  channelId: 0,
-                  imageUrl: '',
-                  stream_url: '',
-                  is_premiere: false,
-                },
+                specialProgram: { ...EMPTY_SPECIAL_PROGRAM },
               });
               setOpenDialog(true);
             }}
@@ -1606,7 +1632,47 @@ export function WeeklyOverridesTable() {
                 <Typography variant="h6" sx={{ color: 'text.primary', fontWeight: 600 }}>
                   Información del Programa Especial
                 </Typography>
-                
+
+                <Autocomplete
+                  options={programs}
+                  value={sourceProgram}
+                  onChange={(_, newValue) => handleSelectSourceProgram(newValue)}
+                  getOptionLabel={(option) => option.name}
+                  filterOptions={sourceProgramFilter}
+                  isOptionEqualToValue={(option, value) => option.id === value.id}
+                  fullWidth
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Basar en un programa existente (opcional)"
+                      placeholder="Escribí el nombre, ej. PLP"
+                      helperText="Copia nombre, descripción, imagen, playlist y panelistas. Después podés editar cualquier campo."
+                    />
+                  )}
+                  renderOption={(props, option) => {
+                    const { key, ...optionProps } = props;
+                    return (
+                      <li key={key} {...optionProps}>
+                        <Box>
+                          <Typography variant="body2">{option.name}</Typography>
+                          <Typography variant="caption" color="text.secondary">
+                            {option.channel_name || 'Sin canal'}
+                            {option.panelists && option.panelists.length > 0
+                              ? ` · ${option.panelists.length} panelista${option.panelists.length > 1 ? 's' : ''}`
+                              : ''}
+                          </Typography>
+                        </Box>
+                      </li>
+                    );
+                  }}
+                />
+
+                {sourceProgram && (
+                  <Alert severity="info" sx={{ py: 0.5 }}>
+                    Se notificará a los suscriptos de <strong>{sourceProgram.name}</strong> cuando arranque esta transmisión.
+                  </Alert>
+                )}
+
                 <TextField
                   label="Nombre del programa"
                   value={formData.specialProgram.name}
