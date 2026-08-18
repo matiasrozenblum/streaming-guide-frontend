@@ -22,6 +22,7 @@ import {
   Autocomplete,
   CircularProgress,
   useTheme,
+  Tooltip,
 } from '@mui/material';
 import { Edit, Delete, Add, Group } from '@mui/icons-material';
 import { Panelist } from '@/types/panelist';
@@ -261,15 +262,21 @@ export default function PanelistsTable({ onError }: PanelistsTableProps) {
                   </Box>
                 </TableCell>
                 <TableCell>
-                  <IconButton aria-label="Editar panelista" onClick={() => handleOpenDialog(panelist)}>
-                    <Edit />
-                  </IconButton>
-                  <IconButton aria-label="Gestionar programas" onClick={() => handleOpenProgramsDialog(panelist)}>
-                    <Group />
-                  </IconButton>
-                  <IconButton aria-label="Eliminar panelista" onClick={() => handleDelete(String(panelist.id))}>
-                    <Delete />
-                  </IconButton>
+                  <Tooltip title="Editar panelista" arrow>
+                    <IconButton aria-label="Editar panelista" onClick={() => handleOpenDialog(panelist)}>
+                      <Edit />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Gestionar programas" arrow>
+                    <IconButton aria-label="Gestionar programas" onClick={() => handleOpenProgramsDialog(panelist)}>
+                      <Group />
+                    </IconButton>
+                  </Tooltip>
+                  <Tooltip title="Eliminar panelista" arrow>
+                    <IconButton aria-label="Eliminar panelista" onClick={() => handleDelete(String(panelist.id))}>
+                      <Delete />
+                    </IconButton>
+                  </Tooltip>
                 </TableCell>
               </TableRow>
             ))}

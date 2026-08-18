@@ -503,7 +503,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Programas
                     </Typography>
-                    <IconButton aria-label="Expandir o contraer programas" size="small" disableRipple sx={{ color: headerTextColor }}>
+                    <IconButton aria-label={isProgramsExpanded ? 'Contraer programas' : 'Expandir programas'} size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"
@@ -591,7 +591,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                     <Typography variant="h6" component="h2" fontWeight={600} sx={{ color: headerTextColor, textTransform: 'uppercase', fontSize: '0.85rem', letterSpacing: '0.05em' }}>
                       Streamers
                     </Typography>
-                    <IconButton aria-label="Expandir o contraer streamers" size="small" disableRipple sx={{ color: headerTextColor }}>
+                    <IconButton aria-label={isStreamersExpanded ? 'Contraer streamers' : 'Expandir streamers'} size="small" disableRipple sx={{ color: headerTextColor }}>
                       <Box
                         component="svg"
                         width="16"
