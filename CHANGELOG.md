@@ -10,6 +10,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.30.0] - 2026-07-29
+
+### Fixed
+- **Programas estirados de horario se veían apagados aunque siguieran en vivo**: cuando una transmisión se pasa de su bloque (cargado 13:00–15:00 pero sigue al aire a las 15:15), el backend ahora devuelve el programa como `is_live: true` (ver *overtime* en backend 1.40.0), pero el bloque se seguía renderizando como pasado: fondo, borde y texto atenuados, y el CTA del tooltip decía "Ver en YouTube" en lugar de "Ver en vivo". La causa era que `isPast` en `ProgramBlock.tsx` se calculaba solo contra el reloj y le ganaba a `isLive` en las ramas de estilo. Ahora un programa al aire deja de considerarse pasado, lo que corrige los 8 puntos de estilo que dependían de `isPast` de una sola vez, en lugar de parchear el fondo y dejar borde y texto apagados. El badge "EN VIVO" queda sin cambios a propósito: un programa en overtime se lee como simplemente en vivo. Con esto el canal también vuelve a aparecer en la lista de zapping mientras la transmisión continúe.
+
+---
+
 ## [1.29.1] - 2026-07-27
 
 ### Fixed

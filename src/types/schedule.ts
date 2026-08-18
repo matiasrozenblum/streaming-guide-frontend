@@ -56,6 +56,9 @@ export interface WeeklyOverride {
     imageUrl?: string;
     stream_url?: string;
     is_premiere?: boolean;
+    style_override?: string | null;
+    /** Programa real en el que se basa el especial, si hay uno. */
+    sourceProgramId?: number;
     channel?: { id: number; name: string; [key: string]: unknown };
   };
 }
