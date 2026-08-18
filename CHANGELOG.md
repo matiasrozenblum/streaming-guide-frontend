@@ -10,6 +10,21 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.31.0] - 2026-08-18
+
+### Added
+- **Autocompletar un programa especial desde uno existente**: crear una transmisión especial de un programa que ya está en la guía obligaba a retipear nombre, descripción, imagen y playlist y a cargar los panelistas uno por uno. El form de programa especial suma un buscador: se escribe "plp", se elige de la lista y se copian nombre, descripción, imagen, playlist, estreno, estilo y panelistas, más el canal si todavía no se eligió ninguno (no pisa una selección múltiple ya armada). Todo queda editable después, y limpiar el buscador corta el vínculo sin borrar lo cargado. El filtro matchea también por canal, así que escribir "olga" lista sus programas. La playlist sale de `youtube_url`, que es el campo donde la carga el backoffice de programas, con `stream_url` de fallback. No hizo falta ningún endpoint nuevo: `GET /programs` ya devolvía todo y el componente ya lo tenía en memoria. El vínculo viaja como `sourceProgramId` (backend 1.42.0), que es lo que hace que los suscriptos del programa original reciban la push del especial; un aviso en el form lo deja explícito porque no se deduce de la UI.
+
+### Fixed
+- **Sumar un invitado borraba al resto del panel**: los panelistas de un override *reemplazan* a los del programa, no se suman. `handleOpenProgramDialog` prellenaba el selector con los del programa, pero `handleOpenDialog` —el otro punto de entrada al mismo diálogo, el de la tabla de emisiones— lo dejaba vacío. Entrando por ahí, agregar un invitado mandaba una lista de uno solo y el override se quedaba con ese, sin que nada lo indicara. Ahora los dos caminos prellenan igual. Queda pendiente que "esta semana va sin panelistas" siga sin poder expresarse: una lista vacía significa "conservar los del programa", tanto antes como ahora.
+- **El buscador de programa base se leía como el campo de nombre**: quedó primero en el bloque, grande y enfocado, y su desplegable tapaba justo al "Nombre del programa" de abajo. Escribir el nombre de un especial nuevo —un partido, una gala— devolvía el "No options" de MUI y parecía que no se podía seguir. Crear un especial aislado siempre funcionó (el campo no gatea el submit y el texto libre no toca el form), pero la UI no lo decía. El buscador pasa a una caja aparte con título propio y el `noOptionsText` aclara que si es un programa nuevo hay que saltearlo y cargar los datos abajo.
+
+### Changed
+- **El selector de panelistas va al final del diálogo de cambios semanales**, como en el de programa regular, en lugar de estar arriba de todo antes incluso de los datos del programa. Aplica a los cinco tipos de cambio, porque el bloque es compartido.
+- **Solapas renombradas por lo que hacen y no por lo que son**: "Crear Cambios" → "Cambiar una emisión", "Cambios por Programa" → "Cambiar un programa", "Programas Especiales" → "Nuevo programa". El par nuevo además hace visible la distinción entre tocar una sola emisión y tocar el programa entero, que antes no se leía. "Semana Actual" y "Próxima Semana" quedan igual.
+
+---
+
 ## [1.30.0] - 2026-07-29
 
 ### Fixed
