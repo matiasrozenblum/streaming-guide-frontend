@@ -1633,45 +1633,66 @@ export function WeeklyOverridesTable() {
                   Información del Programa Especial
                 </Typography>
 
-                <Autocomplete
-                  options={programs}
-                  value={sourceProgram}
-                  onChange={(_, newValue) => handleSelectSourceProgram(newValue)}
-                  getOptionLabel={(option) => option.name}
-                  filterOptions={sourceProgramFilter}
-                  isOptionEqualToValue={(option, value) => option.id === value.id}
-                  fullWidth
-                  renderInput={(params) => (
-                    <TextField
-                      {...params}
-                      label="Basar en un programa existente (opcional)"
-                      placeholder="Escribí el nombre, ej. PLP"
-                      helperText="Copia nombre, descripción, imagen, playlist y panelistas. Después podés editar cualquier campo."
-                    />
-                  )}
-                  renderOption={(props, option) => {
-                    const { key, ...optionProps } = props;
-                    return (
-                      <li key={key} {...optionProps}>
-                        <Box>
-                          <Typography variant="body2">{option.name}</Typography>
-                          <Typography variant="caption" color="text.secondary">
-                            {option.channel_name || 'Sin canal'}
-                            {option.panelists && option.panelists.length > 0
-                              ? ` · ${option.panelists.length} panelista${option.panelists.length > 1 ? 's' : ''}`
-                              : ''}
-                          </Typography>
-                        </Box>
-                      </li>
-                    );
+                {/* Atajo opcional. Va en una caja aparte para que no se lea como
+                    el campo de nombre: es lo primero del bloque y antes se
+                    confundía con "Nombre del programa". */}
+                <Box
+                  sx={{
+                    p: 2,
+                    border: '1px dashed',
+                    borderColor: 'divider',
+                    borderRadius: 1,
                   }}
-                />
+                >
+                  <Typography variant="subtitle2" sx={{ mb: 0.5 }}>
+                    ¿Es una transmisión de un programa que ya existe?
+                  </Typography>
+                  <Typography variant="caption" color="text.secondary" sx={{ display: 'block', mb: 1.5 }}>
+                    Buscalo acá y se completan solos todos los datos de abajo. Si es un
+                    programa nuevo —un partido, una gala, un especial de una sola vez—
+                    salteá este campo y cargá los datos a mano.
+                  </Typography>
+                  <Autocomplete
+                    options={programs}
+                    value={sourceProgram}
+                    onChange={(_, newValue) => handleSelectSourceProgram(newValue)}
+                    getOptionLabel={(option) => option.name}
+                    filterOptions={sourceProgramFilter}
+                    isOptionEqualToValue={(option, value) => option.id === value.id}
+                    fullWidth
+                    noOptionsText="Ningún programa coincide. Si es un programa nuevo, dejá este campo vacío y completá los datos abajo."
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Buscar programa (opcional)"
+                        placeholder="Escribí el nombre, ej. PLP"
+                        helperText="Copia nombre, descripción, imagen, playlist y panelistas. Después podés editar cualquier campo."
+                      />
+                    )}
+                    renderOption={(props, option) => {
+                      const { key, ...optionProps } = props;
+                      return (
+                        <li key={key} {...optionProps}>
+                          <Box>
+                            <Typography variant="body2">{option.name}</Typography>
+                            <Typography variant="caption" color="text.secondary">
+                              {option.channel_name || 'Sin canal'}
+                              {option.panelists && option.panelists.length > 0
+                                ? ` · ${option.panelists.length} panelista${option.panelists.length > 1 ? 's' : ''}`
+                                : ''}
+                            </Typography>
+                          </Box>
+                        </li>
+                      );
+                    }}
+                  />
 
-                {sourceProgram && (
-                  <Alert severity="info" sx={{ py: 0.5 }}>
-                    Se notificará a los suscriptos de <strong>{sourceProgram.name}</strong> cuando arranque esta transmisión.
-                  </Alert>
-                )}
+                  {sourceProgram && (
+                    <Alert severity="info" sx={{ mt: 1.5, py: 0.5 }}>
+                      Se notificará a los suscriptos de <strong>{sourceProgram.name}</strong> cuando arranque esta transmisión.
+                    </Alert>
+                  )}
+                </Box>
 
                 <TextField
                   label="Nombre del programa"
