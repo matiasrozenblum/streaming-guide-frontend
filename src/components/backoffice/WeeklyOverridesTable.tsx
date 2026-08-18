@@ -792,7 +792,7 @@ export function WeeklyOverridesTable() {
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
-            label="Cambiar todas las emisiones" 
+            label="Cambiar un programa" 
             sx={{ fontWeight: 600, color: 'text.primary' }}
           />
           <Tab 
