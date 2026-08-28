@@ -154,6 +154,7 @@ export default function PasswordStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
+          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>
@@ -162,7 +163,7 @@ export default function PasswordStep({
           variant="contained"
           fullWidth
           disabled={isLoading}
-          aria-label={isLoading ? 'Procesando' : undefined}
+          aria-label={isLoading ? 'Procesando' : submitLabel}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : submitLabel}
         </Button>
