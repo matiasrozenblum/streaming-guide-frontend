@@ -4,7 +4,7 @@ import React from 'react';
 import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material';
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
-import { useLayoutValues, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX } from '../constants/layout';
+import { useLayoutValues, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX, DAY_WITH_OVERFLOW_MINUTES } from '../constants/layout';
 import { useThemeContext } from '@/contexts/ThemeContext';
 // Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
@@ -24,10 +24,16 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     return `${hours.toString().padStart(2, '0')}:${mins.toString().padStart(2, '0')}`;
   };
 
+  // 24/7 programs (00:00–23:59) are on air through the overflow zone as well, so they
+  // span the full 28h grid instead of stopping one minute short of midnight.
+  const isFullDay = program.start_time === '00:00' && program.end_time === '23:59';
+
   const startMinutes = parseTime(program.start_time);
   const endMinutes = parseTime(program.end_time);
   const rawDuration = endMinutes - startMinutes;
-  const duration = rawDuration < 0 ? rawDuration + 1440 : rawDuration;
+  const duration = isFullDay
+    ? DAY_WITH_OVERFLOW_MINUTES
+    : rawDuration < 0 ? rawDuration + 1440 : rawDuration;
 
   // Define thresholds and max block duration based on device
   const threshold = isMobile ? 360 : 600; // 6 hours for mobile, 10 hours for web
@@ -39,7 +45,9 @@ const splitLongProgram = (program: Program, isMobile: boolean): Program[] => {
     const numBlocks = Math.ceil(duration / maxBlockDuration);
     const actualBlockDuration = Math.ceil(duration / numBlocks);
     // For cross-midnight programs use absolute end minutes so block boundaries don't collapse
-    const absoluteEnd = rawDuration < 0 ? endMinutes + 1440 : endMinutes;
+    const absoluteEnd = isFullDay
+      ? DAY_WITH_OVERFLOW_MINUTES
+      : rawDuration < 0 ? endMinutes + 1440 : endMinutes;
 
     for (let i = 0; i < numBlocks; i++) {
       const blockStart = startMinutes + (i * actualBlockDuration);

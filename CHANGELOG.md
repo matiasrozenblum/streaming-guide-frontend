@@ -22,6 +22,14 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.31.1] - 2026-09-03
+
+### Fixed
+- **Los programas que arrancan a las 00:00 no se veían en la franja extra del día anterior**: cada día de la grilla se dibuja desde las 00:00 hasta las 04:00 del día siguiente, justamente para que un programa de trasnoche se vea también desde el día en que uno lo empieza a mirar. Pero el filtro de esa franja excluía *todo* programa con `start_time` en 00:00, así que en Streams el martes terminaba con Gran Hermano a la medianoche y la franja quedaba vacía, cuando el miércoles a las 00:00 arrancan El After y Andá Pa Allá. La exclusión venía de la v1.23.0 y apuntaba a un problema real —los canales 24/7 (`00:00–23:59`) repetían su propio título en la franja, y una emisión que cruza medianoche servida como dos filas se veía dos veces seguidas— pero se llevaba puestos también los casos legítimos. Ahora un programa de las 00:00 entra a la franja salvo que ese mismo programa, en ese mismo canal, ya ocupe la frontera de medianoche en el día que se está mirando. La lógica quedó en `src/utils/overflow.ts`, compartida por la grilla de escritorio y la de mobile, que hasta ahora la tenían duplicada.
+- **Los canales 24/7 parecían salir del aire a la medianoche**: un programa `00:00–23:59` cortaba un minuto antes del final del día y dejaba la franja extra vacía, como si el canal se apagara de 00:00 a 04:00. Ahora esos bloques ocupan las 28 horas completas de la grilla (`GOOD VIBES`, `La Granja de Zenón`, `Masha y el Oso`, `Summer & Todd`, las playlists). El último bloque queda cruzando medianoche y lo posiciona el mismo camino que ya existía para los programas de trasnoche.
+
+---
+
 ## [1.31.0] - 2026-08-18
 
 ### Added
