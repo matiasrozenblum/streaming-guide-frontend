@@ -816,16 +816,17 @@ export function SchedulesTable() {
                         InputLabelProps={{ shrink: true }}
                         fullWidth
                       />
-                      <Button
-                        variant="contained"
-                        onClick={handleAddBulkSchedule}
-                        startIcon={isCreatingBulk ? <CircularProgress size={16} color="inherit" /> : <AddCircle />}
-                        sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap' }}
-                        disabled={isCreatingBulk || selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
-                      >
-                        Crear horarios
-                      </Button>
                     </Box>
+
+                    <Button
+                      variant="contained"
+                      onClick={handleAddBulkSchedule}
+                      startIcon={isCreatingBulk ? <CircularProgress size={16} color="inherit" /> : <AddCircle />}
+                      disabled={isCreatingBulk || selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
+                      fullWidth
+                    >
+                      Crear horarios
+                    </Button>
                   </Paper>
                 </Box>
               )}
