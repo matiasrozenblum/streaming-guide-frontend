@@ -84,7 +84,6 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
         {text}
       </Typography>
       <IconButton
-        aria-label="Cerrar tooltip"
         size="small"
         onClick={onDismiss}
         sx={{
