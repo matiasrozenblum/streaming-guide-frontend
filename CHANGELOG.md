@@ -9,6 +9,17 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ## [Unreleased]
 
 ### Added
+- **Tooltips en las flechas del carrusel de banners y en el cierre del tooltip de zapping**: quedaron fuera del barrido de la 1.32.0. Las flechas de "anterior" y "siguiente" del carrusel (solo desktop, aparecen al hacer hover) y el botón de cerrar de `ZappingTooltip` —el globo de onboarding que se muestra dos veces desde el reproductor global— tenían el ícono suelto sin explicación; el de zapping además no tenía `aria-label`, así que un lector de pantalla lo anunciaba como un botón sin nombre. Ahora los tres muestran tooltip con el mismo texto del `aria-label`, igual que el resto de los `IconButton` de la app.
+
+### Changed
+- **El campo de mail del login pasa de `placeholder` a `label`**: era el único input del flujo de auth con el texto adentro del campo, que desaparece apenas se empieza a escribir y deja al usuario sin referencia de qué se estaba pidiendo. Los campos de contraseña del mismo flujo ya usaban `label`, así que el cambio además empareja los dos pasos visualmente.
+
+
+---
+
+## [1.32.0] - 2026-09-06
+
+### Added
 - **Tooltips en los botones que son solo un ícono**: los `IconButton` de la app tenían `aria-label` —un lector de pantalla los entendía— pero para alguien que ve la pantalla eran un ícono suelto sin explicación. Ahora muestran un tooltip con el mismo texto del `aria-label` al pasar el mouse: reproductor global de YouTube (lista de canales, minimizar/maximizar, cerrar), editar y mostrar/ocultar contraseña en el perfil, cerrar en el modal de login y en los diálogos de cookies, feriados y estacionales, botón de mail del footer, y las acciones del backoffice (editar/eliminar usuario, editar/eliminar panelista y gestionar sus programas, aprobar/rechazar cambios propuestos, paginación).
 - **Ojito para ver la contraseña en el login del backoffice**: era el único formulario de contraseña de la app sin toggle de visibilidad, así que un typo solo se descubría con el error de login.
 - **Spinner en el botón "Guardar" de completar perfil**: el texto cambiaba a "Guardando..." pero sin ningún indicador de movimiento; ahora además gira un spinner mientras se envía.
