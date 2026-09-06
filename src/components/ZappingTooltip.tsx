@@ -1,6 +1,6 @@
 'use client';
 
-import { Box, IconButton, Tooltip, Typography } from '@mui/material';
+import { Box, IconButton, Typography } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 
 interface ZappingTooltipProps {
@@ -83,24 +83,21 @@ export const ZappingTooltip: React.FC<ZappingTooltipProps> = ({
       <Typography sx={{ color: '#e2e8f0', fontSize: '13px', lineHeight: 1.5, flex: 1 }}>
         {text}
       </Typography>
-      <Tooltip title="Cerrar sugerencia" arrow>
-        <IconButton
-          aria-label="Cerrar sugerencia"
-          size="small"
-          onClick={onDismiss}
-          sx={{
-            color: '#fff',
-            bgcolor: 'rgba(255,255,255,0.15)',
-            p: 0.5,
-            flexShrink: 0,
-            width: 28,
-            height: 28,
-            '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
-          }}
-        >
-          <CloseIcon sx={{ fontSize: 18 }} />
-        </IconButton>
-      </Tooltip>
+      <IconButton
+        size="small"
+        onClick={onDismiss}
+        sx={{
+          color: '#fff',
+          bgcolor: 'rgba(255,255,255,0.15)',
+          p: 0.5,
+          flexShrink: 0,
+          width: 28,
+          height: 28,
+          '&:hover': { bgcolor: 'rgba(255,255,255,0.28)' },
+        }}
+      >
+        <CloseIcon sx={{ fontSize: 18 }} />
+      </IconButton>
     </Box>
   );
 };

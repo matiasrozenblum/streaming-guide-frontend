@@ -1,7 +1,7 @@
 'use client';
 
 import React, { useState, useEffect, useCallback } from 'react';
-import { Box, IconButton, useTheme, useMediaQuery, Typography, Tooltip } from '@mui/material';
+import { Box, IconButton, useTheme, useMediaQuery, Typography } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
 import { motion, AnimatePresence } from 'framer-motion';
 import Image from 'next/image';
@@ -285,59 +285,55 @@ export default function BannerCarousel({
       {hasMultipleBanners && !isMobile && (
         <>
           {/* Previous/Next Buttons */}
-          <Tooltip title="Imagen anterior" arrow>
-            <IconButton
-              aria-label="Imagen anterior"
-              onClick={(e) => {
-                e.stopPropagation();
-                goToPrevious();
-              }}
-              sx={{
-                position: 'absolute',
-                left: 8,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                backgroundColor: 'transparent',
-                color: 'white',
-                opacity: isHovered ? 1 : 0,
-                transition: 'opacity 0.3s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                },
-                width: 40,
-                height: 40,
-              }}
-            >
-              <ChevronLeft fontSize="medium" />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            aria-label="Imagen anterior"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToPrevious();
+            }}
+            sx={{
+              position: 'absolute',
+              left: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'transparent',
+              color: 'white',
+              opacity: isHovered ? 1 : 0,
+              transition: 'opacity 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              },
+              width: 40,
+              height: 40,
+            }}
+          >
+            <ChevronLeft fontSize="medium" />
+          </IconButton>
 
-          <Tooltip title="Siguiente imagen" arrow>
-            <IconButton
-              aria-label="Siguiente imagen"
-              onClick={(e) => {
-                e.stopPropagation();
-                goToNext();
-              }}
-              sx={{
-                position: 'absolute',
-                right: 8,
-                top: '50%',
-                transform: 'translateY(-50%)',
-                backgroundColor: 'transparent',
-                color: 'white',
-                opacity: isHovered ? 1 : 0,
-                transition: 'opacity 0.3s ease',
-                '&:hover': {
-                  backgroundColor: 'rgba(255,255,255,0.1)',
-                },
-                width: 40,
-                height: 40,
-              }}
-            >
-              <ChevronRight fontSize="medium" />
-            </IconButton>
-          </Tooltip>
+          <IconButton
+            aria-label="Siguiente imagen"
+            onClick={(e) => {
+              e.stopPropagation();
+              goToNext();
+            }}
+            sx={{
+              position: 'absolute',
+              right: 8,
+              top: '50%',
+              transform: 'translateY(-50%)',
+              backgroundColor: 'transparent',
+              color: 'white',
+              opacity: isHovered ? 1 : 0,
+              transition: 'opacity 0.3s ease',
+              '&:hover': {
+                backgroundColor: 'rgba(255,255,255,0.1)',
+              },
+              width: 40,
+              height: 40,
+            }}
+          >
+            <ChevronRight fontSize="medium" />
+          </IconButton>
 
           {/* Dots Indicator */}
           <Box
