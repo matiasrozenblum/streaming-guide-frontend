@@ -187,7 +187,6 @@ export default function CodeStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
-          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>

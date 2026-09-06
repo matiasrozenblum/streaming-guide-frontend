@@ -131,7 +131,6 @@ export default function ExistingUserStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
-          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>

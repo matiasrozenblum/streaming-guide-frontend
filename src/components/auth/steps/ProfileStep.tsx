@@ -171,7 +171,6 @@ export default function ProfileStep({
             startIcon={<ArrowBackIosNewIcon fontSize="small" />}
             fullWidth
             onClick={onBack}
-            aria-label="Volver al paso anterior"
           >
             Volver
           </Button>

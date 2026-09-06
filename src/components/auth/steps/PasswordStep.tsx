@@ -154,7 +154,6 @@ export default function PasswordStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
-          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>
