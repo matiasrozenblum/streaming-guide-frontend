@@ -25,7 +25,6 @@ import { useSessionContext } from '@/contexts/SessionContext';
 import { api } from '@/services/api';
 import type { SessionWithToken } from '@/types/session';
 import { useRouter } from 'next/navigation';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
 import IOSPushGuide from '@/components/IOSPushGuide';
 import { getColorForChannel } from '@/utils/colors';
@@ -119,7 +118,6 @@ const SubscriptionTile = ({
   services?: { service: StreamingService, url: string }[],
   onServiceClick?: (service: StreamingService, url: string) => void
 }) => {
-  const { mode } = useThemeContext();
   const showDelete = activeDeleteId === id;
 
   return (
@@ -138,9 +136,9 @@ const SubscriptionTile = ({
         height: 80,
         display: 'flex',
         alignItems: 'center',
-        background: mode === 'light' ? '#ffffff' : '#1e293b',
+        background: '#1e293b',
         borderRadius: 2,
-        border: mode === 'light' ? '1px solid #e2e8f0' : '1px solid #334155',
+        border: '1px solid #334155',
         overflow: 'hidden',
         cursor: 'pointer',
         position: 'relative',
@@ -151,7 +149,7 @@ const SubscriptionTile = ({
         },
         '&:hover': {
           transform: 'translateY(-2px)',
-          borderColor: mode === 'light' ? '#cbd5e1' : '#475569',
+          borderColor: '#475569',
           boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
         }
       }}
@@ -162,7 +160,7 @@ const SubscriptionTile = ({
           width: 80,
           height: 80,
           flexShrink: 0,
-          background: imageColor || (mode === 'light' ? '#f1f5f9' : '#0f172a'),
+          background: imageColor || '#0f172a',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -212,7 +210,7 @@ const SubscriptionTile = ({
             sx={{
               height: 17,
               alignSelf: 'flex-start',
-              bgcolor: mode === 'light' ? 'rgba(0,0,0,0.06)' : 'rgba(255,255,255,0.07)',
+              bgcolor: 'rgba(255,255,255,0.07)',
               color: 'text.disabled',
               border: 'none',
               '& .MuiChip-icon': { fontSize: '0.7rem', color: 'text.disabled', ml: 0.5 },
@@ -296,7 +294,6 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
-  const { mode } = useThemeContext();
 
   // isIOSDevice, isPWAInstalled removed as they were only used for notification method logic
   const [subscriptions, setSubscriptions] = useState<UserSubscription[]>(initialSubscriptions);
@@ -430,10 +427,10 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
   const [isStreamersExpanded, setIsStreamersExpanded] = useState(true);
   const [activeDeleteId, setActiveDeleteId] = useState<string | number | null>(null);
 
-  // existing hook usages like useThemeContext and useSessionContext are above in the file
+  // existing hook usages like useSessionContext are above in the file
 
   // Header navigation colors
-  const headerTextColor = mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)';
+  const headerTextColor = 'rgba(255,255,255,0.6)';
 
   return (
     <Box sx={{ minHeight: '100vh', bgcolor: 'background.default', py: { xs: 1, sm: 2 } }}>
@@ -629,7 +626,7 @@ export default function SubscriptionsClient({ initialSubscriptions, initialStrea
                                 onToggleDelete={(id) => setActiveDeleteId(activeDeleteId === id ? null : id)}
                                 title={streamer.name}
                                 imageUrl={streamer.logo_url || undefined}
-                                imageColor={getColorForChannel((streamer.order ?? 1) - 1, mode)}
+                                imageColor={getColorForChannel((streamer.order ?? 1) - 1)}
                                 isStreamer={true}
                                 onDelete={(e) => { e.stopPropagation(); removeStreamerSubscription(streamer.id); }}
                                 deleteTooltip="Dejar de seguir"

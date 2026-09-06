@@ -12,7 +12,6 @@ import { Schedule } from '@/types/schedule';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues, DAY_ORDER, DAY_WITH_OVERFLOW_WIDTH_PX, DayOfWeek } from '@/constants/layout';
 import { getOverflowSchedules } from '@/utils/overflow';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { AccessTime } from '@mui/icons-material';
 import weekday from 'dayjs/plugin/weekday';
 import { useInView } from 'react-intersection-observer';
@@ -46,7 +45,6 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
   const [selectedCategory, setSelectedCategory] = useState<Category | null>(null);
   const [containerWidth, setContainerWidth] = useState<number>(0);
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
-  const { mode } = useThemeContext();
   const isToday = selectedDay === today;
   const totalGridWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
   const { session } = useSessionContext();
@@ -135,7 +133,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
 
   if (!channels.length || !schedules.length) {
     return (
-      <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>
+      <Typography sx={{ mt: 4, color: '#f1f5f9' }}>
         Sin datos disponibles
       </Typography>
     );
@@ -279,10 +277,8 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
         ref={scrollRef}
         data-schedule-grid="desktop"
         sx={{
-          background: mode === 'light'
-            ? 'linear-gradient(to right, rgba(255,255,255,0.9), rgba(255,255,255,0.7))'
-            : 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
-          border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+          background: 'linear-gradient(to right, rgba(30,41,59,0.9), rgba(30,41,59,0.7))',
+          border: '1px solid rgba(255,255,255,0.1)',
           borderTopLeftRadius: categoriesEnabled ? 0 : '12px', // Straight when categories visible, rounded when hidden
           borderTopRightRadius: categoriesEnabled ? 0 : '12px',
           borderBottomLeftRadius: '12px', // Round bottom corners
@@ -309,16 +305,12 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
             borderRadius: '4px',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.2)' 
-              : 'rgba(255, 255, 255, 0.2)',
+            background: 'rgba(255, 255, 255, 0.2)',
             borderRadius: '4px',
             border: '1px solid transparent',
             backgroundClip: 'content-box',
             '&:hover': {
-              background: mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.3)' 
-                : 'rgba(255, 255, 255, 0.3)',
+              background: 'rgba(255, 255, 255, 0.3)',
             },
           },
           '&::-webkit-scrollbar-corner': {
@@ -326,9 +318,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
           },
           // Firefox scrollbar styling
           scrollbarWidth: 'thin',
-          scrollbarColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.2) transparent' 
-            : 'rgba(255, 255, 255, 0.2) transparent',
+          scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
@@ -362,7 +352,7 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
                   style_override: s.program.style_override,
                 };
               })}
-              color={getColorForChannel(idx, mode)}
+              color={getColorForChannel(idx)}
               isToday={isToday}
             />
           ))}
@@ -375,8 +365,8 @@ export const ScheduleGridDesktop = ({ channels, schedules, categories, categorie
                 left: 0,
                 mt: 2,
                 zIndex: 10,
-                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
-                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                backgroundColor: '#1e293b',
+                borderTop: '1px solid rgba(255, 255, 255, 0.12)',
                 display: 'flex',
                 justifyContent: 'center',
               }}
