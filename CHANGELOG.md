@@ -8,14 +8,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
-### Fixed
-- **La creación masiva de horarios pedía confirmar dos veces y se perdía al guardar el programa**: cargar días y horas en "Creación Masiva" no creaba nada, los mandaba a una lista intermedia ("Horarios a crear") que recién se persistía con un segundo botón, "Crear N Horarios". El alta de horario simple, en cambio, siempre creó en un solo click, así que el mismo diálogo se comportaba de dos maneras distintas. Peor: sobre un programa existente esa lista intermedia vivía únicamente en el subcomponente y nadie la miraba al guardar, así que quien apretaba "Actualizar" sin pasar por el segundo botón cerraba el diálogo, MUI desmontaba el estado y los horarios no se creaban nunca —desde el backoffice se veía como si guardar el programa los borrara, aunque en la base no se borraba nada. Ahora el botón masivo crea directo, igual que el de horario simple: un solo click en el diálogo de Programas y en el de "Gestionar" de la página de Horarios, donde el riesgo era mayor porque solo tenía botón "Cerrar". Sobre un programa que todavía no existe se siguen encolando junto al resto del alta, que es el único caso donde no hay contra qué crearlos. Se eliminaron la lista intermedia y el segundo botón, y el masivo pasó a validar que haya canal —antes solo lo validaba el alta simple, así que se podían encolar horarios que después fallaban al crearse.
+---
+
+## [1.33.0] - 2026-09-06
+
 ### Added
 - **Tooltips en las flechas del carrusel de banners y en el cierre del tooltip de zapping**: quedaron fuera del barrido de la 1.32.0. Las flechas de "anterior" y "siguiente" del carrusel (solo desktop, aparecen al hacer hover) y el botón de cerrar de `ZappingTooltip` —el globo de onboarding que se muestra dos veces desde el reproductor global— tenían el ícono suelto sin explicación; el de zapping además no tenía `aria-label`, así que un lector de pantalla lo anunciaba como un botón sin nombre. Ahora los tres muestran tooltip con el mismo texto del `aria-label`, igual que el resto de los `IconButton` de la app.
 
 ### Changed
 - **El campo de mail del login pasa de `placeholder` a `label`**: era el único input del flujo de auth con el texto adentro del campo, que desaparece apenas se empieza a escribir y deja al usuario sin referencia de qué se estaba pidiendo. Los campos de contraseña del mismo flujo ya usaban `label`, así que el cambio además empareja los dos pasos visualmente.
 
+### Fixed
+- **La creación masiva de horarios pedía confirmar dos veces y se perdía al guardar el programa**: cargar días y horas en "Creación Masiva" no creaba nada, los mandaba a una lista intermedia ("Horarios a crear") que recién se persistía con un segundo botón, "Crear N Horarios". El alta de horario simple, en cambio, siempre creó en un solo click, así que el mismo diálogo se comportaba de dos maneras distintas. Peor: sobre un programa existente esa lista intermedia vivía únicamente en el subcomponente y nadie la miraba al guardar, así que quien apretaba "Actualizar" sin pasar por el segundo botón cerraba el diálogo, MUI desmontaba el estado y los horarios no se creaban nunca —desde el backoffice se veía como si guardar el programa los borrara, aunque en la base no se borraba nada. Ahora el botón masivo crea directo, igual que el de horario simple: un solo click en el diálogo de Programas y en el de "Gestionar" de la página de Horarios, donde el riesgo era mayor porque solo tenía botón "Cerrar". Sobre un programa que todavía no existe se siguen encolando junto al resto del alta, que es el único caso donde no hay contra qué crearlos. Se eliminaron la lista intermedia y el segundo botón, y el masivo pasó a validar que haya canal —antes solo lo validaba el alta simple, así que se podían encolar horarios que después fallaban al crearse.
 
 ---
 
