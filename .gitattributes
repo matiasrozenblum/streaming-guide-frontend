@@ -1,0 +1,7 @@
+# CHANGELOG.md acumula entradas en [Unreleased] desde ramas paralelas.
+# Con el merge por defecto (y peor con `-X theirs`, que usa /staging), el lado
+# que pierde el hunk desaparece en silencio: una rama que sale de develop no
+# tiene las entradas que otra ya dejó en staging, y el merge las borra.
+# `union` concatena ambos lados en vez de elegir uno, así nunca se pierde una
+# entrada. Puede quedar el orden o los saltos de línea raros: revisar a ojo.
+CHANGELOG.md merge=union
