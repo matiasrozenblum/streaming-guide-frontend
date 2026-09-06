@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import {
   Dialog, DialogTitle, DialogContent,
-  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps, Button
+  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps, Button, Tooltip
 } from '@mui/material';
 import CloseIcon from '@mui/icons-material/Close';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
@@ -280,7 +280,9 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
                     : ''
         )}
-        <IconButton aria-label="Cerrar modal" onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
+        <Tooltip title="Cerrar modal" arrow>
+          <IconButton aria-label="Cerrar modal" onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
+        </Tooltip>
       </DialogTitle>
 
       {(
@@ -434,6 +436,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
+                    aria-label={socialLoginPending ? 'Conectando con Google' : 'Conectate con Google'}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',
@@ -481,6 +484,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
+                    aria-label={socialLoginPending ? 'Conectando con Apple' : 'Conectate con Apple'}
                     sx={{
                       display: 'flex',
                       alignItems: 'center',

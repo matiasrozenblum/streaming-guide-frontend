@@ -27,6 +27,7 @@ import {
   InputLabel,
   Pagination,
   SelectChangeEvent,
+  Tooltip,
 } from '@mui/material';
 import { Edit, Delete, Add, NavigateBefore, NavigateNext } from '@mui/icons-material';
 import { User } from '@/types/user';
@@ -357,25 +358,33 @@ export function UsersTable() {
           
           {/* Page Navigation */}
           <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-            <IconButton
-              aria-label="Página anterior"
-              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
-              disabled={currentPage <= 1}
-              size="small"
-            >
-              <NavigateBefore />
-            </IconButton>
+            <Tooltip title="Página anterior" arrow>
+              <span>
+                <IconButton
+                  aria-label="Página anterior"
+                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
+                  disabled={currentPage <= 1}
+                  size="small"
+                >
+                  <NavigateBefore />
+                </IconButton>
+              </span>
+            </Tooltip>
             <Typography variant="body2" color="text.primary">
               Página {currentPage} de {totalPages}
             </Typography>
-            <IconButton
-              aria-label="Página siguiente"
-              onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
-              disabled={currentPage >= totalPages}
-              size="small"
-            >
-              <NavigateNext />
-            </IconButton>
+            <Tooltip title="Página siguiente" arrow>
+              <span>
+                <IconButton
+                  aria-label="Página siguiente"
+                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
+                  disabled={currentPage >= totalPages}
+                  size="small"
+                >
+                  <NavigateNext />
+                </IconButton>
+              </span>
+            </Tooltip>
           </Box>
           
           <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
@@ -415,23 +424,27 @@ export function UsersTable() {
                 <TableCell>{user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Button size="small" onClick={() => setManagingDevicesForUser(user)}>
+                  <Button size="small" aria-label={`Ver ${user.devices?.length || 0} dispositivos de ${user.email}`} onClick={() => setManagingDevicesForUser(user)}>
                     Ver ({user.devices?.length || 0})
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button size="small" onClick={() => setManagingSubsForUser(user)}>
+                  <Button size="small" aria-label={`Ver ${user.subscriptions?.length || 0} suscripciones de ${user.email}`} onClick={() => setManagingSubsForUser(user)}>
                     Ver ({user.subscriptions?.length || 0})
                   </Button>
                 </TableCell>
                 <TableCell>
                   <Box sx={{ display: 'flex', gap: 0.5 }}>
-                    <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
-                      <Edit />
-                    </IconButton>
-                    <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
-                      <Delete />
-                    </IconButton>
+                    <Tooltip title="Editar usuario" arrow>
+                      <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
+                        <Edit />
+                      </IconButton>
+                    </Tooltip>
+                    <Tooltip title="Eliminar usuario" arrow>
+                      <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
+                        <Delete />
+                      </IconButton>
+                    </Tooltip>
                   </Box>
                 </TableCell>
               </TableRow>

@@ -1,6 +1,6 @@
 'use client';
 import React from 'react';
-import { Box, Typography, IconButton, Button } from '@mui/material';
+import { Box, Typography, IconButton, Button, Tooltip } from '@mui/material';
 import MailOutlineIcon from '@mui/icons-material/MailOutline';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 
@@ -93,22 +93,24 @@ const Footer: React.FC = () => {
       </Typography>
 
       {/* Botón de mail SOLO en web (sm+) */}
-      <IconButton
-        component="a"
-        href={`mailto:${email}`}
-        aria-label="Enviar correo"
-        sx={{
-          display: { xs: 'none', sm: 'inline-flex' }, // <-- oculto en mobile
-          position: 'absolute',
-          top: '50%',
-          right: 8,
-          transform: 'translateY(-50%)',
-          color: 'text.secondary',
-          '&:hover': { color: 'primary.main' },
-        }}
-      >
-        <MailOutlineIcon />
-      </IconButton>
+      <Tooltip title="Enviar correo" arrow>
+        <IconButton
+          component="a"
+          href={`mailto:${email}`}
+          aria-label="Enviar correo"
+          sx={{
+            display: { xs: 'none', sm: 'inline-flex' }, // <-- oculto en mobile
+            position: 'absolute',
+            top: '50%',
+            right: 8,
+            transform: 'translateY(-50%)',
+            color: 'text.secondary',
+            '&:hover': { color: 'primary.main' },
+          }}
+        >
+          <MailOutlineIcon />
+        </IconButton>
+      </Tooltip>
     </Box>
   );
 };

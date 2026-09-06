@@ -19,6 +19,7 @@ import {
   IconButton,
   Snackbar,
   Alert as MuiAlert,
+  CircularProgress,
 } from '@mui/material';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -337,6 +338,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
                   variant="contained"
                   size="small"
                   disabled={isLoading}
+                  startIcon={isLoading ? <CircularProgress size={16} color="inherit" /> : undefined}
                 >
                   {isLoading ? 'Guardando...' : 'Guardar'}
                 </Button>

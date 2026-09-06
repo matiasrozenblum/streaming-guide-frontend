@@ -8,6 +8,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+- **Tooltips en los botones que son solo un ícono**: los `IconButton` de la app tenían `aria-label` —un lector de pantalla los entendía— pero para alguien que ve la pantalla eran un ícono suelto sin explicación. Ahora muestran un tooltip con el mismo texto del `aria-label` al pasar el mouse: reproductor global de YouTube (lista de canales, minimizar/maximizar, cerrar), editar y mostrar/ocultar contraseña en el perfil, cerrar en el modal de login y en los diálogos de cookies, feriados y estacionales, botón de mail del footer, y las acciones del backoffice (editar/eliminar usuario, editar/eliminar panelista y gestionar sus programas, aprobar/rechazar cambios propuestos, paginación).
+- **Ojito para ver la contraseña en el login del backoffice**: era el único formulario de contraseña de la app sin toggle de visibilidad, así que un typo solo se descubría con el error de login.
+- **Spinner en el botón "Guardar" de completar perfil**: el texto cambiaba a "Guardando..." pero sin ningún indicador de movimiento; ahora además gira un spinner mientras se envía.
+
+### Fixed
+- **Los tooltips no aparecían justo cuando el botón estaba deshabilitado**: MUI no muestra el tooltip si su hijo está `disabled`, porque un botón deshabilitado no emite eventos de puntero. Pasaba en la campanita de notificación de cada programa mientras se guardaba el cambio, en el botón de suscripción de cada streamer mientras cargaba, y en la paginación del backoffice al llegar a la primera o última página. Se agregó el `<span>` intermedio que MUI documenta para estos casos; en el botón de streamers el posicionamiento absoluto se movió a un `Box` contenedor para que el wrapper no corra el botón de lugar.
+- **`aria-label` que no seguían el estado del control**: los toggles de las secciones "Programas" y "Streamers" en suscripciones anunciaban siempre "Expandir o contraer", sin decir cuál de las dos cosas iba a pasar. Ahora alternan entre "Expandir" y "Contraer" según estén abiertas o cerradas.
+
+### Changed
+- **Contexto en botones cuyo texto visible no alcanza**: los "Volver" del flujo de auth (código, usuario existente, contraseña, perfil) anuncian "Volver al paso anterior", los "Ver (N)" de la tabla de usuarios del backoffice aclaran qué y de quién ("Ver 3 dispositivos de x@y.com"), y los botones de login social anuncian el proveedor y si están conectando.
+
 ---
 
 ## [1.31.1] - 2026-09-03
