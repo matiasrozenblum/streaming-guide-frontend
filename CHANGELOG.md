@@ -8,6 +8,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+
+---
+
+## [1.32.0] - 2026-09-06
+
 ### Added
 - **Tooltips en los botones que son solo un ícono**: los `IconButton` de la app tenían `aria-label` —un lector de pantalla los entendía— pero para alguien que ve la pantalla eran un ícono suelto sin explicación. Ahora muestran un tooltip con el mismo texto del `aria-label` al pasar el mouse: reproductor global de YouTube (lista de canales, minimizar/maximizar, cerrar), editar y mostrar/ocultar contraseña en el perfil, cerrar en el modal de login y en los diálogos de cookies, feriados y estacionales, botón de mail del footer, y las acciones del backoffice (editar/eliminar usuario, editar/eliminar panelista y gestionar sus programas, aprobar/rechazar cambios propuestos, paginación).
 - **Ojito para ver la contraseña en el login del backoffice**: era el único formulario de contraseña de la app sin toggle de visibilidad, así que un typo solo se descubría con el error de login.
