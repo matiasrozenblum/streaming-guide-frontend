@@ -25,11 +25,6 @@ import {
   CircularProgress,
   Tabs,
   Tab,
-  List,
-  ListItem,
-  ListItemText,
-  ListItemSecondaryAction,
-  Divider,
   Checkbox,
   FormControlLabel,
 } from '@mui/material';
@@ -120,9 +115,9 @@ export function SchedulesTable() {
   const [success, setSuccess] = useState<string | null>(null);
   const [openProgramDialog, setOpenProgramDialog] = useState(false);
   const [programFormData, setProgramFormData] = useState({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
-  const [bulkSchedules, setBulkSchedules] = useState<BulkScheduleData[]>([]);
   const [selectedDays, setSelectedDays] = useState<DayOfWeek[]>([]);
   const [bulkTimeRange, setBulkTimeRange] = useState({ startTime: '', endTime: '' });
+  const [isCreatingBulk, setIsCreatingBulk] = useState(false);
   const [currentTab, setCurrentTab] = useState(0);
 
   const hasFetched = useRef(false);
@@ -252,7 +247,6 @@ export function SchedulesTable() {
   const handleOpenProgramDialog = (program: ProgramWithSchedules) => {
     setSelectedProgram(program);
     setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
-    setBulkSchedules([]);
     setSelectedDays([]);
     setBulkTimeRange({ startTime: '', endTime: '' });
     setOpenProgramDialog(true);
@@ -290,7 +284,6 @@ export function SchedulesTable() {
     setOpenProgramDialog(false);
     setSelectedProgram(null);
     setProgramFormData({ dayOfWeek: '', startTime: '', endTime: '', scheduleType: 'weekly', weekNumberInMonth: '', specificDate: '' });
-    setBulkSchedules([]);
     setSelectedDays([]);
     setBulkTimeRange({ startTime: '', endTime: '' });
     setCurrentTab(0);
@@ -345,52 +338,14 @@ export function SchedulesTable() {
     }
   };
 
-  const handleBulkCreateSchedules = async () => {
-    if (!selectedProgram || !selectedProgram.channel_id) return;
-    
-    try {
-      if (bulkSchedules.length === 0) {
-        throw new Error('Debes agregar al menos un horario');
-      }
-
-      const bulkData = {
-        programId: selectedProgram.id.toString(),
-        channelId: selectedProgram.channel_id.toString(),
-        schedules: bulkSchedules,
-      };
-
-      const response = await api.post<ScheduleType[]>('/schedules/bulk', bulkData, { 
-        headers: { Authorization: `Bearer ${typedSession?.accessToken}` } 
-      });
-      
-      const createdSchedules = response.data;
-      
-      // Update local state
-      setPrograms(programs.map(pr =>
-        pr.id === selectedProgram.id
-          ? { ...pr, schedules: [...pr.schedules, ...createdSchedules] }
-          : pr
-      ));
-      
-      setSelectedProgram(prev =>
-        prev && prev.id === selectedProgram.id
-          ? { ...prev, schedules: [...prev.schedules, ...createdSchedules] }
-          : prev
-      );
-      
-      setSuccess(`${createdSchedules.length} horarios creados correctamente`);
-      setBulkSchedules([]);
-      setSelectedDays([]);
-      setBulkTimeRange({ startTime: '', endTime: '' });
-    } catch (err) {
-      console.error('Error creating bulk schedules:', err);
-      setError((err as Error).message || 'Error al crear los horarios');
-    }
-  };
-
-  const handleAddBulkSchedule = () => {
+  const handleAddBulkSchedule = async () => {
+    if (!selectedProgram) return;
     if (!bulkTimeRange.startTime || !bulkTimeRange.endTime || selectedDays.length === 0) {
       setError('Debes seleccionar días y horarios');
+      return;
+    }
+    if (!selectedProgram.channel_id) {
+      setError('El programa debe estar asociado a un canal');
       return;
     }
 
@@ -400,13 +355,42 @@ export function SchedulesTable() {
       endTime: bulkTimeRange.endTime,
     }));
 
-    setBulkSchedules(prev => [...prev, ...newSchedules]);
-    setSelectedDays([]);
-    setBulkTimeRange({ startTime: '', endTime: '' });
-  };
+    setIsCreatingBulk(true);
+    try {
+      const bulkData = {
+        programId: selectedProgram.id.toString(),
+        channelId: selectedProgram.channel_id.toString(),
+        schedules: newSchedules,
+      };
 
-  const handleRemoveBulkSchedule = (index: number) => {
-    setBulkSchedules(prev => prev.filter((_, i) => i !== index));
+      const response = await api.post<ScheduleType[]>('/schedules/bulk', bulkData, {
+        headers: { Authorization: `Bearer ${typedSession?.accessToken}` }
+      });
+
+      const createdSchedules = response.data;
+
+      // Update local state
+      setPrograms(programs.map(pr =>
+        pr.id === selectedProgram.id
+          ? { ...pr, schedules: [...pr.schedules, ...createdSchedules] }
+          : pr
+      ));
+
+      setSelectedProgram(prev =>
+        prev && prev.id === selectedProgram.id
+          ? { ...prev, schedules: [...prev.schedules, ...createdSchedules] }
+          : prev
+      );
+
+      setSuccess(`${createdSchedules.length} horarios creados correctamente`);
+      setSelectedDays([]);
+      setBulkTimeRange({ startTime: '', endTime: '' });
+    } catch (err) {
+      console.error('Error creating bulk schedules:', err);
+      setError((err as Error).message || 'Error al crear los horarios');
+    } finally {
+      setIsCreatingBulk(false);
+    }
   };
 
   const handleDayToggle = (day: DayOfWeek) => {
@@ -833,52 +817,16 @@ export function SchedulesTable() {
                         fullWidth
                       />
                       <Button
-                        variant="outlined"
+                        variant="contained"
                         onClick={handleAddBulkSchedule}
-                        sx={{ alignSelf: 'flex-end' }}
-                        disabled={selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
+                        startIcon={isCreatingBulk ? <CircularProgress size={16} color="inherit" /> : <AddCircle />}
+                        sx={{ alignSelf: 'flex-end', whiteSpace: 'nowrap' }}
+                        disabled={isCreatingBulk || selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
                       >
-                        Agregar
+                        Crear horarios
                       </Button>
                     </Box>
                   </Paper>
-
-                  {/* Bulk Schedules List */}
-                  {bulkSchedules.length > 0 && (
-                    <Paper sx={{ p: 2, mb: 2 }}>
-                      <Typography variant="subtitle1" sx={{ mb: 2 }}>
-                        Horarios a crear ({bulkSchedules.length})
-                      </Typography>
-                      <List dense>
-                        {bulkSchedules.map((schedule, index) => (
-                          <ListItem key={index}>
-                            <ListItemText
-                              primary={`${DAYS_OF_WEEK.find(d => d.value === schedule.dayOfWeek)?.label} ${formatTime(schedule.startTime)}-${formatTime(schedule.endTime)}`}
-                            />
-                            <ListItemSecondaryAction>
-                              <IconButton
-                                aria-label="Eliminar"
-                                edge="end"
-                                onClick={() => handleRemoveBulkSchedule(index)}
-                                color="error"
-                              >
-                                <Delete />
-                              </IconButton>
-                            </ListItemSecondaryAction>
-                          </ListItem>
-                        ))}
-                      </List>
-                      <Divider sx={{ my: 2 }} />
-                      <Button
-                        variant="contained"
-                        onClick={handleBulkCreateSchedules}
-                        startIcon={<AddCircle />}
-                        fullWidth
-                      >
-                        Crear {bulkSchedules.length} Horarios
-                      </Button>
-                    </Paper>
-                  )}
                 </Box>
               )}
             </Box>
