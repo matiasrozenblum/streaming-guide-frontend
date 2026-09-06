@@ -8,6 +8,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.32.1] - 2026-09-06
+
 ### Fixed
 - **La creación masiva de horarios pedía confirmar dos veces y se perdía al guardar el programa**: cargar días y horas en "Creación Masiva" no creaba nada, los mandaba a una lista intermedia ("Horarios a crear") que recién se persistía con un segundo botón, "Crear N Horarios". El alta de horario simple, en cambio, siempre creó en un solo click, así que el mismo diálogo se comportaba de dos maneras distintas. Peor: sobre un programa existente esa lista intermedia vivía únicamente en el subcomponente y nadie la miraba al guardar, así que quien apretaba "Actualizar" sin pasar por el segundo botón cerraba el diálogo, MUI desmontaba el estado y los horarios no se creaban nunca —desde el backoffice se veía como si guardar el programa los borrara, aunque en la base no se borraba nada. Ahora el botón masivo crea directo, igual que el de horario simple: un solo click en el diálogo de Programas y en el de "Gestionar" de la página de Horarios, donde el riesgo era mayor porque solo tenía botón "Cerrar". Sobre un programa que todavía no existe se siguen encolando junto al resto del alta, que es el único caso donde no hay contra qué crearlos. Se eliminaron la lista intermedia y el segundo botón, y el masivo pasó a validar que haya canal —antes solo lo validaba el alta simple, así que se podían encolar horarios que después fallaban al crearse.
 
