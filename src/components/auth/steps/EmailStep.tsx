@@ -70,7 +70,7 @@ export default function EmailStep({
         variant="contained"
         fullWidth
         disabled={isLoading}
-        aria-label={isLoading ? 'Cargando' : 'Continuar con el correo electrónico'}
+        aria-label={isLoading ? 'Cargando' : undefined}
       >
         {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Continuar'}
       </Button>

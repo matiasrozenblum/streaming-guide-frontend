@@ -171,7 +171,6 @@ export default function ProfileStep({
             startIcon={<ArrowBackIosNewIcon fontSize="small" />}
             fullWidth
             onClick={onBack}
-            aria-label="Volver al paso anterior"
           >
             Volver
           </Button>
@@ -181,7 +180,7 @@ export default function ProfileStep({
           variant="contained"
           fullWidth
           disabled={!first || !last || !birthDate || !gender || !!birthDateError || isLoading}
-          aria-label={isLoading ? 'Guardando perfil' : 'Continuar'}
+          aria-label={isLoading ? 'Guardando perfil' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Continuar'}
         </Button>

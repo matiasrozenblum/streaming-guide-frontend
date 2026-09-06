@@ -177,7 +177,7 @@ export default function CodeStep({
           variant="contained"
           fullWidth
           disabled={isLoading}
-          aria-label={isLoading ? 'Verificando código' : 'Verificar código'}
+          aria-label={isLoading ? 'Verificando' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verificar'}
         </Button>
@@ -187,7 +187,6 @@ export default function CodeStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
-          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>

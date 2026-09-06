@@ -2,3 +2,7 @@
 **Learning:** Found a recurring accessibility pattern in authentication and profile components where icon-only buttons for toggling password visibility (using Visibility/VisibilityOff icons) lacked `aria-label` attributes. This prevents screen readers from understanding the button's purpose and state.
 **Action:** Always ensure that icon-only buttons, specifically those dealing with sensitive or functional inputs like password visibility, have dynamic `aria-label` attributes that reflect the action (e.g., 'Mostrar contraseña' vs 'Ocultar contraseña').
 ## 2024-01-01 - Initializing Palette Journal\n**Learning:** This repo frequently uses MUI components and uses Spanish for the interface.\n**Action:** Use Spanish for aria-labels to maintain consistency. e.g. 'Editar' instead of 'Edit'.
+
+## 2025-02-28 - WCAG 2.5.3 (Label in Name) for Async Submit Buttons
+**Learning:** A rejected UX change revealed a critical constraint regarding WCAG 2.5.3 (Label in Name). When an async button has visible text in its idle state, adding a different explicit `aria-label` for the idle state (e.g., changing `aria-label={isLoading ? 'Cargando' : undefined}` to `aria-label={isLoading ? 'Cargando' : 'Verificar código'}` when visible text is 'Verificar') overrides the visible text and violates the standard.
+**Action:** For async buttons with visible text, keep the idle state `aria-label` as `undefined` so the accessible name comes from the visible text itself. Only apply a conditional `aria-label` during the `isLoading` state when the visible text is hidden/replaced by a spinner.

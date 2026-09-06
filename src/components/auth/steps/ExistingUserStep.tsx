@@ -121,7 +121,7 @@ export default function ExistingUserStep({
           variant="contained"
           fullWidth
           disabled={isLoading}
-          aria-label={isLoading ? 'Iniciando sesión' : 'Iniciar sesión'}
+          aria-label={isLoading ? 'Iniciando sesión' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
         </Button>
@@ -131,7 +131,6 @@ export default function ExistingUserStep({
           fullWidth
           disabled={isLoading}
           onClick={onBack}
-          aria-label="Volver al paso anterior"
         >
           Volver
         </Button>
