@@ -8,6 +8,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+- **Tooltips en las flechas del carrusel de banners y en el cierre del tooltip de zapping**: quedaron fuera del barrido de la 1.32.0. Las flechas de "anterior" y "siguiente" del carrusel (solo desktop, aparecen al hacer hover) y el botón de cerrar de `ZappingTooltip` —el globo de onboarding que se muestra dos veces desde el reproductor global— tenían el ícono suelto sin explicación; el de zapping además no tenía `aria-label`, así que un lector de pantalla lo anunciaba como un botón sin nombre. Ahora los tres muestran tooltip con el mismo texto del `aria-label`, igual que el resto de los `IconButton` de la app.
+
+### Changed
+- **El campo de mail del login pasa de `placeholder` a `label`**: era el único input del flujo de auth con el texto adentro del campo, que desaparece apenas se empieza a escribir y deja al usuario sin referencia de qué se estaba pidiendo. Los campos de contraseña del mismo flujo ya usaban `label`, así que el cambio además empareja los dos pasos visualmente.
+
 
 ---
 
