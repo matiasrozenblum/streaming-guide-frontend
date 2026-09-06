@@ -24,6 +24,7 @@ import {
   Alert,
   Chip,
   CircularProgress,
+  Snackbar,
 } from '@mui/material';
 import InfoOutlinedIcon from '@mui/icons-material/InfoOutlined';
 import {
@@ -398,32 +399,27 @@ export function ProgramSchedulesSection({
     );
   };
 
-  // Clear messages after 6 seconds
-  useEffect(() => {
-    if (error || success) {
-      const timer = setTimeout(() => {
-        setError(null);
-        setSuccess(null);
-      }, 6000);
-      return () => clearTimeout(timer);
-    }
-  }, [error, success]);
-
   const allSchedules = programId ? schedules : [];
   const hasSchedules = allSchedules.length > 0 || pendingSchedules.length > 0;
 
+  const handleCloseFeedback = () => {
+    setError(null);
+    setSuccess(null);
+  };
+
   return (
     <Box>
-      {error && (
-        <Box sx={{ mb: 2, p: 1, bgcolor: 'error.light', color: 'error.contrastText', borderRadius: 1 }}>
-          <Typography variant="body2">{error}</Typography>
-        </Box>
-      )}
-      {success && (
-        <Box sx={{ mb: 2, p: 1, bgcolor: 'success.light', color: 'success.contrastText', borderRadius: 1 }}>
-          <Typography variant="body2">{success}</Typography>
-        </Box>
-      )}
+      {/* Floats over the dialog so it stays visible wherever the user is scrolled */}
+      <Snackbar
+        open={!!error || !!success}
+        autoHideDuration={6000}
+        onClose={handleCloseFeedback}
+        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+      >
+        <Alert severity={error ? 'error' : 'success'} onClose={handleCloseFeedback} variant="filled">
+          {error || success}
+        </Alert>
+      </Snackbar>
 
       <Accordion 
         expanded={expandedAccordion === 'current'} 
@@ -817,16 +813,17 @@ export function ProgramSchedulesSection({
                       />
                     )}
                   </Box>
-                  <Button
-                    variant="contained"
-                    onClick={handleAddBulkSchedule}
-                    startIcon={isCreatingBulk ? <CircularProgress size={16} color="inherit" /> : <AddCircle />}
-                    disabled={isCreatingBulk || selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
-                    sx={{ whiteSpace: 'nowrap' }}
-                  >
-                    {programId ? 'Crear horarios' : 'Agregar'}
-                  </Button>
                 </Box>
+
+                <Button
+                  variant="contained"
+                  onClick={handleAddBulkSchedule}
+                  startIcon={isCreatingBulk ? <CircularProgress size={16} color="inherit" /> : <AddCircle />}
+                  disabled={isCreatingBulk || selectedDays.length === 0 || !bulkTimeRange.startTime || !bulkTimeRange.endTime}
+                  fullWidth
+                >
+                  {programId ? 'Crear horarios' : 'Agregar'}
+                </Button>
               </Paper>
             </AccordionDetails>
           </Accordion>
