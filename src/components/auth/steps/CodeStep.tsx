@@ -6,7 +6,6 @@ import {
   Alert,
   AlertTitle,
   Typography,
-  useTheme,
   CircularProgress
 } from '@mui/material';
 import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
@@ -28,7 +27,6 @@ interface OtpInputProps {
   disabled?: boolean;
 }
 function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputProps) {
-  const theme = useTheme();
   const inputs = React.useRef<(HTMLInputElement | null)[]>([]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
@@ -78,8 +76,8 @@ function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputPro
               fontSize: 20,
               width: 12,
               height: 20,
-              background: theme.palette.mode === 'dark' ? '#16213A' : '#fff',
-              color: theme.palette.mode === 'dark' ? '#fff' : '#111',
+              background: '#16213A',
+              color: '#fff',
               borderRadius: 8,
             },
             inputMode: 'numeric',

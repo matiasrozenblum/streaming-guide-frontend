@@ -4,7 +4,6 @@ import React, { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { signIn } from 'next-auth/react';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useDeviceId } from '@/hooks/useDeviceId';
 import { motion } from 'framer-motion';
 import {
@@ -46,7 +45,6 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
   const { session, status } = useSessionContext();
   const typedSession = session as { user?: { id?: string; gender?: string; birthDate?: string; role?: string } };
   const router = useRouter();
-  const { mode } = useThemeContext();
   const deviceId = useDeviceId();
 
   // Form state
@@ -196,9 +194,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
       }}
     >
       <Header />
@@ -242,9 +238,7 @@ export default function ProfileCompletionForm({ registrationToken, initialUser }
               border: '2px solid',
               borderColor: 'warning.main',
               borderRadius: 2,
-              background: (theme) => theme.palette.mode === 'light'
-                ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+              background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
               backdropFilter: 'blur(8px)',
             }}
           >

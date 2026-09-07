@@ -1459,7 +1459,7 @@ export function WeeklyOverridesTable() {
             {isEditMode ? 'Editar Cambio Semanal' : 'Crear Cambio Semanal'}
           </Typography>
           {selectedSchedule && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+            <Box sx={{ mt: 1, p: 2, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 1 }}>
               <Typography variant="body1" fontWeight="bold" color="text.primary">
                 {selectedSchedule.program.name}
               </Typography>
@@ -1472,7 +1472,7 @@ export function WeeklyOverridesTable() {
             </Box>
           )}
           {selectedProgram && (
-            <Box sx={{ mt: 1, p: 2, backgroundColor: theme.palette.mode === 'dark' ? 'rgba(255,255,255,0.04)' : 'grey.50', borderRadius: 1 }}>
+            <Box sx={{ mt: 1, p: 2, backgroundColor: 'rgba(255,255,255,0.04)', borderRadius: 1 }}>
               <Typography variant="body1" fontWeight="bold" color="text.primary">
                 {selectedProgram.name}
               </Typography>

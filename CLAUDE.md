@@ -14,11 +14,14 @@ Desktop and mobile responsive. The mobile layout is the design reference for the
 - **Animation**: Framer Motion
 
 ## Design Tokens
-- **Dark**: bg `#0f172a`, paper `#1e293b`, primary `#3b82f6`, text `#f1f5f9`, textSecondary `#cbd5e1`
-- **Light**: bg `#f8fafc`, paper `#ffffff`, primary `#2563eb`, text `#111827`, textSecondary `#4B5563`
+The site is **dark-only** (matching the native app). There is no light theme and
+no mode switching: `src/theme/theme.ts` exports a single static MUI theme applied
+by `AppThemeProvider`. Read it with MUI's `useTheme()` — never branch on
+`palette.mode`.
+- **Palette**: bg `#0f172a`, paper `#1e293b`, primary `#3b82f6`, text `#f1f5f9`, textSecondary `#cbd5e1`
 - **Status**: live `#F44336`, offline `#6B7280`
 - **Fonts**: Inter/Roboto (body), Outfit (headings)
-- **Border**: `#334155` (dark), `#e2e8f0` (light)
+- **Border**: `#334155`
 
 ## Coding Conventions
 - App Router: pages in `src/app/`, server components by default, `'use client'` only when needed
@@ -30,7 +33,7 @@ Desktop and mobile responsive. The mobile layout is the design reference for the
 ## Key Paths
 - `src/app/` - App Router pages and layouts
 - `src/components/` - Shared UI components
-- `src/theme/` - MUI theme (dark + light)
+- `src/theme/` - MUI theme (single dark theme) + `AppThemeProvider`
 - `src/services/` - API service layer (Axios)
 - `src/contexts/` - React context providers
 - `src/hooks/` - Custom hooks

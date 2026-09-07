@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect } from 'react';
-import { Box, Typography, Button, useTheme } from '@mui/material';
+import { Box, Typography, Button } from '@mui/material';
 
 export default function Error({
     error,
@@ -14,9 +14,6 @@ export default function Error({
         console.error('Unhandled app error:', error);
     }, [error]);
 
-    const theme = useTheme();
-    const isDark = theme.palette.mode === 'dark';
-
     return (
         <Box
             sx={{
@@ -26,9 +23,7 @@ export default function Error({
                 alignItems: 'center',
                 justifyContent: 'center',
                 p: 3,
-                background: isDark
-                    ? 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)'
-                    : 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)',
+                background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
             }}
         >
             <Box
@@ -45,7 +40,7 @@ export default function Error({
                 {/* Logo */}
                 <Box
                     component="img"
-                    src={isDark ? '/img/text-white.png' : '/img/text.png'}
+                    src="/img/text-white.png"
                     alt="La Guía del Streaming"
                     sx={{ height: 36, width: 'auto' }}
                 />
@@ -55,7 +50,7 @@ export default function Error({
                     sx={{
                         width: 80,
                         height: 80,
-                        bgcolor: isDark ? 'rgba(245,158,11,0.15)' : '#fef3c7',
+                        bgcolor: 'rgba(245,158,11,0.15)',
                         borderRadius: '50%',
                         display: 'flex',
                         alignItems: 'center',

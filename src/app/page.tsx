@@ -181,8 +181,7 @@ export default async function HomePage() {
   };
 
   // Note: the Organization (brand logo) and WebSite JSON-LD live in the root
-  // layout, not here — everything under ClientWrapper is gated behind
-  // CustomThemeProvider's mount check and never reaches the server HTML.
+  // layout, not here — they describe the site itself, not this page.
 
   return (
     <ClientWrapper>
