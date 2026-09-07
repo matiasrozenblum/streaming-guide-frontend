@@ -32,7 +32,6 @@ import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
 import ArrowBackIcon from '@mui/icons-material/ArrowBack';
 import EditIcon from '@mui/icons-material/Edit';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import Header from '@/components/Header';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -67,17 +66,13 @@ const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.
     sx={{
       p: 2.5,
       mb: 2,
-      background: (theme) => theme.palette.mode === 'light'
-        ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-        : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+      background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
       backdropFilter: 'blur(8px)',
       borderRadius: 2,
       transition: 'all 0.2s ease-in-out',
       '&:hover': {
         transform: 'translateY(-2px)',
-        boxShadow: (theme) => theme.palette.mode === 'light'
-          ? '0 8px 16px rgba(0,0,0,0.1)'
-          : '0 8px 16px rgba(0,0,0,0.3)',
+        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
       }
     }}
   >
@@ -123,7 +118,6 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   const { session, status } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   const router = useRouter();
-  const { mode } = useThemeContext();
   const { consent, openPreferences } = useCookieConsent();
 
   // Track profile page visit
@@ -394,9 +388,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
       }}
     >
@@ -430,7 +422,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 variant="h5"
                 sx={{
                   fontWeight: 600,
-                  color: mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(78, 58, 58, 0.6)',
+                  color: 'rgba(78, 58, 58, 0.6)',
                   WebkitBackgroundClip: 'text',
                 }}
               >

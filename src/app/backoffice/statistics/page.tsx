@@ -34,7 +34,6 @@ import {
   Checkbox,
 } from '@mui/material';
 import { BarChart } from '@mui/icons-material';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { DatePicker } from '@mui/x-date-pickers/DatePicker';
 import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
 import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
@@ -261,7 +260,6 @@ function hasCount(
 
 export default function StatisticsPage() {
   const { status } = useSessionContext();
-  const { mode } = useThemeContext();
   
   const [mainTab, setMainTab] = useState(0);
   const mainTabs = [
@@ -702,7 +700,7 @@ export default function StatisticsPage() {
   }) => {
     if (!data || data.length === 0) {
       return (
-        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>{title}</Typography>
             <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
@@ -712,7 +710,7 @@ export default function StatisticsPage() {
     }
 
     return (
-      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+      <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>{title}</Typography>
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
@@ -728,7 +726,7 @@ export default function StatisticsPage() {
                     sx={{ 
                       minWidth: 20, 
                       fontWeight: 'bold',
-                      color: mode === 'light' ? '#374151' : '#d1d5db'
+                      color: '#d1d5db'
                     }}
                   >
                     #{index + 1}
@@ -738,7 +736,7 @@ export default function StatisticsPage() {
                       variant="body2" 
                       sx={{ 
                         fontWeight: 'medium',
-                        color: mode === 'light' ? '#111827' : '#f9fafb',
+                        color: '#f9fafb',
                         overflow: 'hidden',
                         textOverflow: 'ellipsis',
                         whiteSpace: 'nowrap'
@@ -750,7 +748,7 @@ export default function StatisticsPage() {
                       <Typography 
                         variant="caption" 
                         sx={{ 
-                          color: mode === 'light' ? '#6b7280' : '#9ca3af',
+                          color: '#9ca3af',
                           fontSize: '0.75rem'
                         }}
                       >
@@ -762,7 +760,7 @@ export default function StatisticsPage() {
                     <Box
                       sx={{
                         height: 24,
-                        backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151',
+                        backgroundColor: '#374151',
                         borderRadius: 1,
                         overflow: 'hidden',
                         position: 'relative'
@@ -844,7 +842,7 @@ export default function StatisticsPage() {
   }) {
     if (!data || data.length === 0) {
       return (
-        <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+        <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
           <CardContent>
             <Typography variant="h6" gutterBottom>{title}</Typography>
             <Typography variant="body2" color="text.secondary">No hay datos disponibles</Typography>
@@ -855,7 +853,7 @@ export default function StatisticsPage() {
     // Only show top N
     const topData = data.slice(0, maxBars);
     return (
-      <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+      <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
         <CardContent>
           <Typography variant="h6" gutterBottom>{title}</Typography>
           <Box sx={{ maxHeight: 320, overflowY: 'auto', pr: 1 }}>
@@ -864,14 +862,14 @@ export default function StatisticsPage() {
                 const total = keys.reduce((sum, k) => sum + (item.counts?.[k] ?? 0), 0);
                 return (
                   <Box key={item.id || index} sx={{ display: 'flex', alignItems: 'center', gap: 2, minWidth: 0 }}>
-                    <Typography variant="body2" sx={{ minWidth: 20, fontWeight: 'bold', color: mode === 'light' ? '#374151' : '#d1d5db' }}>#{index + 1}</Typography>
+                    <Typography variant="body2" sx={{ minWidth: 20, fontWeight: 'bold', color: '#d1d5db' }}>#{index + 1}</Typography>
                     <Box sx={{ flex: 1, minWidth: 0 }}>
-                      <Typography variant="body2" sx={{ fontWeight: 'medium', color: mode === 'light' ? '#111827' : '#f9fafb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Typography>
+                      <Typography variant="body2" sx={{ fontWeight: 'medium', color: '#f9fafb', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{item.name}</Typography>
                       {showChannel && item.channelName && (
-                        <Typography variant="caption" sx={{ color: mode === 'light' ? '#6b7280' : '#9ca3af', fontSize: '0.75rem' }}>{item.channelName}</Typography>
+                        <Typography variant="caption" sx={{ color: '#9ca3af', fontSize: '0.75rem' }}>{item.channelName}</Typography>
                       )} 
                     </Box>
-                    <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: mode === 'light' ? '#f3f4f6' : '#374151', borderRadius: 1, overflow: 'hidden' }}>
+                    <Box sx={{ position: 'relative', flex: 1, minWidth: 120, maxWidth: 320, display: 'flex', height: 28, backgroundColor: '#374151', borderRadius: 1, overflow: 'hidden' }}>
                       {keys.map((k) => {
                         const value = item.counts?.[k] ?? 0;
                         const width = total > 0 ? (value / total) * 100 : 0;
@@ -897,7 +895,7 @@ export default function StatisticsPage() {
                         );
                       })}
                     </Box>
-                    <Typography variant="caption" sx={{ minWidth: 24, textAlign: 'right', color: mode === 'light' ? '#111827' : '#f9fafb', fontWeight: 'bold', fontSize: '0.9rem', ml: 1 }}>{total}</Typography>
+                    <Typography variant="caption" sx={{ minWidth: 24, textAlign: 'right', color: '#f9fafb', fontWeight: 'bold', fontSize: '0.9rem', ml: 1 }}>{total}</Typography>
                   </Box>
                 );
               })}
@@ -908,7 +906,7 @@ export default function StatisticsPage() {
               {keys.map(k => (
                 <Box key={k} sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                   <Box sx={{ width: 16, height: 16, backgroundColor: colors[k], borderRadius: 0.5, border: '1px solid #e5e7eb' }} />
-                  <Typography variant="caption" sx={{ color: mode === 'light' ? '#374151' : '#d1d5db' }}>{getLabel(k)}</Typography>
+                  <Typography variant="caption" sx={{ color: '#d1d5db' }}>{getLabel(k)}</Typography>
                 </Box>
               ))}
             </Box>
@@ -1163,7 +1161,7 @@ export default function StatisticsPage() {
           component="h1"
           gutterBottom
           sx={{
-            color: mode === 'light' ? '#111827' : '#f1f5f9',
+            color: '#f1f5f9',
             mb: 3,
             display: 'flex',
             alignItems: 'center',
@@ -1180,9 +1178,9 @@ export default function StatisticsPage() {
             onChange={(_, newValue) => setMainTab(newValue)}
             sx={{
               '& .MuiTab-root': {
-                color: mode === 'light' ? '#6b7280' : '#9ca3af',
+                color: '#9ca3af',
                 '&.Mui-selected': {
-                  color: mode === 'light' ? '#2563eb' : '#3b82f6',
+                  color: '#3b82f6',
                 },
               },
             }}
@@ -1214,7 +1212,7 @@ export default function StatisticsPage() {
            typeof demographics.byAgeGroup === 'object' ? (
             <Box sx={{ display: 'grid', gap: 3, gridTemplateColumns: { xs: '1fr', md: 'repeat(2, 1fr)' } }}>
               {/* Resumen General */}
-              <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+              <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Resumen General</Typography>
                   <Box display="flex" flexDirection="column" gap={2}>
@@ -1225,7 +1223,7 @@ export default function StatisticsPage() {
                 </CardContent>
               </Card>
               {/* Por Género */}
-              <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+              <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
                 <CardContent>
                   <Typography variant="h6" gutterBottom>Distribución por Género</Typography>
                   <Box display="flex" flexDirection="column" gap={1}>
@@ -1243,14 +1241,14 @@ export default function StatisticsPage() {
               </Card>
               {/* Por Edad */}
               <Box sx={{ gridColumn: { xs: '1', md: '1 / -1' } }}>
-                <Card sx={{ backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b', border: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}` }}>
+                <Card sx={{ backgroundColor: '#1e293b', border: '1px solid rgba(255,255,255,0.1)' }}>
                   <CardContent>
                     <Typography variant="h6" gutterBottom>Distribución por Edad</Typography>
                     <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)', md: 'repeat(3, 1fr)' } }}>
                       {Object.entries(demographics.byAgeGroup).map(([ageGroup, count]) => {
                         if (!ageGroup || count === undefined || count === null) return null;
                         return (
-                          <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: mode === 'light' ? '#f8fafc' : '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
+                          <Box key={ageGroup} display="flex" justifyContent="space-between" alignItems="center" p={2} sx={{ backgroundColor: '#334155', borderRadius: 1, border: `1px solid ${getAgeGroupColor(ageGroup)}20` }}>
                             <Chip label={getAgeGroupLabel(ageGroup)} size="small" sx={{ backgroundColor: getAgeGroupColor(ageGroup), color: 'white', fontWeight: 'bold' }} />
                             <Typography variant="h6">{(count || 0).toLocaleString()}</Typography>
                           </Box>
@@ -1747,7 +1745,7 @@ export default function StatisticsPage() {
             </Box>
           </LocalizationProvider>
           
-          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Generación de Reportes</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: '#f1f5f9' }}>Generación de Reportes</Typography>
           <Box sx={{ mb: 4 }}>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
               Genera reportes con fechas personalizadas o períodos predefinidos. Selecciona un canal específico o genera reportes para todos los canales.
@@ -1758,7 +1756,7 @@ export default function StatisticsPage() {
               <Box sx={{ display: 'flex', gap: 3, alignItems: 'flex-start', flexWrap: 'wrap' }}>
                 {/* Date Range */}
                 <Box sx={{ flex: 1, minWidth: 300 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: '#f1f5f9' }}>
                     Rango de Fechas
                   </Typography>
                   
@@ -1832,7 +1830,7 @@ export default function StatisticsPage() {
 
                 {/* Channel Selection */}
                 <Box sx={{ flex: 1, minWidth: 300 }}>
-                  <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+                  <Typography variant="subtitle1" sx={{ mb: 2, color: '#f1f5f9' }}>
                     Seleccionar Canal
                   </Typography>
                   <FormControl fullWidth>
@@ -1860,7 +1858,7 @@ export default function StatisticsPage() {
 
             {/* Report Actions */}
             <Box>
-              <Typography variant="subtitle1" sx={{ mb: 2, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+              <Typography variant="subtitle1" sx={{ mb: 2, color: '#f1f5f9' }}>
                 Generar Reporte
               </Typography>
               <Box sx={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
@@ -1885,7 +1883,7 @@ export default function StatisticsPage() {
               </Box>
               
               {/* Report Info */}
-              <Box sx={{ mt: 2, p: 2, backgroundColor: mode === 'light' ? '#f8fafc' : '#1e293b', borderRadius: 1 }}>
+              <Box sx={{ mt: 2, p: 2, backgroundColor: '#1e293b', borderRadius: 1 }}>
                 <Typography variant="body2" color="text.secondary">
                   <strong>Canal:</strong> {selectedChannelId ? channelsList.find(c => c.id === selectedChannelId)?.name : 'Todos los canales'}
                 </Typography>
@@ -1903,27 +1901,27 @@ export default function StatisticsPage() {
 
 
 
-          <Typography variant="h6" gutterBottom sx={{ color: mode === 'light' ? '#111827' : '#f1f5f9' }}>Reportes Automáticos</Typography>
+          <Typography variant="h6" gutterBottom sx={{ color: '#f1f5f9' }}>Reportes Automáticos</Typography>
           <Box>
             <Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
               Los reportes automáticos se envían a laguiadelstreaming@gmail.com en los siguientes horarios:
             </Typography>
             <Box sx={{ display: 'grid', gap: 2, gridTemplateColumns: { xs: '1fr', sm: 'repeat(2, 1fr)' } }}>
-              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+              <Card sx={{ p: 2, backgroundColor: '#1e3a8a' }}>
                 <CardContent>
                   <Typography variant="h6">Semanal</Typography>
                   <Typography variant="body2">Domingos a las 6:00 PM</Typography>
                 </CardContent>
               </Card>
               
-              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+              <Card sx={{ p: 2, backgroundColor: '#1e3a8a' }}>
                 <CardContent>
                   <Typography variant="h6">Mensual</Typography>
                   <Typography variant="body2">Primer día del mes a las 9:00 AM</Typography>
                 </CardContent>
               </Card>
               
-              <Card sx={{ p: 2, backgroundColor: mode === 'light' ? '#f0f9ff' : '#1e3a8a' }}>
+              <Card sx={{ p: 2, backgroundColor: '#1e3a8a' }}>
                 <CardContent>
                   <Typography variant="h6">Anual</Typography>
                   <Typography variant="body2">1 de Enero a las 10:00 AM</Typography>

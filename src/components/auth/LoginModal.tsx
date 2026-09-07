@@ -140,7 +140,6 @@ declare global {
 }
 
 export default function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
-  const theme = useTheme();
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
   const { data: session, status: sessionStatus } = useSession();
@@ -261,12 +260,12 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
         paper: {
           sx: {
             borderRadius: 2,
-            backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper
+            backgroundColor: '#0F172A'
           }
         }
       }}
     >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2, backgroundColor: '#0F172A' }}>
         {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
           isUserExisting && step === 'existing-user'
             ? 'Iniciar Sesión'
@@ -288,7 +287,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
       {(
         <>
           {phase === 'flow' && (
-            <Box sx={{ px: 3, pt: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+            <Box sx={{ px: 3, pt: 2, backgroundColor: '#0F172A' }}>
               <Stepper
                 nonLinear
                 alternativeLabel
@@ -349,7 +348,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
             </Box>
           )}
 
-          <DialogContent sx={{ px: 3, py: 2, backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper }}>
+          <DialogContent sx={{ px: 3, py: 2, backgroundColor: '#0F172A' }}>
             {phase === 'email' && (
               <>
                 <EmailStep
@@ -449,7 +448,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       fontWeight: 600,
                       borderColor: 'text.primary',
                       color: 'text.primary',
-                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
+                      backgroundColor: '#0F172A',
                       '&:hover': {
                         borderColor: 'primary.main',
                         backgroundColor: 'action.hover',
@@ -497,7 +496,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       fontWeight: 600,
                       borderColor: 'text.primary',
                       color: 'text.primary',
-                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
+                      backgroundColor: '#0F172A',
                       '&:hover': {
                         borderColor: 'primary.main',
                         backgroundColor: 'action.hover',
@@ -510,7 +509,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     {socialLoginPending ? (
                       <CircularProgress size={20} sx={{ color: 'text.primary' }} />
                     ) : (
-                      <AppleIcon sx={{ color: theme.palette.mode === 'dark' ? '#FFF' : '#000' }} />
+                      <AppleIcon sx={{ color: '#FFF' }} />
                     )}
                     {socialLoginPending ? 'Conectando...' : 'Conectate con Apple'}
                   </Button>
@@ -547,7 +546,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                       fontWeight: 600,
                       borderColor: 'text.primary',
                       color: 'text.primary',
-                      backgroundColor: theme.palette.mode === 'dark' ? '#0F172A' : theme.palette.background.paper,
+                      backgroundColor: '#0F172A',
                       '&:hover': {
                         borderColor: 'primary.main',
                         backgroundColor: 'action.hover',

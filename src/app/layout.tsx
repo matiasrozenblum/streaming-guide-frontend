@@ -1,4 +1,4 @@
-import { CustomThemeProvider } from '@/contexts/ThemeContext';
+import { AppThemeProvider } from '@/theme/ThemeProvider';
 import '@/styles/globals.css';
 import type { Metadata, Viewport } from 'next';
 import { Inter } from 'next/font/google';
@@ -65,15 +65,13 @@ export const metadata: Metadata = {
     'apple-mobile-web-app-capable': 'yes',
     'apple-mobile-web-app-status-bar-style': 'default',
     'apple-mobile-web-app-title': 'La Guía del Streaming',
-    'theme-color': '#f8fafc',
   },
 };
 
 // Structured data identifying La Guía del Streaming itself (site logo/brand),
 // so search engines and AI overviews use our microphone logo — not a channel's.
-// Lives in the root layout, outside CustomThemeProvider, because that provider
-// renders a skeleton instead of children until it mounts on the client: anything
-// inside it never reaches the server-rendered HTML that non-JS crawlers read.
+// Lives in the root layout so it is part of the server-rendered HTML that
+// non-JS crawlers read.
 const organizationJsonLd = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
@@ -91,6 +89,8 @@ const websiteJsonLd = {
 };
 
 export const viewport: Viewport = {
+  themeColor: '#0f172a',
+  colorScheme: 'dark',
   width: 'device-width',
   initialScale: 1,
   maximumScale: 1,
@@ -118,7 +118,7 @@ export default function RootLayout({
           <SessionProviderWrapper>
             <PushProvider enabled={true} installPrompt={null}>
               <TooltipProvider>
-                <CustomThemeProvider>
+                <AppThemeProvider>
                   <YouTubePlayerProvider>
                     <ConditionalLayoutWrapper>
                       <PageviewTracker />
@@ -135,7 +135,7 @@ export default function RootLayout({
                   {/* Cookie Consent Components */}
                   <CookieConsentBanner />
                   <CookiePreferencesModal />
-                </CustomThemeProvider>
+                </AppThemeProvider>
               </TooltipProvider>
             </PushProvider>
 

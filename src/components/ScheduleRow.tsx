@@ -5,7 +5,6 @@ import { Box, Avatar, Typography, useTheme, useMediaQuery } from '@mui/material'
 import { usePathname } from 'next/navigation';
 import { ProgramBlock } from './ProgramBlock';
 import { useLayoutValues, DAY_WIDTH_PX, OVERFLOW_WIDTH_PX, DAY_WITH_OVERFLOW_MINUTES } from '../constants/layout';
-import { useThemeContext } from '@/contexts/ThemeContext';
 // Removed getChannelBackground import - now using database background_color
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
 
@@ -109,7 +108,6 @@ export const ScheduleRow = ({
   isToday,
 }: Props) => {
   const theme = useTheme();
-  const { mode } = useThemeContext();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { channelLabelWidth, rowHeight } = useLayoutValues();
   const pathname = usePathname();
@@ -125,14 +123,12 @@ export const ScheduleRow = ({
       justifyContent="center"
       position="sticky"
       left={0}
-      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      bgcolor="#1e293b"
       height="100%"
       zIndex={6}
       sx={{
-        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-        boxShadow: mode === 'light'
-          ? '2px 0 4px rgba(0,0,0,0.05)'
-          : '2px 0 4px rgba(0,0,0,0.2)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '2px 0 4px rgba(0,0,0,0.2)',
       }}
     >
       {channelLogo ? (
@@ -145,9 +141,7 @@ export const ScheduleRow = ({
             width: isMobile ? 112 : 130,
             height: isMobile ? 50 : 68,
             background: channelBackgroundColor || '#ffffff', // fallback to white
-            boxShadow: mode === 'light'
-              ? '0 2px 4px rgba(0,0,0,0.1)'
-              : '0 2px 4px rgba(0,0,0,0.2)',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)',
             '& img': {
               objectFit: 'contain',
               width: '100%',
@@ -161,7 +155,7 @@ export const ScheduleRow = ({
           sx={{
             fontWeight: 600,
             fontSize: isMobile ? '0.875rem' : '1rem',
-            color: mode === 'light' ? '#374151' : '#f1f5f9',
+            color: '#f1f5f9',
             textAlign: 'center',
           }}
         >
@@ -180,14 +174,12 @@ export const ScheduleRow = ({
       justifyContent="center"
       position="sticky"
       left={0}
-      bgcolor={mode === 'light' ? 'white' : '#1e293b'}
+      bgcolor="#1e293b"
       height="100%"
       zIndex={6}
       sx={{
-        borderRight: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
-        boxShadow: mode === 'light'
-          ? '2px 0 4px rgba(0,0,0,0.05)'
-          : '2px 0 4px rgba(0,0,0,0.2)',
+        borderRight: '1px solid rgba(255, 255, 255, 0.12)',
+        boxShadow: '2px 0 4px rgba(0,0,0,0.2)',
       }}
     >
       {/* Blurred Logo Background */}
@@ -232,7 +224,7 @@ export const ScheduleRow = ({
             fontWeight: 700,
             fontSize: isMobile ? '0.875rem' : '1rem',
             lineHeight: 1.2,
-            color: mode === 'light' ? '#1e293b' : '#f1f5f9',
+            color: '#f1f5f9',
             textAlign: 'center',
             letterSpacing: '0.02em',
             textTransform: 'uppercase',
@@ -311,14 +303,12 @@ export const ScheduleRow = ({
       <Box
         display="flex"
         alignItems="center"
-        borderBottom={`1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`}
+        borderBottom="1px solid rgba(255, 255, 255, 0.12)"
         position="relative"
         height={`${rowHeight}px`}
         sx={{
           '&:hover': {
-            backgroundColor: mode === 'light'
-              ? 'rgba(0, 0, 0, 0.02)'
-              : 'rgba(255, 255, 255, 0.02)',
+            backgroundColor: 'rgba(255, 255, 255, 0.02)',
           },
         }}
       >
@@ -333,9 +323,7 @@ export const ScheduleRow = ({
               top: 0,
               width: `${OVERFLOW_WIDTH_PX}px`,
               height: '100%',
-              backgroundColor: mode === 'dark'
-                ? 'rgba(255,255,255,0.04)'
-                : 'rgba(0,0,0,0.04)',
+              backgroundColor: 'rgba(255,255,255,0.04)',
               pointerEvents: 'none',
               zIndex: 0,
             }}

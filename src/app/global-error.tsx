@@ -11,7 +11,7 @@ export default function GlobalError({
     reset: () => void;
 }) {
     return (
-        <html lang="es">
+        <html lang="es" style={{ colorScheme: 'dark' }}>
             <head>
                 <meta charSet="utf-8" />
                 <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -24,8 +24,8 @@ export default function GlobalError({
                     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
                     body {
                         font-family: 'Inter', system-ui, sans-serif;
-                        background: #f8fafc;
-                        color: #111827;
+                        background: #0f172a;
+                        color: #f1f5f9;
                         min-height: 100dvh;
                         display: flex;
                         align-items: center;
@@ -45,7 +45,7 @@ export default function GlobalError({
                     .icon-ring {
                         width: 80px;
                         height: 80px;
-                        background: #fef3c7;
+                        background: rgba(217,119,6,0.2);
                         border-radius: 50%;
                         display: flex;
                         align-items: center;
@@ -54,7 +54,7 @@ export default function GlobalError({
                     }
                     h1 { font-size: 1.5rem; font-weight: 700; margin-bottom: 0.4rem; }
                     .sub {
-                        color: #6b7280;
+                        color: #94a3b8;
                         font-size: 0.95rem;
                         line-height: 1.65;
                     }
@@ -70,45 +70,25 @@ export default function GlobalError({
                         transition: background 0.15s;
                     }
                     .btn-primary {
-                        background: #2563eb;
+                        background: #3b82f6;
                         color: #fff;
                         border: none;
                     }
-                    .btn-primary:hover { background: #1d4ed8; }
+                    .btn-primary:hover { background: #2563eb; }
                     .btn-secondary {
                         background: transparent;
-                        color: #374151;
-                        border: 1px solid #e5e7eb;
+                        color: #cbd5e1;
+                        border: 1px solid #334155;
                     }
-                    .btn-secondary:hover { background: #f9fafb; }
-
-                    /* Dark mode via system preference */
-                    @media (prefers-color-scheme: dark) {
-                        body { background: #0f172a; color: #f1f5f9; }
-                        .icon-ring { background: rgba(217,119,6,0.2); }
-                        .sub { color: #94a3b8; }
-                        .btn-primary { background: #3b82f6; }
-                        .btn-primary:hover { background: #2563eb; }
-                        .btn-secondary { color: #cbd5e1; border-color: #334155; }
-                        .btn-secondary:hover { background: #1e293b; }
-                        .logo-light { display: none; }
-                    }
-                    @media (prefers-color-scheme: light) {
-                        .logo-dark { display: none; }
-                    }
+                    .btn-secondary:hover { background: #1e293b; }
                 `}</style>
             </head>
             <body>
                 <div className="wrap">
                     <img
-                        src="/img/text.png"
-                        alt="La Guía del Streaming"
-                        className="logo logo-light"
-                    />
-                    <img
                         src="/img/text-white.png"
                         alt="La Guía del Streaming"
-                        className="logo logo-dark"
+                        className="logo"
                     />
 
                     <div className="icon-ring">
