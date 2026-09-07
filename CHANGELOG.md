@@ -10,7 +10,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.33.0] - 2026-09-06
+## [1.33.0] - 2026-09-07
+
+### Added
+- **Página 404 propia**: hasta ahora una URL inexistente caía en el 404 que trae Next por defecto, que se pinta con texto oscuro y sin fondo propio. Eso funcionaba de casualidad mientras el `<body>` no pintaba nada; al pasar a fondo oscuro quedaba texto oscuro sobre oscuro, ilegible. `src/app/not-found.tsx` es un server component sin dependencias de cliente, con el logo, el mensaje y un botón para volver al inicio, en el mismo lenguaje visual que la pantalla de error.
 
 ### Removed
 - **El toggle de dark/light mode y todo el light mode**: la web quedó dark-only, igual que la app nativa. El botón del header desapareció junto con `ThemeContext` (el contexto, `useThemeContext`, `toggleTheme`, la preferencia guardada en `localStorage`, la lectura de `prefers-color-scheme` y el evento de analytics `theme_change`). El tema pasó a ser un único objeto estático en `src/theme/theme.ts`, aplicado por `AppThemeProvider`; los componentes que necesitan leerlo usan el `useTheme()` de MUI. Se colapsaron ~210 condicionales `mode === 'light' ? … : …` a su rama oscura en 28 archivos, se eliminó la paleta clara de `getColorForChannel` y de `getServiceColor` (ambas funciones ya no reciben `mode`), y en el CSS global se borraron las reglas `html[data-theme="light"]` y el bloque `@media (prefers-color-scheme: dark)`.
