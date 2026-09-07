@@ -21,6 +21,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 - **Color de la barra del navegador y del PWA**: `theme-color` pasó de `#f8fafc` a `#0f172a` (en el `viewport` de Next y en `manifest.json`), acompañado de `color-scheme: dark` para que los controles nativos y las barras de scroll se rendericen oscuros.
+- **El user menu se corrió a la derecha para alinearse con el logo**: el botón del menú de usuario tenía `marginRight: 1.5` (12px) y el `UserButton` del estado deslogueado un `mr` de 8px, ambos puestos para separarlos del toggle de tema que vivía a su derecha. Sin toggle ese margen quedó como aire muerto que dejaba el borde derecho del menú más adentro que el borde izquierdo del logo, rompiendo la simetría con el banner. Ahora el inset lo define solo el `pr` del contenedor, así que ambos lados quedan a 32px del viewport en desktop y 8px en mobile. El `gap` de ese contenedor también se fue: quedó un único hijo.
 - **Scrollbars y sombras sin variante clara**: quedaron los valores oscuros como únicos, y la pantalla de `global-error` —que trae su CSS embebido porque corre cuando falla el layout raíz— dejó de alternar por `prefers-color-scheme` y de servir dos logos para elegir uno por CSS.
 
 ---

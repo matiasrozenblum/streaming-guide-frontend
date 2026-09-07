@@ -84,7 +84,6 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
           minWidth: isMobile ? 0 : `${MIN_WIDTH}px`,
           width: isMobile ? 40 : 'auto', // Fixed width on mobile for circle
           height: 40, // Fixed height for both
-          marginRight: 1.5, // 12px spacing to the right
           backdropFilter: 'blur(8px)',
           color: 'text.primary',
           '&:hover': {

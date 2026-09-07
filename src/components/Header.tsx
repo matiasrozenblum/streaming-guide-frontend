@@ -216,7 +216,6 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
             transform: 'translateY(-50%)',
             display: 'flex',
             alignItems: 'center',
-            gap: 1,
           }}
         >
           {!isAuth ? (
