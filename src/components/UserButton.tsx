@@ -2,7 +2,6 @@
 import { useState } from 'react';
 import { IconButton, Tooltip } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
-import { tokens } from '@/design-system/tokens';
 import LoginModal from './auth/LoginModal';
 
 export const UserButton = () => {
@@ -18,7 +17,6 @@ export const UserButton = () => {
           sx={{
             width: 44,
             height: 44,
-            mr: tokens.spacing.sm,
             color: 'text.secondary',
             backgroundColor: 'rgba(255,255,255,0.1)',
             backdropFilter: 'blur(8px)',
