@@ -1,9 +1,7 @@
 import React from 'react';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { Box, Container, useTheme, useMediaQuery, Typography } from '@mui/material';
 import { useRouter, usePathname } from 'next/navigation';
 import UserMenu from './UserMenu';
-import { ThemeToggle } from './ThemeToggle';
 import { tokens } from '@/design-system/tokens';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
@@ -19,12 +17,11 @@ interface HeaderProps {
 export default function Header({ streamersEnabled }: HeaderProps = {}) {
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
-  const { mode } = useThemeContext();
   const router = useRouter();
   const pathname = usePathname();
   const isAuth = typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
 
-  const text = mode === 'light' ? '/img/text.png' : '/img/text-white.png';
+  const text = '/img/text-white.png';
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const [isHomePage, setIsHomePage] = React.useState(false);
@@ -146,13 +143,13 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 textTransform: 'uppercase',
                 fontFamily: '"Outfit", sans-serif',
                 color: isCanalesPage
-                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                  ? '#ffffff'
+                  : 'rgba(255,255,255,0.6)',
                 transition: 'color 0.2s ease-in-out',
                 '&:hover': {
                   color: isCanalesPage
-                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                    ? '#ffffff'
+                    : 'rgba(255,255,255,0.9)',
                 },
                 position: 'relative',
                 '&::after': isCanalesPage ? {
@@ -162,7 +159,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                   left: 0,
                   right: 0,
                   height: '2px',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  backgroundColor: '#42a5f5',
                 } : {},
               }}
             >
@@ -184,13 +181,13 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                 textTransform: 'uppercase',
                 fontFamily: '"Outfit", sans-serif',
                 color: isStreamersPage
-                  ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                  : (mode === 'light' ? 'rgba(0,0,0,0.6)' : 'rgba(255,255,255,0.6)'),
+                  ? '#ffffff'
+                  : 'rgba(255,255,255,0.6)',
                 transition: 'color 0.2s ease-in-out',
                 '&:hover': {
                   color: isStreamersPage
-                    ? (mode === 'light' ? '#1976d2' : '#ffffff')
-                    : (mode === 'light' ? '#1976d2' : 'rgba(255,255,255,0.9)'),
+                    ? '#ffffff'
+                    : 'rgba(255,255,255,0.9)',
                 },
                 position: 'relative',
                 '&::after': isStreamersPage ? {
@@ -200,7 +197,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                   left: 0,
                   right: 0,
                   height: '2px',
-                  backgroundColor: mode === 'light' ? '#1976d2' : '#42a5f5',
+                  backgroundColor: '#42a5f5',
                 } : {},
               }}
             >
@@ -229,7 +226,6 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
           ) : (
             <UserMenu onLogout={handleLogout} />
           )}
-          <ThemeToggle />
         </Box>
       </Box>
     </Container>

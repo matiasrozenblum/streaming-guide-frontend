@@ -10,7 +10,6 @@ import dynamic from 'next/dynamic';
 import { api } from '@/services/api';
 import { bannersApi } from '@/services/banners';
 import { useLiveStatus } from '@/contexts/LiveStatusContext';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { ScheduleGrid } from '@/components/ScheduleGrid';
 import { SkeletonScheduleGrid } from '@/components/SkeletonScheduleGrid';
@@ -66,7 +65,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
   const bannerOuterRef = useRef<HTMLDivElement>(null);
   const bannerOffsetRef = useRef(0);
 
-  const { mode } = useThemeContext();
   const { setLiveStatuses, liveStatus } = useLiveStatus();
   const { setZapList } = useYouTubePlayer();
 
@@ -90,12 +88,6 @@ export default function HomeClient({ initialData }: HomeClientProps) {
     }
     return map;
   }, [initialData.weekSchedules]);
-
-  // Keep html background in sync with theme so overscroll bounce area matches
-  useEffect(() => {
-    document.documentElement.style.backgroundColor =
-      mode === 'dark' ? '#0f172a' : '#f8fafc';
-  }, [mode]);
 
   // Set initial live statuses immediately
   useEffect(() => {
@@ -361,9 +353,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           height: '100%',
           maxWidth: '100vw',
           background:
-            mode === 'light'
-              ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-              : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+            'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
           display: 'flex',
           flexDirection: 'column',
           overflow: 'hidden',

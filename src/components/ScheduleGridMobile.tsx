@@ -13,7 +13,6 @@ import { NowIndicator } from './NowIndicator';
 import { getColorForChannel } from '@/utils/colors';
 import { useLayoutValues, DAY_ORDER, DAY_WITH_OVERFLOW_WIDTH_PX, DayOfWeek } from '@/constants/layout';
 import { getOverflowSchedules } from '@/utils/overflow';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { event as gaEvent } from '@/lib/gtag';
 import Clarity from '@microsoft/clarity';
 import { useSessionContext } from '@/contexts/SessionContext';
@@ -45,7 +44,6 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
   const [containerWidth, setContainerWidth] = useState<number>(0);
 
   const { channelLabelWidth, pixelsPerMinute } = useLayoutValues();
-  const { mode } = useThemeContext();
   const isToday = selectedDay === today;
   const totalGridWidth = DAY_WITH_OVERFLOW_WIDTH_PX + channelLabelWidth;
 
@@ -127,7 +125,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
 
   if (!channels.length || !schedules.length) {
     return (
-      <Typography sx={{ mt: 4, color: mode === 'light' ? '#374151' : '#f1f5f9' }}>
+      <Typography sx={{ mt: 4, color: '#f1f5f9' }}>
         Sin datos disponibles
       </Typography>
     );
@@ -266,16 +264,12 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
             borderRadius: '4px',
           },
           '&::-webkit-scrollbar-thumb': {
-            background: mode === 'light' 
-              ? 'rgba(0, 0, 0, 0.2)' 
-              : 'rgba(255, 255, 255, 0.2)',
+            background: 'rgba(255, 255, 255, 0.2)',
             borderRadius: '4px',
             border: '1px solid transparent',
             backgroundClip: 'content-box',
             '&:hover': {
-              background: mode === 'light' 
-                ? 'rgba(0, 0, 0, 0.3)' 
-                : 'rgba(255, 255, 255, 0.3)',
+              background: 'rgba(255, 255, 255, 0.3)',
             },
           },
           '&::-webkit-scrollbar-corner': {
@@ -283,9 +277,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
           },
           // Firefox scrollbar styling
           scrollbarWidth: 'thin',
-          scrollbarColor: mode === 'light' 
-            ? 'rgba(0, 0, 0, 0.2) transparent' 
-            : 'rgba(255, 255, 255, 0.2) transparent',
+          scrollbarColor: 'rgba(255, 255, 255, 0.2) transparent',
         }}
       >
         <Box sx={{ width: `${totalGridWidth}px`, position: 'relative' }}>
@@ -319,7 +311,7 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
                   style_override: s.program.style_override,
                 };
               })}
-              color={getColorForChannel(idx, mode)}
+              color={getColorForChannel(idx)}
               isToday={isToday}
             />
           ))}
@@ -335,8 +327,8 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
                   ? `calc(${bottomNavHeight}px + env(safe-area-inset-bottom, 0px))`
                   : 0,
                 zIndex: 10,
-                backgroundColor: mode === 'light' ? 'white' : '#1e293b',
-                borderTop: `1px solid ${mode === 'light' ? 'rgba(0, 0, 0, 0.12)' : 'rgba(255, 255, 255, 0.12)'}`,
+                backgroundColor: '#1e293b',
+                borderTop: '1px solid rgba(255, 255, 255, 0.12)',
                 display: 'flex',
                 justifyContent: 'center',
               }}
@@ -374,13 +366,13 @@ export const ScheduleGridMobile = ({ channels, schedules, categories, categories
               : '5vh',
             left: '50%',
             transform: 'translateX(-50%)',
-            backgroundColor: mode === 'light' ? '#2563eb' : '#3b82f6',
+            backgroundColor: '#3b82f6',
             color: '#ffffff',
             opacity: 0.85,
             textTransform: 'none',
             zIndex: 1000,
             '&:hover': {
-              backgroundColor: mode === 'light' ? '#1d4ed8' : '#2563eb',
+              backgroundColor: '#2563eb',
               opacity: 1,
             },
           }}

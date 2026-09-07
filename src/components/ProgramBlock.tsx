@@ -6,7 +6,6 @@ import dayjs from 'dayjs';
 import customParseFormat from 'dayjs/plugin/customParseFormat';
 import { useLayoutValues, DAY_WITH_OVERFLOW_WIDTH_PX } from '@/constants/layout';
 import { OpenInNew, Notifications } from '@mui/icons-material';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { parseStreamUrl } from '@/utils/parseStreamUrl';
 import { event as gaEvent } from '@/lib/gtag';
@@ -85,7 +84,6 @@ export const ProgramBlock: React.FC<Props> = ({
 
   // Simplified approach - no complex stream matching needed
   const { pixelsPerMinute } = useLayoutValues();
-  const { mode } = useThemeContext();
   const theme = useTheme();
   const [isMobile, setIsMobile] = useState(false);
   const bellRef = useRef<HTMLButtonElement>(null);
@@ -454,7 +452,7 @@ export const ProgramBlock: React.FC<Props> = ({
         variant="subtitle1"
         fontWeight={tokens.typography.fontWeight.bold}
         sx={{
-          color: mode === 'dark' ? '#fff' : theme.palette.text.primary
+          color: '#fff'
         }}
       >
         {name.toUpperCase()}
@@ -463,7 +461,7 @@ export const ProgramBlock: React.FC<Props> = ({
         variant="body2"
         sx={{
           mt: tokens.spacing.sm,
-          color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary,
+          color: 'rgba(255,255,255,0.8)',
           display: 'flex',
           alignItems: 'center',
           gap: 1
@@ -481,7 +479,7 @@ export const ProgramBlock: React.FC<Props> = ({
           variant="body2"
           sx={{
             mt: tokens.spacing.sm,
-            color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary
+            color: 'rgba(255,255,255,0.8)'
           }}
         >
           {description}
@@ -492,13 +490,13 @@ export const ProgramBlock: React.FC<Props> = ({
           <Text
             variant="body2"
             fontWeight={tokens.typography.fontWeight.bold}
-            sx={{ color: mode === 'dark' ? '#fff' : theme.palette.text.primary }}
+            sx={{ color: '#fff' }}
           >
             Panelistas:
           </Text>
           <Text
             variant="body2"
-            sx={{ color: mode === 'dark' ? 'rgba(255,255,255,0.8)' : theme.palette.text.secondary }}
+            sx={{ color: 'rgba(255,255,255,0.8)' }}
           >
             {panelists.map(p => p.name).join(', ')}
           </Text>
@@ -529,7 +527,7 @@ export const ProgramBlock: React.FC<Props> = ({
           <Text
             variant="body2"
             sx={{
-              color: mode === 'dark' ? 'rgba(255,255,255,0.5)' : theme.palette.text.disabled,
+              color: 'rgba(255,255,255,0.5)',
               fontStyle: 'italic',
               fontSize: tokens.typography.fontSize.sm,
             }}
@@ -608,12 +606,8 @@ export const ProgramBlock: React.FC<Props> = ({
             ],
             sx: {
               '& .MuiTooltip-tooltip': {
-                backgroundColor: mode === 'light'
-                  ? theme.palette.background.paper
-                  : '#0F172A',
-                color: mode === 'light'
-                  ? theme.palette.text.primary
-                  : '#fff',
+                backgroundColor: '#0F172A',
+                color: '#fff',
                 boxShadow: theme.shadows[3],
               }
             }
@@ -640,7 +634,7 @@ export const ProgramBlock: React.FC<Props> = ({
                 : isPast
                   ? alpha(color, 0.05)
                   : alpha(color, 0.15),
-              border: `1px solid ${isPast ? alpha(color, mode === 'light' ? 0.3 : 0.4) : color}`,
+              border: `1px solid ${isPast ? alpha(color, 0.4) : color}`,
               borderRadius: tokens.borderRadius.sm,
               transition: `background-color ${tokens.transition.normal} ${tokens.transition.timing}`,
               cursor: 'pointer',
@@ -648,10 +642,8 @@ export const ProgramBlock: React.FC<Props> = ({
               boxShadow: tokens.boxShadow.sm,
               '&:hover': {
                 backgroundColor: isLive
-                  ? alpha(color, mode === 'light' ? 0.38 : 0.48)
-                  : isPast
-                    ? alpha(color, mode === 'light' ? 0.36 : 0.28)
-                    : alpha(color, mode === 'light' ? 0.22 : 0.28),
+                  ? alpha(color, 0.48)
+                  : alpha(color, 0.28),
                 transform: 'scale(1.01)',
               },
             }}
@@ -764,7 +756,7 @@ export const ProgramBlock: React.FC<Props> = ({
                         width: '40px',
                         height: '40px',
                         objectFit: 'contain',
-                        opacity: isPast ? (mode === 'light' ? 0.5 : 0.4) : 1,
+                        opacity: isPast ? 0.4 : 1,
                       }}
                     />
                   )}
@@ -799,7 +791,7 @@ export const ProgramBlock: React.FC<Props> = ({
                         sx={{
                           fontSize: totalMultipleStreams && totalMultipleStreams > 1 ? '0.6rem' : '0.65rem',
                           textAlign: 'center',
-                          color: isPast ? alpha(color, 0.8) : alpha(color, 0.8),
+                          color: alpha(color, 0.8),
                           lineHeight: totalMultipleStreams && totalMultipleStreams > 1 ? 1.1 : 1.2,
                           maxWidth: '100%',
                           overflow: 'hidden',

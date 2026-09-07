@@ -2,19 +2,15 @@
 import React from 'react';
 import { Container, Typography, Box, Paper, Divider, useTheme } from '@mui/material';
 import Header from '@/components/Header';
-import { useThemeContext } from '@/contexts/ThemeContext';
 
 export default function PrivacyPolicyPage() {
-  const { mode } = useThemeContext();
   const theme = useTheme();
   
   return (
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
         color: theme.palette.text.primary,
       }}
@@ -25,7 +21,7 @@ export default function PrivacyPolicyPage() {
         elevation={1} 
         sx={{ 
           p: 4,
-          backgroundColor: mode === 'light' ? 'rgba(255, 255, 255, 0.9)' : 'rgba(30, 41, 59, 0.9)',
+          backgroundColor: 'rgba(30, 41, 59, 0.9)',
           backdropFilter: 'blur(8px)',
         }}
       >

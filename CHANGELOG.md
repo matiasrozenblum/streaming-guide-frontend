@@ -8,6 +8,25 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.33.0] - 2026-09-06
+
+### Removed
+- **El toggle de dark/light mode y todo el light mode**: la web quedó dark-only, igual que la app nativa. El botón del header desapareció junto con `ThemeContext` (el contexto, `useThemeContext`, `toggleTheme`, la preferencia guardada en `localStorage`, la lectura de `prefers-color-scheme` y el evento de analytics `theme_change`). El tema pasó a ser un único objeto estático en `src/theme/theme.ts`, aplicado por `AppThemeProvider`; los componentes que necesitan leerlo usan el `useTheme()` de MUI. Se colapsaron ~210 condicionales `mode === 'light' ? … : …` a su rama oscura en 28 archivos, se eliminó la paleta clara de `getColorForChannel` y de `getServiceColor` (ambas funciones ya no reciben `mode`), y en el CSS global se borraron las reglas `html[data-theme="light"]` y el bloque `@media (prefers-color-scheme: dark)`.
+
+### Fixed
+- **La página servida ya no era más que un esqueleto para los crawlers**: `CustomThemeProvider` renderizaba `HomePageSkeleton` en lugar de sus hijos hasta montarse en el cliente, para que no se viera el flash entre tema claro y oscuro. El costo era que nada por debajo del provider —el bloque de texto SEO de la home, su JSON-LD de página— llegaba al HTML del servidor, así que un buscador sin JS veía la grilla vacía. Sin dos temas no hay flash que evitar, así que el gate se eliminó y el árbol vuelve a renderizarse en el servidor.
+- **El `<body>` no pintaba fondo**: su `background` era un `linear-gradient` sobre `--background-start-rgb` y `--background-end-rgb`, variables que nunca se definieron, así que la declaración era inválida y quedaba transparente. Cada página tapaba el hueco con su propio fondo, pero el área de overscroll y los momentos previos a la hidratación mostraban blanco. Ahora `html` y `body` pintan `#0f172a` directamente, y `HomeClient` ya no necesita sincronizar el fondo del `<html>` por JS.
+
+### Changed
+- **Color de la barra del navegador y del PWA**: `theme-color` pasó de `#f8fafc` a `#0f172a` (en el `viewport` de Next y en `manifest.json`), acompañado de `color-scheme: dark` para que los controles nativos y las barras de scroll se rendericen oscuros.
+- **Scrollbars y sombras sin variante clara**: quedaron los valores oscuros como únicos, y la pantalla de `global-error` —que trae su CSS embebido porque corre cuando falla el layout raíz— dejó de alternar por `prefers-color-scheme` y de servir dos logos para elegir uno por CSS.
+
+---
+
+## [1.32.1] - 2026-09-06
+
 ### Fixed
 - **La creación masiva de horarios pedía confirmar dos veces y se perdía al guardar el programa**: cargar días y horas en "Creación Masiva" no creaba nada, los mandaba a una lista intermedia ("Horarios a crear") que recién se persistía con un segundo botón, "Crear N Horarios". El alta de horario simple, en cambio, siempre creó en un solo click, así que el mismo diálogo se comportaba de dos maneras distintas. Peor: sobre un programa existente esa lista intermedia vivía únicamente en el subcomponente y nadie la miraba al guardar, así que quien apretaba "Actualizar" sin pasar por el segundo botón cerraba el diálogo, MUI desmontaba el estado y los horarios no se creaban nunca —desde el backoffice se veía como si guardar el programa los borrara, aunque en la base no se borraba nada. Ahora el botón masivo crea directo, igual que el de horario simple: un solo click en el diálogo de Programas y en el de "Gestionar" de la página de Horarios, donde el riesgo era mayor porque solo tenía botón "Cerrar". Sobre un programa que todavía no existe se siguen encolando junto al resto del alta, que es el único caso donde no hay contra qué crearlos. Se eliminaron la lista intermedia y el segundo botón, y el masivo pasó a validar que haya canal —antes solo lo validaba el alta simple, así que se podían encolar horarios que después fallaban al crearse.
 

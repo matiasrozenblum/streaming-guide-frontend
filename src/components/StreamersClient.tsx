@@ -21,7 +21,6 @@ import {
   Notifications,
   NotificationsNone,
 } from '@mui/icons-material';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { useYouTubePlayer } from '@/contexts/YouTubeGlobalPlayerContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { event as gaEvent } from '@/lib/gtag';
@@ -43,16 +42,16 @@ const MotionBox = motion(Box);
 const MotionCard = motion(Card);
 
 
-const getServiceColor = (service: StreamingService, mode: 'light' | 'dark'): string => {
+const getServiceColor = (service: StreamingService): string => {
   switch (service) {
     case StreamingService.TWITCH:
-      return mode === 'light' ? '#9146FF' : '#A970FF';
+      return '#A970FF';
     case StreamingService.KICK:
-      return mode === 'light' ? '#53FC18' : '#6AFF3A';
+      return '#6AFF3A';
     case StreamingService.YOUTUBE:
-      return mode === 'light' ? '#FF0000' : '#FF4444';
+      return '#FF4444';
     default:
-      return mode === 'light' ? '#1976d2' : '#42a5f5';
+      return '#42a5f5';
   }
 };
 
@@ -91,7 +90,6 @@ interface StreamersClientProps {
 export default function StreamersClient({ initialStreamers, initialCategories = [], streamersEnabled }: StreamersClientProps) {
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   const _initialCategories = initialCategories; // Reserved for future category filtering feature
-  const { mode } = useThemeContext();
   const { session } = useSessionContext();
   const typedSession = session as SessionWithToken | null;
   // Use prop if provided, otherwise fall back to hook for backward compatibility
@@ -396,9 +394,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
     <Box
       sx={{
         minHeight: '100dvh',
-        background: mode === 'light'
-          ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-          : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
         // Add bottom padding on mobile for bottom navigation + safe area inset (only if streamers enabled)
         pb: {
@@ -445,12 +441,10 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
               sx={{
                 textAlign: 'center',
                 py: 8,
-                background: mode === 'light'
-                  ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                  : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
+                background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
                 backdropFilter: 'blur(8px)',
                 borderRadius: 3,
-                border: mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)',
+                border: '1px solid rgba(255,255,255,0.1)',
               }}
             >
               <CardContent>
@@ -469,11 +463,11 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                 // Determine service colors for border/glow
                 const hasTwitch = streamer.services.some(s => s.service === StreamingService.TWITCH);
                 const hasKick = streamer.services.some(s => s.service === StreamingService.KICK);
-                const twitchColor = getServiceColor(StreamingService.TWITCH, mode);
-                const kickColor = getServiceColor(StreamingService.KICK, mode);
+                const twitchColor = getServiceColor(StreamingService.TWITCH);
+                const kickColor = getServiceColor(StreamingService.KICK);
                 // Fallback to first service color if neither Twitch nor Kick exists
                 const fallbackService = streamer.services[0];
-                const fallbackColor = fallbackService ? getServiceColor(fallbackService.service, mode) : null;
+                const fallbackColor = fallbackService ? getServiceColor(fallbackService.service) : null;
                 const isDual = hasTwitch && hasKick;
                 const serviceColor = isDual ? null : (hasKick ? kickColor : hasTwitch ? twitchColor : fallbackColor);
                 // Smooth blend between colors near the middle (48% -> 52%) with same opacity as single-color border
@@ -483,9 +477,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                   ? `linear-gradient(to right, ${twitchBorder} 0%, ${twitchBorder} 48%, ${kickBorder} 52%, ${kickBorder} 100%)`
                   : undefined;
                 const cardInnerBg =
-                  mode === 'light'
-                    ? 'linear-gradient(135deg,rgba(255,255,255,0.9) 0%,rgba(255,255,255,0.8) 100%)'
-                    : 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)';
+                  'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)';
 
                 return (
                   <Grid size={{ xs: 6, sm: 4, md: 2, lg: 2 }} key={streamer.id}>
@@ -506,7 +498,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                           ? 'none'
                           : serviceColor
                             ? `1px solid ${alpha(serviceColor, 0.4)}`
-                            : (mode === 'light' ? '1px solid rgba(255,255,255,0.2)' : '1px solid rgba(255,255,255,0.1)'),
+                            : '1px solid rgba(255,255,255,0.1)',
                         // Gradient split border created via pseudo-element to preserve rounded corners and inner bg
                         ...(isDual
                           ? {
@@ -574,13 +566,11 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                               0 0 15px ${alpha(kickColor, 0.3)},
                               0 0 30px ${alpha(twitchColor, 0.15)},
                               0 0 30px ${alpha(kickColor, 0.15)},
-                              0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})
+                              0 12px 24px rgba(0,0,0,0.4)
                             `
                             : serviceColor
-                              ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,${mode === 'light' ? '0.15' : '0.4'})`
-                              : (mode === 'light'
-                                ? '0 12px 24px rgba(0,0,0,0.15)'
-                                : '0 12px 24px rgba(0,0,0,0.4)'),
+                              ? `0 0 15px ${serviceColor}60, 0 0 30px ${serviceColor}30, 0 12px 24px rgba(0,0,0,0.4)`
+                              : '0 12px 24px rgba(0,0,0,0.4)',
                           ...(isDual
                             ? {
                               '&::after': {
@@ -609,7 +599,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                             // Match the card's rounded corners at the top
                             borderTopLeftRadius: Number(theme.shape.borderRadius) * 3,
                             borderTopRightRadius: Number(theme.shape.borderRadius) * 3,
-                            backgroundColor: mode === 'light' ? 'rgba(0,0,0,0.05)' : 'rgba(255,255,255,0.05)',
+                            backgroundColor: 'rgba(255,255,255,0.05)',
                           })}
                         >
                           {/* LIVE Badge */}
@@ -726,7 +716,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                 display: 'flex',
                                 alignItems: 'center',
                                 justifyContent: 'center',
-                                backgroundColor: getColorForChannel(index, mode),
+                                backgroundColor: getColorForChannel(index),
                               }}
                             >
                               <Typography
@@ -780,9 +770,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                     height: 20,
                                     backgroundColor: category.color
                                       ? `${category.color}20`
-                                      : mode === 'light'
-                                        ? 'rgba(0,0,0,0.08)'
-                                        : 'rgba(255,255,255,0.1)',
+                                      : 'rgba(255,255,255,0.1)',
                                     color: category.color || 'text.secondary',
                                     border: category.color ? `1px solid ${category.color}40` : 'none',
                                   }}
@@ -818,8 +806,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                       opacity: isOtherPlatformActive ? 0.35 : 1,
                                       justifyContent: 'center',
                                       borderRadius: 1.5,
-                                      borderColor: getServiceColor(service.service, mode),
-                                      color: getServiceColor(service.service, mode),
+                                      borderColor: getServiceColor(service.service),
+                                      color: getServiceColor(service.service),
                                       textTransform: 'none',
                                       gap: 1,
                                       py: 0.75,
@@ -828,10 +816,8 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
                                       transition: 'opacity 0.2s ease',
                                       '&:hover': {
                                         opacity: 1, // Full opacity on hover even if inactive
-                                        borderColor: getServiceColor(service.service, mode),
-                                        backgroundColor: mode === 'light'
-                                          ? `${getServiceColor(service.service, mode)}15`
-                                          : `${getServiceColor(service.service, mode)}25`,
+                                        borderColor: getServiceColor(service.service),
+                                        backgroundColor: `${getServiceColor(service.service)}25`,
                                       }
                                     }}
                                   >

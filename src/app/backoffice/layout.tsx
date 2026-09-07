@@ -3,7 +3,6 @@
 import { useEffect, useState } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
-import { useThemeContext } from '@/contexts/ThemeContext';
 import { signOut } from 'next-auth/react';
 import {
   Box, Drawer, AppBar, Toolbar, Typography,
@@ -30,7 +29,6 @@ import Image from 'next/image';
 export default function BackofficeLayout({ children }: { children: React.ReactNode }) {
   const [mobileOpen, setMobileOpen] = useState(false);
   const { session, status } = useSessionContext();
-  const { mode } = useThemeContext();
   const typedSession = session as SessionWithToken | null;
   const router   = useRouter();
   const pathname = usePathname();
@@ -80,7 +78,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
         >
           <Image
             unoptimized
-            src={mode === 'light' ? '/img/text.png' : '/img/text-white.png'}
+            src="/img/text-white.png"
             alt="La Guía del Streaming"
             width={120}
             height={44}
@@ -96,19 +94,19 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
               selected={item.path === '/backoffice' ? pathname === item.path : pathname.startsWith(item.path)}
               sx={{
                 '&.Mui-selected': {
-                  backgroundColor: mode === 'light' ? 'rgba(37, 99, 235, 0.1)' : 'rgba(59, 130, 246, 0.2)',
+                  backgroundColor: 'rgba(59, 130, 246, 0.2)',
                   '& .MuiListItemIcon-root': {
-                    color: mode === 'light' ? '#2563eb' : '#3b82f6',
+                    color: '#3b82f6',
                   },
                   '& .MuiListItemText-primary': {
-                    color: mode === 'light' ? '#2563eb' : '#3b82f6',
+                    color: '#3b82f6',
                   },
                 },
                 '& .MuiListItemIcon-root': {
-                  color: mode === 'light' ? '#4B5563' : '#cbd5e1',
+                  color: '#cbd5e1',
                 },
                 '& .MuiListItemText-primary': {
-                  color: mode === 'light' ? '#111827' : '#f1f5f9',
+                  color: '#f1f5f9',
                 },
               }}
             >
@@ -125,18 +123,16 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     <Box sx={{ 
       display: 'flex',
       minHeight: '100vh',
-      background: mode === 'light'
-        ? 'linear-gradient(135deg,#f8fafc 0%,#e2e8f0 100%)'
-        : 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+      background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
     }}>
       <AppBar 
         position="fixed"
         sx={{ 
           width: { sm: `calc(100% - ${drawerWidth}px)` }, 
           ml: { sm: `${drawerWidth}px` },
-          backgroundColor: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(15,23,42,0.9)',
+          backgroundColor: 'rgba(15,23,42,0.9)',
           backdropFilter: 'blur(8px)',
-          borderBottom: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+          borderBottom: '1px solid rgba(255,255,255,0.1)',
         }}
       >
         <Toolbar>
@@ -149,7 +145,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
           >
             <MenuIcon />
           </IconButton>
-          <Typography sx={{ flexGrow: 1, color: mode === 'light' ? '#111827' : '#f1f5f9' }}>
+          <Typography sx={{ flexGrow: 1, color: '#f1f5f9' }}>
             Panel de Administración
           </Typography>
           <UserMenu onLogout={handleLogout} showHomeOption={true} />
@@ -167,8 +163,8 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
             '& .MuiDrawer-paper': { 
               boxSizing: 'border-box', 
               width: drawerWidth,
-              backgroundColor: mode === 'light' ? '#ffffff' : '#1e293b',
-              borderRight: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+              backgroundColor: '#1e293b',
+              borderRight: '1px solid rgba(255,255,255,0.1)',
             }
           }}
         >
@@ -182,9 +178,9 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
             '& .MuiDrawer-paper': { 
               boxSizing: 'border-box', 
               width: drawerWidth,
-              backgroundColor: mode === 'light' ? 'rgba(255,255,255,0.9)' : 'rgba(30,41,59,0.9)',
+              backgroundColor: 'rgba(30,41,59,0.9)',
               backdropFilter: 'blur(8px)',
-              borderRight: `1px solid ${mode === 'light' ? 'rgba(0,0,0,0.1)' : 'rgba(255,255,255,0.1)'}`,
+              borderRight: '1px solid rgba(255,255,255,0.1)',
             }
           }}
         >
