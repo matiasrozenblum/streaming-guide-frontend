@@ -18,6 +18,7 @@ import {
   InputLabel,
   Typography,
   Divider,
+  Tooltip,
 } from '@mui/material';
 import { Delete, Add } from '@mui/icons-material';
 import { User } from '@/types/user';
@@ -147,7 +148,9 @@ export function ManageSubscriptionsDialog({ open, onClose, user, session, onSubs
                 key={sub.id}
                 secondaryAction={
                   <Box>
-                    <IconButton aria-label="Eliminar suscripción" onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
+                    <Tooltip title="Eliminar suscripción" arrow>
+                      <IconButton aria-label="Eliminar suscripción" onClick={() => handleDelete(sub.id)}><Delete /></IconButton>
+                    </Tooltip>
                   </Box>
                 }
               >
