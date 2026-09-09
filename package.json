@@ -16,6 +16,7 @@
     "@mui/icons-material": "^7.1.0",
     "@mui/material": "^7.1.0",
     "@mui/system": "^7.1.0",
+    "@mui/x-charts": "^8.29.3",
     "@mui/x-date-pickers": "^8.5.3",
     "@mui/x-date-pickers-pro": "^8.5.3",
     "@nestjs/common": "^11.0.12",

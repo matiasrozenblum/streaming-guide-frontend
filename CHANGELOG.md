@@ -10,6 +10,27 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.34.0] - 2026-09-09
+
+### Added
+
+- **Sección de Métricas en el backoffice (`/backoffice/analytics`)**: resumen con tiles de KPI y variación contra la ventana previa, curvas de tendencia con granularidad día/semana/mes, y rankings de programas y canales con movimiento de posición. Convive con Estadísticas, que sigue reportando sobre el estado de la base (altas, suscripciones, PDFs); esta sección reporta sobre lo que la gente hace. Los datos salen del pipeline propio del backend, así que a diferencia de Datadog —que retiene un mes— el histórico no se corta.
+- **Envío de eventos a nuestro propio backend** (`src/lib/analyticsQueue.ts`): cuarto sink junto a PostHog, Datadog, GA4 y Clarity, enganchado en el mismo punto único por el que ya pasan todos los eventos (`event()` y `pageview()` en `src/lib/gtag.ts`), de modo que hereda el filtro de admins y las reglas de consent existentes. Los eventos se batchean y se mandan cada 10 segundos, al llegar a 20, y —lo importante— cuando la pestaña se oculta o se cierra, vía `sendBeacon`, que es el único transporte que el browser garantiza en ese momento. Falla en silencio siempre: perder un evento es aceptable, romper un click handler por registrarlo no.
+- **Exportador de imagen para Instagram**: botón en el ranking de programas que genera el top 10 como PNG de 1080×1350 (formato 4:5, el más alto que Instagram no recorta), replicando el diseño de referencia. Renderizado server-side con `ImageResponse` de `next/og`, sin dependencias nuevas. Los logos de canal se descargan e incrustan como data URI en vez de referenciarse por URL, así un logo caído degrada a "sin logo" en vez de tumbar la imagen entera.
+- **Mi resumen (`/mi-resumen`)**: recap personal estilo Wrapped con el top 5 de programas, totales y día favorito, en ventana semanal, mensual o anual. Se comparte como imagen 1080×1920 a través de la Web Share API cuando el browser la soporta, con fallback a descarga —Chrome y Firefox de escritorio no comparten archivos, y un share sheet que no hace nada es peor que una imagen guardada. Accesible desde el menú de usuario.
+
+### Changed
+
+- **`click_youtube_live`, `click_youtube_deferred` y `program_subscribe` ahora mandan `program_id` y `channel_id`**: hasta ahora solo viajaban los nombres, lo que obligaba al backend a resolverlos contra un mapa por texto. Con los ids, los rankings agregan sobre una columna entera indexada en vez de un lookup en jsonb.
+- **Política de privacidad actualizada**: se declara la recolección propia (qué se guarda, con qué identificador, y que los eventos individuales se borran a los 90 días quedando solo totales agregados) y se suma Datadog, que ya estaba integrado pero no figuraba.
+
+### Notes
+
+- El backoffice queda excluido del sink propio, igual que ya lo estaba en Datadog: el tráfico de `/backoffice` somos nosotros, no los usuarios.
+- La paleta de los gráficos se validó como set categórico contra la superficie oscura (`#1e293b`): peor par CVD ΔE 9.4, peor par de visión normal ΔE 24.0, los tres colores por encima de 3:1 de contraste.
+
+---
+
 ## [1.33.0] - 2026-09-07
 
 ### Added

@@ -189,6 +189,8 @@ export const ProgramBlock: React.FC<Props> = ({
       action: isLive ? 'click_youtube_live' : 'click_youtube_deferred',
       params: {
         category: 'program',
+        program_id: id,
+        channel_id: channelId,
         program_name: name,
         channel_name: channelName || 'unknown',
       },
@@ -270,6 +272,7 @@ export const ProgramBlock: React.FC<Props> = ({
         action: willSubscribe ? 'program_subscribe' : 'program_unsubscribe',
         params: {
           program_id: id,
+          channel_id: channelId,
           program_name: name,
           channel_name: channelName,
           has_push: isValidPush,
