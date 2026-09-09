@@ -83,6 +83,12 @@ export async function GET(request: NextRequest) {
       width: RECAP_WIDTH,
       height: RECAP_HEIGHT,
       fonts: toImageResponseFonts(fonts),
+      // Must override ImageResponse's default of `public, immutable,
+      // max-age=31536000`. This card is one specific user's personal data behind
+      // a session; marked public, a shared cache could hand it to somebody else.
+      headers: {
+        "cache-control": "private, no-store, max-age=0, must-revalidate",
+      },
     },
   );
 }

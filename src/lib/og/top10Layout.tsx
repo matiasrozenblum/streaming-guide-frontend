@@ -13,6 +13,7 @@ const PAD_X = 36;
 const NUMBER_COL = 118;
 const LOGO_BOX_W = 168;
 const LOGO_BOX_H = 76;
+const FOOTER_H = 96;
 
 const COLORS = {
   frame: "#4a7ba8",
@@ -49,119 +50,131 @@ export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
         fontFamily: "Outfit, sans-serif",
       }}
     >
-      {rows.map((row, index) => {
-        const isLeader = index === 0;
-        const name = row.program_name ?? "—";
+      {/* Centred rather than top-aligned: a range can return fewer than ten
+          programs, and anchoring a short list to the top leaves one large void
+          instead of balanced margins. With a full ten this is a no-op. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          justifyContent: "center",
+        }}
+      >
+        {rows.map((row, index) => {
+          const isLeader = index === 0;
+          const name = row.program_name ?? "—";
 
-        return (
-          <div
-            key={index}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              height: ROW_HEIGHT,
-              marginBottom: index === rows.length - 1 ? 0 : ROW_GAP,
-            }}
-          >
-            {/* The leader's number sits in its own white chip; the rest are set
+          return (
+            <div
+              key={index}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                height: ROW_HEIGHT,
+                marginBottom: index === rows.length - 1 ? 0 : ROW_GAP,
+              }}
+            >
+              {/* The leader's number sits in its own white chip; the rest are set
                 straight onto the frame. */}
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                justifyContent: "center",
-                width: NUMBER_COL,
-                height: ROW_HEIGHT,
-                borderRadius: 14,
-                backgroundColor: isLeader ? COLORS.card : "transparent",
-              }}
-            >
-              <span
-                style={{ fontSize: 58, fontWeight: 800, color: COLORS.ink }}
-              >
-                {String(index + 1).padStart(2, "0")}
-              </span>
-            </div>
-
-            <div
-              style={{
-                display: "flex",
-                alignItems: "center",
-                flex: 1,
-                height: ROW_HEIGHT,
-                marginLeft: 16,
-                paddingLeft: 28,
-                paddingRight: 20,
-                borderRadius: 14,
-                backgroundColor: isLeader ? COLORS.leaderCard : COLORS.card,
-              }}
-            >
               <div
                 style={{
                   display: "flex",
-                  flex: 1,
-                  justifyContent: "center",
                   alignItems: "center",
-                  paddingRight: 12,
+                  justifyContent: "center",
+                  width: NUMBER_COL,
+                  height: ROW_HEIGHT,
+                  borderRadius: 14,
+                  backgroundColor: isLeader ? COLORS.card : "transparent",
                 }}
               >
                 <span
-                  style={{
-                    // Long titles step down rather than overflow the card.
-                    fontSize: name.length > 22 ? 34 : 42,
-                    fontWeight: 800,
-                    color: isLeader ? COLORS.leaderInk : COLORS.ink,
-                    textAlign: "center",
-                    lineHeight: 1.1,
-                  }}
+                  style={{ fontSize: 58, fontWeight: 800, color: COLORS.ink }}
                 >
-                  {name}
+                  {String(index + 1).padStart(2, "0")}
                 </span>
               </div>
 
-              {/* Wider than tall: channel logos are mostly wordmarks, and a
-                  square box makes them fit by height and render tiny. */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
-                  justifyContent: "center",
-                  width: LOGO_BOX_W,
-                  height: LOGO_BOX_H,
+                  flex: 1,
+                  height: ROW_HEIGHT,
+                  marginLeft: 16,
+                  paddingLeft: 28,
+                  paddingRight: 20,
+                  borderRadius: 14,
+                  backgroundColor: isLeader ? COLORS.leaderCard : COLORS.card,
                 }}
               >
-                {row.logo ? (
-                  <img
-                    src={row.logo}
-                    width={LOGO_BOX_W}
-                    height={LOGO_BOX_H}
-                    style={{ objectFit: "contain" }}
-                    alt=""
-                  />
-                ) : (
-                  // No logo: fall back to the channel name so the row still says
-                  // which channel it belongs to.
+                <div
+                  style={{
+                    display: "flex",
+                    flex: 1,
+                    justifyContent: "center",
+                    alignItems: "center",
+                    paddingRight: 12,
+                  }}
+                >
                   <span
                     style={{
-                      fontSize: 18,
+                      // Long titles step down rather than overflow the card.
+                      fontSize: name.length > 22 ? 34 : 42,
                       fontWeight: 800,
                       color: isLeader ? COLORS.leaderInk : COLORS.ink,
                       textAlign: "center",
+                      lineHeight: 1.1,
                     }}
                   >
-                    {row.channel_name ?? ""}
+                    {name}
                   </span>
-                )}
+                </div>
+
+                {/* Wider than tall: channel logos are mostly wordmarks, and a
+                  square box makes them fit by height and render tiny. */}
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: LOGO_BOX_W,
+                    height: LOGO_BOX_H,
+                  }}
+                >
+                  {row.logo ? (
+                    <img
+                      src={row.logo}
+                      width={LOGO_BOX_W}
+                      height={LOGO_BOX_H}
+                      style={{ objectFit: "contain" }}
+                      alt=""
+                    />
+                  ) : (
+                    // No logo: fall back to the channel name so the row still says
+                    // which channel it belongs to.
+                    <span
+                      style={{
+                        fontSize: 18,
+                        fontWeight: 800,
+                        color: isLeader ? COLORS.leaderInk : COLORS.ink,
+                        textAlign: "center",
+                      }}
+                    >
+                      {row.channel_name ?? ""}
+                    </span>
+                  )}
+                </div>
               </div>
             </div>
-          </div>
-        );
-      })}
+          );
+        })}
+      </div>
 
       <div
         style={{
           display: "flex",
-          flex: 1,
+          height: FOOTER_H,
           alignItems: "center",
           justifyContent: "center",
         }}
