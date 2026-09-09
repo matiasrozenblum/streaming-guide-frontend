@@ -11,6 +11,8 @@ const ROW_HEIGHT = 104;
 const ROW_GAP = 16;
 const PAD_X = 36;
 const NUMBER_COL = 118;
+const LOGO_BOX_W = 168;
+const LOGO_BOX_H = 76;
 
 const COLORS = {
   frame: "#4a7ba8",
@@ -117,20 +119,22 @@ export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
                 </span>
               </div>
 
+              {/* Wider than tall: channel logos are mostly wordmarks, and a
+                  square box makes them fit by height and render tiny. */}
               <div
                 style={{
                   display: "flex",
                   alignItems: "center",
                   justifyContent: "center",
-                  width: 84,
-                  height: 84,
+                  width: LOGO_BOX_W,
+                  height: LOGO_BOX_H,
                 }}
               >
                 {row.logo ? (
                   <img
                     src={row.logo}
-                    width={84}
-                    height={84}
+                    width={LOGO_BOX_W}
+                    height={LOGO_BOX_H}
                     style={{ objectFit: "contain" }}
                     alt=""
                   />
