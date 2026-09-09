@@ -76,6 +76,8 @@ export default function PrivacyPolicyPage() {
               <li><strong>Google Analytics:</strong> Análisis de tráfico y comportamiento de usuarios</li>
               <li><strong>PostHog:</strong> Análisis de producto y experiencia de usuario</li>
               <li><strong>Microsoft Clarity:</strong> Mapas de calor y grabaciones de sesión</li>
+              <li><strong>Datadog:</strong> Rendimiento del sitio y grabaciones de sesión</li>
+              <li><strong>Análisis propio:</strong> Registramos en nuestros propios servidores qué programas y canales se abren, para elaborar rankings y estadísticas de uso. Guardamos el evento junto a un identificador de dispositivo y, si iniciaste sesión, tu identificador de usuario. Los eventos individuales se conservan 90 días; pasado ese plazo solo quedan totales diarios agregados, que no permiten identificarte.</li>
             </Typography>
 
             <Typography variant="h6" component="h3" gutterBottom>
@@ -157,6 +159,7 @@ export default function PrivacyPolicyPage() {
               <li><strong>Google Analytics:</strong> Para análisis web</li>
               <li><strong>PostHog:</strong> Para análisis de producto</li>
               <li><strong>Microsoft Clarity:</strong> Para análisis de comportamiento</li>
+              <li><strong>Datadog:</strong> Para monitoreo de rendimiento y errores</li>
               <li><strong>Hotjar:</strong> Para análisis de experiencia de usuario</li>
             </Typography>
             
@@ -198,7 +201,8 @@ export default function PrivacyPolicyPage() {
               Compartimos información con terceros únicamente en las siguientes circunstancias:
             </Typography>
             <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li>Con servicios de análisis (Google Analytics, PostHog, Microsoft Clarity, Hotjar) para mejorar nuestro sitio</li>
+              <li>Con servicios de análisis (Google Analytics, PostHog, Microsoft Clarity, Hotjar, Datadog) para mejorar nuestro sitio</li>
+              <li>Las estadísticas de nuestro análisis propio nunca se comparten de forma individual: si publicamos rankings o resúmenes, son siempre datos agregados</li>
               <li>Con YouTube/Google para el funcionamiento de contenido embebido</li>
               <li>Datos agregados y anónimos para análisis estadístico</li>
               <li>Cuando sea requerido por ley</li>

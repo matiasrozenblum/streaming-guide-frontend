@@ -18,6 +18,7 @@ import {
   Mic,
   CalendarMonth,
   BarChart,
+  Insights,
   Category as CategoryIcon,
   Person as PersonIcon,
   ViewCarousel
@@ -62,6 +63,7 @@ export default function BackofficeLayout({ children }: { children: React.ReactNo
     { text: 'Cambios',    icon: <TrackChanges />, path: '/backoffice/changes' },
     { text: 'Usuarios',   icon: <People />,     path: '/backoffice/users' },
     { text: 'Estadísticas', icon: <BarChart />, path: '/backoffice/statistics' },
+    { text: 'Métricas',   icon: <Insights />, path: '/backoffice/analytics' },
   ];
 
   const drawer = (

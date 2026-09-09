@@ -1,6 +1,10 @@
 import posthog from 'posthog-js';
 import { datadogRum } from '@datadog/browser-rum';
 import type { RumEvent } from '@datadog/browser-rum';
+import {
+  enqueueAnalyticsEvent,
+  setAnalyticsIdentity,
+} from '@/lib/analyticsQueue';
 
 export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
 
@@ -62,6 +66,28 @@ declare global {
     ) => void;
   }
 }
+
+/**
+ * Ids reach this module as numbers from some call sites and as strings from
+ * others (ProgramBlock types its `id` prop as a string). Both must land in the
+ * typed column, or those events would fall back to name matching for no reason.
+ */
+const toId = (value: unknown): number | undefined => {
+  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
+  if (typeof value === 'string' && value.trim() !== '') {
+    const parsed = Number(value);
+    return Number.isInteger(parsed) ? parsed : undefined;
+  }
+  return undefined;
+};
+
+/**
+ * Backoffice traffic is us, not our users. Datadog already drops it in
+ * beforeSend; the first-party sink has to make the same call itself.
+ */
+const isBackofficeView = (): boolean =>
+  typeof window !== 'undefined' &&
+  window.location.pathname.startsWith('/backoffice');
 
 export const pageview = (url: string) => {
   // Check if analytics consent is given
@@ -128,6 +154,21 @@ export const pageview = (url: string) => {
     } catch (e) {
       console.warn('[Datadog] startView error:', e);
     }
+  }
+
+  // First-party sink. Reached only with analytics consent, since the guard at
+  // the top of this function already returned otherwise.
+  if (!isBackofficeView()) {
+    setAnalyticsIdentity({
+      user_gender: user?.gender,
+      user_age_group: getAgeGroup(user?.birthDate),
+      user_role: user?.role,
+    });
+    enqueueAnalyticsEvent({
+      name: '$pageview',
+      ts: new Date().toISOString(),
+      properties: { page_path: pageviewData.page_path },
+    });
   }
 };
 
@@ -254,5 +295,30 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     } catch (e) {
       console.warn('[Datadog] addAction error:', e);
     }
+  }
+
+  // First-party sink, same opt-out model as Datadog above.
+  if (!analyticsExplicitlyRejected && !isBackofficeView()) {
+    setAnalyticsIdentity({
+      user_gender: user?.gender,
+      user_age_group: getAgeGroup(user?.birthDate),
+      user_role: user?.role,
+    });
+
+    // program_id / channel_id are promoted out of params into typed columns so
+    // rankings aggregate on an indexed int rather than a jsonb lookup. The
+    // names ride along as a fallback for rows the ids cannot resolve.
+    const { program_id, channel_id, program_name, channel_name, ...rest } =
+      params ?? {};
+
+    enqueueAnalyticsEvent({
+      name: action,
+      ts: new Date().toISOString(),
+      program_id: toId(program_id),
+      channel_id: toId(channel_id),
+      program_name: typeof program_name === 'string' ? program_name : undefined,
+      channel_name: typeof channel_name === 'string' ? channel_name : undefined,
+      properties: rest,
+    });
   }
 };
