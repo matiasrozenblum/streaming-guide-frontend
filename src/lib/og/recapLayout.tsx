@@ -7,6 +7,9 @@ import type { ReactElement } from "react";
 export const RECAP_WIDTH = 1080;
 export const RECAP_HEIGHT = 1920;
 
+const LOGO_W = 132;
+const LOGO_H = 66;
+
 const COLORS = {
   // The product's own dark palette, so a shared card still reads as ours.
   bg: "#0f172a",
@@ -70,7 +73,17 @@ export function renderRecap(data: RecapLayoutData): ReactElement {
         </span>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", flex: 1 }}>
+      {/* Centred rather than top-aligned: a recap can have anywhere from 1 to 5
+          rows, and anchoring them to the top leaves one large void above the
+          stats instead of balanced margins. */}
+      <div
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          flex: 1,
+          justifyContent: "center",
+        }}
+      >
         {data.rows.map((row) => (
           <div
             key={row.position}
@@ -96,23 +109,21 @@ export function renderRecap(data: RecapLayoutData): ReactElement {
             </span>
 
             {row.logo ? (
+              // Wider than tall: channel logos are mostly wordmarks, and a
+              // square box makes them fit by height and render tiny.
               <img
                 src={row.logo}
-                width={78}
-                height={78}
-                style={{
-                  objectFit: "contain",
-                  borderRadius: 14,
-                  marginRight: 26,
-                }}
+                width={LOGO_W}
+                height={LOGO_H}
+                style={{ objectFit: "contain", marginRight: 26 }}
                 alt=""
               />
             ) : (
               <div
                 style={{
                   display: "flex",
-                  width: 78,
-                  height: 78,
+                  width: LOGO_W,
+                  height: LOGO_H,
                   marginRight: 26,
                 }}
               />

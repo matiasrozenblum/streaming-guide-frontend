@@ -24,6 +24,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **`click_youtube_live`, `click_youtube_deferred` y `program_subscribe` ahora mandan `program_id` y `channel_id`**: hasta ahora solo viajaban los nombres, lo que obligaba al backend a resolverlos contra un mapa por texto. Con los ids, los rankings agregan sobre una columna entera indexada en vez de un lookup en jsonb.
 - **Política de privacidad actualizada**: se declara la recolección propia (qué se guarda, con qué identificador, y que los eventos individuales se borran a los 90 días quedando solo totales agregados) y se suma Datadog, que ya estaba integrado pero no figuraba.
 
+### Fixed
+
+- **Los logos en formato WebP tumbaban la generación de imagen**: satori solo decodifica PNG, JPEG y GIF, y ante cualquier otro formato no lo saltea sino que lanza (`TypeError: a is not iterable`) y se lleva puesto el render entero. El bucket de logos tiene los tres formatos mezclados —Luzu es PNG, Blender JPEG, Olga WebP—, así que cualquier top 10 que incluyera a Olga fallaba. Ahora los formatos que satori no soporta se reconvierten a PNG con `sharp` (que pasa a ser dependencia directa en vez de transitiva de Next), y si la conversión falla se cae al nombre del canal en texto en lugar de romper la imagen.
+- **Los logos anchos se renderizaban diminutos**: el contenedor era cuadrado, así que un wordmark apaisado como el de LUZU u OLGA entraba por altura y quedaba ilegible. El recuadro pasó a ser más ancho que alto en ambas imágenes.
+
 ### Notes
 
 - El backoffice queda excluido del sink propio, igual que ya lo estaba en Datadog: el tráfico de `/backoffice` somos nosotros, no los usuarios.

@@ -47,20 +47,59 @@ export const toImageResponseFonts = (fonts: LoadedFont[] | null) =>
   }));
 
 /**
+ * Formats satori can decode. Anything else has to be converted before it can be
+ * drawn — satori does not fail softly on an unknown format, it throws
+ * ("a is not iterable") and takes the whole render down with it.
+ */
+const SATORI_RASTER_TYPES = ["image/png", "image/jpeg", "image/gif"];
+
+/**
+ * Re-encode to PNG. sharp is what Next already uses for image optimisation, and
+ * it is declared as a direct dependency so this does not silently rely on a
+ * transitive one. If it is unavailable for any reason the caller falls back to
+ * no image, which the layouts render as the channel name.
+ */
+async function toPng(buffer: Buffer): Promise<string | null> {
+  try {
+    const sharp = (await import("sharp")).default;
+    const png = await sharp(buffer).png().toBuffer();
+    return `data:image/png;base64,${png.toString("base64")}`;
+  } catch {
+    return null;
+  }
+}
+
+/**
  * Inline a remote image as a data URI. Satori can take remote URLs, but one slow
  * or 403-ing host would stall or fail the whole render — fetching here lets a
  * broken logo degrade to no logo instead.
+ *
+ * Channel logos are whatever was uploaded to the bucket: PNG, JPEG and WebP are
+ * all present today. WebP and SVG have to be converted or dropped rather than
+ * passed through, since satori throws on them instead of skipping them.
  */
 export async function inlineImage(url: string | null): Promise<string | null> {
   if (!url) return null;
   try {
     const res = await fetch(url);
     if (!res.ok) return null;
-    const type = res.headers.get("content-type") ?? "image/png";
-    // SVG is not reliably rasterised by satori inside an <img>.
+
+    const type = (res.headers.get("content-type") ?? "image/png")
+      .split(";")[0]
+      .trim()
+      .toLowerCase();
+    const buffer = Buffer.from(await res.arrayBuffer());
+
+    if (SATORI_RASTER_TYPES.includes(type)) {
+      return `data:${type};base64,${buffer.toString("base64")}`;
+    }
+
+    // WebP, AVIF and friends: re-encode. SVG is skipped outright — sharp can
+    // rasterise it, but only at a size it has to guess, and the result is
+    // unreliable enough that the text fallback reads better.
     if (type.includes("svg")) return null;
-    const base64 = Buffer.from(await res.arrayBuffer()).toString("base64");
-    return `data:${type};base64,${base64}`;
+
+    return await toPng(buffer);
   } catch {
     return null;
   }
