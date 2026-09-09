@@ -86,10 +86,16 @@ export function TrendChart({ trend, loading, height = 300 }: Props) {
             strokeOpacity: 0.4,
           },
           "& .MuiLineElement-root": { strokeWidth: 2 },
+          // The mark needs the series colour as its FILL. x-charts defaults the
+          // fill to the paper surface and the stroke to the series colour;
+          // overriding only the stroke left both the same as the background and
+          // the point was invisible until hover. Series colour inside, a surface
+          // ring outside, which also keeps overlapping marks separable.
           "& .MuiMarkElement-root": {
+            fill: SERIES[0],
             stroke: theme.palette.background.paper,
             strokeWidth: 2,
-            r: 4,
+            r: 5,
           },
         }}
       />

@@ -39,7 +39,9 @@ export function InstagramExport({ from, to, metric }: Props) {
     setError(null);
     try {
       const params = new URLSearchParams({ from, to, metric });
-      const res = await fetch(`/api/og/top10?${params}`);
+      // no-store on the client too: the browser's HTTP cache would otherwise
+      // re-serve a previously generated image for the same range.
+      const res = await fetch(`/api/og/top10?${params}`, { cache: "no-store" });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         setError(body?.error ?? "No se pudo generar la imagen.");

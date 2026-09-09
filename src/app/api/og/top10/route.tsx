@@ -82,5 +82,12 @@ export async function GET(request: NextRequest) {
     width: TOP10_WIDTH,
     height: TOP10_HEIGHT,
     fonts: toImageResponseFonts(fonts),
+    // ImageResponse defaults to `public, immutable, max-age=31536000`, which is
+    // right for an OG card keyed by immutable content and wrong for this: the
+    // ranking changes as events arrive, so the same URL must not be frozen for
+    // a year. It is also admin-only data, which has no business in a shared cache.
+    headers: {
+      "cache-control": "private, no-store, max-age=0, must-revalidate",
+    },
   });
 }

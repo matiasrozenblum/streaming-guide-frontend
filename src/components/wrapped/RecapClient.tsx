@@ -61,7 +61,9 @@ export function RecapClient() {
     setSharing(true);
     setShareError(null);
     try {
-      const res = await fetch(`/api/og/recap?period=${period}`);
+      const res = await fetch(`/api/og/recap?period=${period}`, {
+        cache: "no-store",
+      });
       if (!res.ok) {
         const body = await res.json().catch(() => null);
         setShareError(body?.error ?? "No pudimos generar la imagen.");
