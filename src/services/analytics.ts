@@ -3,6 +3,12 @@ import { api } from "@/services/api";
 /** Mirrors the backend's DEFAULT_METRIC — the event that means "opened a live stream". */
 export const DEFAULT_METRIC = "click_youtube_live";
 
+/**
+ * Streamers have no live-click event of their own; the equivalent action is
+ * following the link out to their Twitch/Kick/YouTube channel.
+ */
+export const DEFAULT_STREAMER_METRIC = "streamer_service_click";
+
 export type Granularity = "day" | "week" | "month";
 export type Platform = "web" | "ios" | "android";
 export type RecapPeriod = "week" | "month" | "year";
@@ -40,6 +46,9 @@ export interface RankingRow {
   position: number;
   program_id?: number;
   program_name?: string;
+  streamer_id?: number;
+  streamer_name?: string;
+  streamer_logo_url?: string | null;
   channel_id: number | null;
   channel_name: string | null;
   channel_logo_url: string | null;
@@ -124,6 +133,18 @@ export async function getChannelRanking(
   return data;
 }
 
+export async function getStreamerRanking(
+  params: RangeParams & { metric?: string; limit?: number },
+): Promise<RankingRow[]> {
+  const { data } = await api.get<RankingRow[]>(
+    "/analytics/rankings/streamers",
+    {
+      params,
+    },
+  );
+  return data;
+}
+
 export async function getProgramTrend(
   programId: number,
   params: RangeParams & { metric?: string; granularity?: Granularity },
@@ -155,6 +176,8 @@ export const METRIC_LABELS: Record<string, string> = {
   program_subscribe: "Suscripciones a programas",
   program_unsubscribe: "Bajas de programas",
   streamer_subscribe: "Suscripciones a streamers",
+  streamer_unsubscribe: "Bajas de streamers",
+  streamer_service_click: "Clicks a streamers",
   zap_use: "Uso de zapping",
   banner_click: "Clicks en banners",
   $pageview: "Vistas de página",

@@ -1,12 +1,12 @@
-import posthog from 'posthog-js';
-import { datadogRum } from '@datadog/browser-rum';
-import type { RumEvent } from '@datadog/browser-rum';
+import posthog from "posthog-js";
+import { datadogRum } from "@datadog/browser-rum";
+import type { RumEvent } from "@datadog/browser-rum";
 import {
   enqueueAnalyticsEvent,
   setAnalyticsIdentity,
-} from '@/lib/analyticsQueue';
+} from "@/lib/analyticsQueue";
 
-export const GA_TRACKING_ID = 'G-WP58Q5S1H2';
+export const GA_TRACKING_ID = "G-WP58Q5S1H2";
 
 // Module-level flags — avoids calling datadogRum.getInitConfiguration() which
 // throws a TrustedScript CSP error in Next.js on some browsers.
@@ -17,7 +17,7 @@ let isAdminSession = false;
 
 export function initDatadogRum(): void {
   if (datadogInited) return;
-  if (typeof window === 'undefined') return;
+  if (typeof window === "undefined") return;
 
   const appId = process.env.NEXT_PUBLIC_DATADOG_APP_ID;
   const clientToken = process.env.NEXT_PUBLIC_DATADOG_CLIENT_TOKEN;
@@ -27,18 +27,18 @@ export function initDatadogRum(): void {
     datadogRum.init({
       applicationId: appId,
       clientToken,
-      site: 'datadoghq.com',
-      service: 'la-guia-del-streaming-frontend',
-      env: process.env.NODE_ENV === 'production' ? 'production' : 'staging',
+      site: "datadoghq.com",
+      service: "la-guia-del-streaming-frontend",
+      env: process.env.NODE_ENV === "production" ? "production" : "staging",
       version: process.env.NEXT_PUBLIC_APP_VERSION,
       sessionSampleRate: 100,
       sessionReplaySampleRate: 20,
       trackUserInteractions: true,
       trackResources: true,
       trackLongTasks: true,
-      defaultPrivacyLevel: 'mask-user-input',
+      defaultPrivacyLevel: "mask-user-input",
       beforeSend: (event: RumEvent) => {
-        if ((event.view?.url ?? '').includes('/backoffice')) return false;
+        if ((event.view?.url ?? "").includes("/backoffice")) return false;
         if (isAdminSession) return false;
         return true;
       },
@@ -46,12 +46,12 @@ export function initDatadogRum(): void {
     datadogRum.startSessionReplayRecording();
     datadogInited = true;
   } catch (e) {
-    console.warn('[Datadog] init FAILED:', e);
+    console.warn("[Datadog] init FAILED:", e);
   }
 }
 
 export function setDatadogUser(role: string): void {
-  isAdminSession = role === 'admin';
+  isAdminSession = role === "admin";
   if (datadogInited) {
     datadogRum.setUser({ role });
   }
@@ -60,9 +60,9 @@ export function setDatadogUser(role: string): void {
 declare global {
   interface Window {
     gtag: (
-      command: 'config' | 'event',
+      command: "config" | "event",
       targetId: string,
-      config?: Record<string, unknown>
+      config?: Record<string, unknown>,
     ) => void;
   }
 }
@@ -73,8 +73,9 @@ declare global {
  * typed column, or those events would fall back to name matching for no reason.
  */
 const toId = (value: unknown): number | undefined => {
-  if (typeof value === 'number') return Number.isFinite(value) ? value : undefined;
-  if (typeof value === 'string' && value.trim() !== '') {
+  if (typeof value === "number")
+    return Number.isFinite(value) ? value : undefined;
+  if (typeof value === "string" && value.trim() !== "") {
     const parsed = Number(value);
     return Number.isInteger(parsed) ? parsed : undefined;
   }
@@ -86,12 +87,12 @@ const toId = (value: unknown): number | undefined => {
  * beforeSend; the first-party sink has to make the same call itself.
  */
 const isBackofficeView = (): boolean =>
-  typeof window !== 'undefined' &&
-  window.location.pathname.startsWith('/backoffice');
+  typeof window !== "undefined" &&
+  window.location.pathname.startsWith("/backoffice");
 
 export const pageview = (url: string) => {
   // Check if analytics consent is given
-  const consent = localStorage.getItem('cookie-consent');
+  const consent = localStorage.getItem("cookie-consent");
   if (consent) {
     try {
       const consentData = JSON.parse(consent);
@@ -110,7 +111,7 @@ export const pageview = (url: string) => {
   const user = nextData?.props?.pageProps?.session?.user || {};
 
   // Don't track admin users to avoid polluting metrics
-  if (user?.role === 'admin') return;
+  if (user?.role === "admin") return;
 
   // Calculate age if birthDate is available
   let age: number | undefined;
@@ -119,7 +120,10 @@ export const pageview = (url: string) => {
     const today = new Date();
     age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
   }
@@ -133,17 +137,21 @@ export const pageview = (url: string) => {
     user_role: user?.role,
   };
 
-  if (typeof window.gtag === 'function') {
+  if (typeof window.gtag === "function") {
     try {
-      window.gtag('config', GA_TRACKING_ID, pageviewData);
-    } catch { /* gtag Trusted Types error — non-fatal */ }
+      window.gtag("config", GA_TRACKING_ID, pageviewData);
+    } catch {
+      /* gtag Trusted Types error — non-fatal */
+    }
   }
 
   // Send to PostHog if loaded
   if (posthog.__loaded) {
     try {
-      posthog.capture('$pageview', pageviewData);
-    } catch { /* non-fatal */ }
+      posthog.capture("$pageview", pageviewData);
+    } catch {
+      /* non-fatal */
+    }
   }
 
   // Send to Datadog RUM if initialized — use startView() for native page view tracking
@@ -152,7 +160,7 @@ export const pageview = (url: string) => {
     try {
       datadogRum.startView({ name: pageviewData.page_path });
     } catch (e) {
-      console.warn('[Datadog] startView error:', e);
+      console.warn("[Datadog] startView error:", e);
     }
   }
 
@@ -165,7 +173,7 @@ export const pageview = (url: string) => {
       user_role: user?.role,
     });
     enqueueAnalyticsEvent({
-      name: '$pageview',
+      name: "$pageview",
       ts: new Date().toISOString(),
       properties: { page_path: pageviewData.page_path },
     });
@@ -180,7 +188,7 @@ type GtagEventParams = {
  * Calculate age group from birth date
  */
 const getAgeGroup = (birthDate: string | Date | undefined): string => {
-  if (!birthDate) return 'unknown';
+  if (!birthDate) return "unknown";
 
   const birth = new Date(birthDate);
   const today = new Date();
@@ -190,13 +198,13 @@ const getAgeGroup = (birthDate: string | Date | undefined): string => {
     age--;
   }
 
-  if (age < 18) return 'under_18';
-  if (age < 25) return '18_24';
-  if (age < 35) return '25_34';
-  if (age < 45) return '35_44';
-  if (age < 55) return '45_54';
-  if (age < 65) return '55_64';
-  return '65_plus';
+  if (age < 18) return "under_18";
+  if (age < 25) return "18_24";
+  if (age < 35) return "25_34";
+  if (age < 45) return "35_44";
+  if (age < 55) return "45_54";
+  if (age < 65) return "55_64";
+  return "65_plus";
 };
 
 type NextData = {
@@ -219,19 +227,33 @@ type NextData = {
  * En params puedes incluir lo que necesites: name, type, id, duration, index...
  * Si hay una sesión activa, incluye datos del usuario como gender and age
  */
-export const event = ({ action, params, userData }: { action: string; params?: GtagEventParams; userData?: { id?: string; gender?: string; birthDate?: string; role?: string } }) => {
+export const event = ({
+  action,
+  params,
+  userData,
+}: {
+  action: string;
+  params?: GtagEventParams;
+  userData?: {
+    id?: string;
+    gender?: string;
+    birthDate?: string;
+    role?: string;
+  };
+}) => {
   // Resolve consent state:
   //   hasAnalyticsConsent — user explicitly accepted analytics
   //   analyticsExplicitlyRejected — user explicitly rejected analytics
   //   Neither flag set — user hasn't responded yet (opt-out model applies)
-  const consent = localStorage.getItem('cookie-consent');
+  const consent = localStorage.getItem("cookie-consent");
   let hasAnalyticsConsent = false;
   let analyticsExplicitlyRejected = false;
   if (consent) {
     try {
       const consentData = JSON.parse(consent);
       hasAnalyticsConsent = consentData.preferences?.analytics === true;
-      analyticsExplicitlyRejected = consentData.preferences?.analytics === false;
+      analyticsExplicitlyRejected =
+        consentData.preferences?.analytics === false;
     } catch {
       // Don't track if consent data is invalid
       return;
@@ -248,7 +270,7 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   }
 
   // Don't track admin users to avoid polluting metrics
-  if (user?.role === 'admin') return;
+  if (user?.role === "admin") return;
 
   // Calculate age if birthDate is available
   let age: number | undefined;
@@ -257,7 +279,10 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     const today = new Date();
     age = today.getFullYear() - birthDate.getFullYear();
     const monthDiff = today.getMonth() - birthDate.getMonth();
-    if (monthDiff < 0 || (monthDiff === 0 && today.getDate() < birthDate.getDate())) {
+    if (
+      monthDiff < 0 ||
+      (monthDiff === 0 && today.getDate() < birthDate.getDate())
+    ) {
       age--;
     }
   }
@@ -274,17 +299,21 @@ export const event = ({ action, params, userData }: { action: string; params?: G
   // Only send to Google Analytics if analytics consent is given.
   // Wrapped in try-catch: gtag.js violates Trusted Types CSP on some browsers
   // and would otherwise throw synchronously, blocking PostHog and Datadog.
-  if (hasAnalyticsConsent && typeof window.gtag === 'function') {
+  if (hasAnalyticsConsent && typeof window.gtag === "function") {
     try {
-      window.gtag('event', action, eventData);
-    } catch { /* gtag Trusted Types error — non-fatal */ }
+      window.gtag("event", action, eventData);
+    } catch {
+      /* gtag Trusted Types error — non-fatal */
+    }
   }
 
   // Only send to PostHog if analytics consent is given and PostHog is loaded
   if (hasAnalyticsConsent && posthog.__loaded) {
     try {
       posthog.capture(action, eventData);
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
   }
 
   // Send to Datadog RUM using opt-out model: track unless user explicitly rejected.
@@ -293,7 +322,7 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     try {
       datadogRum.addAction(action, eventData);
     } catch (e) {
-      console.warn('[Datadog] addAction error:', e);
+      console.warn("[Datadog] addAction error:", e);
     }
   }
 
@@ -308,16 +337,26 @@ export const event = ({ action, params, userData }: { action: string; params?: G
     // program_id / channel_id are promoted out of params into typed columns so
     // rankings aggregate on an indexed int rather than a jsonb lookup. The
     // names ride along as a fallback for rows the ids cannot resolve.
-    const { program_id, channel_id, program_name, channel_name, ...rest } =
-      params ?? {};
+    const {
+      program_id,
+      channel_id,
+      streamer_id,
+      program_name,
+      channel_name,
+      streamer_name,
+      ...rest
+    } = params ?? {};
 
     enqueueAnalyticsEvent({
       name: action,
       ts: new Date().toISOString(),
       program_id: toId(program_id),
       channel_id: toId(channel_id),
-      program_name: typeof program_name === 'string' ? program_name : undefined,
-      channel_name: typeof channel_name === 'string' ? channel_name : undefined,
+      streamer_id: toId(streamer_id),
+      program_name: typeof program_name === "string" ? program_name : undefined,
+      channel_name: typeof channel_name === "string" ? channel_name : undefined,
+      streamer_name:
+        typeof streamer_name === "string" ? streamer_name : undefined,
       properties: rest,
     });
   }

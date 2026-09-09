@@ -26,9 +26,11 @@ import {
   getTrends,
   getProgramRanking,
   getChannelRanking,
+  getStreamerRanking,
   getEventNames,
   metricLabel,
   DEFAULT_METRIC,
+  DEFAULT_STREAMER_METRIC,
   type Overview,
   type Trend,
   type RankingRow,
@@ -41,7 +43,13 @@ import { TrendChart } from "@/components/backoffice/analytics/TrendChart";
 import { RankingTable } from "@/components/backoffice/analytics/RankingTable";
 import { InstagramExport } from "@/components/backoffice/analytics/InstagramExport";
 
-const TABS = ["Resumen", "Tendencias", "Programas", "Canales"] as const;
+const TABS = [
+  "Resumen",
+  "Tendencias",
+  "Programas",
+  "Canales",
+  "Streamers",
+] as const;
 
 export default function AnalyticsPage() {
   const [tab, setTab] = useState(0);
@@ -59,6 +67,7 @@ export default function AnalyticsPage() {
   const [trend, setTrend] = useState<Trend | null>(null);
   const [programs, setPrograms] = useState<RankingRow[]>([]);
   const [channels, setChannels] = useState<RankingRow[]>([]);
+  const [streamers, setStreamers] = useState<RankingRow[]>([]);
 
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -76,17 +85,25 @@ export default function AnalyticsPage() {
     setLoading(true);
     setError(null);
     try {
-      const [overviewData, trendData, programData, channelData] =
+      const [overviewData, trendData, programData, channelData, streamerData] =
         await Promise.all([
           getOverview(range),
           getTrends({ ...range, metric, granularity }),
           getProgramRanking({ ...range, metric, limit: 20 }),
           getChannelRanking({ ...range, metric, limit: 20 }),
+          // Streamers are ranked by their own metric: the picker above selects
+          // among program/channel events, none of which a streamer emits.
+          getStreamerRanking({
+            ...range,
+            metric: DEFAULT_STREAMER_METRIC,
+            limit: 20,
+          }),
         ]);
       setOverview(overviewData);
       setTrend(trendData);
       setPrograms(programData);
       setChannels(channelData);
+      setStreamers(streamerData);
     } catch (err) {
       console.error("[analytics] load failed", err);
       setError(
@@ -261,6 +278,7 @@ export default function AnalyticsPage() {
                   from={range.from}
                   to={range.to}
                   metric={metric}
+                  kind="programs"
                 />
               </Box>
               <RankingTable rows={programs} loading={loading} />
@@ -271,11 +289,57 @@ export default function AnalyticsPage() {
         {tab === 3 && (
           <Card variant="outlined">
             <CardContent>
-              <Typography variant="h6" sx={{ mb: 2 }}>
-                Ranking de canales
-              </Typography>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6">Ranking de canales</Typography>
+                <InstagramExport
+                  from={range.from}
+                  to={range.to}
+                  metric={metric}
+                  kind="channels"
+                />
+              </Box>
               <RankingTable
                 rows={channels}
+                loading={loading}
+                showChannel={false}
+              />
+            </CardContent>
+          </Card>
+        )}
+
+        {tab === 4 && (
+          <Card variant="outlined">
+            <CardContent>
+              <Box
+                sx={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "space-between",
+                  flexWrap: "wrap",
+                  gap: 2,
+                  mb: 2,
+                }}
+              >
+                <Typography variant="h6">Ranking de streamers</Typography>
+                {/* No metric passed: streamers are ranked by their own event,
+                    and the picker above only offers program/channel ones. */}
+                <InstagramExport
+                  from={range.from}
+                  to={range.to}
+                  kind="streamers"
+                />
+              </Box>
+              <RankingTable
+                rows={streamers}
                 loading={loading}
                 showChannel={false}
               />

@@ -29,8 +29,10 @@ export interface QueuedEvent {
   ts: string;
   program_id?: number;
   channel_id?: number;
+  streamer_id?: number;
   program_name?: string;
   channel_name?: string;
+  streamer_name?: string;
   properties?: Record<string, unknown>;
 }
 

@@ -29,6 +29,16 @@ interface Props {
 }
 
 /**
+ * A row is a program, a channel or a streamer depending on which ranking it came
+ * from; each keeps its own name and logo fields, so resolve them once here.
+ */
+const nameOf = (row: RankingRow): string =>
+  row.program_name ?? row.streamer_name ?? row.channel_name ?? "—";
+
+const logoOf = (row: RankingRow): string | null =>
+  row.streamer_logo_url ?? row.channel_logo_url ?? null;
+
+/**
  * Ranked magnitudes. The bar is drawn inside the row rather than as a separate
  * chart so the name, the value and the length share one line — a bar chart
  * beside a table would say the same thing twice.
@@ -74,7 +84,7 @@ export function RankingTable({
       <TableBody>
         {rows.map((row) => (
           <TableRow
-            key={`${row.program_id ?? "ch"}-${row.channel_id}-${row.position}`}
+            key={`${row.program_id ?? row.streamer_id ?? "ch"}-${row.channel_id}-${row.position}`}
             hover
             onClick={onSelect ? () => onSelect(row) : undefined}
             sx={{ cursor: onSelect ? "pointer" : "default" }}
@@ -85,9 +95,21 @@ export function RankingTable({
               </Typography>
             </TableCell>
             <TableCell>
-              <Typography variant="body2" sx={{ mb: 0.5 }}>
-                {row.program_name ?? row.channel_name ?? "—"}
-              </Typography>
+              <Box
+                sx={{ display: "flex", alignItems: "center", gap: 1, mb: 0.5 }}
+              >
+                {/* Channel and streamer rankings have no separate logo column,
+                    so their own logo rides alongside the name instead. */}
+                {!showChannel && logoOf(row) && (
+                  <Avatar
+                    src={logoOf(row)!}
+                    alt=""
+                    sx={{ width: 22, height: 22 }}
+                    variant="rounded"
+                  />
+                )}
+                <Typography variant="body2">{nameOf(row)}</Typography>
+              </Box>
               <Box
                 sx={{
                   height: 6,
