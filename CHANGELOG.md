@@ -10,6 +10,20 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.35.0] - 2026-09-09
+
+### Added
+
+- **Pestaña de Streamers en Métricas, con su propio ranking**: hasta ahora los streamers no tenían sección propia pese a que la app los trackea desde hace tiempo. Se rankean por `streamer_service_click` —salir hacia su canal de Twitch, Kick o YouTube— y no por `click_youtube_live`, que es un evento que un streamer no emite. Requirió promover `streamer_id` a columna en el backend (ver 1.46.0 del backend); hasta ahora viajaba enterrado en el jsonb de propiedades.
+- **Exportar la imagen de Instagram también para canales y streamers**: el botón dejó de ser exclusivo del ranking de programas. La ruta pasa a tomar `?kind=programs|channels|streamers` y aplica el default de métrica correcto para cada uno.
+
+### Changed
+
+- **La imagen ajusta el tratamiento del logo según qué rankea**: los logos de canal son wordmarks apaisados y siguen usando el recuadro ancho; los de streamer son fotos de una persona, así que van en un recorte cuadrado y circular. El redondeo vive en el contenedor y no en el `<img>`, porque satori no recorta un `borderRadius` puesto sobre la imagen.
+- **`/mi-resumen` pasó a tener el chrome del resto del sitio**: era una página suelta sin header, sin logo y sin menú de usuario, que no se parecía a ninguna otra ruta accesible por un usuario no admin. Ahora sigue el mismo patrón que `/subscriptions` —`Header`, contenedor, botón de volver y animación de entrada— y suma el detalle que le faltaba: la primera posición marcada con el color de marca como en la imagen compartible, el conteo de veces por programa, los canales más vistos, la comparación contra el período anterior, un skeleton mientras carga y un estado vacío con salida a la grilla. La página además redirige a un visitante no logueado en el servidor, en vez de renderizar y avisar en el cliente.
+
+---
+
 ## [1.34.0] - 2026-09-09
 
 ### Added

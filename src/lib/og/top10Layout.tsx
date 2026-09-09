@@ -13,6 +13,8 @@ const PAD_X = 36;
 const NUMBER_COL = 118;
 const LOGO_BOX_W = 168;
 const LOGO_BOX_H = 76;
+/** Avatars are portraits, so they get a square crop instead of a wide letterbox. */
+const AVATAR_SIZE = 78;
 const FOOTER_H = 96;
 
 const COLORS = {
@@ -24,8 +26,10 @@ const COLORS = {
 };
 
 export interface Top10Row {
-  program_name: string | null;
-  channel_name: string | null;
+  /** The entity being ranked: a program, a channel or a streamer. */
+  title: string;
+  /** Secondary line used only as a fallback when there is no logo. */
+  subtitle: string | null;
   /** Already inlined as a data URI, or null when the logo could not be loaded. */
   logo: string | null;
 }
@@ -37,7 +41,21 @@ export interface Top10Row {
  * eyeballed against the reference design without standing up auth and a
  * populated backend.
  */
-export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
+/**
+ * Channel logos are wordmarks and want a wide box; streamer logos are photos of
+ * a person and want a square, circular crop. Same artwork, two logo treatments.
+ */
+export type LogoShape = "wide" | "avatar";
+
+export function renderTop10(
+  rows: Top10Row[],
+  footer: string,
+  logoShape: LogoShape = "wide",
+): ReactElement {
+  const isAvatar = logoShape === "avatar";
+  const boxW = isAvatar ? AVATAR_SIZE : LOGO_BOX_W;
+  const boxH = isAvatar ? AVATAR_SIZE : LOGO_BOX_H;
+
   return (
     <div
       style={{
@@ -63,7 +81,7 @@ export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
       >
         {rows.map((row, index) => {
           const isLeader = index === 0;
-          const name = row.program_name ?? "—";
+          const name = row.title;
 
           return (
             <div
@@ -131,28 +149,32 @@ export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
                   </span>
                 </div>
 
-                {/* Wider than tall: channel logos are mostly wordmarks, and a
-                  square box makes them fit by height and render tiny. */}
+                {/* Two treatments: channel logos are wordmarks and want a wide
+                    letterbox; streamer logos are photos of a person and want a
+                    square, circular crop. The rounding lives on this container
+                    because satori does not clip a borderRadius set on the img. */}
                 <div
                   style={{
                     display: "flex",
                     alignItems: "center",
                     justifyContent: "center",
-                    width: LOGO_BOX_W,
-                    height: LOGO_BOX_H,
+                    width: boxW,
+                    height: boxH,
+                    borderRadius: isAvatar ? boxW / 2 : 0,
+                    overflow: "hidden",
                   }}
                 >
                   {row.logo ? (
                     <img
                       src={row.logo}
-                      width={LOGO_BOX_W}
-                      height={LOGO_BOX_H}
-                      style={{ objectFit: "contain" }}
+                      width={boxW}
+                      height={boxH}
+                      style={{ objectFit: isAvatar ? "cover" : "contain" }}
                       alt=""
                     />
                   ) : (
-                    // No logo: fall back to the channel name so the row still says
-                    // which channel it belongs to.
+                    // No logo: fall back to the secondary line so the row still
+                    // says who it belongs to.
                     <span
                       style={{
                         fontSize: 18,
@@ -161,7 +183,7 @@ export function renderTop10(rows: Top10Row[], footer: string): ReactElement {
                         textAlign: "center",
                       }}
                     >
-                      {row.channel_name ?? ""}
+                      {row.subtitle ?? ""}
                     </span>
                   )}
                 </div>

@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
-import { Box, Container, Typography } from "@mui/material";
+import { getServerSession } from "next-auth";
+import { redirect } from "next/navigation";
+import { authOptions } from "@/lib/auth";
 import { RecapClient } from "@/components/wrapped/RecapClient";
 
 export const metadata: Metadata = {
@@ -7,18 +9,13 @@ export const metadata: Metadata = {
   description: "Lo que más viste en la semana, el mes o el año.",
 };
 
-export default function MiResumenPage() {
-  return (
-    <Container maxWidth="sm" sx={{ py: 4 }}>
-      <Box sx={{ mb: 3 }}>
-        <Typography variant="h4" sx={{ fontWeight: 700 }}>
-          Mi resumen
-        </Typography>
-        <Typography color="text.secondary">
-          Lo que más viste, listo para compartir.
-        </Typography>
-      </Box>
-      <RecapClient />
-    </Container>
-  );
+export default async function MiResumenPage() {
+  // Same gate as /subscriptions: this page is only about the signed-in user, so
+  // there is nothing to render for a visitor.
+  const session = await getServerSession(authOptions);
+  if (!session?.user?.id) {
+    redirect("/");
+  }
+
+  return <RecapClient />;
 }
