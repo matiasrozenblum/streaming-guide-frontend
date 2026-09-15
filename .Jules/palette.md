@@ -8,3 +8,7 @@
 ## 2026-08-18 - Tooltips sobre botones deshabilitados
 **Learning:** MUI `Tooltip` no muestra nada cuando su hijo está `disabled`: el botón deshabilitado no emite eventos de puntero, así que el tooltip queda muerto justo cuando más se necesita explicar por qué no se puede clickear.
 **Action:** Cuando el hijo puede estar `disabled`, envolverlo en un `<span>` intermedio que sí recibe los eventos. Si el botón estaba posicionado con `position: absolute`, mover el posicionamiento a un `Box` contenedor para que el `span` no rompa el layout.
+
+## 2025-02-18 - Formularios sin Label
+**Learning:** Los TextField que solo usan el atributo `placeholder` en lugar de `label` presentan problemas de accesibilidad y usabilidad, ya que el texto desaparece al escribir y el usuario depende de la memoria. Se observó esto en componentes como `EmailStep`.
+**Action:** Usar siempre la prop `label` en componentes TextField (ej. de MUI) en lugar de depender exclusivamente de `placeholder`.
