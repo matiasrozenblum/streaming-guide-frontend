@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -10,8 +10,6 @@ import {
   Typography,
   Button,
   Link,
-  Alert,
-  CircularProgress,
 } from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
 import { useSessionContext } from "@/contexts/SessionContext";
@@ -39,8 +37,6 @@ function isExcludedPath(pathname: string): boolean {
 }
 
 interface ViewProps {
-  saving: boolean;
-  error: string | null;
   onAccept: () => void;
   onSignOut: () => void;
 }
@@ -49,12 +45,7 @@ interface ViewProps {
  * The notice itself, with no session or network concerns — kept separate so the
  * layout can be rendered and reviewed on its own.
  */
-export function LegalConsentDialogView({
-  saving,
-  error,
-  onAccept,
-  onSignOut,
-}: ViewProps) {
+export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
   return (
     <Dialog
       open
@@ -98,23 +89,13 @@ export function LegalConsentDialogView({
           y durante el año, con diseños listos para compartir en redes.
         </Typography>
 
-        {error && (
-          <Alert severity="error" sx={{ mb: 2, textAlign: "left" }}>
-            {error}
-          </Alert>
-        )}
-
         <Button
           variant="contained"
           size="large"
           onClick={onAccept}
-          disabled={saving}
-          startIcon={
-            saving ? <CircularProgress size={18} color="inherit" /> : undefined
-          }
           sx={{ fontWeight: 700, py: 1.2, px: 3.5, mb: 2 }}
         >
-          {saving ? "Guardando…" : "Ver mi resumen y continuar"}
+          Ver mi resumen y continuar
         </Button>
 
         <Typography
@@ -163,9 +144,12 @@ export function LegalConsentDialogView({
  * declaration in one step.
  *
  * It cannot be dismissed: the only ways past it are accepting or signing out.
- * That makes failure handling load-bearing — a user who cannot record their
- * acceptance would be trapped, so the error is surfaced with a retry and the
- * sign-out link stays live throughout.
+ *
+ * Accepting navigates immediately and records the acceptance in the background,
+ * rather than holding the user behind a spinner while the request completes.
+ * Nothing is lost if that request fails: the acceptance simply is not stored, so
+ * the notice comes back next time. Erring towards asking twice is both the safe
+ * side legally and the one that cannot leave anybody stuck on a dead dialog.
  */
 export function LegalConsentDialog() {
   const { session, status } = useSessionContext();
@@ -173,10 +157,17 @@ export function LegalConsentDialog() {
   const pathname = usePathname();
 
   const [open, setOpen] = useState(false);
-  const [saving, setSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+
+  /**
+   * Set the moment the user accepts, before the write has landed. The effect
+   * below re-runs on every route change, so without this the navigation to
+   * /mi-resumen would re-query the backend while the POST was still in flight,
+   * read "not accepted" and put the notice straight back on screen.
+   */
+  const acceptedRef = useRef(false);
 
   useEffect(() => {
+    if (acceptedRef.current) return;
     if (status !== "authenticated" || !session) return;
 
     // Also closes it on client-side navigation into one of these routes, not
@@ -208,31 +199,26 @@ export function LegalConsentDialog() {
     };
   }, [status, session, pathname]);
 
-  const accept = useCallback(async () => {
-    setSaving(true);
-    setError(null);
-    try {
-      await api.post("/users/me/seen-features", {
-        feature: buildLegalConsentEntry(),
+  const accept = useCallback(() => {
+    acceptedRef.current = true;
+
+    // Deliberately not awaited: the user moves on at once and the write
+    // finishes on its own. A client-side route change does not cancel it.
+    api
+      .post("/users/me/seen-features", { feature: buildLegalConsentEntry() })
+      .catch(() => {
+        // Nothing to tell the user: the notice will simply reappear later.
       });
-      setOpen(false);
-      router.push("/mi-resumen");
-    } catch {
-      setError(
-        "No pudimos guardar tu confirmación. Revisá tu conexión y probá de nuevo.",
-      );
-    } finally {
-      setSaving(false);
-    }
+
+    setOpen(false);
+    router.push("/mi-resumen");
   }, [router]);
 
   if (!open) return null;
 
   return (
     <LegalConsentDialogView
-      saving={saving}
-      error={error}
-      onAccept={() => void accept()}
+      onAccept={accept}
       onSignOut={() => void signOut({ callbackUrl: "/" })}
     />
   );
