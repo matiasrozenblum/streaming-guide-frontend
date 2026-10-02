@@ -8,6 +8,29 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+- **Aviso de aceptación de legales, bloqueante y por única vez**: a todo usuario con sesión iniciada le aparece un cartel que anuncia la función de resumen y toma, en un mismo paso, la aceptación de los Términos, la Política de Privacidad y la declaración de ser mayor de 18. No se puede descartar: las únicas salidas son aceptar o cerrar sesión, que es un enlace dentro del propio cartel.
+  - La aceptación se guarda como una entrada en `seen_features` con la forma `legal_accepted:<versión>:<timestamp ISO>`, sin necesidad de migración. La versión permite volver a pedirla cuando el documento cambie, y el timestamp permite responder cuándo aceptó cada persona y a qué texto.
+  - Al no haber forma de descartarlo, el manejo de errores es parte del diseño: si falla el guardado se muestra el error, el botón queda habilitado para reintentar y el enlace de cerrar sesión sigue disponible. Y si falla la *lectura* de qué aceptó el usuario, el cartel no se muestra — un corte de red no puede dejar a alguien afuera de un sitio cuyos términos quizá ya aceptó.
+  - Al registrarse, la aceptación queda registrada en el mismo momento en que se setea la contraseña, de modo que a quien acaba de aceptar no se le vuelve a preguntar.
+
+### Changed
+
+- **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
+
+- **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
+- **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
+- **El panel de cookies ahora dice que la categoría de Análisis incluye nuestro sistema propio**: la Política remite a ese panel para desactivar "el sistema de análisis interno", pero el panel solo nombraba herramientas de terceros, así que el control al que apuntaba el texto no se correspondía con lo que mostraba.
+
+### Fixed
+
+- **La fecha de "Última actualización" de la Política de Privacidad era `new Date()`**: se renderizaba la fecha del día en cada visita, de modo que el documento siempre parecía haberse actualizado hoy. Pasa a una constante compartida con los TyC (`src/constants/legal.ts`), que además expone la versión publicada para que el aviso de aceptación pueda compararla contra lo que aceptó cada usuario.
+
+- **El alta por login social no verificaba la edad**: la regla de 18 años vivía en el formulario de registro con email, pero `ProfileCompletionForm` —el paso de completar perfil al que se redirige a todo usuario que entra con Google o Apple— no la tenía. Quien se registraba por ahí nunca cruzaba una barrera de edad.
+- **La fecha de nacimiento arrancaba en "hoy" y la validación solo corría al tocar el campo**: en el registro web y en el alta social el valor por defecto era la fecha actual, así que un usuario que completaba el resto del formulario sin abrir el calendario enviaba una fecha de nacimiento de hoy, es decir una edad de cero. Ahora el campo arranca vacío, la validación también corre al enviar y el calendario no deja elegir un año que no llegue a los 18.
+- **La misma cuenta de edad estaba copiada en cuatro archivos** (registro, alta social, edición de perfil y alta de usuarios del backoffice), cada una con su propio texto de error. Pasan todas por `src/utils/age.ts`, que replica la regla del servidor en un solo lugar.
+
 ---
 
 ## [1.35.0] - 2026-09-09

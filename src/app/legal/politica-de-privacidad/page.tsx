@@ -1,286 +1,354 @@
-'use client';
-import React from 'react';
-import { Container, Typography, Box, Paper, Divider, useTheme } from '@mui/material';
-import Header from '@/components/Header';
+"use client";
+import React from "react";
+import {
+  Container,
+  Typography,
+  Box,
+  Paper,
+  Divider,
+  useTheme,
+} from "@mui/material";
+import Header from "@/components/Header";
+import { LEGAL_LAST_UPDATED } from "@/constants/legal";
 
 export default function PrivacyPolicyPage() {
   const theme = useTheme();
-  
+
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
-        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        minHeight: "100dvh",
+        background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)",
         py: { xs: 1, sm: 2 },
         color: theme.palette.text.primary,
       }}
     >
       <Header />
       <Container maxWidth="md" sx={{ py: 4 }}>
-      <Paper 
-        elevation={1} 
-        sx={{ 
-          p: 4,
-          backgroundColor: 'rgba(30, 41, 59, 0.9)',
-          backdropFilter: 'blur(8px)',
-        }}
-      >
-        <Typography variant="h3" component="h1" gutterBottom align="center">
-          Política de Privacidad
-        </Typography>
-        
-        <Typography variant="body2" color="text.secondary" align="center" sx={{ mb: 4 }}>
-          Última actualización: {new Date().toLocaleDateString('es-ES')}
-        </Typography>
+        <Paper
+          elevation={1}
+          sx={{
+            p: 4,
+            backgroundColor: "rgba(30, 41, 59, 0.9)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <Typography variant="h3" component="h1" gutterBottom align="center">
+            Política de Privacidad
+          </Typography>
 
-        <Divider sx={{ my: 3 }} />
+          <Typography
+            variant="body2"
+            color="text.secondary"
+            align="center"
+            sx={{ mb: 4 }}
+          >
+            Última actualización: {LEGAL_LAST_UPDATED}
+          </Typography>
 
-        <Box sx={{ '& > *': { mb: 3 } }}>
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              1. Información que Recopilamos
-            </Typography>
-            <Typography variant="body1" paragraph>
-              En La Guía del Streaming recopilamos información para mejorar tu experiencia en nuestro sitio web:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li>Información de uso del sitio web (páginas visitadas, tiempo de permanencia)</li>
-              <li>Datos técnicos (tipo de navegador, dispositivo, dirección IP)</li>
-              <li>Preferencias de usuario (configuraciones, suscripciones)</li>
-              <li>Datos de interacción (clics, reproducciones de video)</li>
-            </Typography>
-          </section>
+          <Divider sx={{ my: 3 }} />
 
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              2. Uso de Cookies
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Utilizamos diferentes tipos de cookies para mejorar tu experiencia:
-            </Typography>
-            
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Cookies Necesarias
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Esenciales para el funcionamiento del sitio. Incluyen cookies de sesión, autenticación y preferencias básicas.
+          <Box sx={{ "& > *": { mb: 3 } }}>
+            <Typography paragraph>
+              En LA GUÍA DEL STREAMING nos comprometemos a tratar tus datos con
+              transparencia y de acuerdo con la{" "}
+              <strong>
+                Ley N° 25.326 de Protección de los Datos Personales
+              </strong>{" "}
+              de la República Argentina. Esta política detalla qué información
+              recolectamos, cómo la utilizamos, bajo qué plazos la conservamos y
+              qué derechos tenés como usuario.
             </Typography>
 
-            <Typography variant="h6" component="h3" gutterBottom>
-              Cookies de Análisis
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Nos ayudan a entender cómo interactúas con nuestro sitio web. Utilizamos:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 2 }}>
-              <li><strong>Google Analytics:</strong> Análisis de tráfico y comportamiento de usuarios</li>
-              <li><strong>PostHog:</strong> Análisis de producto y experiencia de usuario</li>
-              <li><strong>Microsoft Clarity:</strong> Mapas de calor y grabaciones de sesión</li>
-              <li><strong>Datadog:</strong> Rendimiento del sitio y grabaciones de sesión</li>
-              <li><strong>Análisis propio:</strong> Registramos en nuestros propios servidores qué programas y canales se abren, para elaborar rankings y estadísticas de uso. Guardamos el evento junto a un identificador de dispositivo y, si iniciaste sesión, tu identificador de usuario. Los eventos individuales se conservan 90 días; pasado ese plazo solo quedan totales diarios agregados, que no permiten identificarte.</li>
-            </Typography>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                1. Política de menores de edad
+              </Typography>
+              <Typography paragraph>
+                Nuestros servicios y el registro de cuentas están dirigidos{" "}
+                <strong>exclusivamente a personas mayores de 18 años</strong>.
+                No recolectamos conscientemente datos personales de menores de
+                18 años. Si tomamos conocimiento de que se han recopilado datos
+                personales de un menor sin el correspondiente consentimiento,
+                procederemos de inmediato a su supresión de nuestros sistemas.
+              </Typography>
+            </section>
 
-            <Typography variant="h6" component="h3" gutterBottom>
-              Cookies de Marketing
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Se utilizan para mostrar contenido relevante y medir la efectividad. Incluye Google Tag Manager y herramientas similares.
-            </Typography>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                2. Información que recopilamos
+              </Typography>
+              <Typography paragraph>
+                Recolectamos datos técnicos, de interacción y de contacto para
+                operar la plataforma, enviar alertas y generar métricas de
+                consumo:
+              </Typography>
+              <ul style={{ marginLeft: 24, marginBottom: 16 }}>
+                <li>
+                  <strong>Identificadores seudónimos:</strong> Asignamos
+                  identificadores técnicos a tu dispositivo o navegador para
+                  registrar visitas y mantener configuraciones locales. En caso
+                  de iniciar sesión o registrar una cuenta, estos
+                  identificadores quedan asociados a tu perfil de usuario.
+                </li>
+                <li>
+                  <strong>Datos de registro y autenticación social:</strong> Si
+                  creás una cuenta a través de servicios de terceros (como
+                  Google o Apple), recopilamos la información básica provista
+                  por dichos proveedores: nombre completo, dirección de correo
+                  electrónico y el identificador único de autenticación.
+                </li>
+                <li>
+                  <strong>Tokens de Notificaciones Push:</strong> Si habilitás
+                  voluntariamente el sistema de alertas de transmisiones,
+                  recopilamos y almacenamos un token único de notificación
+                  asociado a tu dispositivo o navegador para poder remitirte los
+                  avisos solicitados.
+                </li>
+                <li>
+                  <strong>Datos de perfil demográfico:</strong> Si completás
+                  voluntariamente la información de tu cuenta, asociamos a tus
+                  eventos de uso variables de rango etario y género con el fin
+                  de personalizar la experiencia y generar reportes de audiencia
+                  agregados.
+                </li>
+                <li>
+                  <strong>Eventos de interacción (telemetría puntual):</strong>{" "}
+                  Registramos acciones puntuales dentro del sitio y la app,
+                  tales como clics sobre la grilla, apertura de programas,
+                  canales seleccionados, guardado de favoritos y accesos a
+                  transmisiones. No registramos el tiempo de permanencia activa
+                  o duración pasiva de navegación.
+                </li>
+                <li>
+                  <strong>Información técnica general:</strong> Tipo de
+                  navegador y sistema operativo para optimizar la compatibilidad
+                  técnica de la interfaz. No almacenamos de forma directa tu
+                  dirección IP en nuestras bases de datos propias (el
+                  procesamiento de geolocalización aproximada o logs de red es
+                  gestionado por los servicios de infraestructura y analítica
+                  externa).
+                </li>
+              </ul>
+            </section>
 
-            <Typography variant="h6" component="h3" gutterBottom>
-              Cookies de Preferencias
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Permiten recordar tus configuraciones como tema, idioma y otras preferencias personales.
-            </Typography>
-          </section>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                3. Finalidades del tratamiento y función &quot;Mi Resumen&quot;
+              </Typography>
+              <Typography paragraph>
+                Tratamos los datos recopilados para los siguientes fines:
+              </Typography>
+              <ul style={{ marginLeft: 24, marginBottom: 16 }}>
+                <li>
+                  <strong>Operación de la plataforma y alertas:</strong>{" "}
+                  Presentar la programación actualizada, sincronizar enlaces a
+                  emisiones en directo y despachar notificaciones push cuando
+                  inician los programas o creadores que marcaste en tu grilla o
+                  favoritos.
+                </li>
+                <li>
+                  <strong>
+                    Historial de usuario y balances (&quot;Mi Resumen&quot;):
+                  </strong>{" "}
+                  Construir y almacenar el historial de programas y canales
+                  interactuados por cada usuario registrado. Esta información
+                  permite generar los balances periódicos de consumo (resúmenes
+                  semanales y anuales) con piezas gráficas para descargar y
+                  compartir.
+                </li>
+                <li>
+                  <strong>Métricas internas y rankings agregados:</strong>{" "}
+                  Elaborar estadísticas consolidadas sobre el consumo de
+                  streaming en la región. Todos los informes de industria,
+                  métricas comerciales y rankings públicos se presentan de forma
+                  disociada y agregada, impidiendo identificar a personas
+                  individuales.
+                </li>
+              </ul>
+            </section>
 
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              3. Uso de YouTube API Services
-            </Typography>
-            <Typography variant="body1" paragraph>
-              <strong>Este sitio web utiliza YouTube API Services.</strong> Al usar nuestro sitio, usted también acepta las políticas de YouTube y Google.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Para más información sobre cómo Google maneja sus datos, consulte la{' '}
-              <a 
-                href="http://www.google.com/policies/privacy" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
-              >
-                Política de Privacidad de Google
-              </a>
-              .
-            </Typography>
-            
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Datos de YouTube que Accedemos
-            </Typography>
-            <Typography variant="body2" paragraph>
-              A través de YouTube API Services, accedemos únicamente a información pública como:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 1 }}>
-              <li>Información de canales de YouTube (nombres, IDs)</li>
-              <li>Estado de transmisiones en vivo</li>
-              <li>IDs de videos públicos</li>
-              <li>Metadatos públicos de contenido</li>
-            </Typography>
-            <Typography variant="body2" paragraph>
-              <strong>No accedemos ni almacenamos datos privados de cuentas de YouTube de usuarios.</strong>
-            </Typography>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                4. Cookies, telemetría y configuración de preferencias
+              </Typography>
+              <Typography paragraph>
+                El sitio y la app utilizan tecnologías de almacenamiento local,
+                cookies y sistemas propios de eventos estructurados en las
+                siguientes categorías:
+              </Typography>
+              <ul style={{ marginLeft: 24, marginBottom: 16 }}>
+                <li>
+                  <strong>Cookies Necesarias:</strong> Imprescindibles para el
+                  funcionamiento técnico de la plataforma, autenticación de
+                  sesiones y seguridad.
+                </li>
+                <li>
+                  <strong>Cookies de Análisis:</strong> Permiten evaluar el uso
+                  de la plataforma y el rendimiento del producto. Operamos un
+                  sistema de recolección propio habilitado de forma
+                  predeterminada (esquema opt-out), además de herramientas
+                  analíticas de terceros.
+                </li>
+                <li>
+                  <strong>Cookies de Preferencias:</strong> Guardan
+                  configuraciones de interfaz elegidas por el usuario (como
+                  canales destacados o filtros visuales).
+                </li>
+                <li>
+                  <strong>Cookies de Marketing:</strong> Utilizadas para medir
+                  la efectividad de campañas y accesos a contenidos.
+                </li>
+              </ul>
+              <Typography paragraph>
+                <strong>Herramientas de terceros:</strong> Utilizamos servicios
+                externos especializados para monitoreo, envío de avisos y
+                análisis, tales como Firebase (para notificaciones e
+                infraestructura), Google Analytics (GA4), PostHog, Microsoft
+                Clarity, Hotjar y Datadog, cada uno sujeto a sus respectivas
+                políticas de privacidad.
+              </Typography>
+              <Typography paragraph>
+                <strong>Gestión del consentimiento:</strong> Podés personalizar
+                o desactivar las categorías de cookies no esenciales y el
+                sistema de análisis interno en cualquier momento desde el panel
+                de <strong>Configurar cookies</strong> en el pie de página web.
+                En la aplicación móvil, dicha opción estará disponible en la
+                sección de Configuración/Ajustes de la cuenta. Las
+                notificaciones push pueden administrarse o desactivarse de forma
+                individual por cada programa o streamer desde la propia grilla,
+                o bien revocarse de manera global desde la configuración de
+                notificaciones de tu navegador o sistema operativo móvil
+                (Android/iOS).
+              </Typography>
+            </section>
 
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Revocación de Acceso
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Si desea revocar el acceso de aplicaciones a su cuenta de Google/YouTube, puede hacerlo en{' '}
-              <a 
-                href="https://security.google.com/settings/" 
-                target="_blank" 
-                rel="noopener noreferrer"
-                style={{ color: theme.palette.primary.main, textDecoration: 'underline' }}
-              >
-                Google Security Settings
-              </a>
-              .
-            </Typography>
-          </section>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                5. YouTube API Services
+              </Typography>
+              <Typography paragraph>
+                Nuestra plataforma utiliza los servicios de YouTube API Services
+                para mostrar transmisiones públicas y estados en vivo. Al
+                interactuar con estas funciones, aceptas los{" "}
+                <a
+                  href="https://www.youtube.com/t/terms"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#3b82f6" }}
+                >
+                  Términos de Servicio de YouTube
+                </a>{" "}
+                y la{" "}
+                <a
+                  href="https://policies.google.com/privacy"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#3b82f6" }}
+                >
+                  Política de Privacidad de Google
+                </a>
+                . Únicamente accedemos y mostramos datos públicos provistos por
+                la API oficial y no accedemos, recopilamos ni almacenamos datos
+                privados de cuentas de Google de los usuarios. Podés gestionar y
+                revocar accesos en cualquier momento a través de la{" "}
+                <a
+                  href="https://myaccount.google.com/permissions"
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  style={{ color: "#3b82f6" }}
+                >
+                  Configuración de Seguridad de Google
+                </a>
+                .
+              </Typography>
+            </section>
 
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              4. Otros Servicios de Terceros
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Además de YouTube API Services, utilizamos otros servicios de terceros:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li><strong>Google Analytics:</strong> Para análisis web</li>
-              <li><strong>PostHog:</strong> Para análisis de producto</li>
-              <li><strong>Microsoft Clarity:</strong> Para análisis de comportamiento</li>
-              <li><strong>Datadog:</strong> Para monitoreo de rendimiento y errores</li>
-              <li><strong>Hotjar:</strong> Para análisis de experiencia de usuario</li>
-            </Typography>
-            
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Contenido y Publicidad de Terceros
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Nuestro sitio permite que terceros sirvan contenido, incluyendo:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li>Videos embebidos de YouTube (que pueden incluir publicidad)</li>
-              <li>Contenido analítico de servicios de terceros</li>
-              <li>Scripts de seguimiento y análisis</li>
-            </Typography>
-          </section>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                6. Alojamiento de datos y transferencia internacional
+              </Typography>
+              <Typography paragraph>
+                Los servidores y bases de datos principales de LA GUÍA DEL
+                STREAMING se encuentran alojados en centros de datos ubicados en
+                la <strong>República Federativa del Brasil</strong> (a través de
+                proveedores de infraestructura en la nube como Supabase y
+                Railway). Al utilizar el servicio, consientes la transferencia
+                internacional de tus datos a dicha jurisdicción bajo estándares
+                de cifrado y medidas de seguridad técnicas apropiadas para
+                proteger la confidencialidad de la información.
+              </Typography>
+            </section>
 
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              5. Almacenamiento y Procesamiento de Datos
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Explicamos cómo utilizamos, procesamos y compartimos su información:
-            </Typography>
-            
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Uso Interno
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li>Mejorar la experiencia de usuario en nuestro sitio</li>
-              <li>Analizar patrones de uso y preferencias</li>
-              <li>Mantener y optimizar el funcionamiento del sitio</li>
-              <li>Proporcionar recomendaciones personalizadas</li>
-            </Typography>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                7. Conservación y retención de datos
+              </Typography>
+              <ul style={{ marginLeft: 24, marginBottom: 16 }}>
+                <li>
+                  <strong>Eventos crudos de telemetría:</strong> Los registros
+                  puntuales de eventos técnicos y clics se conservan en las
+                  bases operativas por un plazo máximo de{" "}
+                  <strong>90 días corridos</strong>, tras el cual se eliminan de
+                  forma automatizada.
+                </li>
+                <li>
+                  <strong>Tokens de Notificaciones Push:</strong> Se conservan
+                  mientras mantengas activas las alertas o la aplicación
+                  instalada. Ante la desinstalación de la app o la revocación de
+                  permisos en el dispositivo, el token se elimina
+                  automáticamente de nuestra base de datos en el primer intento
+                  de envío posterior, una vez que el proveedor del servicio de
+                  notificaciones reporta que el identificador ya no es válido.
+                </li>
+                <li>
+                  <strong>Historial de consumo de usuarios registrados:</strong>{" "}
+                  Los registros de programas y canales visualizados asociados a
+                  tu cuenta se conservan de forma continua mientras tu cuenta
+                  permanezca activa, con el fin exclusivo de permitir la
+                  generación de balances históricos y resúmenes anuales
+                  (&quot;Mi Resumen&quot;).
+                </li>
+                <li>
+                  <strong>Métricas estadísticas consolidadas:</strong> Los datos
+                  agregados y disociados (sin vinculación a cuentas o
+                  identificadores personales) se conservan por tiempo indefinido
+                  con fines de análisis histórico y desarrollo comercial.
+                </li>
+              </ul>
+            </section>
 
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Compartir con Terceros
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Compartimos información con terceros únicamente en las siguientes circunstancias:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2 }}>
-              <li>Con servicios de análisis (Google Analytics, PostHog, Microsoft Clarity, Hotjar, Datadog) para mejorar nuestro sitio</li>
-              <li>Las estadísticas de nuestro análisis propio nunca se comparten de forma individual: si publicamos rankings o resúmenes, son siempre datos agregados</li>
-              <li>Con YouTube/Google para el funcionamiento de contenido embebido</li>
-              <li>Datos agregados y anónimos para análisis estadístico</li>
-              <li>Cuando sea requerido por ley</li>
-            </Typography>
-
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Almacenamiento de Datos
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Sus datos se almacenan de forma segura y se conservan únicamente mientras sea necesario para los fines descritos o según requiera la ley.
-            </Typography>
-            
-            <Typography variant="h6" component="h3" gutterBottom sx={{ mt: 2 }}>
-              Eliminación de Datos
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Para solicitar la eliminación de sus datos almacenados, contáctenos usando la información proporcionada en la sección de contacto. Procesaremos su solicitud de acuerdo con la legislación aplicable.
-            </Typography>
-          </section>
-
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              6. Tus Derechos
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Tienes derecho a:
-            </Typography>
-            <Typography variant="body2" component="ul" sx={{ pl: 2, mb: 1 }}>
-              <li>Configurar tus preferencias de cookies en cualquier momento</li>
-              <li>Solicitar información sobre los datos que tenemos sobre ti</li>
-              <li>Solicitar la eliminación de tus datos</li>
-              <li>Retirar tu consentimiento en cualquier momento</li>
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Puedes gestionar tus preferencias de cookies desde el footer del sitio o contactándonos directamente.
-            </Typography>
-          </section>
-
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              7. Seguridad de los Datos
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Implementamos medidas de seguridad apropiadas para proteger tu información personal contra acceso no autorizado, alteración, divulgación o destrucción.
-            </Typography>
-          </section>
-
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              8. Información de Contacto
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Si tienes preguntas sobre esta política de privacidad, sobre el tratamiento de tus datos, o deseas ejercer tus derechos de privacidad, puedes contactarnos en:
-            </Typography>
-            <Typography variant="body2" paragraph>
-              <strong>Email:</strong> laguiadelstreaming@gmail.com<br />
-              <strong>Sitio web:</strong> https://laguiadelstreaming.com<br />
-              <strong>Responsable:</strong> La Guía del Streaming
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Responderemos a tu consulta en un plazo razonable de acuerdo con la legislación aplicable.
-            </Typography>
-          </section>
-
-          <section>
-            <Typography variant="h5" component="h2" gutterBottom>
-              9. Cambios en esta Política
-            </Typography>
-            <Typography variant="body1" paragraph>
-              Podemos actualizar esta política de privacidad ocasionalmente. Te notificaremos sobre cambios significativos actualizando la fecha en la parte superior de esta página y, cuando sea apropiado, a través de otros medios de comunicación.
-            </Typography>
-            <Typography variant="body2" paragraph>
-              Te recomendamos revisar esta política periódicamente para mantenerte informado sobre cómo protegemos tu información.
-            </Typography>
-          </section>
-        </Box>
-      </Paper>
-    </Container>
+            <section>
+              <Typography variant="h6" gutterBottom>
+                8. Supresión de cuenta y derechos del titular
+              </Typography>
+              <Typography paragraph>
+                De acuerdo con la Ley N° 25.326, tenés derecho a acceder,
+                rectificar, actualizar o suprimir tus datos personales:
+              </Typography>
+              <ul style={{ marginLeft: 24, marginBottom: 16 }}>
+                <li>
+                  <strong>Baja de cuenta y desvinculación:</strong> Si solicitás
+                  la baja de tu cuenta de usuario, tus credenciales, datos de
+                  perfil, tokens e identificadores asociados se eliminan
+                  definitivamente. Los registros históricos de interacción pasan
+                  a un estado disociado y anonimizado de forma irreversible,
+                  eliminando cualquier identificador que permita vincularlos con
+                  tu identidad.
+                </li>
+                <li>
+                  <strong>Ejercicio de derechos:</strong> Podés solicitar la
+                  actualización, exportación o supresión de tus datos enviando
+                  un correo electrónico a{" "}
+                  <strong>hola@laguiadelstreaming.com</strong> con el asunto
+                  &quot;Protección de Datos Personales&quot;. Responderemos a tu
+                  solicitud en los plazos establecidos por la normativa vigente.
+                </li>
+              </ul>
+            </section>
+          </Box>
+        </Paper>
+      </Container>
     </Box>
   );
-} 
+}

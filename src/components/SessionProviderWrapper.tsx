@@ -1,17 +1,20 @@
-'use client';
-import { SessionProvider as NextAuthSessionProvider } from 'next-auth/react';
-import { SessionProvider as CustomSessionProvider } from '@/contexts/SessionContext';
-import React, { ReactNode, useEffect, useState } from 'react';
-import { useSession } from 'next-auth/react';
-import { useRouter, usePathname } from 'next/navigation';
-import SessionPoller from './SessionPoller';
+"use client";
+import { SessionProvider as NextAuthSessionProvider } from "next-auth/react";
+import { SessionProvider as CustomSessionProvider } from "@/contexts/SessionContext";
+import React, { ReactNode, useEffect, useState } from "react";
+import { useSession } from "next-auth/react";
+import { useRouter, usePathname } from "next/navigation";
+import SessionPoller from "./SessionPoller";
+import { LegalConsentDialog } from "./legal/LegalConsentDialog";
 
 interface ExtendedSession {
   profileIncomplete?: boolean;
   registrationToken?: string;
 }
 
-interface Props { children: ReactNode }
+interface Props {
+  children: ReactNode;
+}
 
 function SessionRedirectHandler({ children }: Props) {
   const { data: session, status } = useSession();
@@ -24,11 +27,11 @@ function SessionRedirectHandler({ children }: Props) {
     // 2. Profile is incomplete
     //3already on profile page
     if (
-      status === 'authenticated' && 
-      (session as ExtendedSession)?.profileIncomplete && 
-      pathname !== '/profile-completion'
+      status === "authenticated" &&
+      (session as ExtendedSession)?.profileIncomplete &&
+      pathname !== "/profile-completion"
     ) {
-      router.replace('/profile-completion');
+      router.replace("/profile-completion");
     }
   }, [session, status, pathname, router]);
 
@@ -46,18 +49,19 @@ function ServiceWorkerHandler() {
     if (!isClient) return;
 
     // Only run on client side
-    if (typeof window === 'undefined') {
+    if (typeof window === "undefined") {
       return;
     }
 
     // Register service worker if not already registered
-    if ('serviceWorker' in navigator) {
-      navigator.serviceWorker.register('/push-sw.js')
+    if ("serviceWorker" in navigator) {
+      navigator.serviceWorker
+        .register("/push-sw.js")
         .then((registration) => {
-          console.log('[Service Worker] Registered:', registration);
+          console.log("[Service Worker] Registered:", registration);
         })
         .catch((error) => {
-          console.error('[Service Worker] Registration failed:', error);
+          console.error("[Service Worker] Registration failed:", error);
         });
     }
   }, [isClient]);
@@ -73,6 +77,8 @@ export default function SessionProviderWrapper({ children }: Props) {
         <ServiceWorkerHandler />
         <SessionRedirectHandler>
           {children}
+          {/* Mounted here so it covers every route a signed-in user can reach. */}
+          <LegalConsentDialog />
         </SessionRedirectHandler>
       </CustomSessionProvider>
     </NextAuthSessionProvider>
