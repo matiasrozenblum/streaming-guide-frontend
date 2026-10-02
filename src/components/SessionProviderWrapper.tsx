@@ -5,7 +5,6 @@ import React, { ReactNode, useEffect, useState } from "react";
 import { useSession } from "next-auth/react";
 import { useRouter, usePathname } from "next/navigation";
 import SessionPoller from "./SessionPoller";
-import { LegalConsentDialog } from "./legal/LegalConsentDialog";
 
 interface ExtendedSession {
   profileIncomplete?: boolean;
@@ -75,11 +74,7 @@ export default function SessionProviderWrapper({ children }: Props) {
       <CustomSessionProvider>
         <SessionPoller />
         <ServiceWorkerHandler />
-        <SessionRedirectHandler>
-          {children}
-          {/* Mounted here so it covers every route a signed-in user can reach. */}
-          <LegalConsentDialog />
-        </SessionRedirectHandler>
+        <SessionRedirectHandler>{children}</SessionRedirectHandler>
       </CustomSessionProvider>
     </NextAuthSessionProvider>
   );
