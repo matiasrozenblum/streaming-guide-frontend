@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState } from "react";
 import {
   Box,
   TextField,
@@ -6,24 +6,33 @@ import {
   Alert,
   AlertTitle,
   InputAdornment,
-  CircularProgress
-} from '@mui/material';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import MenuItem from '@mui/material/MenuItem';
-import { useSession } from 'next-auth/react';
-import { DatePicker } from '@mui/x-date-pickers/DatePicker';
-import { LocalizationProvider } from '@mui/x-date-pickers/LocalizationProvider';
-import { AdapterDayjs } from '@mui/x-date-pickers/AdapterDayjs';
-import dayjs, { Dayjs } from 'dayjs';
-import 'dayjs/locale/es';
+  CircularProgress,
+} from "@mui/material";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import MenuItem from "@mui/material/MenuItem";
+import { useSession } from "next-auth/react";
+import { DatePicker } from "@mui/x-date-pickers/DatePicker";
+import {
+  birthDateError as validateBirthDate,
+  MINIMUM_AGE_YEARS,
+} from "@/utils/age";
+import { LocalizationProvider } from "@mui/x-date-pickers/LocalizationProvider";
+import { AdapterDayjs } from "@mui/x-date-pickers/AdapterDayjs";
+import dayjs, { Dayjs } from "dayjs";
+import "dayjs/locale/es";
 
 interface ProfileStepProps {
   initialFirst?: string;
   initialLast?: string;
   initialBirthDate?: string;
   initialGender?: string;
-  onSubmit: (first: string, last: string, birthDate: string, gender: string) => void;
+  onSubmit: (
+    first: string,
+    last: string,
+    birthDate: string,
+    gender: string,
+  ) => void;
   onBack: () => void;
   error?: string;
   isLoading?: boolean;
@@ -31,10 +40,10 @@ interface ProfileStepProps {
 }
 
 export default function ProfileStep({
-  initialFirst = '',
-  initialLast = '',
-  initialBirthDate = '',
-  initialGender = '',
+  initialFirst = "",
+  initialLast = "",
+  initialBirthDate = "",
+  initialGender = "",
   error,
   onSubmit,
   onBack,
@@ -44,63 +53,60 @@ export default function ProfileStep({
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
   const [last, setLast] = useState(initialLast);
-  const [birthDate, setBirthDate] = useState<Dayjs | null>(initialBirthDate ? dayjs(initialBirthDate) : dayjs());
+  // Empty, not today: an untouched field defaulting to today submitted an
+  // age of zero, which the server now rejects.
+  const [birthDate, setBirthDate] = useState<Dayjs | null>(
+    initialBirthDate ? dayjs(initialBirthDate) : null,
+  );
   const [gender, setGender] = useState(initialGender);
-  const [localErr, setLocalErr] = useState('');
+  const [localErr, setLocalErr] = useState("");
   // If user is from social provider, disable name fields if present
-  const isSocial = !!session?.user && (session.user.firstName || session.user.lastName || session.user.email);
-  const [birthDateError, setBirthDateError] = useState('');
+  const isSocial =
+    !!session?.user &&
+    (session.user.firstName || session.user.lastName || session.user.email);
+  const [birthDateError, setBirthDateError] = useState("");
 
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
     if (!first.trim()) {
-      setLocalErr('Ingresa tu nombre');
+      setLocalErr("Ingresa tu nombre");
       return;
     }
     if (!last.trim()) {
-      setLocalErr('Ingresa tu apellido');
+      setLocalErr("Ingresa tu apellido");
       return;
     }
     if (!gender) {
-      setLocalErr('Selecciona tu género');
+      setLocalErr("Selecciona tu género");
       return;
     }
-    if (!birthDate) {
-      setLocalErr('Ingresa tu fecha de nacimiento');
+    const ageError = validateBirthDate(birthDate);
+    if (ageError) {
+      setBirthDateError(ageError);
+      setLocalErr(ageError);
       return;
     }
-    setLocalErr('');
-    const birthDateString = birthDate ? birthDate.format('YYYY-MM-DD') : '';
+    setLocalErr("");
+    const birthDateString = birthDate ? birthDate.format("YYYY-MM-DD") : "";
     onSubmit(first.trim(), last.trim(), birthDateString, gender);
   };
 
   const handleBirthDateChange = (value: Dayjs | null) => {
     setBirthDate(value);
-    if (!value) {
-      setBirthDateError('La fecha de nacimiento es obligatoria');
-      return;
-    }
-    const birth = value.toDate();
-    const now = new Date();
-    let age = now.getFullYear() - birth.getFullYear();
-    const m = now.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-      age--;
-    }
-    if (age < 18) {
-      setBirthDateError('Debés ser mayor de 18 años para registrarte');
-    } else {
-      setBirthDateError('');
-    }
+    setBirthDateError(validateBirthDate(value) ?? "");
   };
 
   return (
-    <Box component="form" onSubmit={handle} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handle}
+      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+    >
       <TextField
         label="Nombre"
         fullWidth
         value={first}
-        onChange={e => setFirst(e.target.value)}
+        onChange={(e) => setFirst(e.target.value)}
         autoFocus
         InputProps={{
           startAdornment: (
@@ -115,7 +121,7 @@ export default function ProfileStep({
         label="Apellido"
         fullWidth
         value={last}
-        onChange={e => setLast(e.target.value)}
+        onChange={(e) => setLast(e.target.value)}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
@@ -126,18 +132,20 @@ export default function ProfileStep({
         disabled={Boolean(isSocial && last)}
       />
       <LocalizationProvider dateAdapter={AdapterDayjs} adapterLocale="es">
-        <Box sx={{ display: 'flex', gap: 2 }}>
+        <Box sx={{ display: "flex", gap: 2 }}>
           <DatePicker
             label="Fecha de nacimiento"
             value={birthDate}
             onChange={handleBirthDateChange}
+            // Nobody eligible was born this year.
+            maxDate={dayjs().subtract(MINIMUM_AGE_YEARS, "year")}
             format="DD/MM/YYYY"
             slotProps={{
               textField: {
                 fullWidth: true,
                 error: !!birthDateError,
                 helperText: birthDateError,
-                placeholder: dayjs().format('DD/MM/YYYY'),
+                placeholder: dayjs().format("DD/MM/YYYY"),
                 InputLabelProps: {
                   shrink: true,
                 },
@@ -149,7 +157,7 @@ export default function ProfileStep({
             select
             fullWidth
             value={gender}
-            onChange={e => setGender(e.target.value)}
+            onChange={(e) => setGender(e.target.value)}
           >
             <MenuItem value="masculino">Masculino</MenuItem>
             <MenuItem value="femenino">Femenino</MenuItem>
@@ -164,7 +172,7 @@ export default function ProfileStep({
           {localErr || error}
         </Alert>
       )}
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1 }}>
         {showBackButton && (
           <Button
             variant="outlined"
@@ -180,10 +188,21 @@ export default function ProfileStep({
           type="submit"
           variant="contained"
           fullWidth
-          disabled={!first || !last || !birthDate || !gender || !!birthDateError || isLoading}
-          aria-label={isLoading ? 'Guardando perfil' : undefined}
+          disabled={
+            !first ||
+            !last ||
+            !birthDate ||
+            !gender ||
+            !!birthDateError ||
+            isLoading
+          }
+          aria-label={isLoading ? "Guardando perfil" : undefined}
         >
-          {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Continuar'}
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            "Continuar"
+          )}
         </Button>
       </Box>
     </Box>

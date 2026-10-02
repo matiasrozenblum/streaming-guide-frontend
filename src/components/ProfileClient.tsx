@@ -1,9 +1,9 @@
-'use client';
+"use client";
 
-import React, { useEffect, useState } from 'react';
-import { signOut } from 'next-auth/react';
-import { useRouter } from 'next/navigation';
-import { motion } from 'framer-motion';
+import React, { useEffect, useState } from "react";
+import { signOut } from "next-auth/react";
+import { useRouter } from "next/navigation";
+import { motion } from "framer-motion";
 import {
   Box,
   Container,
@@ -25,22 +25,23 @@ import {
   Collapse,
   Snackbar,
   Tooltip,
-} from '@mui/material';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import EditIcon from '@mui/icons-material/Edit';
-import Header from '@/components/Header';
-import { useSessionContext } from '@/contexts/SessionContext';
-import type { SessionWithToken } from '@/types/session';
-import { event as gaEvent } from '@/lib/gtag';
-import { useCookieConsent } from '@/contexts/CookieConsentContext';
-import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
-import ExpandMoreIcon from '@mui/icons-material/ExpandMore';
-import dayjs from 'dayjs';
-import MuiAlert from '@mui/material/Alert';
+} from "@mui/material";
+import VpnKeyIcon from "@mui/icons-material/VpnKey";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import EditIcon from "@mui/icons-material/Edit";
+import Header from "@/components/Header";
+import { birthDateError } from "@/utils/age";
+import { useSessionContext } from "@/contexts/SessionContext";
+import type { SessionWithToken } from "@/types/session";
+import { event as gaEvent } from "@/lib/gtag";
+import { useCookieConsent } from "@/contexts/CookieConsentContext";
+import { CookiePreferencesModal } from "@/components/CookiePreferencesModal";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import dayjs from "dayjs";
+import MuiAlert from "@mui/material/Alert";
 
 const MotionBox = motion(Box);
 
@@ -53,39 +54,62 @@ const getPasswordStrength = (password: string): number => {
   return Math.min(strength, 4);
 };
 
-const getPasswordStrengthColor = (password: string): 'error' | 'warning' | 'primary' => {
+const getPasswordStrengthColor = (
+  password: string,
+): "error" | "warning" | "primary" => {
   const strength = getPasswordStrength(password);
-  if (strength <= 1) return 'error';
-  if (strength <= 2) return 'warning';
-  return 'primary';
+  if (strength <= 1) return "error";
+  if (strength <= 2) return "warning";
+  return "primary";
 };
 
-const ProfileSection = ({ title, value, onEdit }: { title: string; value: React.ReactNode; onEdit: () => void }) => (
+const ProfileSection = ({
+  title,
+  value,
+  onEdit,
+}: {
+  title: string;
+  value: React.ReactNode;
+  onEdit: () => void;
+}) => (
   <Paper
     elevation={0}
     sx={{
       p: 2.5,
       mb: 2,
-      background: 'linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)',
-      backdropFilter: 'blur(8px)',
+      background:
+        "linear-gradient(135deg,rgba(30,41,59,0.9) 0%,rgba(30,41,59,0.8) 100%)",
+      backdropFilter: "blur(8px)",
       borderRadius: 2,
-      transition: 'all 0.2s ease-in-out',
-      '&:hover': {
-        transform: 'translateY(-2px)',
-        boxShadow: '0 8px 16px rgba(0,0,0,0.3)',
-      }
+      transition: "all 0.2s ease-in-out",
+      "&:hover": {
+        transform: "translateY(-2px)",
+        boxShadow: "0 8px 16px rgba(0,0,0,0.3)",
+      },
     }}
   >
-    <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 1.5 }}>
-      <Typography variant="h6" sx={{ fontSize: '1.1rem', fontWeight: 600 }}>{title}</Typography>
+    <Box
+      sx={{
+        display: "flex",
+        justifyContent: "space-between",
+        alignItems: "center",
+        mb: 1.5,
+      }}
+    >
+      <Typography variant="h6" sx={{ fontSize: "1.1rem", fontWeight: 600 }}>
+        {title}
+      </Typography>
       <Tooltip title="Editar información" arrow>
         <IconButton
           aria-label="Editar información"
           onClick={onEdit}
           size="small"
           sx={{
-            color: 'primary.main',
-            '&:hover': { backgroundColor: 'primary.main', color: 'primary.contrastText' }
+            color: "primary.main",
+            "&:hover": {
+              backgroundColor: "primary.main",
+              color: "primary.contrastText",
+            },
           }}
         >
           <EditIcon fontSize="small" />
@@ -108,10 +132,10 @@ interface ProfileClientProps {
 }
 
 const genderTranslations: Record<string, string> = {
-  male: 'Masculino',
-  female: 'Femenino',
-  non_binary: 'No binario',
-  rather_not_say: 'Prefiero no decir'
+  male: "Masculino",
+  female: "Femenino",
+  non_binary: "No binario",
+  rather_not_say: "Prefiero no decir",
 };
 
 export default function ProfileClient({ initialUser }: ProfileClientProps) {
@@ -123,46 +147,53 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   // Track profile page visit
   useEffect(() => {
     gaEvent({
-      action: 'profile_page_visit',
+      action: "profile_page_visit",
       params: {
         has_initial_data: !!initialUser.firstName || !!initialUser.lastName,
       },
-      userData: typedSession?.user
+      userData: typedSession?.user,
     });
   }, [initialUser.firstName, initialUser.lastName, typedSession?.user]);
 
   useEffect(() => {
     // If there is no real user, redirect to home
     if (!typedSession?.user || !typedSession.user.id) {
-      router.push('/');
+      router.push("/");
     }
   }, [typedSession, router]);
 
   // sección en edición
-  const [editSection, setEditSection] =
-    useState<'none' | 'personal' | 'email' | 'phone' | 'password'>('none');
+  const [editSection, setEditSection] = useState<
+    "none" | "personal" | "email" | "phone" | "password"
+  >("none");
 
   // datos de usuario
   const [firstName, setFirstName] = useState(initialUser.firstName);
   const [lastName, setLastName] = useState(initialUser.lastName);
   const [email, setEmail] = useState(initialUser.email);
   const [phone, setPhone] = useState(initialUser.phone);
-  const [gender, setGender] = useState(initialUser.gender || '');
+  const [gender, setGender] = useState(initialUser.gender || "");
   const [birthDate, setBirthDate] = useState(
-    initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : ''
+    initialUser.birthDate ? initialUser.birthDate.slice(0, 10) : "",
   );
-  const [personalError, setPersonalError] = useState('');
+  const [personalError, setPersonalError] = useState("");
 
   // códigos de verificación
-  const [codeSent, setCodeSent] = useState({ email: false, phone: false, password: false });
-  const [emailCode, setEmailCode] = useState('');
-  const [phoneCode, setPhoneCode] = useState('');
-  const [passwordCode, setPasswordCode] = useState('');
-  const [newPassword, setNewPassword] = useState('');
-  const [confirmPassword, setConfirmPassword] = useState('');
-  const [emailStep, setEmailStep] = useState<'input' | 'verify'>('input');
-  const [newEmail, setNewEmail] = useState('');
-  const [passwordStep, setPasswordStep] = useState<'verify' | 'change'>('verify');
+  const [codeSent, setCodeSent] = useState({
+    email: false,
+    phone: false,
+    password: false,
+  });
+  const [emailCode, setEmailCode] = useState("");
+  const [phoneCode, setPhoneCode] = useState("");
+  const [passwordCode, setPasswordCode] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [emailStep, setEmailStep] = useState<"input" | "verify">("input");
+  const [newEmail, setNewEmail] = useState("");
+  const [passwordStep, setPasswordStep] = useState<"verify" | "change">(
+    "verify",
+  );
 
   // diálogo cancelar cuenta
   const [openCancel, setOpenCancel] = useState(false);
@@ -181,187 +212,215 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
   // --- All handlers from original ProfilePage ---
   const saveNames = async () => {
     if (!typedSession) return;
-    setPersonalError('');
-    // Validate birthDate (must be 18+)
-    if (!birthDate) {
-      setPersonalError('La fecha de nacimiento es obligatoria');
-      setErrorMessage('La fecha de nacimiento es obligatoria');
-      return;
-    }
-    const birth = new Date(birthDate);
-    const now = new Date();
-    let age = now.getFullYear() - birth.getFullYear();
-    const m = now.getMonth() - birth.getMonth();
-    if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-      age--;
-    }
-    if (age < 18) {
-      setPersonalError('Debes ser mayor de 18 años para registrarte');
-      setErrorMessage('Debes ser mayor de 18 años para registrarte');
+    setPersonalError("");
+    // Same rule as signup and as the server, through one shared helper.
+    const ageError = birthDateError(birthDate ? new Date(birthDate) : null);
+    if (ageError) {
+      setPersonalError(ageError);
+      setErrorMessage(ageError);
       return;
     }
     const id = typedSession.user.id;
-    const res = await fetch(`/api/users/${id}`,
-      {
-        method: 'PATCH',
-        credentials: 'include',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ firstName, lastName, gender, birthDate }),
-      });
+    const res = await fetch(`/api/users/${id}`, {
+      method: "PATCH",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ firstName, lastName, gender, birthDate }),
+    });
     if (res.ok) {
-      setSuccessMessage('Datos actualizados correctamente');
-      setEditSection('none');
+      setSuccessMessage("Datos actualizados correctamente");
+      setEditSection("none");
     } else {
-      setPersonalError('Error al actualizar');
-      setErrorMessage('Error al actualizar los datos');
+      setPersonalError("Error al actualizar");
+      setErrorMessage("Error al actualizar los datos");
     }
 
     // Track successful profile update
-    type ProfileFields = { firstName: string; lastName: string; gender: string; birthDate: string };
+    type ProfileFields = {
+      firstName: string;
+      lastName: string;
+      gender: string;
+      birthDate: string;
+    };
     gaEvent({
-      action: 'profile_update',
+      action: "profile_update",
       params: {
-        fields_updated: ['firstName', 'lastName', 'gender', 'birthDate']
-          .filter(key => ({ firstName, lastName, gender, birthDate })[key as keyof ProfileFields] !== initialUser[key as keyof ProfileFields])
-          .join(','),
+        fields_updated: ["firstName", "lastName", "gender", "birthDate"]
+          .filter(
+            (key) =>
+              ({ firstName, lastName, gender, birthDate })[
+                key as keyof ProfileFields
+              ] !== initialUser[key as keyof ProfileFields],
+          )
+          .join(","),
         has_password_change: false,
       },
-      userData: typedSession?.user
+      userData: typedSession?.user,
     });
   };
 
-  const sendCode = async (field: 'email' | 'phone' | 'password') => {
+  const sendCode = async (field: "email" | "phone" | "password") => {
     try {
-      const identifier = field === 'email' ? newEmail : email;
-      const res = await fetch('/api/auth/send-code', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const identifier = field === "email" ? newEmail : email;
+      const res = await fetch("/api/auth/send-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ identifier }),
       });
 
       if (!res.ok) {
         const error = await res.json();
-        throw new Error(error.message || 'Error al enviar el código');
+        throw new Error(error.message || "Error al enviar el código");
       }
 
-      setCodeSent(prev => ({ ...prev, [field]: true }));
+      setCodeSent((prev) => ({ ...prev, [field]: true }));
     } catch (error) {
-      alert(error instanceof Error ? error.message : 'Error al enviar el código');
-      setErrorMessage(error instanceof Error ? error.message : 'Error al enviar el código');
+      alert(
+        error instanceof Error ? error.message : "Error al enviar el código",
+      );
+      setErrorMessage(
+        error instanceof Error ? error.message : "Error al enviar el código",
+      );
     }
   };
 
-  const verifyAndUpdate = async (field: 'email' | 'phone' | 'password') => {
-    if (field === 'password') {
-      if (passwordStep === 'verify') {
+  const verifyAndUpdate = async (field: "email" | "phone" | "password") => {
+    if (field === "password") {
+      if (passwordStep === "verify") {
         try {
           // First verify the code
-          const verifyRes = await fetch('/api/auth/verify-code', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+          const verifyRes = await fetch("/api/auth/verify-code", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
             body: JSON.stringify({ identifier: email, code: passwordCode }),
           });
 
           if (!verifyRes.ok) {
             const error = await verifyRes.json();
-            throw new Error(error.message || 'Error al verificar el código');
+            throw new Error(error.message || "Error al verificar el código");
           }
 
           // If verification successful, move to password change step
-          setPasswordStep('change');
-          setPasswordCode('');
+          setPasswordStep("change");
+          setPasswordCode("");
         } catch (error) {
-          alert(error instanceof Error ? error.message : 'Error al verificar el código');
-          setErrorMessage(error instanceof Error ? error.message : 'Error al verificar el código');
+          alert(
+            error instanceof Error
+              ? error.message
+              : "Error al verificar el código",
+          );
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Error al verificar el código",
+          );
         }
-      } else if (passwordStep === 'change') {
+      } else if (passwordStep === "change") {
         if (newPassword !== confirmPassword) {
-          alert('Las contraseñas no coinciden');
-          setErrorMessage('Las contraseñas no coinciden');
+          alert("Las contraseñas no coinciden");
+          setErrorMessage("Las contraseñas no coinciden");
           return;
         }
 
         try {
           // Update the password using PATCH /api/users/:id
           const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
-            method: 'PATCH',
-            headers: { 'Content-Type': 'application/json' },
-            credentials: 'include',
+            method: "PATCH",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
             body: JSON.stringify({ password: newPassword }),
           });
 
           if (!updateRes.ok) {
             const error = await updateRes.json();
-            throw new Error(error.message || 'Error al actualizar la contraseña');
+            throw new Error(
+              error.message || "Error al actualizar la contraseña",
+            );
           }
 
           // Update successful
-          setEditSection('none');
-          setPasswordStep('verify');
-          setNewPassword('');
-          setConfirmPassword('');
-          setCodeSent(prev => ({ ...prev, password: false }));
-          alert('Contraseña actualizada exitosamente');
+          setEditSection("none");
+          setPasswordStep("verify");
+          setNewPassword("");
+          setConfirmPassword("");
+          setCodeSent((prev) => ({ ...prev, password: false }));
+          alert("Contraseña actualizada exitosamente");
         } catch (error) {
-          alert(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
-          setErrorMessage(error instanceof Error ? error.message : 'Error al cambiar la contraseña');
+          alert(
+            error instanceof Error
+              ? error.message
+              : "Error al cambiar la contraseña",
+          );
+          setErrorMessage(
+            error instanceof Error
+              ? error.message
+              : "Error al cambiar la contraseña",
+          );
         }
       }
-    } else if (field === 'email') {
+    } else if (field === "email") {
       try {
         // First verify the code
-        const verifyRes = await fetch('/api/auth/verify-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const verifyRes = await fetch("/api/auth/verify-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier: newEmail, code: emailCode }),
         });
 
         if (!verifyRes.ok) {
           const error = await verifyRes.json();
-          throw new Error(error.message || 'Error al verificar el código');
+          throw new Error(error.message || "Error al verificar el código");
         }
 
         // Then update the email using the users endpoint
         const updateRes = await fetch(`/api/users/${typedSession?.user.id}`, {
-          method: 'PATCH',
-          headers: { 'Content-Type': 'application/json' },
-          credentials: 'include',
+          method: "PATCH",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
           body: JSON.stringify({ email: newEmail }),
         });
 
         if (!updateRes.ok) {
           const error = await updateRes.json();
-          throw new Error(error.message || 'Error al actualizar el email');
+          throw new Error(error.message || "Error al actualizar el email");
         }
 
         // Update successful
         setEmail(newEmail);
-        setEditSection('none');
-        setEmailStep('input');
-        setNewEmail('');
-        setEmailCode('');
-        setCodeSent(prev => ({ ...prev, email: false }));
+        setEditSection("none");
+        setEmailStep("input");
+        setNewEmail("");
+        setEmailCode("");
+        setCodeSent((prev) => ({ ...prev, email: false }));
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Error al cambiar el email');
-        setErrorMessage(error instanceof Error ? error.message : 'Error al cambiar el email');
+        alert(
+          error instanceof Error ? error.message : "Error al cambiar el email",
+        );
+        setErrorMessage(
+          error instanceof Error ? error.message : "Error al cambiar el email",
+        );
       }
-    } else if (field === 'phone') {
+    } else if (field === "phone") {
       try {
-        const res = await fetch('/api/auth/send-code', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+        const res = await fetch("/api/auth/send-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
           body: JSON.stringify({ identifier: phone }),
         });
 
         if (!res.ok) {
           const error = await res.json();
-          throw new Error(error.message || 'Error al enviar el código');
+          throw new Error(error.message || "Error al enviar el código");
         }
 
-        setCodeSent(prev => ({ ...prev, phone: true }));
+        setCodeSent((prev) => ({ ...prev, phone: true }));
       } catch (error) {
-        alert(error instanceof Error ? error.message : 'Error al enviar el código');
-        setErrorMessage(error instanceof Error ? error.message : 'Error al enviar el código');
+        alert(
+          error instanceof Error ? error.message : "Error al enviar el código",
+        );
+        setErrorMessage(
+          error instanceof Error ? error.message : "Error al enviar el código",
+        );
       }
     }
   };
@@ -370,25 +429,25 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
     if (!typedSession) return;
     const id = typedSession.user.id;
     const res = await fetch(`/api/users/${id}`, {
-      method: 'DELETE',
-      credentials: 'include',
+      method: "DELETE",
+      credentials: "include",
     });
     if (res.ok) {
-      await signOut({ callbackUrl: '/' });
+      await signOut({ callbackUrl: "/" });
     } else {
-      alert('Error al cancelar la cuenta');
-      setErrorMessage('Error al cancelar la cuenta');
+      alert("Error al cancelar la cuenta");
+      setErrorMessage("Error al cancelar la cuenta");
     }
   };
 
-  if (status !== 'authenticated') return null;
+  if (status !== "authenticated") return null;
 
   // --- Full UI from original ProfilePage ---
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
-        background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
+        minHeight: "100dvh",
+        background: "linear-gradient(135deg,#0f172a 0%,#1e293b 100%)",
         py: { xs: 1, sm: 2 },
       }}
     >
@@ -399,12 +458,12 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           mt: 4,
           mb: 6,
           px: { xs: 2, sm: 3 },
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center'
+          display: "flex",
+          flexDirection: "column",
+          alignItems: "center",
         }}
       >
-        <Box sx={{ width: '100%', maxWidth: 600 }}>
+        <Box sx={{ width: "100%", maxWidth: 600 }}>
           <MotionBox
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
@@ -412,9 +471,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           >
             <Box
               sx={{
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'space-between',
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
                 mb: 4,
               }}
             >
@@ -422,20 +481,20 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 variant="h5"
                 sx={{
                   fontWeight: 600,
-                  color: 'rgba(78, 58, 58, 0.6)',
-                  WebkitBackgroundClip: 'text',
+                  color: "rgba(78, 58, 58, 0.6)",
+                  WebkitBackgroundClip: "text",
                 }}
               >
                 Mi cuenta
               </Typography>
               <Button
                 startIcon={<ArrowBackIcon />}
-                onClick={() => router.push('/')}
+                onClick={() => router.push("/")}
                 variant="outlined"
                 size="large"
                 sx={{
                   borderRadius: 2,
-                  textTransform: 'none',
+                  textTransform: "none",
                   px: 3,
                 }}
               >
@@ -446,14 +505,14 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
               <ProfileSection
                 title="Datos personales"
                 value={
-                  editSection !== 'personal' ? (
+                  editSection !== "personal" ? (
                     <Grid container spacing={2}>
                       <Grid component="div" size={6}>
                         <Typography color="text.secondary" gutterBottom>
                           Nombre
                         </Typography>
                         <Typography variant="body1">
-                          {firstName || '—'}
+                          {firstName || "—"}
                         </Typography>
                       </Grid>
                       <Grid component="div" size={6}>
@@ -461,7 +520,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           Apellido
                         </Typography>
                         <Typography variant="body1">
-                          {lastName || '—'}
+                          {lastName || "—"}
                         </Typography>
                       </Grid>
                       <Grid component="div" size={6}>
@@ -469,7 +528,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           Fecha de nacimiento
                         </Typography>
                         <Typography variant="body1">
-                          {birthDate ? dayjs(birthDate).format('DD/MM/YYYY') : '—'}
+                          {birthDate
+                            ? dayjs(birthDate).format("DD/MM/YYYY")
+                            : "—"}
                         </Typography>
                       </Grid>
                       <Grid component="div" size={6}>
@@ -477,14 +538,14 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           Género
                         </Typography>
                         <Typography variant="body1">
-                          {gender ? genderTranslations[gender] || gender : '—'}
+                          {gender ? genderTranslations[gender] || gender : "—"}
                         </Typography>
                       </Grid>
                     </Grid>
                   ) : (
                     <Box
                       component="form"
-                      onSubmit={e => {
+                      onSubmit={(e) => {
                         e.preventDefault();
                         saveNames();
                       }}
@@ -495,7 +556,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             label="Nombre"
                             fullWidth
                             value={firstName}
-                            onChange={e => setFirstName(e.target.value)}
+                            onChange={(e) => setFirstName(e.target.value)}
                             variant="outlined"
                             size="small"
                           />
@@ -505,7 +566,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             label="Apellido"
                             fullWidth
                             value={lastName}
-                            onChange={e => setLastName(e.target.value)}
+                            onChange={(e) => setLastName(e.target.value)}
                             variant="outlined"
                             size="small"
                           />
@@ -516,7 +577,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             type="date"
                             fullWidth
                             value={birthDate}
-                            onChange={e => setBirthDate(e.target.value)}
+                            onChange={(e) => setBirthDate(e.target.value)}
                             variant="outlined"
                             size="small"
                             InputLabelProps={{ shrink: true }}
@@ -528,25 +589,40 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             select
                             fullWidth
                             value={gender}
-                            onChange={e => setGender(e.target.value)}
+                            onChange={(e) => setGender(e.target.value)}
                             variant="outlined"
                             size="small"
                           >
                             <MenuItem value="male">Masculino</MenuItem>
                             <MenuItem value="female">Femenino</MenuItem>
                             <MenuItem value="non_binary">No binario</MenuItem>
-                            <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
+                            <MenuItem value="rather_not_say">
+                              Prefiero no decir
+                            </MenuItem>
                           </TextField>
                         </Grid>
                         {personalError && (
                           <Grid component="div" size={12}>
-                            <Typography color="error" variant="body2" sx={{ mt: 1 }}>{personalError}</Typography>
+                            <Typography
+                              color="error"
+                              variant="body2"
+                              sx={{ mt: 1 }}
+                            >
+                              {personalError}
+                            </Typography>
                           </Grid>
                         )}
                         <Grid component="div" size={12}>
-                          <Box sx={{ display: 'flex', gap: 1, justifyContent: 'flex-end', mt: 1 }}>
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 1,
+                              justifyContent: "flex-end",
+                              mt: 1,
+                            }}
+                          >
                             <Button
-                              onClick={() => setEditSection('none')}
+                              onClick={() => setEditSection("none")}
                               variant="outlined"
                               size="small"
                             >
@@ -565,14 +641,20 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     </Box>
                   )
                 }
-                onEdit={() => setEditSection('personal')}
+                onEdit={() => setEditSection("personal")}
               />
               <ProfileSection
                 title="Correo electrónico"
                 value={
-                  editSection === 'email' ? (
-                    emailStep === 'input' ? (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                  editSection === "email" ? (
+                    emailStep === "input" ? (
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
                         <TextField
                           label="Nuevo correo electrónico"
                           type="email"
@@ -580,21 +662,23 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           onChange={(e) => setNewEmail(e.target.value)}
                           fullWidth
                         />
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1 }}>
                           <Button
                             variant="contained"
                             onClick={() => {
                               if (!newEmail) {
-                                alert('Por favor ingresa un correo electrónico');
+                                alert(
+                                  "Por favor ingresa un correo electrónico",
+                                );
                                 return;
                               }
                               const re = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
                               if (!re.test(newEmail)) {
-                                alert('Correo electrónico inválido');
+                                alert("Correo electrónico inválido");
                                 return;
                               }
-                              sendCode('email');
-                              setEmailStep('verify');
+                              sendCode("email");
+                              setEmailStep("verify");
                             }}
                           >
                             Enviar código
@@ -602,9 +686,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           <Button
                             variant="outlined"
                             onClick={() => {
-                              setEditSection('none');
-                              setEmailStep('input');
-                              setNewEmail('');
+                              setEditSection("none");
+                              setEmailStep("input");
+                              setNewEmail("");
                             }}
                           >
                             Cancelar
@@ -612,7 +696,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                         </Box>
                       </Box>
                     ) : (
-                      <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+                      <Box
+                        sx={{
+                          display: "flex",
+                          flexDirection: "column",
+                          gap: 2,
+                        }}
+                      >
                         <Typography variant="body2" color="text.secondary">
                           Se ha enviado un código de verificación a {newEmail}
                         </Typography>
@@ -622,18 +712,18 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                           onChange={(e) => setEmailCode(e.target.value)}
                           fullWidth
                         />
-                        <Box sx={{ display: 'flex', gap: 1 }}>
+                        <Box sx={{ display: "flex", gap: 1 }}>
                           <Button
                             variant="contained"
-                            onClick={() => verifyAndUpdate('email')}
+                            onClick={() => verifyAndUpdate("email")}
                           >
                             Verificar y actualizar
                           </Button>
                           <Button
                             variant="outlined"
                             onClick={() => {
-                              setEmailStep('input');
-                              setEmailCode('');
+                              setEmailStep("input");
+                              setEmailCode("");
                             }}
                           >
                             Volver
@@ -645,21 +735,17 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     <Typography>{email}</Typography>
                   )
                 }
-                onEdit={() => setEditSection('email')}
+                onEdit={() => setEditSection("email")}
               />
               <ProfileSection
                 title="Teléfono"
-                value={
-                  <Typography variant="body1">{phone || '—'}</Typography>
-                }
-                onEdit={() => setEditSection('phone')}
+                value={<Typography variant="body1">{phone || "—"}</Typography>}
+                onEdit={() => setEditSection("phone")}
               />
               <ProfileSection
                 title="Contraseña"
-                value={
-                  <Typography variant="body1">••••••••</Typography>
-                }
-                onEdit={() => setEditSection('password')}
+                value={<Typography variant="body1">••••••••</Typography>}
+                onEdit={() => setEditSection("password")}
               />
 
               <ProfileSection
@@ -671,15 +757,17 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                       endIcon={
                         <ExpandMoreIcon
                           style={{
-                            transform: cookiesOpen ? 'rotate(180deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s',
+                            transform: cookiesOpen
+                              ? "rotate(180deg)"
+                              : "rotate(0deg)",
+                            transition: "transform 0.2s",
                           }}
                         />
                       }
-                      sx={{ mb: 1, textTransform: 'none' }}
+                      sx={{ mb: 1, textTransform: "none" }}
                       size="small"
                     >
-                      {cookiesOpen ? 'Ocultar detalles' : 'Ver detalles'}
+                      {cookiesOpen ? "Ocultar detalles" : "Ver detalles"}
                     </Button>
                     <Collapse in={cookiesOpen}>
                       <Grid container spacing={2}>
@@ -688,7 +776,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             Cookies de Análisis
                           </Typography>
                           <Typography variant="body1">
-                            {consent?.analytics ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                            {consent?.analytics
+                              ? "✅ Habilitadas"
+                              : "❌ Deshabilitadas"}
                           </Typography>
                         </Grid>
                         <Grid component="div" size={6}>
@@ -696,7 +786,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             Cookies de Marketing
                           </Typography>
                           <Typography variant="body1">
-                            {consent?.marketing ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                            {consent?.marketing
+                              ? "✅ Habilitadas"
+                              : "❌ Deshabilitadas"}
                           </Typography>
                         </Grid>
                         <Grid component="div" size={6}>
@@ -704,7 +796,9 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                             Cookies de Preferencias
                           </Typography>
                           <Typography variant="body1">
-                            {consent?.preferences ? '✅ Habilitadas' : '❌ Deshabilitadas'}
+                            {consent?.preferences
+                              ? "✅ Habilitadas"
+                              : "❌ Deshabilitadas"}
                           </Typography>
                         </Grid>
                         <Grid component="div" size={6}>
@@ -722,7 +816,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 onEdit={() => openPreferences()}
               />
             </Stack>
-            <Box sx={{ mt: 6, textAlign: 'center' }}>
+            <Box sx={{ mt: 6, textAlign: "center" }}>
               <Button
                 variant="contained"
                 color="error"
@@ -731,8 +825,8 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   px: 4,
                   py: 1.5,
                   borderRadius: 2,
-                  textTransform: 'none',
-                  fontSize: '1rem',
+                  textTransform: "none",
+                  fontSize: "1rem",
                 }}
               >
                 Cancelar mi usuario
@@ -742,13 +836,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         </Box>
       </Container>
       <Dialog
-        open={editSection === 'phone'}
-        onClose={() => setEditSection('none')}
+        open={editSection === "phone"}
+        onClose={() => setEditSection("none")}
         PaperProps={{
           sx: {
             borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
-          }
+            minWidth: { xs: "90%", sm: 400 },
+          },
         }}
       >
         <DialogTitle>Cambiar teléfono</DialogTitle>
@@ -760,17 +854,17 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             label="Nuevo teléfono"
             fullWidth
             value={phone}
-            onChange={e => setPhone(e.target.value)}
+            onChange={(e) => setPhone(e.target.value)}
             variant="outlined"
           />
           <Button
             sx={{ mt: 3 }}
             variant="contained"
             disabled={codeSent.phone}
-            onClick={() => sendCode('phone')}
+            onClick={() => sendCode("phone")}
             fullWidth
           >
-            {codeSent.phone ? 'Reenviar código' : 'Enviar código'}
+            {codeSent.phone ? "Reenviar código" : "Enviar código"}
           </Button>
           {codeSent.phone && (
             <>
@@ -778,13 +872,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 label="Código de verificación"
                 fullWidth
                 value={phoneCode}
-                onChange={e => setPhoneCode(e.target.value)}
+                onChange={(e) => setPhoneCode(e.target.value)}
                 sx={{ mt: 3 }}
                 variant="outlined"
               />
               <Button
                 sx={{ mt: 2 }}
-                onClick={() => verifyAndUpdate('phone')}
+                onClick={() => verifyAndUpdate("phone")}
                 variant="contained"
                 fullWidth
               >
@@ -794,51 +888,54 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          <Button onClick={() => setEditSection('none')} variant="outlined">
+          <Button onClick={() => setEditSection("none")} variant="outlined">
             Cerrar
           </Button>
         </DialogActions>
       </Dialog>
       <Dialog
-        open={editSection === 'password'}
+        open={editSection === "password"}
         onClose={() => {
-          setEditSection('none');
-          setPasswordStep('verify');
-          setPasswordCode('');
-          setNewPassword('');
-          setConfirmPassword('');
-          setCodeSent(prev => ({ ...prev, password: false }));
+          setEditSection("none");
+          setPasswordStep("verify");
+          setPasswordCode("");
+          setNewPassword("");
+          setConfirmPassword("");
+          setCodeSent((prev) => ({ ...prev, password: false }));
         }}
         PaperProps={{
           sx: {
             borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
-          }
+            minWidth: { xs: "90%", sm: 400 },
+          },
         }}
       >
         <DialogTitle>
-          {passwordStep === 'verify' ? 'Verificar identidad' : 'Cambiar contraseña'}
+          {passwordStep === "verify"
+            ? "Verificar identidad"
+            : "Cambiar contraseña"}
         </DialogTitle>
         <DialogContent>
-          {passwordStep === 'verify' ? (
+          {passwordStep === "verify" ? (
             <>
               <DialogContentText sx={{ mb: 3 }}>
-                Envía un código para verificar tu identidad antes de cambiar la contraseña.
+                Envía un código para verificar tu identidad antes de cambiar la
+                contraseña.
               </DialogContentText>
               <Button
                 variant="contained"
                 disabled={codeSent.password}
-                onClick={() => sendCode('password')}
+                onClick={() => sendCode("password")}
                 fullWidth
               >
-                {codeSent.password ? 'Reenviar código' : 'Enviar código'}
+                {codeSent.password ? "Reenviar código" : "Enviar código"}
               </Button>
               {codeSent.password && (
                 <TextField
                   label="Código de verificación"
                   fullWidth
                   value={passwordCode}
-                  onChange={e => setPasswordCode(e.target.value)}
+                  onChange={(e) => setPasswordCode(e.target.value)}
                   sx={{ mt: 3 }}
                   variant="outlined"
                   InputProps={{
@@ -846,7 +943,7 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                       <InputAdornment position="start">
                         <VpnKeyIcon fontSize="small" />
                       </InputAdornment>
-                    )
+                    ),
                   }}
                 />
               )}
@@ -855,10 +952,10 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
             <Stack spacing={2} sx={{ mt: 2 }}>
               <TextField
                 label="Nueva contraseña"
-                type={showPassword ? 'text' : 'password'}
+                type={showPassword ? "text" : "password"}
                 fullWidth
                 value={newPassword}
-                onChange={e => setNewPassword(e.target.value)}
+                onChange={(e) => setNewPassword(e.target.value)}
                 variant="outlined"
                 InputProps={{
                   startAdornment: (
@@ -868,17 +965,32 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Tooltip title={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} arrow>
+                      <Tooltip
+                        title={
+                          showPassword
+                            ? "Ocultar contraseña"
+                            : "Mostrar contraseña"
+                        }
+                        arrow
+                      >
                         <IconButton
-                          aria-label={showPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          aria-label={
+                            showPassword
+                              ? "Ocultar contraseña"
+                              : "Mostrar contraseña"
+                          }
                           size="small"
-                          onClick={() => setShowPassword(s => !s)}
+                          onClick={() => setShowPassword((s) => !s)}
                         >
-                          {showPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                          {showPassword ? (
+                            <VisibilityOffIcon fontSize="small" />
+                          ) : (
+                            <VisibilityIcon fontSize="small" />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
               {newPassword && (
@@ -889,19 +1001,30 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                     color={getPasswordStrengthColor(newPassword)}
                   />
                   <Typography variant="caption">
-                    Fuerza: {['Muy débil', 'Débil', 'Media', 'Fuerte', 'Muy fuerte'][getPasswordStrength(newPassword)]}
+                    Fuerza:{" "}
+                    {
+                      ["Muy débil", "Débil", "Media", "Fuerte", "Muy fuerte"][
+                        getPasswordStrength(newPassword)
+                      ]
+                    }
                   </Typography>
                 </>
               )}
               <TextField
                 label="Confirmar contraseña"
-                type={showConfirmPassword ? 'text' : 'password'}
+                type={showConfirmPassword ? "text" : "password"}
                 fullWidth
                 value={confirmPassword}
-                onChange={e => setConfirmPassword(e.target.value)}
+                onChange={(e) => setConfirmPassword(e.target.value)}
                 variant="outlined"
-                error={confirmPassword !== '' && newPassword !== confirmPassword}
-                helperText={confirmPassword !== '' && newPassword !== confirmPassword ? 'Las contraseñas no coinciden' : ''}
+                error={
+                  confirmPassword !== "" && newPassword !== confirmPassword
+                }
+                helperText={
+                  confirmPassword !== "" && newPassword !== confirmPassword
+                    ? "Las contraseñas no coinciden"
+                    : ""
+                }
                 InputProps={{
                   startAdornment: (
                     <InputAdornment position="start">
@@ -910,30 +1033,45 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   ),
                   endAdornment: (
                     <InputAdornment position="end">
-                      <Tooltip title={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'} arrow>
+                      <Tooltip
+                        title={
+                          showConfirmPassword
+                            ? "Ocultar contraseña"
+                            : "Mostrar contraseña"
+                        }
+                        arrow
+                      >
                         <IconButton
-                          aria-label={showConfirmPassword ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                          aria-label={
+                            showConfirmPassword
+                              ? "Ocultar contraseña"
+                              : "Mostrar contraseña"
+                          }
                           size="small"
-                          onClick={() => setShowConfirmPassword(s => !s)}
+                          onClick={() => setShowConfirmPassword((s) => !s)}
                         >
-                          {showConfirmPassword ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                          {showConfirmPassword ? (
+                            <VisibilityOffIcon fontSize="small" />
+                          ) : (
+                            <VisibilityIcon fontSize="small" />
+                          )}
                         </IconButton>
                       </Tooltip>
                     </InputAdornment>
-                  )
+                  ),
                 }}
               />
             </Stack>
           )}
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
-          {passwordStep === 'verify' ? (
+          {passwordStep === "verify" ? (
             <>
-              <Button onClick={() => setEditSection('none')} variant="outlined">
+              <Button onClick={() => setEditSection("none")} variant="outlined">
                 Cancelar
               </Button>
               <Button
-                onClick={() => verifyAndUpdate('password')}
+                onClick={() => verifyAndUpdate("password")}
                 variant="contained"
                 disabled={!passwordCode}
               >
@@ -943,15 +1081,20 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
           ) : (
             <>
               <Button
-                onClick={() => setPasswordStep('verify')}
+                onClick={() => setPasswordStep("verify")}
                 variant="outlined"
               >
                 Volver
               </Button>
               <Button
-                onClick={() => verifyAndUpdate('password')}
+                onClick={() => verifyAndUpdate("password")}
                 variant="contained"
-                disabled={!newPassword || !confirmPassword || newPassword !== confirmPassword || getPasswordStrength(newPassword) < 2}
+                disabled={
+                  !newPassword ||
+                  !confirmPassword ||
+                  newPassword !== confirmPassword ||
+                  getPasswordStrength(newPassword) < 2
+                }
               >
                 Cambiar contraseña
               </Button>
@@ -965,25 +1108,22 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         PaperProps={{
           sx: {
             borderRadius: 2,
-            minWidth: { xs: '90%', sm: 400 }
-          }
+            minWidth: { xs: "90%", sm: 400 },
+          },
         }}
       >
         <DialogTitle>Confirmar cancelación</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            ¿Estás seguro que deseas cancelar tu usuario? Esta acción es irreversible.
+            ¿Estás seguro que deseas cancelar tu usuario? Esta acción es
+            irreversible.
           </DialogContentText>
         </DialogContent>
         <DialogActions sx={{ p: 3 }}>
           <Button onClick={() => setOpenCancel(false)} variant="outlined">
             Volver
           </Button>
-          <Button
-            onClick={cancelAccount}
-            variant="contained"
-            color="error"
-          >
+          <Button onClick={cancelAccount} variant="contained" color="error">
             Sí, cancelar
           </Button>
         </DialogActions>
@@ -996,9 +1136,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         open={!!successMessage}
         autoHideDuration={4000}
         onClose={() => setSuccessMessage(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <MuiAlert onClose={() => setSuccessMessage(null)} severity="success" sx={{ width: '100%' }}>
+        <MuiAlert
+          onClose={() => setSuccessMessage(null)}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {successMessage}
         </MuiAlert>
       </Snackbar>
@@ -1006,12 +1150,16 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
         open={!!errorMessage}
         autoHideDuration={5000}
         onClose={() => setErrorMessage(null)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <MuiAlert onClose={() => setErrorMessage(null)} severity="error" sx={{ width: '100%' }}>
+        <MuiAlert
+          onClose={() => setErrorMessage(null)}
+          severity="error"
+          sx={{ width: "100%" }}
+        >
           {errorMessage}
         </MuiAlert>
       </Snackbar>
     </Box>
   );
-} 
+}

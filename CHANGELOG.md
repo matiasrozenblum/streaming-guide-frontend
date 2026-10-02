@@ -8,6 +8,12 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **El alta por login social no verificaba la edad**: la regla de 18 años vivía en el formulario de registro con email, pero `ProfileCompletionForm` —el paso de completar perfil al que se redirige a todo usuario que entra con Google o Apple— no la tenía. Quien se registraba por ahí nunca cruzaba una barrera de edad.
+- **La fecha de nacimiento arrancaba en "hoy" y la validación solo corría al tocar el campo**: en el registro web y en el alta social el valor por defecto era la fecha actual, así que un usuario que completaba el resto del formulario sin abrir el calendario enviaba una fecha de nacimiento de hoy, es decir una edad de cero. Ahora el campo arranca vacío, la validación también corre al enviar y el calendario no deja elegir un año que no llegue a los 18.
+- **La misma cuenta de edad estaba copiada en cuatro archivos** (registro, alta social, edición de perfil y alta de usuarios del backoffice), cada una con su propio texto de error. Pasan todas por `src/utils/age.ts`, que replica la regla del servidor en un solo lugar.
+
 ---
 
 ## [1.33.0] - 2026-09-07
