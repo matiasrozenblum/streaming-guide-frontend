@@ -22,10 +22,21 @@ import {
 } from "@/constants/legal";
 
 /**
- * The signup flow takes the same acceptance at the password step, so a user
- * still completing their profile would otherwise be asked twice.
+ * Routes where the notice must stay out of the way.
+ *
+ * The legal pages are the important case: the notice links to them, and asking
+ * somebody to accept a document while covering that very document is both
+ * useless and unfair. The signup flow is excluded because it takes the same
+ * acceptance at the password step, so the user would be asked twice.
  */
-const EXCLUDED_PATHS = ["/profile-completion"];
+function isExcludedPath(pathname: string): boolean {
+  return (
+    pathname === "/profile-completion" ||
+    pathname === "/terminos-y-condiciones" ||
+    // Covers the privacy policy and anything else filed under /legal.
+    pathname.startsWith("/legal")
+  );
+}
 
 interface ViewProps {
   saving: boolean;
@@ -167,7 +178,14 @@ export function LegalConsentDialog() {
 
   useEffect(() => {
     if (status !== "authenticated" || !session) return;
-    if (EXCLUDED_PATHS.includes(pathname)) return;
+
+    // Also closes it on client-side navigation into one of these routes, not
+    // just on a fresh load — the links open in a new tab, but nothing stops a
+    // user from reaching the legal pages some other way.
+    if (isExcludedPath(pathname)) {
+      setOpen(false);
+      return;
+    }
 
     let cancelled = false;
 
