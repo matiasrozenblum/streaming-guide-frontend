@@ -15,6 +15,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
   - Al no haber forma de descartarlo, el manejo de errores es parte del diseño: si falla el guardado se muestra el error, el botón queda habilitado para reintentar y el enlace de cerrar sesión sigue disponible. Y si falla la *lectura* de qué aceptó el usuario, el cartel no se muestra — un corte de red no puede dejar a alguien afuera de un sitio cuyos términos quizá ya aceptó.
   - Al registrarse, la aceptación queda registrada en el mismo momento en que se setea la contraseña, de modo que a quien acaba de aceptar no se le vuelve a preguntar.
 
+### Fixed
+
+- **El aviso de aceptación se renderizaba con el tema claro**: estaba montado en `SessionProviderWrapper`, que envuelve a `AppThemeProvider` en lugar de estar dentro suyo. Un `Dialog` de MUI fuera del provider cae al tema por defecto de la librería, que es claro, así que el cartel aparecía como una tarjeta blanca sobre un sitio que es dark-only. Pasa a montarse junto al resto de los overlays globales, dentro del provider.
+
 ### Changed
 
 - **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
