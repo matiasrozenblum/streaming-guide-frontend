@@ -17,6 +17,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 
+- **Ajustes visuales del aviso de aceptación**: el botón pasa a medir lo que mide su texto en lugar de ocupar todo el ancho, la letra chica legal baja a 11px para distinguirse del cuerpo como es habitual en ese tipo de texto, y los márgenes entre el borde del cartel y el contenido se ajustaron otra vez. Alto del diálogo: 377px → 342px.
 - **El aviso de aceptación es más compacto**: el padding del cartel y los márgenes entre sus elementos se ajustaron sin tocar los tamaños de texto. Además de ganar prolijidad, achicarlo reduce los casos en que el cartel no entra en pantalla: con el navegador muy ampliado el contenido del propio diálogo tiene que scrollear para alcanzar el botón, y cuanto más chico sea, más tarde ocurre eso.
 
 ### Fixed

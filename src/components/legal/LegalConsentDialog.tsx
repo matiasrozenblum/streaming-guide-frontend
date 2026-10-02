@@ -57,7 +57,7 @@ export function LegalConsentDialogView({
       aria-labelledby="legal-consent-title"
       slotProps={{ paper: { sx: { borderRadius: 3 } } }}
     >
-      <DialogContent sx={{ textAlign: "center", px: 3, py: 3.5 }}>
+      <DialogContent sx={{ textAlign: "center", px: 2.5, py: 3 }}>
         <Box
           sx={{
             width: 48,
@@ -96,13 +96,12 @@ export function LegalConsentDialogView({
         <Button
           variant="contained"
           size="large"
-          fullWidth
           onClick={onAccept}
           disabled={saving}
           startIcon={
             saving ? <CircularProgress size={18} color="inherit" /> : undefined
           }
-          sx={{ fontWeight: 700, py: 1.2, mb: 2 }}
+          sx={{ fontWeight: 700, py: 1.2, px: 3.5, mb: 2 }}
         >
           {saving ? "Guardando…" : "Ver mi resumen y continuar"}
         </Button>
@@ -110,7 +109,7 @@ export function LegalConsentDialogView({
         <Typography
           variant="caption"
           color="text.secondary"
-          sx={{ display: "block", lineHeight: 1.7 }}
+          sx={{ display: "block", fontSize: "0.6875rem", lineHeight: 1.55 }}
         >
           Al continuar confirmás que sos mayor de 18 años y aceptás nuestros{" "}
           <Link
