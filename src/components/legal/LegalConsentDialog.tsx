@@ -57,32 +57,32 @@ export function LegalConsentDialogView({
       aria-labelledby="legal-consent-title"
       slotProps={{ paper: { sx: { borderRadius: 3 } } }}
     >
-      <DialogContent sx={{ textAlign: "center", px: { xs: 3, sm: 4 }, py: 4 }}>
+      <DialogContent sx={{ textAlign: "center", px: 3, py: 3.5 }}>
         <Box
           sx={{
-            width: 56,
-            height: 56,
+            width: 48,
+            height: 48,
             borderRadius: "50%",
             bgcolor: "primary.main",
             display: "flex",
             alignItems: "center",
             justifyContent: "center",
             mx: "auto",
-            mb: 2.5,
+            mb: 2,
           }}
         >
-          <InsightsIcon sx={{ fontSize: 30, color: "#fff" }} />
+          <InsightsIcon sx={{ fontSize: 26, color: "#fff" }} />
         </Box>
 
         <Typography
           id="legal-consent-title"
           variant="h6"
-          sx={{ fontWeight: 700, mb: 1.5 }}
+          sx={{ fontWeight: 700, mb: 1.25 }}
         >
           ¡Llegó tu resumen a La Guía!
         </Typography>
 
-        <Typography color="text.secondary" sx={{ mb: 3 }}>
+        <Typography color="text.secondary" sx={{ mb: 2.5 }}>
           Mirá el ranking de los canales y programas que más viste en la semana
           y durante el año, con diseños listos para compartir en redes.
         </Typography>
@@ -102,7 +102,7 @@ export function LegalConsentDialogView({
           startIcon={
             saving ? <CircularProgress size={18} color="inherit" /> : undefined
           }
-          sx={{ fontWeight: 700, py: 1.3, mb: 2.5 }}
+          sx={{ fontWeight: 700, py: 1.2, mb: 2 }}
         >
           {saving ? "Guardando…" : "Ver mi resumen y continuar"}
         </Button>
