@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
   Box,
   TextField,
@@ -10,13 +10,13 @@ import {
   Tooltip,
   LinearProgress,
   Typography,
-  CircularProgress
-} from '@mui/material';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import VisibilityIcon from '@mui/icons-material/Visibility';
-import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
-import Link from 'next/link';
+  CircularProgress,
+} from "@mui/material";
+import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
+import Link from "next/link";
 
 interface PasswordStepProps {
   onSubmit: (password: string) => void;
@@ -31,13 +31,13 @@ export default function PasswordStep({
   onBack,
   isLoading,
   error,
-  submitLabel = 'Registrarme'
+  submitLabel = "Registrarme",
 }: PasswordStepProps) {
-  const [pass, setPass] = useState('');
+  const [pass, setPass] = useState("");
   const [show, setShow] = useState(false);
-  const [confirm, setConfirm] = useState('');
+  const [confirm, setConfirm] = useState("");
   const [show2, setShow2] = useState(false);
-  const [localErr, setLocalErr] = useState('');
+  const [localErr, setLocalErr] = useState("");
   const [strength, setStrength] = useState(0);
 
   // Calcular fuerza
@@ -53,31 +53,35 @@ export default function PasswordStep({
   const handle = (e: React.FormEvent) => {
     e.preventDefault();
     if (pass.length < 6) {
-      setLocalErr('La contraseña debe tener al menos 6 caracteres');
+      setLocalErr("La contraseña debe tener al menos 6 caracteres");
       return;
     }
     if (pass !== confirm) {
-      setLocalErr('Las contraseñas no coinciden');
+      setLocalErr("Las contraseñas no coinciden");
       return;
     }
-    setLocalErr('');
+    setLocalErr("");
     onSubmit(pass);
   };
 
   const getColor = () => {
-    if (strength <= 1) return 'error';
-    if (strength <= 2) return 'warning';
-    return 'primary';
+    if (strength <= 1) return "error";
+    if (strength <= 2) return "warning";
+    return "primary";
   };
 
   return (
-    <Box component="form" onSubmit={handle} sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+    <Box
+      component="form"
+      onSubmit={handle}
+      sx={{ display: "flex", flexDirection: "column", gap: 2 }}
+    >
       <TextField
         label="Contraseña"
-        type={show ? 'text' : 'password'}
+        type={show ? "text" : "password"}
         fullWidth
         value={pass}
-        onChange={e => setPass(e.target.value)}
+        onChange={(e) => setPass(e.target.value)}
         disabled={isLoading}
         autoFocus
         InputProps={{
@@ -88,31 +92,46 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+              <Tooltip
+                title={show ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
                 <IconButton
-                  aria-label={show ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={
+                    show ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
                   size="small"
-                  onClick={() => setShow(s => !s)}
+                  onClick={() => setShow((s) => !s)}
                 >
-                  {show ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  {show ? (
+                    <VisibilityOffIcon fontSize="small" />
+                  ) : (
+                    <VisibilityIcon fontSize="small" />
+                  )}
                 </IconButton>
               </Tooltip>
             </InputAdornment>
-          )
+          ),
         }}
       />
       {pass && (
         <>
-          <LinearProgress variant="determinate" value={(strength/4)*100} color={getColor()} />
-          <Typography variant="caption">Fuerza: {['Muy débil','Débil','Media','Fuerte','Muy fuerte'][strength]}</Typography>
+          <LinearProgress
+            variant="determinate"
+            value={(strength / 4) * 100}
+            color={getColor()}
+          />
+          <Typography variant="caption">
+            Fuerza:{" "}
+            {["Muy débil", "Débil", "Media", "Fuerte", "Muy fuerte"][strength]}
+          </Typography>
         </>
       )}
       <TextField
         label="Confirmar contraseña"
-        type={show2 ? 'text' : 'password'}
+        type={show2 ? "text" : "password"}
         fullWidth
         value={confirm}
-        onChange={e => setConfirm(e.target.value)}
+        onChange={(e) => setConfirm(e.target.value)}
         disabled={isLoading}
         InputProps={{
           startAdornment: (
@@ -122,17 +141,25 @@ export default function PasswordStep({
           ),
           endAdornment: (
             <InputAdornment position="end">
-              <Tooltip title={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}>
+              <Tooltip
+                title={show2 ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
                 <IconButton
-                  aria-label={show2 ? 'Ocultar contraseña' : 'Mostrar contraseña'}
+                  aria-label={
+                    show2 ? "Ocultar contraseña" : "Mostrar contraseña"
+                  }
                   size="small"
-                  onClick={() => setShow2(s => !s)}
+                  onClick={() => setShow2((s) => !s)}
                 >
-                  {show2 ? <VisibilityOffIcon fontSize="small" /> : <VisibilityIcon fontSize="small" />}
+                  {show2 ? (
+                    <VisibilityOffIcon fontSize="small" />
+                  ) : (
+                    <VisibilityIcon fontSize="small" />
+                  )}
                 </IconButton>
               </Tooltip>
             </InputAdornment>
-          )
+          ),
         }}
       />
       {(localErr || error) && (
@@ -141,13 +168,26 @@ export default function PasswordStep({
           {localErr || error}
         </Alert>
       )}
-      <Typography variant="caption" sx={{ mt: 1, mb: -1, textAlign: 'center' }}>
-        Al acceder y utilizar este sitio web, aceptás los{' '}
-        <Link href="/terminos-y-condiciones" target="_blank" style={{ color: 'inherit', textDecoration: 'underline' }}>
-          términos y condiciones
-        </Link>.
+      <Typography variant="caption" sx={{ mt: 1, mb: -1, textAlign: "center" }}>
+        Al registrarte confirmás que sos mayor de 18 años y aceptás nuestros{" "}
+        <Link
+          href="/terminos-y-condiciones"
+          target="_blank"
+          style={{ color: "inherit", textDecoration: "underline" }}
+        >
+          Términos y Condiciones
+        </Link>{" "}
+        y la{" "}
+        <Link
+          href="/legal/politica-de-privacidad"
+          target="_blank"
+          style={{ color: "inherit", textDecoration: "underline" }}
+        >
+          Política de Privacidad
+        </Link>
+        .
       </Typography>
-      <Box sx={{ display: 'flex', gap: 1 }}>
+      <Box sx={{ display: "flex", gap: 1 }}>
         <Button
           variant="outlined"
           startIcon={<ArrowBackIosNewIcon fontSize="small" />}
@@ -163,9 +203,13 @@ export default function PasswordStep({
           variant="contained"
           fullWidth
           disabled={isLoading}
-          aria-label={isLoading ? 'Procesando' : undefined}
+          aria-label={isLoading ? "Procesando" : undefined}
         >
-          {isLoading ? <CircularProgress size={24} color="inherit" /> : submitLabel}
+          {isLoading ? (
+            <CircularProgress size={24} color="inherit" />
+          ) : (
+            submitLabel
+          )}
         </Button>
       </Box>
     </Box>

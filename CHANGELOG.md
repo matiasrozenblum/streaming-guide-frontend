@@ -8,7 +8,16 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+- **Aviso de aceptación de legales, bloqueante y por única vez**: a todo usuario con sesión iniciada le aparece un cartel que anuncia la función de resumen y toma, en un mismo paso, la aceptación de los Términos, la Política de Privacidad y la declaración de ser mayor de 18. No se puede descartar: las únicas salidas son aceptar o cerrar sesión, que es un enlace dentro del propio cartel.
+  - La aceptación se guarda como una entrada en `seen_features` con la forma `legal_accepted:<versión>:<timestamp ISO>`, sin necesidad de migración. La versión permite volver a pedirla cuando el documento cambie, y el timestamp permite responder cuándo aceptó cada persona y a qué texto.
+  - Al no haber forma de descartarlo, el manejo de errores es parte del diseño: si falla el guardado se muestra el error, el botón queda habilitado para reintentar y el enlace de cerrar sesión sigue disponible. Y si falla la *lectura* de qué aceptó el usuario, el cartel no se muestra — un corte de red no puede dejar a alguien afuera de un sitio cuyos términos quizá ya aceptó.
+  - Al registrarse, la aceptación queda registrada en el mismo momento en que se setea la contraseña, de modo que a quien acaba de aceptar no se le vuelve a preguntar.
+
 ### Changed
+
+- **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
 
 - **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
 - **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
