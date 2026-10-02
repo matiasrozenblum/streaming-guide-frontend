@@ -215,9 +215,11 @@ export default function PrivacyPolicyPage() {
                 de <strong>Configurar cookies</strong> en el pie de página web.
                 En la aplicación móvil, dicha opción estará disponible en la
                 sección de Configuración/Ajustes de la cuenta. Las
-                notificaciones push se pueden revocar directamente desde los
-                ajustes de notificaciones de tu navegador o sistema operativo
-                móvil (Android/iOS).
+                notificaciones push pueden administrarse o desactivarse de forma
+                individual por cada programa o streamer desde la propia grilla,
+                o bien revocarse de manera global desde la configuración de
+                notificaciones de tu navegador o sistema operativo móvil
+                (Android/iOS).
               </Typography>
             </section>
 
@@ -293,9 +295,11 @@ export default function PrivacyPolicyPage() {
                 <li>
                   <strong>Tokens de Notificaciones Push:</strong> Se conservan
                   mientras mantengas activas las alertas o la aplicación
-                  instalada; ante desinstalación o revocación de permisos,
-                  quedan inactivos y se depuran en las limpiezas periódicas de
-                  base de datos.
+                  instalada. Ante la desinstalación de la app o la revocación de
+                  permisos en el dispositivo, el token se elimina
+                  automáticamente de nuestra base de datos en el primer intento
+                  de envío posterior, una vez que el proveedor del servicio de
+                  notificaciones reporta que el identificador ya no es válido.
                 </li>
                 <li>
                   <strong>Historial de consumo de usuarios registrados:</strong>{" "}

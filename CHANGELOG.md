@@ -11,6 +11,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Changed
 
 - **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
+- **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
 - **El panel de cookies ahora dice que la categoría de Análisis incluye nuestro sistema propio**: la Política remite a ese panel para desactivar "el sistema de análisis interno", pero el panel solo nombraba herramientas de terceros, así que el control al que apuntaba el texto no se correspondía con lo que mostraba.
 
 ### Fixed
