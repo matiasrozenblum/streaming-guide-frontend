@@ -13,7 +13,7 @@ import {
 } from "@mui/material";
 import InsightsIcon from "@mui/icons-material/Insights";
 import { useSessionContext } from "@/contexts/SessionContext";
-import { api } from "@/services/api";
+import type { SessionWithToken } from "@/types/session";
 import {
   buildLegalConsentEntry,
   hasAcceptedCurrentLegal,
@@ -35,6 +35,18 @@ function isExcludedPath(pathname: string): boolean {
     pathname.startsWith("/legal")
   );
 }
+
+/**
+ * The shared axios instance resolves the session on every request, which means
+ * an extra round trip to /api/auth/session before the call even leaves. The
+ * token is already in hand here, so these two talk to the backend directly.
+ */
+const SEEN_FEATURES_URL = `${process.env.NEXT_PUBLIC_API_URL}/users/me/seen-features`;
+
+const authHeaders = (token: string) => ({
+  "Content-Type": "application/json",
+  Authorization: `Bearer ${token}`,
+});
 
 interface ViewProps {
   onAccept: () => void;
@@ -153,6 +165,14 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
  */
 export function LegalConsentDialog() {
   const { session, status } = useSessionContext();
+  const typedSession = session as SessionWithToken | null;
+  /**
+   * next-auth hands back a new session object on every refresh, so depending on
+   * it re-ran this effect — and re-queried the backend — several times per page
+   * load. These two only change when the user actually does.
+   */
+  const userId = typedSession?.user?.id ?? null;
+  const accessToken = typedSession?.accessToken ?? null;
   const router = useRouter();
   const pathname = usePathname();
 
@@ -168,7 +188,7 @@ export function LegalConsentDialog() {
 
   useEffect(() => {
     if (acceptedRef.current) return;
-    if (status !== "authenticated" || !session) return;
+    if (status !== "authenticated" || !userId || !accessToken) return;
 
     // Also closes it on client-side navigation into one of these routes, not
     // just on a fresh load — the links open in a new tab, but nothing stops a
@@ -180,11 +200,13 @@ export function LegalConsentDialog() {
 
     let cancelled = false;
 
-    api
-      .get("/users/me/seen-features")
-      .then((res) => {
+    fetch(SEEN_FEATURES_URL, { headers: authHeaders(accessToken) })
+      .then((r) =>
+        r.ok ? r.json() : Promise.reject(new Error(String(r.status))),
+      )
+      .then((data: unknown) => {
         if (cancelled) return;
-        const seen: string[] = Array.isArray(res.data) ? res.data : [];
+        const seen = Array.isArray(data) ? (data as string[]) : [];
         setOpen(!hasAcceptedCurrentLegal(seen));
       })
       .catch(() => {
@@ -197,21 +219,41 @@ export function LegalConsentDialog() {
     return () => {
       cancelled = true;
     };
-  }, [status, session, pathname]);
+  }, [status, userId, accessToken, pathname]);
 
   const accept = useCallback(() => {
+    const token = accessToken;
+    if (!token) return;
     acceptedRef.current = true;
 
     // Deliberately not awaited: the user moves on at once and the write
     // finishes on its own. A client-side route change does not cancel it.
-    api
-      .post("/users/me/seen-features", { feature: buildLegalConsentEntry() })
+    fetch(SEEN_FEATURES_URL, {
+      method: "POST",
+      headers: authHeaders(token),
+      body: JSON.stringify({ feature: buildLegalConsentEntry() }),
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(String(r.status));
+      })
       .catch(() => {
         // Nothing to tell the user: the notice will simply reappear later.
       });
 
     setOpen(false);
     router.push("/mi-resumen");
+  }, [router, accessToken]);
+
+  /**
+   * `signOut({ callbackUrl })` starts the navigation alongside the request that
+   * clears the session, and the two race: the new page can load while the
+   * cookie is still valid, leaving the user back where they started. Awaiting
+   * the sign-out and navigating afterwards — what the header's logout already
+   * does — removes the race.
+   */
+  const handleSignOut = useCallback(async () => {
+    await signOut({ redirect: false });
+    router.push("/");
   }, [router]);
 
   if (!open) return null;
@@ -219,7 +261,7 @@ export function LegalConsentDialog() {
   return (
     <LegalConsentDialogView
       onAccept={accept}
-      onSignOut={() => void signOut({ callbackUrl: "/" })}
+      onSignOut={() => void handleSignOut()}
     />
   );
 }
