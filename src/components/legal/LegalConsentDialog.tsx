@@ -188,7 +188,15 @@ export function LegalConsentDialog() {
 
   useEffect(() => {
     if (acceptedRef.current) return;
-    if (status !== "authenticated" || !userId || !accessToken) return;
+
+    // Every path that stops here has to close the notice rather than just
+    // bail: an early return leaves whatever was on screen before. Signing out
+    // from inside the notice hits exactly this — the session goes away but the
+    // dialog stayed up, over a logged-out site.
+    if (status !== "authenticated" || !userId || !accessToken) {
+      setOpen(false);
+      return;
+    }
 
     // Also closes it on client-side navigation into one of these routes, not
     // just on a fresh load — the links open in a new tab, but nothing stops a
