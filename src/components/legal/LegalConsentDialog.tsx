@@ -75,16 +75,21 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
       }}
       aria-labelledby="legal-consent-title"
       slotProps={{
+        // MUI veils the page with 50% black by default, so the card was looking
+        // through an already-darkened site — the reason it read as opaque even
+        // at 78%. A lighter veil lets the page show through the glass.
+        backdrop: { sx: { backgroundColor: "rgba(0, 0, 0, 0.28)" } },
         paper: {
           sx: {
             borderRadius: 4,
-            // Lifted off the page rather than painted onto it: a surface a step
-            // lighter than the background, slightly see-through over the blur,
-            // a hairline edge to catch the light and a deep shadow underneath.
-            backgroundColor: "rgba(42, 56, 78, 0.78)",
-            backdropFilter: "blur(24px)",
+            // Glass sitting in front of the page rather than painted onto it:
+            // see-through over a blur, a hairline edge to catch the light, and
+            // a soft shadow — enough to lift it, not so much that it looks
+            // stamped on.
+            backgroundColor: "rgba(42, 56, 78, 0.72)",
+            backdropFilter: "blur(18px)",
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.55)",
+            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.38)",
             backgroundImage: "none",
           },
         },
@@ -175,9 +180,12 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             opacity: 0.75,
             // Pinned to the bottom edge, away from the body copy.
             mb: 0,
-            // Chrome on Android inflates small text inside wide blocks on its
-            // own ("font boosting"). It hit the sign-out control hardest, whose
-            // line box then grew and left a gap twice the size of the others.
+            // Spreads the lines evenly instead of letting the last one end up
+            // with a single word on it. Two lines are not reachable here: at
+            // this width the text would need to drop to about 7.5px, well past
+            // readable for something with legal weight.
+            textWrap: "balance",
+            // Chrome on Android grows small text inside wide blocks on its own.
             WebkitTextSizeAdjust: "100%",
             textSizeAdjust: "100%",
           }}
