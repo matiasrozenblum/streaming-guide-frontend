@@ -9,12 +9,14 @@
  * Events are batched rather than posted individually: opening the grid and
  * clicking through a few programs produces a burst, and one request per click
  * would be both wasteful and slow. The queue flushes on a timer, when it fills,
- * and — critically — when the page is being hidden or unloaded, where
- * sendBeacon is the only transport the browser guarantees to complete.
+ * and — critically — when the page is being hidden or unloaded, using a
+ * keepalive request so it still completes.
  *
  * Nothing here ever throws into the caller. Losing an analytics event is
  * acceptable; breaking a click handler to record one is not.
  */
+
+import { getAuthToken } from "@/services/authToken";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000";
 const ENDPOINT = `${API_URL}/analytics/events`;
@@ -92,33 +94,28 @@ function buildPayload(events: QueuedEvent[]): string {
 }
 
 /**
- * `useBeacon` is set when the page is going away. sendBeacon survives unload
- * where fetch does not, but it cannot carry an Authorization header — those
- * events land anonymous, attributed only by device_id. That is the right
- * trade-off at unload: an anonymous event beats a lost one.
+ * `keepalive` rather than `sendBeacon`, even when the page is going away.
+ *
+ * Both survive unload, but sendBeacon cannot set headers — and without the
+ * Authorization header the server cannot tell whose events these are, so every
+ * one of them lands anonymous and the per-user recap stays empty forever.
+ * keepalive fetch carries the token and survives the same way; its only cost is
+ * a 64KB body ceiling, far above a batch of 50 events.
  */
-function send(events: QueuedEvent[], useBeacon: boolean): void {
+function send(events: QueuedEvent[]): void {
   if (events.length === 0) return;
 
-  const body = buildPayload(events);
-
-  if (useBeacon && typeof navigator !== "undefined" && navigator.sendBeacon) {
-    try {
-      navigator.sendBeacon(
-        ENDPOINT,
-        new Blob([body], { type: "application/json" }),
-      );
-      return;
-    } catch {
-      // Fall through to fetch.
-    }
-  }
+  const token = getAuthToken();
+  const headers: Record<string, string> = {
+    "Content-Type": "application/json",
+  };
+  if (token) headers.Authorization = `Bearer ${token}`;
 
   try {
     void fetch(ENDPOINT, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body,
+      headers,
+      body: buildPayload(events),
       keepalive: true,
       credentials: "omit",
     }).catch(() => {
@@ -129,14 +126,14 @@ function send(events: QueuedEvent[], useBeacon: boolean): void {
   }
 }
 
-export function flushAnalyticsQueue(useBeacon = false): void {
+export function flushAnalyticsQueue(): void {
   if (queue.length === 0) return;
 
   const pending = queue;
   queue = [];
 
   for (let i = 0; i < pending.length; i += MAX_BATCH) {
-    send(pending.slice(i, i + MAX_BATCH), useBeacon);
+    send(pending.slice(i, i + MAX_BATCH));
   }
 }
 
@@ -144,16 +141,16 @@ function ensureStarted(): void {
   if (typeof window === "undefined") return;
 
   if (!timer) {
-    timer = setInterval(() => flushAnalyticsQueue(false), FLUSH_INTERVAL_MS);
+    timer = setInterval(() => flushAnalyticsQueue(), FLUSH_INTERVAL_MS);
   }
 
   if (!listenersBound) {
     // visibilitychange is the reliable signal on mobile, where a backgrounded
     // tab is often killed without ever firing pagehide or unload.
     document.addEventListener("visibilitychange", () => {
-      if (document.visibilityState === "hidden") flushAnalyticsQueue(true);
+      if (document.visibilityState === "hidden") flushAnalyticsQueue();
     });
-    window.addEventListener("pagehide", () => flushAnalyticsQueue(true));
+    window.addEventListener("pagehide", () => flushAnalyticsQueue());
     listenersBound = true;
   }
 }
@@ -176,7 +173,7 @@ export function enqueueAnalyticsEvent(event: QueuedEvent): void {
   try {
     ensureStarted();
     queue.push(event);
-    if (queue.length >= FLUSH_AT) flushAnalyticsQueue(false);
+    if (queue.length >= FLUSH_AT) flushAnalyticsQueue();
   } catch {
     // Never let instrumentation break the caller.
   }

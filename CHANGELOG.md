@@ -8,6 +8,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Fixed
+
+- **Ningún evento llegaba asociado a un usuario, así que "Mi resumen" no podía llenarse nunca**: la cola de analíticas enviaba los lotes sin encabezado de autorización, y el servidor toma el usuario del token. El resultado era que el cien por ciento de los eventos quedaba anónimo y la tabla que alimenta el resumen por persona permanecía vacía. Se agrega el token a cada envío, mediante un módulo que el proveedor de sesión mantiene al día.
+- **El envío al ocultarse la pestaña perdía la atribución por diseño**: usaba `sendBeacon`, que sobrevive a la descarga de la página pero no admite encabezados. Pasa a un `fetch` con `keepalive`, que sobrevive igual y sí lleva el token; su único límite es un cuerpo de 64KB, muy por encima de un lote de 50 eventos.
+
 ---
 
 ## [1.35.0] - 2026-09-09
