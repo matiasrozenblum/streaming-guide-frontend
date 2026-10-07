@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useEffect, useRef, useState } from "react";
+import type { KeyboardEvent as ReactKeyboardEvent } from "react";
 import { useRouter, usePathname } from "next/navigation";
 import { signOut } from "next-auth/react";
 import {
@@ -202,21 +203,31 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             Política de Privacidad
           </Link>
           . O podés{" "}
-          <Link
-            component="button"
-            type="button"
+          {/* A real <button> here is inline-block: it carries its own box, and
+              browsers size that box differently enough that the line it landed
+              on ended up visibly taller than its neighbours on Android. A span
+              is a true inline element, so it flows as plain text — with the
+              button role and key handling added back by hand. */}
+          <Box
+            component="span"
+            role="button"
+            tabIndex={0}
             onClick={onSignOut}
-            color="inherit"
+            onKeyDown={(e: ReactKeyboardEvent<HTMLSpanElement>) => {
+              if (e.key === "Enter" || e.key === " ") {
+                e.preventDefault();
+                onSignOut();
+              }
+            }}
             sx={{
-              verticalAlign: "baseline",
-              fontSize: "inherit",
-              fontWeight: "inherit",
-              fontFamily: "inherit",
-              lineHeight: "inherit",
+              cursor: "pointer",
+              textDecoration: "underline",
+              color: "inherit",
+              "&:hover": { color: "text.primary" },
             }}
           >
             cerrar sesión
-          </Link>
+          </Box>
           .
         </Typography>
       </DialogContent>
