@@ -174,6 +174,11 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             opacity: 0.75,
             // Pinned to the bottom edge, away from the body copy.
             mb: 0,
+            // Chrome on Android inflates small text inside wide blocks on its
+            // own ("font boosting"). It hit the sign-out control hardest, whose
+            // line box then grew and left a gap twice the size of the others.
+            WebkitTextSizeAdjust: "100%",
+            textSizeAdjust: "100%",
           }}
         >
           Al continuar confirmás que sos mayor de 18 años y aceptás nuestros{" "}
@@ -202,7 +207,13 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             type="button"
             onClick={onSignOut}
             color="inherit"
-            sx={{ verticalAlign: "baseline", font: "inherit" }}
+            sx={{
+              verticalAlign: "baseline",
+              fontSize: "inherit",
+              fontWeight: "inherit",
+              fontFamily: "inherit",
+              lineHeight: "inherit",
+            }}
           >
             cerrar sesión
           </Link>
