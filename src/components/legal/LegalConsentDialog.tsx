@@ -75,21 +75,32 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
       }}
       aria-labelledby="legal-consent-title"
       slotProps={{
-        // MUI veils the page with 50% black by default, so the card was looking
-        // through an already-darkened site — the reason it read as opaque even
-        // at 78%. A lighter veil lets the page show through the glass.
-        backdrop: { sx: { backgroundColor: "rgba(0, 0, 0, 0.28)" } },
+        // Two different reads of the same idea, because the backdrop differs:
+        // on a phone the grid sits right behind the card and the lighter glass
+        // looks good, while on desktop the card lands over the bright banner,
+        // where the same settings let too much through and the text competes
+        // with the picture. Desktop keeps the denser veil and surface.
+        backdrop: {
+          sx: {
+            backgroundColor: {
+              xs: "rgba(0, 0, 0, 0.28)",
+              sm: "rgba(0, 0, 0, 0.5)",
+            },
+          },
+        },
         paper: {
           sx: {
             borderRadius: 4,
-            // Glass sitting in front of the page rather than painted onto it:
-            // see-through over a blur, a hairline edge to catch the light, and
-            // a soft shadow — enough to lift it, not so much that it looks
-            // stamped on.
-            backgroundColor: "rgba(42, 56, 78, 0.72)",
-            backdropFilter: "blur(18px)",
+            backgroundColor: {
+              xs: "rgba(42, 56, 78, 0.72)",
+              sm: "rgba(42, 56, 78, 0.78)",
+            },
+            backdropFilter: { xs: "blur(18px)", sm: "blur(24px)" },
             border: "1px solid rgba(255, 255, 255, 0.08)",
-            boxShadow: "0 16px 40px rgba(0, 0, 0, 0.38)",
+            boxShadow: {
+              xs: "0 16px 40px rgba(0, 0, 0, 0.38)",
+              sm: "0 24px 60px rgba(0, 0, 0, 0.55)",
+            },
             backgroundImage: "none",
           },
         },
@@ -180,11 +191,9 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             opacity: 0.75,
             // Pinned to the bottom edge, away from the body copy.
             mb: 0,
-            // Spreads the lines evenly instead of letting the last one end up
-            // with a single word on it. Two lines are not reachable here: at
-            // this width the text would need to drop to about 7.5px, well past
-            // readable for something with legal weight.
-            textWrap: "balance",
+            // No line balancing on purpose: evened-out lines turned this into
+            // three full rows, and two full rows with a short tail reads
+            // lighter at the foot of the card.
             // Chrome on Android grows small text inside wide blocks on its own.
             WebkitTextSizeAdjust: "100%",
             textSizeAdjust: "100%",
