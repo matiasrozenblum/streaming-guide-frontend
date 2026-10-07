@@ -51,6 +51,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **El alta por login social no verificaba la edad**: la regla de 18 años vivía en el formulario de registro con email, pero `ProfileCompletionForm` —el paso de completar perfil al que se redirige a todo usuario que entra con Google o Apple— no la tenía. Quien se registraba por ahí nunca cruzaba una barrera de edad.
 - **La fecha de nacimiento arrancaba en "hoy" y la validación solo corría al tocar el campo**: en el registro web y en el alta social el valor por defecto era la fecha actual, así que un usuario que completaba el resto del formulario sin abrir el calendario enviaba una fecha de nacimiento de hoy, es decir una edad de cero. Ahora el campo arranca vacío, la validación también corre al enviar y el calendario no deja elegir un año que no llegue a los 18.
 - **La misma cuenta de edad estaba copiada en cuatro archivos** (registro, alta social, edición de perfil y alta de usuarios del backoffice), cada una con su propio texto de error. Pasan todas por `src/utils/age.ts`, que replica la regla del servidor en un solo lugar.
+### Fixed
+
+- **Ningún evento llegaba asociado a un usuario, así que "Mi resumen" no podía llenarse nunca**: la cola de analíticas enviaba los lotes sin encabezado de autorización, y el servidor toma el usuario del token. El resultado era que el cien por ciento de los eventos quedaba anónimo y la tabla que alimenta el resumen por persona permanecía vacía. Se agrega el token a cada envío, mediante un módulo que el proveedor de sesión mantiene al día.
+- **El envío al ocultarse la pestaña perdía la atribución por diseño**: usaba `sendBeacon`, que sobrevive a la descarga de la página pero no admite encabezados. Pasa a un `fetch` con `keepalive`, que sobrevive igual y sí lleva el token; su único límite es un cuerpo de 64KB, muy por encima de un lote de 50 eventos.
 
 ---
 
