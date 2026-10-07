@@ -58,6 +58,10 @@ interface ViewProps {
  * layout can be rendered and reviewed on its own.
  */
 export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
+  // The notice can sit on screen across a new year; deriving it keeps the
+  // promise honest instead of freezing a year into the copy.
+  const year = new Date().getFullYear();
+
   return (
     <Dialog
       open
@@ -69,13 +73,27 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
         if (reason === "backdropClick") return;
       }}
       aria-labelledby="legal-consent-title"
-      slotProps={{ paper: { sx: { borderRadius: 3 } } }}
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 4,
+            // Lifted off the page rather than painted onto it: a surface a step
+            // lighter than the background, slightly see-through over the blur,
+            // a hairline edge to catch the light and a deep shadow underneath.
+            backgroundColor: "rgba(42, 56, 78, 0.78)",
+            backdropFilter: "blur(24px)",
+            border: "1px solid rgba(255, 255, 255, 0.08)",
+            boxShadow: "0 24px 60px rgba(0, 0, 0, 0.55)",
+            backgroundImage: "none",
+          },
+        },
+      }}
     >
-      <DialogContent sx={{ textAlign: "center", px: 2.5, py: 3 }}>
+      <DialogContent sx={{ textAlign: "center", px: 3, pt: 3, pb: 2 }}>
         <Box
           sx={{
-            width: 48,
-            height: 48,
+            width: 52,
+            height: 52,
             borderRadius: "50%",
             bgcolor: "primary.main",
             display: "flex",
@@ -85,35 +103,78 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             mb: 2,
           }}
         >
-          <InsightsIcon sx={{ fontSize: 26, color: "#fff" }} />
+          <InsightsIcon sx={{ fontSize: 28, color: "#fff" }} />
         </Box>
 
         <Typography
           id="legal-consent-title"
-          variant="h6"
-          sx={{ fontWeight: 700, mb: 1.25 }}
+          component="h2"
+          sx={{
+            fontSize: "1.35rem",
+            fontWeight: 700,
+            lineHeight: 1.25,
+            mb: 1.5,
+          }}
         >
           ¡Llegó tu resumen a La Guía!
         </Typography>
 
-        <Typography color="text.secondary" sx={{ mb: 2.5 }}>
-          Mirá el ranking de los canales y programas que más viste en la semana
-          y durante el año, con diseños listos para compartir en redes.
+        <Typography
+          color="text.secondary"
+          sx={{
+            fontSize: "0.95rem",
+            lineHeight: 1.55,
+            mb: 1,
+            // Spreads the last line instead of leaving a single word stranded.
+            textWrap: "balance",
+          }}
+        >
+          Mirá el ranking de los programas y canales que más viste en la semana,
+          con diseños listos para compartir en redes.
+        </Typography>
+
+        <Typography
+          color="text.secondary"
+          sx={{
+            fontSize: "0.95rem",
+            lineHeight: 1.55,
+            mb: 3,
+            textWrap: "balance",
+          }}
+        >
+          A fin de año tendrás tu resumen de {year} también.
         </Typography>
 
         <Button
           variant="contained"
           size="large"
           onClick={onAccept}
-          sx={{ fontWeight: 700, py: 1.2, px: 3.5, mb: 2 }}
+          sx={{
+            // Slightly smaller with tighter sides on a phone: at full width the
+            // generous desktop padding is wasted, and without this the label
+            // wraps onto two lines inside the button on a 360px screen.
+            fontSize: { xs: "0.9375rem", sm: "1rem" },
+            fontWeight: 700,
+            py: 1.35,
+            px: { xs: 2, sm: 4 },
+            borderRadius: 2.5,
+            mb: 3,
+            width: { xs: "100%", sm: "auto" },
+          }}
         >
-          Ver mi resumen y continuar
+          Continuar y ver mi resumen
         </Button>
 
         <Typography
-          variant="caption"
+          component="p"
           color="text.secondary"
-          sx={{ display: "block", fontSize: "0.6875rem", lineHeight: 1.55 }}
+          sx={{
+            fontSize: "0.625rem",
+            lineHeight: 1.5,
+            opacity: 0.75,
+            // Pinned to the bottom edge, away from the body copy.
+            mb: 0,
+          }}
         >
           Al continuar confirmás que sos mayor de 18 años y aceptás nuestros{" "}
           <Link
@@ -121,6 +182,7 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             target="_blank"
             rel="noopener"
             color="primary"
+            sx={{ font: "inherit" }}
           >
             Términos y Condiciones
           </Link>{" "}
@@ -130,6 +192,7 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
             target="_blank"
             rel="noopener"
             color="primary"
+            sx={{ font: "inherit" }}
           >
             Política de Privacidad
           </Link>
