@@ -96,6 +96,16 @@ export const YouTubePlayerProvider: React.FC<{ children: React.ReactNode }> = ({
         target_service: parsed.service ?? undefined,
         target_program: item.programName ?? undefined,
         target_is_live: item.isLive,
+        // Canonical id keys, which the first-party sink promotes out of the
+        // params into its typed columns so zapping can be ranked on an indexed
+        // int. The target_* keys above stay as they are — the GA, PostHog and
+        // Clarity dashboards are already built on them. ZapItem.id is a channel
+        // id or a streamer id depending on kind, never both.
+        ...(item.kind === 'streamer'
+          ? { streamer_id: item.id, streamer_name: item.name }
+          : { channel_id: item.id, channel_name: item.name }),
+        program_id: item.programId ?? undefined,
+        program_name: item.programName ?? undefined,
       },
     });
   };

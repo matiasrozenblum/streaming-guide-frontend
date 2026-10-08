@@ -189,6 +189,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
           service,
           isLive: true,
           programName: null,
+          programId: null,
           logoShape: 'square' as const,
         };
       });
