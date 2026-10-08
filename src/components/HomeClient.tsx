@@ -201,6 +201,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
       let videoUrl: string | null = null;
       let isLive = false;
       let programName: string | null = null;
+      let programId: number | null = null;
 
       // Prefer a currently-live program from today's schedules
       const todaySchedules = schedules.filter(s => s.day_of_week === today);
@@ -212,6 +213,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
           videoUrl = streamUrl;
           isLive = true;
           programName = s.program.name;
+          programId = s.program.id;
           break;
         }
       }
@@ -238,6 +240,7 @@ export default function HomeClient({ initialData }: HomeClientProps) {
         service,
         isLive,
         programName,
+        programId,
       };
     });
   }, [channelsWithSchedules, liveStatus]);
