@@ -10,7 +10,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
-## [1.36.1] - 2026-10-15
+## [1.33.1] - 2026-10-16
 
 ### Fixed
 - **El banner anterior titilaba al pasar de banner**: al terminar el fade-out, el banner saliente volvía por un frame a opacidad 1 antes de desmontarse, y el entrante caía por un frame a opacidad 0 al terminar su fade-in. No era un problema de `BannerCarousel` sino de framer-motion 12.12: cuando la animación de opacidad (que corre por WAAPI) terminaba, la cancelaba en el mismo frame pero recién escribía el valor final en el estilo inline en el frame siguiente, así que por un frame el elemento mostraba el valor previo a la animación. Medido frame a frame en producción, el saliente pasaba de 0.03 a 1.00 justo antes de desmontarse. Se actualizó `framer-motion` a 12.43.0, que escribe el valor final antes de cancelar; con eso la transición queda limpia en ambos sentidos. Afecta a todas las animaciones de opacidad del sitio, no solo al carousel.
