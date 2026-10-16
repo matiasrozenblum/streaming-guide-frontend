@@ -3,7 +3,7 @@
 import React, { useState, useEffect, useCallback } from 'react';
 import { Box, IconButton, useTheme, useMediaQuery, Typography } from '@mui/material';
 import { ChevronLeft, ChevronRight } from '@mui/icons-material';
-import { motion, AnimatePresence } from 'framer-motion';
+import { motion } from 'framer-motion';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import { useSessionContext } from '@/contexts/SessionContext';
@@ -19,6 +19,9 @@ interface BannerCarouselProps {
 }
 
 const MotionBox = motion(Box);
+
+// Seconds the incoming banner takes to fade in over the outgoing one
+const CROSSFADE_DURATION = 0.5;
 
 /**
  * Banner Carousel Component
@@ -77,7 +80,20 @@ export default function BannerCarousel({
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
-  const [currentIndex, setCurrentIndex] = useState(0);
+  // Crossfade stack. `current` is the slide on top and `under` the one it fades in
+  // over, which stays opaque beneath it until fully covered. Going straight back to
+  // `under` instead fades the slide that was entering (`leaving`) back out on top.
+  // `entries` counts each slide's entrances and is part of its key, so an entering
+  // slide remounts at opacity 0 in the same commit that raises it to the top: a
+  // slide hidden moments ago may still be opaque, and animating it down from there
+  // would show it on top for a frame.
+  const [slides, setSlides] = useState<{
+    current: number;
+    under: number | null;
+    leaving: number | null;
+    entries: number[];
+  }>({ current: 0, under: null, leaving: null, entries: [] });
+  const currentIndex = slides.current;
   const [isPaused, setIsPaused] = useState(false);
   const [isHovered, setIsHovered] = useState(false);
 
@@ -85,34 +101,39 @@ export default function BannerCarousel({
   const [touchStart, setTouchStart] = useState<number | null>(null);
   const [touchEnd, setTouchEnd] = useState<number | null>(null);
 
+  const goTo = useCallback((getIndex: (current: number) => number) => {
+    setSlides((prev) => {
+      const next = getIndex(prev.current);
+      if (next === prev.current) return prev;
+      if (next === prev.under) {
+        return { ...prev, current: next, under: null, leaving: prev.current };
+      }
+      const entries = [...prev.entries];
+      entries[next] = (entries[next] ?? 0) + 1;
+      return { current: next, under: prev.current, leaving: null, entries };
+    });
+  }, []);
+
+  const goToNext = useCallback(() => {
+    goTo((current) => (current === banners.length - 1 ? 0 : current + 1));
+  }, [goTo, banners.length]);
+
+  const goToPrevious = useCallback(() => {
+    goTo((current) => (current === 0 ? banners.length - 1 : current - 1));
+  }, [goTo, banners.length]);
+
+  const goToSlide = useCallback((index: number) => {
+    goTo(() => index);
+  }, [goTo]);
+
   // Auto-rotation logic
   useEffect(() => {
     if (!autoRotate || banners.length <= 1 || isPaused) return;
 
-    const interval = setInterval(() => {
-      setCurrentIndex((prevIndex) =>
-        prevIndex === banners.length - 1 ? 0 : prevIndex + 1
-      );
-    }, autoRotateInterval);
+    const interval = setInterval(goToNext, autoRotateInterval);
 
     return () => clearInterval(interval);
-  }, [autoRotate, autoRotateInterval, banners.length, isPaused]);
-
-  const goToNext = useCallback(() => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === banners.length - 1 ? 0 : prevIndex + 1
-    );
-  }, [banners.length]);
-
-  const goToPrevious = useCallback(() => {
-    setCurrentIndex((prevIndex) =>
-      prevIndex === 0 ? banners.length - 1 : prevIndex - 1
-    );
-  }, [banners.length]);
-
-  const goToSlide = useCallback((index: number) => {
-    setCurrentIndex(index);
-  }, []);
+  }, [autoRotate, autoRotateInterval, banners.length, isPaused, goToNext]);
 
   // Touch/swipe handlers for mobile
   const minSwipeDistance = 50;
@@ -168,9 +189,6 @@ export default function BannerCarousel({
   }
 
   const currentBanner = banners[currentIndex];
-  const imageSrc = isMobile
-    ? (currentBanner.image_url_mobile || currentBanner.image_url)
-    : (currentBanner.image_url_desktop || currentBanner.image_url);
   const hasMultipleBanners = banners.length > 1;
 
   // Responsive dimensions
@@ -204,76 +222,101 @@ export default function BannerCarousel({
       onTouchMove={isMobile ? onTouchMove : undefined}
       onTouchEnd={isMobile ? onTouchEnd : undefined}
     >
-      <AnimatePresence mode="wait">
-        <MotionBox
-          key={currentBanner.id}
-          initial={{ opacity: 0 }}
-          animate={{ opacity: 1 }}
-          exit={{ opacity: 0 }}
-          transition={{ duration: 0.5 }}
-          sx={{
-            position: 'relative',
-            width: '100%',
-            height: '100%',
-          }}
-        >
-          {/* Background Image */}
-          <Image
-            src={imageSrc}
-            alt={currentBanner.title}
-            fill
-            style={{
-              objectFit: 'cover', // Cover the entire container, may crop edges
-              objectPosition: 'center', // Center the image within the container
-            }}
-            sizes={isMobile ? '100vw' : '100vw'}
-            priority={true} // Always prioritize banner images for fast loading
-            quality={85} // Optimize quality vs size
-          />
+      {/* Crossfade: every slide stays mounted (so images are loaded before they are
+          shown) and stacked. The incoming slide fades in on top of the outgoing one,
+          which stays opaque underneath; slides that leave the stack are hidden only
+          after a full fade, once whatever is on top has covered them. Fading both at
+          once would let the background show through mid-transition. */}
+      <Box sx={{ position: 'absolute', inset: 0, isolation: 'isolate' }}>
+        {banners.map((banner, index) => {
+          const role = index === slides.current ? 'top'
+            : index === slides.under ? 'under'
+              : index === slides.leaving ? 'leaving'
+                : 'hidden';
+          const entries = slides.entries[index] ?? 0;
+          const imageSrc = isMobile
+            ? (banner.image_url_mobile || banner.image_url)
+            : (banner.image_url_desktop || banner.image_url);
 
-          {/* Content Overlay - Only show when description is set (text baked into image otherwise) */}
-          {currentBanner.description && (
-            <Box
+          return (
+            <MotionBox
+              key={`${banner.id}-${entries}`}
+              aria-hidden={role !== 'top'}
+              // Only an entering slide mounts after the first render
+              initial={entries > 0 ? { opacity: 0 } : false}
+              animate={
+                role === 'hidden'
+                  ? { opacity: 0, transition: { delay: CROSSFADE_DURATION, duration: 0 } }
+                  : { opacity: role === 'leaving' ? 0 : 1, transition: { duration: CROSSFADE_DURATION } }
+              }
               sx={{
                 position: 'absolute',
-                bottom: 0,
-                left: 0,
-                right: 0,
-                p: isMobile ? 2 : 3,
-                background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                inset: 0,
+                zIndex: { leaving: 3, top: 2, under: 1, hidden: 0 }[role],
               }}
             >
-              <Typography
-                variant={isMobile ? 'h6' : 'h5'}
-                component="h3"
-                sx={{
-                  color: 'white',
-                  fontWeight: 'bold',
-                  textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
-                  mb: 0.5,
-                  lineHeight: 1.2,
+              {/* Background Image */}
+              <Image
+                src={imageSrc}
+                alt={banner.title}
+                fill
+                style={{
+                  objectFit: 'cover', // Cover the entire container, may crop edges
+                  objectPosition: 'center', // Center the image within the container
                 }}
-              >
-                {currentBanner.title}
-              </Typography>
+                sizes="100vw"
+                // Only the first slide is the LCP candidate; the rest load right away
+                // (not lazily) so they are ready before their first fade-in
+                priority={index === 0}
+                loading={index === 0 ? undefined : 'eager'}
+                quality={85} // Optimize quality vs size
+              />
 
-              <Typography
-                variant={isMobile ? 'body2' : 'body1'}
-                sx={{
-                  color: 'rgba(255,255,255,0.9)',
-                  textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
-                  display: '-webkit-box',
-                  WebkitLineClamp: isMobile ? 2 : 3,
-                  WebkitBoxOrient: 'vertical',
-                  overflow: 'hidden',
-                }}
-              >
-                {currentBanner.description}
-              </Typography>
-            </Box>
-          )}
-        </MotionBox>
-      </AnimatePresence>
+              {/* Content Overlay - Only show when description is set (text baked into image otherwise) */}
+              {banner.description && (
+                <Box
+                  sx={{
+                    position: 'absolute',
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    p: isMobile ? 2 : 3,
+                    background: 'linear-gradient(transparent, rgba(0,0,0,0.7))',
+                  }}
+                >
+                  <Typography
+                    variant={isMobile ? 'h6' : 'h5'}
+                    component="h3"
+                    sx={{
+                      color: 'white',
+                      fontWeight: 'bold',
+                      textShadow: '2px 2px 4px rgba(0,0,0,0.8)',
+                      mb: 0.5,
+                      lineHeight: 1.2,
+                    }}
+                  >
+                    {banner.title}
+                  </Typography>
+
+                  <Typography
+                    variant={isMobile ? 'body2' : 'body1'}
+                    sx={{
+                      color: 'rgba(255,255,255,0.9)',
+                      textShadow: '1px 1px 2px rgba(0,0,0,0.8)',
+                      display: '-webkit-box',
+                      WebkitLineClamp: isMobile ? 2 : 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden',
+                    }}
+                  >
+                    {banner.description}
+                  </Typography>
+                </Box>
+              )}
+            </MotionBox>
+          );
+        })}
+      </Box>
 
       {/* Navigation Controls - Only show on desktop and when hovered, hide on mobile */}
       {hasMultipleBanners && !isMobile && (
