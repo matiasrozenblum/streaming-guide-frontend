@@ -5,8 +5,11 @@ Todas las modificaciones importantes de este proyecto se documentarán en este a
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
-
 ## [Unreleased]
+
+---
+
+## [1.36.0] - 2026-10-11
 
 ### Added
 
@@ -19,6 +22,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 - **Ajustes visuales del aviso de aceptación**: el botón pasa a medir lo que mide su texto en lugar de ocupar todo el ancho, la letra chica legal baja a 11px para distinguirse del cuerpo como es habitual en ese tipo de texto, y los márgenes entre el borde del cartel y el contenido se ajustaron otra vez. Alto del diálogo: 377px → 342px.
 - **El aviso de aceptación es más compacto**: el padding del cartel y los márgenes entre sus elementos se ajustaron sin tocar los tamaños de texto. Además de ganar prolijidad, achicarlo reduce los casos en que el cartel no entra en pantalla: con el navegador muy ampliado el contenido del propio diálogo tiene que scrollear para alcanzar el botón, y cuanto más chico sea, más tarde ocurre eso.
+- **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
+- **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
+- **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
+- **El panel de cookies ahora dice que la categoría de Análisis incluye nuestro sistema propio**: la Política remite a ese panel para desactivar "el sistema de análisis interno", pero el panel solo nombraba herramientas de terceros, así que el control al que apuntaba el texto no se correspondía con lo que mostraba.
 
 ### Fixed
 
@@ -35,26 +42,13 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **El aviso tapaba las propias páginas de legales**: está montado en el layout, así que aparecía en cualquier ruta, incluidas las de Términos y Condiciones y Política de Privacidad a las que el propio cartel enlaza. Pedirle a alguien que acepte un documento mientras le tapás ese documento no tiene sentido. Esas rutas quedan excluidas, y la exclusión también cierra el cartel si se llega a ellas por navegación interna y no solo en una carga nueva.
 - **Se podía seguir scrolleando el sitio con el aviso abierto**: el home no usa scroll nativo. `HomeClient` escucha `wheel` sobre `window` y mueve el banner por `transform` mientras empuja a mano el `scrollTop` de la grilla. El bloqueo de scroll que aplica un modal —`overflow: hidden` sobre el `body`— solo detiene el scroll del navegador y no tiene efecto sobre ese mecanismo, así que la página seguía desplazándose por debajo del cartel. El handler ahora no hace nada mientras haya un diálogo en pantalla, lo que cubre también el panel de cookies y cualquier modal futuro.
 - **El aviso de aceptación se renderizaba con el tema claro**: estaba montado en `SessionProviderWrapper`, que envuelve a `AppThemeProvider` en lugar de estar dentro suyo. Un `Dialog` de MUI fuera del provider cae al tema por defecto de la librería, que es claro, así que el cartel aparecía como una tarjeta blanca sobre un sitio que es dark-only. Pasa a montarse junto al resto de los overlays globales, dentro del provider.
-
-### Changed
-
-- **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
-
-- **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
-- **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
-- **El panel de cookies ahora dice que la categoría de Análisis incluye nuestro sistema propio**: la Política remite a ese panel para desactivar "el sistema de análisis interno", pero el panel solo nombraba herramientas de terceros, así que el control al que apuntaba el texto no se correspondía con lo que mostraba.
-
-### Fixed
-
 - **La fecha de "Última actualización" de la Política de Privacidad era `new Date()`**: se renderizaba la fecha del día en cada visita, de modo que el documento siempre parecía haberse actualizado hoy. Pasa a una constante compartida con los TyC (`src/constants/legal.ts`), que además expone la versión publicada para que el aviso de aceptación pueda compararla contra lo que aceptó cada usuario.
-
 - **El alta por login social no verificaba la edad**: la regla de 18 años vivía en el formulario de registro con email, pero `ProfileCompletionForm` —el paso de completar perfil al que se redirige a todo usuario que entra con Google o Apple— no la tenía. Quien se registraba por ahí nunca cruzaba una barrera de edad.
 - **La fecha de nacimiento arrancaba en "hoy" y la validación solo corría al tocar el campo**: en el registro web y en el alta social el valor por defecto era la fecha actual, así que un usuario que completaba el resto del formulario sin abrir el calendario enviaba una fecha de nacimiento de hoy, es decir una edad de cero. Ahora el campo arranca vacío, la validación también corre al enviar y el calendario no deja elegir un año que no llegue a los 18.
 - **La misma cuenta de edad estaba copiada en cuatro archivos** (registro, alta social, edición de perfil y alta de usuarios del backoffice), cada una con su propio texto de error. Pasan todas por `src/utils/age.ts`, que replica la regla del servidor en un solo lugar.
-### Fixed
-
 - **Ningún evento llegaba asociado a un usuario, así que "Mi resumen" no podía llenarse nunca**: la cola de analíticas enviaba los lotes sin encabezado de autorización, y el servidor toma el usuario del token. El resultado era que el cien por ciento de los eventos quedaba anónimo y la tabla que alimenta el resumen por persona permanecía vacía. Se agrega el token a cada envío, mediante un módulo que el proveedor de sesión mantiene al día.
 - **El envío al ocultarse la pestaña perdía la atribución por diseño**: usaba `sendBeacon`, que sobrevive a la descarga de la página pero no admite encabezados. Pasa a un `fetch` con `keepalive`, que sobrevive igual y sí lleva el token; su único límite es un cuerpo de 64KB, muy por encima de un lote de 50 eventos.
+- **El zapping no dejaba rastro rankeable**: `zap_use` mandaba el canal y el programa solo como texto dentro de las propiedades, y el promotor de ids busca las claves canónicas. Las columnas `program_id` y `channel_id` quedaban nulas en todos los eventos de zapping —el más frecuente del sitio—, así que el backoffice no podía ordenarlo. Ahora el evento viaja con los ids; el del programa es el real, tomado del horario del que se arma la lista, en vez de resolverse por nombre, que colapsa dos programas homónimos de distintos canales en un solo id. No cuenta como reproducción en Mi Resumen: un zap es un salto de dos segundos, no una vista.
 
 ---
 
@@ -524,7 +518,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Fixed bell icon not showing up for users without session on streamers
 - Fixed bell icon triggering browser confirm message
 
-
 ## [1.16.3] - 2026-03-23
 
 ### Changed
@@ -599,7 +592,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 - Added upload banner logic
 - Added fixed banner logic
-
 
 ## [1.15.2] - 2025-12-31
 
@@ -840,7 +832,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Added logic to weekly override whole programs
 - Added logic to add panelists to weekly overrides
 - added statistics backoffice section for users and subscriptions
-
 
 ## [1.2.8] - 2025-06-20
 
@@ -1227,7 +1218,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 - Now youtube link opens embedded modal
-
 
 ## [0.0.17] - 2025-04-15
 
