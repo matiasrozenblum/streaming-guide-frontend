@@ -280,7 +280,9 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     : ''
         )}
         <Tooltip title="Cerrar modal" arrow>
-          <IconButton aria-label="Cerrar modal" onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
+          <span>
+            <IconButton aria-label="Cerrar modal" disabled={socialLoginPending} onClick={onClose}><CloseIcon /></IconButton>
+          </span>
         </Tooltip>
       </DialogTitle>
 
