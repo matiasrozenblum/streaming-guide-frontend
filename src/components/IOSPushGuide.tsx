@@ -11,6 +11,7 @@ import {
   Alert,
   Collapse,
   IconButton,
+  Tooltip,
 } from '@mui/material';
 import {
   AddToHomeScreen,
@@ -76,14 +77,16 @@ export default function IOSPushGuide() {
         }
       }}
       action={
-        <IconButton
-          color="inherit"
-          size="small"
-          aria-label={expanded ? 'Contraer guía de notificaciones' : 'Expandir guía de notificaciones'}
-          onClick={() => setExpanded(!expanded)}
-        >
-          {expanded ? <ExpandLess /> : <ExpandMore />}
-        </IconButton>
+        <Tooltip title={expanded ? 'Contraer guía de notificaciones' : 'Expandir guía de notificaciones'} arrow>
+          <IconButton
+            color="inherit"
+            size="small"
+            aria-label={expanded ? 'Contraer guía de notificaciones' : 'Expandir guía de notificaciones'}
+            onClick={() => setExpanded(!expanded)}
+          >
+            {expanded ? <ExpandLess /> : <ExpandMore />}
+          </IconButton>
+        </Tooltip>
       }
     >
       <Box>
