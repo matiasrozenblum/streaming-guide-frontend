@@ -83,11 +83,71 @@ export interface RecapChannel {
   plays: number;
 }
 
+export interface RecapStreamer {
+  position: number;
+  streamer_id: number;
+  streamer_name: string;
+  streamer_logo_url: string | null;
+  plays: number;
+}
+
+export type RecapGridShape = "week" | "month";
+
+export interface RecapGridCell {
+  /** The day this cell stands for; null for the calendar's leading padding. */
+  date: string | null;
+  plays: number;
+  /** Whichever channel the cell is mostly made of — it decides the colour. */
+  channel_id: number | null;
+  channel_name: string | null;
+  /** Set instead of the channel on a streamer's grid: twitch, kick, youtube. */
+  platform: string | null;
+  /** The single busiest cell of the grid. */
+  peak: boolean;
+}
+
+export interface RecapGridRow {
+  /** "Mañana" | "Tarde" | "Noche" on a week, "Semana 1"… on a month. */
+  label: string;
+  /** Always seven, Monday first. */
+  cells: RecapGridCell[];
+}
+
+export interface RecapGrid {
+  shape: RecapGridShape;
+  day_labels: string[];
+  rows: RecapGridRow[];
+  /** "los miércoles a la mañana", ready to drop into the sentence. */
+  peak_label: string | null;
+}
+
+/**
+ * Three views of the same plays: the ranking placas draw the whole period, the
+ * ones that feature a single programme or streamer draw only its own.
+ */
+export interface RecapGrids {
+  /** Every programme of the period, coloured by channel. */
+  total: RecapGrid;
+  /** Every streamer of the period, coloured by platform. */
+  streamers: RecapGrid;
+  /** Only the top programme. */
+  program: RecapGrid | null;
+  /** Only the top streamer. */
+  streamer: RecapGrid | null;
+}
+
 export interface Recap {
   enough_data: boolean;
+  /**
+   * How many plays a recap needs. Sent by the API rather than hardcoded here so
+   * the "you are at 2 of 3" progress cannot drift from the rule gating it.
+   */
+  minimum_plays: number;
   period: { type: RecapPeriod; from: string; to: string; label: string };
   top_programs: RecapProgram[];
   top_channels: RecapChannel[];
+  top_streamers: RecapStreamer[];
+  grids: RecapGrids;
   totals: {
     plays: number;
     distinct_programs: number;
