@@ -7,6 +7,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+### Added
+
+- **"Mi resumen" pasa a ser una fila de placas compartibles**: la pantalla dejaba de parecerse a lo que la gente iba a subir a una historia. Ahora muestra las cuatro placas —programa mas visto, top de programas, streamer mas visto y top de streamers— en formato 9:16, y pasar el mouse por una agranda esa tarjeta y revela los botones de compartir. El foco de teclado hace lo mismo, asi que las acciones no quedan atadas al mouse. Las placas se arman con **reproducciones**, que es lo que medimos; el diseno original hablaba de horas, que no tenemos.
+- **La tarjeta y la imagen descargable son el mismo componente**: la placa se dibuja una sola vez a 1080x1920 y la tarjeta la escala con un transform, en lugar de maquetarla dos veces. Por eso esta escrita con elementos planos y estilos inline y no con MUI: el export lo renderiza satori, que entiende estilos inline pero no las clases que genera emotion. Si fueran dos implementaciones se desincronizarian al primer ajuste.
+- **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
+
+### Fixed
+
+- **El logo del canal se recortaba en las placas**: los tiles usaban `object-fit: cover`, que sobre un wordmark apaisado como el de Luzu recorta el medio y deja un pedazo ilegible. Los logos pasan a `contain` y solo las fotos redondas de streamers siguen con `cover`, que es donde recortar es lo correcto.
+
+---
+
 ---
 
 ## [1.36.0] - 2026-10-11
