@@ -21,15 +21,21 @@ import {
 const RATIO = PLACA_WIDTH / PLACA_HEIGHT;
 
 /**
- * Caption, share dock and the air around them — the row gets what is left.
+ * Caption and the air around it — the row gets what is left.
  *
- * Desktop: 16 top + card + 12 + caption + 12 + dock(44) + 16 bottom.
+ * Desktop: 16 top + card + 12 + caption(20) + 16 bottom. The share buttons do
+ * not appear here: on a screen wider than it is tall the cards are limited by
+ * height, so a row reserved for the buttons came straight out of the placa.
+ * They sit over the bottom of the selected placa instead.
  */
-const BLOCK_DESKTOP = 120;
+const BLOCK_DESKTOP = 64;
 const BLOCK_MOBILE = 152;
 
 const GAP_DESKTOP = 20;
 const PAD_DESKTOP = 40;
+
+/** Six 44px buttons with 10px between them — what ShareDock measures. */
+const DOCK_WIDTH = 6 * 44 + 5 * 10;
 
 /** A slide leaves the next placa visibly peeking at both sides, as designed. */
 const SLIDE_WIDTH_RATIO = 0.74;
@@ -140,16 +146,20 @@ function PlacaCard({
   recap,
   height,
   active,
+  overlay,
 }: {
   kind: PlacaKind;
   recap: Recap;
   height: number;
   active: boolean;
+  /** Drawn over the bottom of the placa — the share buttons, when selected. */
+  overlay?: React.ReactNode;
 }) {
   const width = height * RATIO;
   return (
     <Box
       sx={{
+        position: "relative",
         width,
         height,
         borderRadius: "16px",
@@ -170,6 +180,7 @@ function PlacaCard({
       >
         <Placa kind={kind} recap={recap} />
       </Box>
+      {overlay}
     </Box>
   );
 }
@@ -553,6 +564,45 @@ export function RecapDock({
               recap={recap}
               height={metrics.card}
               active={isActive}
+              overlay={
+                isActive && (
+                  <Box
+                    sx={{
+                      position: "absolute",
+                      left: 0,
+                      right: 0,
+                      bottom: 0,
+                      height: Math.max(84, metrics.card * 0.17),
+                      display: "flex",
+                      alignItems: "flex-end",
+                      justifyContent: "center",
+                      pb: "16px",
+                      // The placa's own footer sits above this band, so the
+                      // scrim darkens empty canvas rather than hiding content.
+                      background:
+                        "linear-gradient(to bottom, rgba(10,13,18,0) 0%, rgba(10,13,18,0.72) 46%, rgba(10,13,18,0.92) 100%)",
+                    }}
+                  >
+                    <Box
+                      sx={{
+                        // Narrow desktop windows give narrow cards; scaling
+                        // keeps the six buttons inside the placa instead of
+                        // letting them spill over its edges.
+                        transform: `scale(${Math.min(
+                          1,
+                          (metrics.card * RATIO - 24) / DOCK_WIDTH,
+                        )})`,
+                        transformOrigin: "bottom center",
+                      }}
+                    >
+                      <ShareDock
+                        busy={busy}
+                        onShare={(target) => onShare(kind, target)}
+                      />
+                    </Box>
+                  </Box>
+                )
+              }
             />
 
             <Caption
@@ -561,30 +611,6 @@ export function RecapDock({
               total={kinds.length}
               active={isActive}
             />
-
-            {/*
-              The slot is reserved whether or not the dock shows, and the dock
-              itself is taken out of flow: it is wider than a card, so leaving
-              it in would widen this column the moment it appears and shove the
-              whole row sideways.
-            */}
-            <Box sx={{ height: 44, width: "100%", position: "relative" }}>
-              {isActive && (
-                <Box
-                  sx={{
-                    position: "absolute",
-                    top: 0,
-                    left: "50%",
-                    transform: "translateX(-50%)",
-                  }}
-                >
-                  <ShareDock
-                    busy={busy}
-                    onShare={(target) => onShare(kind, target)}
-                  />
-                </Box>
-              )}
-            </Box>
           </Box>
         );
       })}
