@@ -2,6 +2,7 @@ import type { CSSProperties, ReactNode } from "react";
 import type { Recap, RecapGrid } from "@/services/analytics";
 import {
   PLACA_HEIGHT,
+  PLACA_PADDING,
   PLACA_WIDTH,
   PlacaFooter,
   PlacaGrid,
@@ -10,6 +11,7 @@ import {
   PlacaSentence,
   PlacaTitle,
   condensed,
+  placaPeriod,
 } from "./PlacaChrome";
 import {
   PLATFORM_LEGEND,
@@ -56,7 +58,7 @@ function periodWord(recap: Recap): string {
 function nameLines(name: string): string[] {
   const words = name.trim().split(/\s+/);
   if (words.length === 1) return [words[0]];
-  const mid = Math.ceil(words.length / 2);
+  const mid = Math.floor(words.length / 2) || 1;
   return [words.slice(0, mid).join(" "), words.slice(mid).join(" ")];
 }
 
@@ -113,7 +115,7 @@ function Canvas({ accent, children }: { accent: string; children: ReactNode }) {
         flexDirection: "column",
         backgroundColor: "#0F172A",
         backgroundImage: accentGlow(accent),
-        padding: "88px 80px 80px",
+        padding: PLACA_PADDING,
         overflow: "hidden",
       }}
     >
@@ -126,19 +128,22 @@ function Artwork({
   src,
   alt,
   size,
+  width,
   round,
   accent,
 }: {
   src: string | null;
   alt: string;
   size: number;
+  /** Wider than tall for a channel wordmark; square for a portrait. */
+  width?: number;
   round: boolean;
   accent: string;
 }) {
   return (
     <div
       style={{
-        width: size,
+        width: width ?? size,
         height: size,
         flexShrink: 0,
         overflow: "hidden",
@@ -157,7 +162,7 @@ function Artwork({
         <img
           src={src}
           alt={alt}
-          width={size}
+          width={width ?? size}
           height={size}
           style={{ objectFit: round ? "cover" : "contain" }}
         />
@@ -184,7 +189,7 @@ function Hero(props: {
 
   return (
     <Canvas accent={accent}>
-      <PlacaHeader period={recap.period.label} logo={props.logo} />
+      <PlacaHeader period={placaPeriod(recap.period)} logo={props.logo} />
 
       <div
         style={{
@@ -192,7 +197,7 @@ function Hero(props: {
           flexDirection: "column",
           marginTop: "auto",
           marginBottom: "auto",
-          padding: "32px 0",
+          padding: "24px 0",
         }}
       >
         <PlacaTitle lines={[props.title, periodWord(recap)]} accent={accent} />
@@ -208,7 +213,7 @@ function Hero(props: {
           <Artwork
             src={props.artwork}
             alt={props.where}
-            size={props.round ? 150 : 164}
+            size={120}
             round={props.round}
             accent={accent}
           />
@@ -227,8 +232,9 @@ function Hero(props: {
             <div
               style={{
                 ...inter,
-                fontSize: 40,
+                fontSize: 36,
                 fontWeight: 600,
+                lineHeight: "42px",
                 color: "#F1F5F9",
               }}
             >
@@ -238,16 +244,16 @@ function Hero(props: {
         </div>
 
         <div
-          style={{ display: "flex", flexDirection: "column", paddingTop: 36 }}
+          style={{ display: "flex", flexDirection: "column", paddingTop: 44 }}
         >
           {nameLines(props.name).map((line) => (
             <div
               key={line}
               style={{
                 ...condensed,
-                fontSize: 150,
+                fontSize: recap.period.type === "week" ? 170 : 140,
                 letterSpacing: "-0.04em",
-                lineHeight: 0.88,
+                lineHeight: "86%",
                 color: "#F1F5F9",
                 whiteSpace: "nowrap",
               }}
@@ -261,16 +267,16 @@ function Hero(props: {
           style={{
             display: "flex",
             alignItems: "baseline",
-            gap: 20,
-            paddingTop: 44,
+            gap: 22,
+            paddingTop: 36,
           }}
         >
           <div
             style={{
               ...condensed,
-              fontSize: 156,
+              fontSize: 120,
               letterSpacing: "-0.05em",
-              lineHeight: 0.86,
+              lineHeight: "84%",
               color: accent,
             }}
           >
@@ -284,6 +290,7 @@ function Hero(props: {
               fontWeight: 800,
               fontStretch: "84%",
               fontSize: 58,
+              lineHeight: "70px",
               letterSpacing: "-0.01em",
               color: "#F1F5F9",
             }}
@@ -293,7 +300,7 @@ function Hero(props: {
         </div>
       </div>
 
-      <div style={{ display: "flex", flexDirection: "column", gap: 20 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 30 }}>
         {grid && <PlacaGrid grid={grid} />}
         <PlacaLegend items={props.legend} />
         {text && <PlacaSentence text={text} />}
@@ -326,23 +333,21 @@ function Ranking(props: {
 
   return (
     <Canvas accent={accent}>
-      <PlacaHeader period={recap.period.label} logo={props.logo} />
+      <PlacaHeader period={placaPeriod(recap.period)} logo={props.logo} />
 
       <div
         style={{
           display: "flex",
           flexDirection: "column",
-          paddingTop: compact ? 52 : 72,
+          paddingTop: compact ? 64 : 80,
         }}
       >
-        <div style={{ paddingBottom: compact ? 36 : 52, display: "flex" }}>
+        <div style={{ paddingBottom: compact ? 44 : 56, display: "flex" }}>
           <PlacaTitle lines={[props.title, periodWord(recap)]} accent={accent} />
         </div>
 
         {rows.map((row, index) => {
           const first = index === 0;
-          const size = first ? (compact ? 92 : 128) : compact ? 70 : 96;
-          const gap = compact ? 26 : 58;
           return (
             <div
               key={row.key}
@@ -350,22 +355,22 @@ function Ranking(props: {
                 display: "flex",
                 alignItems: "center",
                 gap: 26,
-                ...(index > 0
-                  ? {
+                ...(first
+                  ? { paddingBottom: compact ? 14 : 20 }
+                  : {
                       borderTop: "2px solid rgba(241,245,249,0.14)",
-                      paddingTop: gap,
-                      marginTop: gap,
-                    }
-                  : {}),
+                      paddingTop: compact ? 10 : 18,
+                      paddingBottom: compact ? 10 : 18,
+                    }),
               }}
             >
               <div
                 style={{
                   ...condensed,
-                  width: 54,
+                  width: 46,
                   flexShrink: 0,
-                  fontSize: first ? 60 : 46,
-                  lineHeight: 1,
+                  fontSize: first ? 48 : 38,
+                  lineHeight: "100%",
                   color: first ? accent : "#94A3B8",
                 }}
               >
@@ -374,7 +379,8 @@ function Ranking(props: {
               <Artwork
                 src={row.artwork}
                 alt={row.name}
-                size={size}
+                size={80}
+                width={props.round ? 80 : 180}
                 round={props.round}
                 accent={row.color}
               />
@@ -390,9 +396,9 @@ function Ranking(props: {
                 <div
                   style={{
                     ...condensed,
-                    fontSize: first ? (compact ? 54 : 72) : compact ? 42 : 54,
+                    fontSize: first ? (compact ? 54 : 64) : compact ? 44 : 52,
                     letterSpacing: "-0.03em",
-                    lineHeight: 0.96,
+                    lineHeight: "96%",
                     color: "#F1F5F9",
                   }}
                 >
@@ -401,8 +407,9 @@ function Ranking(props: {
                 <div
                   style={{
                     ...inter,
-                    fontSize: first ? 30 : 26,
+                    fontSize: first ? 30 : 28,
                     fontWeight: first ? 600 : 500,
+                    lineHeight: "36px",
                     color: first ? accent : "#CBD5E1",
                   }}
                 >
@@ -418,11 +425,11 @@ function Ranking(props: {
         style={{
           display: "flex",
           flexDirection: "column",
-          gap: 20,
+          gap: 30,
           marginTop: "auto",
         }}
       >
-        {grid && <PlacaGrid grid={grid} />}
+        {grid && <PlacaGrid grid={grid} dense={compact} />}
         <PlacaLegend items={props.legend} />
         {text && <PlacaSentence text={text} />}
         <PlacaFooter accent={accent} />

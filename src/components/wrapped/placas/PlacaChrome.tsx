@@ -1,5 +1,5 @@
 import type { CSSProperties } from "react";
-import type { RecapGrid, RecapGridCell } from "@/services/analytics";
+import type { Recap, RecapGrid, RecapGridCell } from "@/services/analytics";
 import { channelColor, platformColor, EMPTY_CELL } from "./palette";
 
 /**
@@ -10,10 +10,16 @@ import { channelColor, platformColor, EMPTY_CELL } from "./palette";
  * satori, which understands inline styles but not emotion's generated classes.
  * Nothing here is responsive on purpose — the placa is one fixed canvas that
  * the card scales down, so the thumbnail cannot drift from the export.
+ *
+ * Every measurement below is read off the Paper artboards (C1/C5 · v2) rather
+ * than guessed, so the two stay in step.
  */
 
 export const PLACA_WIDTH = 1080;
 export const PLACA_HEIGHT = 1920;
+
+/** Leaves the 920px content column the design is laid out on. */
+export const PLACA_PADDING = "200px 80px 170px";
 
 /**
  * The brand mark, as the browser loads it. The PNG export cannot follow a root
@@ -30,6 +36,40 @@ export const condensed: CSSProperties = {
 };
 
 const inter: CSSProperties = { fontFamily: "Inter, sans-serif" };
+
+const SHORT_MONTHS = [
+  "ENE", "FEB", "MAR", "ABR", "MAY", "JUN",
+  "JUL", "AGO", "SEP", "OCT", "NOV", "DIC",
+];
+
+const MONTHS = [
+  "enero", "febrero", "marzo", "abril", "mayo", "junio",
+  "julio", "agosto", "septiembre", "octubre", "noviembre", "diciembre",
+];
+
+/**
+ * What goes in the pill: "5 — 11 OCT", or "26 OCT — 1 NOV" across a month
+ * boundary, or "OCTUBRE".
+ *
+ * Not `period.label` — that is a sentence ("Semana del 26 de octubre al 1 de
+ * noviembre") written for the page heading, and it overran the pill badly
+ * enough that the end of it was cut off by the edge of the placa.
+ */
+export function placaPeriod(period: Recap["period"]): string {
+  if (period.type !== "week") {
+    const month = new Date(`${period.from}T12:00:00Z`).getUTCMonth();
+    return MONTHS[month].toUpperCase();
+  }
+
+  const from = new Date(`${period.from}T12:00:00Z`);
+  const to = new Date(`${period.to}T12:00:00Z`);
+  const fromMonth = SHORT_MONTHS[from.getUTCMonth()];
+  const toMonth = SHORT_MONTHS[to.getUTCMonth()];
+
+  return fromMonth === toMonth
+    ? `${from.getUTCDate()} — ${to.getUTCDate()} ${toMonth}`
+    : `${from.getUTCDate()} ${fromMonth} — ${to.getUTCDate()} ${toMonth}`;
+}
 
 export function PlacaHeader({
   period,
@@ -50,24 +90,26 @@ export function PlacaHeader({
       <img
         src={logo}
         alt="La Guía del Streaming"
-        width={330}
-        height={90}
+        width={296}
+        height={80}
         style={{ objectFit: "contain", flexShrink: 0 }}
       />
       <div
         style={{
           display: "flex",
           alignItems: "center",
+          flexShrink: 0,
           borderRadius: 999,
           border: "2px solid rgba(241,245,249,0.3)",
-          padding: "16px 32px",
+          padding: "12px 26px",
         }}
       >
         <div
           style={{
             ...inter,
-            fontSize: 28,
+            fontSize: 26,
             fontWeight: 600,
+            lineHeight: "32px",
             letterSpacing: "0.05em",
             color: "#F1F5F9",
             whiteSpace: "nowrap",
@@ -94,10 +136,10 @@ export function PlacaTitle({
           key={line}
           style={{
             ...inter,
-            fontSize: 38,
+            fontSize: 50,
             fontWeight: 700,
             letterSpacing: "0.04em",
-            lineHeight: 1.18,
+            lineHeight: "58px",
             color: accent,
             whiteSpace: "nowrap",
           }}
@@ -114,21 +156,21 @@ export function PlacaFooter({ accent }: { accent: string }) {
     <div
       style={{
         display: "flex",
-        alignItems: "flex-end",
+        alignItems: "center",
         justifyContent: "space-between",
         gap: 24,
         borderTop: "2px solid rgba(241,245,249,0.2)",
-        paddingTop: 34,
-        marginTop: 12,
+        paddingTop: 28,
+        marginTop: 8,
       }}
     >
-      <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
+      <div style={{ display: "flex", flexDirection: "column", gap: 4 }}>
         <div
           style={{
             ...inter,
             fontSize: 30,
             fontWeight: 600,
-            lineHeight: 1.25,
+            lineHeight: "42px",
             color: "#F1F5F9",
             display: "flex",
             flexDirection: "column",
@@ -138,7 +180,13 @@ export function PlacaFooter({ accent }: { accent: string }) {
           <span>La Guía para armar el tuyo</span>
         </div>
         <div
-          style={{ ...inter, fontSize: 26, fontWeight: 500, color: "#94A3B8" }}
+          style={{
+            ...inter,
+            fontSize: 26,
+            fontWeight: 500,
+            lineHeight: "36px",
+            color: "#94A3B8",
+          }}
         >
           laguiadelstreaming.com
         </div>
@@ -148,9 +196,11 @@ export function PlacaFooter({ accent }: { accent: string }) {
           ...inter,
           fontSize: 30,
           fontWeight: 700,
+          lineHeight: "36px",
           letterSpacing: "0.05em",
           color: accent,
           whiteSpace: "nowrap",
+          flexShrink: 0,
         }}
       >
         MI RESUMEN
@@ -171,14 +221,22 @@ function cellColor(cell: RecapGridCell): string {
  * month is a calendar whose leading blanks keep the columns under the right
  * letter. Both arrive already shaped, so this only paints them.
  */
-export function PlacaGrid({ grid }: { grid: RecapGrid }) {
+export function PlacaGrid({
+  grid,
+  dense = false,
+}: {
+  grid: RecapGrid;
+  /** A ranking placa has a list above the grid, so its cells are shorter. */
+  dense?: boolean;
+}) {
   const isWeek = grid.shape === "week";
   const labelWidth = 150;
-  const cellHeight = isWeek ? 84 : 58;
+  const cellHeight = isWeek ? (dense ? 60 : 82) : dense ? 38 : 52;
+  const gap = dense ? 9 : 10;
 
   return (
-    <div style={{ display: "flex", flexDirection: "column", gap: isWeek ? 10 : 8 }}>
-      <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+    <div style={{ display: "flex", flexDirection: "column", gap }}>
+      <div style={{ display: "flex", alignItems: "center", gap, height: 36 }}>
         {isWeek && <div style={{ width: labelWidth, flexShrink: 0 }} />}
         {grid.day_labels.map((day, index) => (
           <div
@@ -188,6 +246,7 @@ export function PlacaGrid({ grid }: { grid: RecapGrid }) {
               flex: 1,
               fontSize: 26,
               fontWeight: 700,
+              lineHeight: "36px",
               textAlign: "center",
               color: "#94A3B8",
               display: "flex",
@@ -204,7 +263,7 @@ export function PlacaGrid({ grid }: { grid: RecapGrid }) {
         return (
           <div
             key={row.label}
-            style={{ display: "flex", alignItems: "center", gap: 10 }}
+            style={{ display: "flex", alignItems: "center", gap }}
           >
             {isWeek && (
               <div
@@ -248,9 +307,7 @@ export function PlacaLegend({
 }) {
   if (items.length === 0) return null;
   return (
-    <div
-      style={{ display: "flex", alignItems: "center", gap: 36, paddingTop: 4 }}
-    >
+    <div style={{ display: "flex", alignItems: "center", gap: 36, paddingTop: 14 }}>
       {items.map((item) => (
         <div
           key={item.label}
@@ -289,9 +346,9 @@ export function PlacaSentence({ text }: { text: string }) {
         ...condensed,
         fontWeight: 800,
         fontStretch: "84%",
-        fontSize: 54,
+        fontSize: 46,
         letterSpacing: "-0.02em",
-        lineHeight: 1.14,
+        lineHeight: "114%",
         color: "#F1F5F9",
         paddingTop: 10,
       }}
