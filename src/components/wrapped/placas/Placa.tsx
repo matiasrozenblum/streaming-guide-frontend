@@ -169,6 +169,7 @@ function Artwork({
 function Hero(props: {
   recap: Recap;
   accent: string;
+  logo?: string;
   title: string;
   artwork: string | null;
   round: boolean;
@@ -183,7 +184,7 @@ function Hero(props: {
 
   return (
     <Canvas accent={accent}>
-      <PlacaHeader period={recap.period.label} />
+      <PlacaHeader period={recap.period.label} logo={props.logo} />
 
       <div
         style={{
@@ -273,7 +274,9 @@ function Hero(props: {
               color: accent,
             }}
           >
-            {props.count}
+            {/* A bare number is a non-string child, which satori refuses on a
+                div that is not a flex container — so it goes in as text. */}
+            {String(props.count)}
           </div>
           <div
             style={{
@@ -303,6 +306,7 @@ function Hero(props: {
 function Ranking(props: {
   recap: Recap;
   accent: string;
+  logo?: string;
   title: string;
   rows: Array<{
     key: string;
@@ -322,7 +326,7 @@ function Ranking(props: {
 
   return (
     <Canvas accent={accent}>
-      <PlacaHeader period={recap.period.label} />
+      <PlacaHeader period={recap.period.label} logo={props.logo} />
 
       <div
         style={{
@@ -365,7 +369,7 @@ function Ranking(props: {
                   color: first ? accent : "#94A3B8",
                 }}
               >
-                {index + 1}
+                {String(index + 1)}
               </div>
               <Artwork
                 src={row.artwork}
@@ -435,7 +439,16 @@ export function canRender(kind: PlacaKind, recap: Recap): boolean {
   return recap.top_streamers.length > 0;
 }
 
-export function Placa({ kind, recap }: { kind: PlacaKind; recap: Recap }) {
+export function Placa({
+  kind,
+  recap,
+  logo,
+}: {
+  kind: PlacaKind;
+  recap: Recap;
+  /** Inlined brand mark, for the PNG export; the browser uses the default. */
+  logo?: string;
+}) {
   const topProgram = recap.top_programs[0];
   const topStreamer = recap.top_streamers[0];
   const listSize = recap.period.type === "week" ? 3 : 5;
@@ -445,6 +458,7 @@ export function Placa({ kind, recap }: { kind: PlacaKind; recap: Recap }) {
     return (
       <Hero
         recap={recap}
+        logo={logo}
         accent={accent}
         title="MI PROGRAMA MÁS VISTO"
         artwork={topProgram.channel_logo_url}
@@ -464,6 +478,7 @@ export function Placa({ kind, recap }: { kind: PlacaKind; recap: Recap }) {
     return (
       <Hero
         recap={recap}
+        logo={logo}
         accent={platformColor(platform)}
         title="MI STREAMER MÁS VISTO"
         artwork={topStreamer.streamer_logo_url}
@@ -488,6 +503,7 @@ export function Placa({ kind, recap }: { kind: PlacaKind; recap: Recap }) {
     return (
       <Ranking
         recap={recap}
+        logo={logo}
         accent={channelColor(topProgram.channel_name)}
         title={`MIS ${rows.length} PROGRAMAS MÁS VISTOS`}
         rows={rows}
@@ -509,6 +525,7 @@ export function Placa({ kind, recap }: { kind: PlacaKind; recap: Recap }) {
   return (
     <Ranking
       recap={recap}
+      logo={logo}
       accent={accent}
       title={`MIS ${rows.length} STREAMERS MÁS VISTOS`}
       rows={rows}

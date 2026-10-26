@@ -15,7 +15,12 @@ import { channelColor, platformColor, EMPTY_CELL } from "./palette";
 export const PLACA_WIDTH = 1080;
 export const PLACA_HEIGHT = 1920;
 
-const LOGO_SRC = "/img/text-white.png";
+/**
+ * The brand mark, as the browser loads it. The PNG export cannot follow a root
+ * relative path, so `PlacaHeader` takes an override and the route passes the
+ * same file inlined as a data URI.
+ */
+export const LOGO_SRC = "/img/text-white.png";
 
 /** The condensed display face the design is built on. */
 export const condensed: CSSProperties = {
@@ -26,7 +31,13 @@ export const condensed: CSSProperties = {
 
 const inter: CSSProperties = { fontFamily: "Inter, sans-serif" };
 
-export function PlacaHeader({ period }: { period: string }) {
+export function PlacaHeader({
+  period,
+  logo = LOGO_SRC,
+}: {
+  period: string;
+  logo?: string;
+}) {
   return (
     <div
       style={{
@@ -37,7 +48,7 @@ export function PlacaHeader({ period }: { period: string }) {
     >
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src={LOGO_SRC}
+        src={logo}
         alt="La Guía del Streaming"
         width={330}
         height={90}
