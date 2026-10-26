@@ -184,9 +184,9 @@ export function RecapClient() {
           display: "flex",
           alignItems: "center",
           gap: "16px",
-          px: { xs: "16px", md: "48px" },
-          pt: { xs: "16px", md: "24px" },
-          pb: { xs: "16px", md: "28px" },
+          px: { xs: "16px", md: "40px" },
+          pt: { xs: "16px", md: "14px" },
+          pb: { xs: "16px", md: "14px" },
           flexWrap: "wrap",
         }}
       >

@@ -21,25 +21,15 @@ import {
 const RATIO = PLACA_WIDTH / PLACA_HEIGHT;
 
 /**
- * How tall a card is by its distance from the one being hovered, as a factor of
- * the row's neutral height: the hovered card grows, its neighbours hold their
- * size and anything further back drops away.
+ * Caption, share dock and the air around them — the row gets what is left.
  *
- * Sizing by distance rather than scaling the hovered card alone is what keeps
- * the row still — a lone card growing eats the gaps around it and shoves its
- * neighbours sideways, which is what the first pass did.
+ * Desktop: 16 top + card + 12 + caption + 12 + dock(44) + 16 bottom.
  */
-const DISTANCE_SCALE = [1.147, 1, 0.902];
-
-const scaleAt = (distance: number) =>
-  DISTANCE_SCALE[Math.min(distance, DISTANCE_SCALE.length - 1)];
-
-/** Caption, share dock and the air around them — the row gets what is left. */
-const BLOCK_DESKTOP = 110;
+const BLOCK_DESKTOP = 120;
 const BLOCK_MOBILE = 152;
 
 const GAP_DESKTOP = 20;
-const PAD_DESKTOP = 48;
+const PAD_DESKTOP = 40;
 
 /** A slide leaves the next placa visibly peeking at both sides, as designed. */
 const SLIDE_WIDTH_RATIO = 0.74;
@@ -49,8 +39,8 @@ const useIsomorphicLayoutEffect =
   typeof window === "undefined" ? useEffect : useLayoutEffect;
 
 interface Metrics {
-  /** Desktop: height of a card while nothing is hovered. */
-  neutral: number;
+  /** Desktop: height of every card — they are all the same size. */
+  card: number;
   /** Mobile: width of one slide. */
   slide: number;
   viewportWidth: number;
@@ -73,7 +63,7 @@ function useMetrics(count: number) {
   const rowRef = useRef<HTMLDivElement | null>(null);
   const probeRef = useRef<HTMLDivElement | null>(null);
   const [metrics, setMetrics] = useState<Metrics>({
-    neutral: 460,
+    card: 460,
     slide: 280,
     viewportWidth: 1280,
   });
@@ -97,19 +87,15 @@ function useMetrics(count: number) {
       room(BLOCK_MOBILE) * RATIO,
     );
 
-    // The widest the row ever gets is with one card hovered, so the neutral
-    // size is solved against that rather than against the resting row.
-    const spread = scaleAt(0) + 1 + scaleAt(2) * Math.max(0, count - 2);
+    // Every card is the same size, so the row simply divides the width it has
+    // and takes the height only when that is the tighter of the two.
     const usable = Math.max(
       240,
       viewportWidth - 2 * PAD_DESKTOP - (count - 1) * GAP_DESKTOP,
     );
-    const hovered = Math.min(
-      room(BLOCK_DESKTOP),
-      (usable / spread / RATIO) * scaleAt(0),
-    );
+    const card = Math.min(room(BLOCK_DESKTOP), usable / count / RATIO);
 
-    setMetrics({ neutral: hovered / scaleAt(0), slide, viewportWidth });
+    setMetrics({ card, slide, viewportWidth });
   }, [count]);
 
   useIsomorphicLayoutEffect(() => {
@@ -170,9 +156,8 @@ function PlacaCard({
         overflow: "hidden",
         flexShrink: 0,
         border: active ? "2px solid #3B82F6" : "1px solid #334155",
-        boxShadow: active ? "0 24px 60px rgba(59,130,246,0.30)" : "none",
-        transition:
-          "width .22s ease, height .22s ease, box-shadow .22s ease, border-color .22s ease",
+        boxShadow: active ? "0 20px 50px rgba(59,130,246,0.28)" : "none",
+        transition: "box-shadow .2s ease, border-color .2s ease",
       }}
     >
       <Box
@@ -181,7 +166,6 @@ function PlacaCard({
           height: PLACA_HEIGHT,
           transform: `scale(${width / PLACA_WIDTH})`,
           transformOrigin: "top left",
-          transition: "transform .22s ease",
         }}
       >
         <Placa kind={kind} recap={recap} />
@@ -356,16 +340,18 @@ function Caption({
     <Box sx={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
       <Typography
         sx={{
-          fontSize: 16,
+          fontFamily: "Outfit, sans-serif",
+          fontSize: 15,
           fontWeight: 700,
+          lineHeight: "20px",
           color: active ? "#F1F5F9" : "#CBD5E1",
           whiteSpace: "nowrap",
-          transition: "color .22s ease",
+          transition: "color .2s ease",
         }}
       >
         {PLACA_LABELS[kind]}
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "#64748B", whiteSpace: "nowrap" }}>
+      <Typography sx={{ fontSize: 13, color: "#94A3B8", whiteSpace: "nowrap" }}>
         {index + 1} de {total}
       </Typography>
     </Box>
@@ -520,8 +506,6 @@ export function RecapDock({
     );
   }
 
-  const activeIndex = active ? kinds.indexOf(active) : -1;
-
   return (
     <Box
       ref={rowRef}
@@ -531,6 +515,7 @@ export function RecapDock({
         justifyContent: "center",
         gap: `${GAP_DESKTOP}px`,
         px: `${PAD_DESKTOP}px`,
+        py: "16px",
         flexGrow: 1,
       }}
     >
@@ -538,10 +523,6 @@ export function RecapDock({
 
       {kinds.map((kind, index) => {
         const isActive = active === kind;
-        const height =
-          metrics.neutral *
-          (activeIndex === -1 ? 1 : scaleAt(Math.abs(index - activeIndex)));
-
         return (
           <Box
             key={kind}
@@ -558,7 +539,7 @@ export function RecapDock({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "14px",
+              gap: "12px",
               flexShrink: 0,
               outline: "none",
               "&:focus-visible > :first-of-type": {
@@ -570,7 +551,7 @@ export function RecapDock({
             <PlacaCard
               kind={kind}
               recap={recap}
-              height={height}
+              height={metrics.card}
               active={isActive}
             />
 
