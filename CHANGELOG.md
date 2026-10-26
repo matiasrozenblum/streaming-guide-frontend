@@ -20,10 +20,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **La imagen que se comparte ahora es la placa**: el export seguia dibujando la tarjeta vieja, asi que lo que se veia en pantalla y lo que se descargaba no tenian nada que ver. La ruta `/api/og/recap` pasa a renderizar el mismo componente `Placa`, a 1080x1920 y sin nada de interfaz alrededor, y acepta `kind` para saber cual de las cuatro generar. Tres cosas hubo que acomodar para satori: los numeros van como texto (rechaza cualquier hijo que no sea string en un div sin `display: flex`), los colores salen en hex y `rgba()` en vez de hex de ocho digitos, y el glow pasa a ser lineal porque ignora la posicion de un radial y lo centra en el canvas.
 - **Las placas no estaban usando la tipografia condensada**: pedian Archivo, que no se cargaba en ningun lado, asi que caian a Inter y el display perdia el ancho que el diseno le daba. Se agrega Archivo con el eje `wdth`; el export carga aparte la instancia ya fijada en ese ancho, porque satori ignora `font-stretch`.
 - **El header de "Mi resumen" quedaba pegado al borde y las tarjetas no entraban**: las placas median exactamente el alto del viewport, asi que al hacer hover crecian fuera de la pantalla y los botones de compartir quedaban abajo del pliegue. Ahora el tamano se calcula descontando el espacio que necesitan titulo, epigrafe y acciones, y el hover escala con un transform en lugar de agrandar la caja, que era lo que empujaba la fila.
-
 - **El logo del canal se recortaba en las placas**: los tiles usaban `object-fit: cover`, que sobre un wordmark apaisado como el de Luzu recorta el medio y deja un pedazo ilegible. Los logos pasan a `contain` y solo las fotos redondas de streamers siguen con `cover`, que es donde recortar es lo correcto.
-
----
 
 ---
 
