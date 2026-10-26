@@ -1,6 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useRef, useState } from "react";
+import {
+  useCallback,
+  useEffect,
+  useLayoutEffect,
+  useRef,
+  useState,
+} from "react";
 import { Box, Tooltip, Typography, useMediaQuery, useTheme } from "@mui/material";
 import type { Recap } from "@/services/analytics";
 import { PLACA_HEIGHT, PLACA_WIDTH } from "./placas/PlacaChrome";
@@ -15,39 +21,127 @@ import {
 const RATIO = PLACA_WIDTH / PLACA_HEIGHT;
 
 /**
- * Room the page needs around the cards: header, title row, the card's own
- * caption and the share dock. The card takes whatever is left, so hovering can
- * never push the actions off the screen.
+ * How tall a card is by its distance from the one being hovered, as a factor of
+ * the row's neutral height: the hovered card grows, its neighbours hold their
+ * size and anything further back drops away.
+ *
+ * Sizing by distance rather than scaling the hovered card alone is what keeps
+ * the row still — a lone card growing eats the gaps around it and shoves its
+ * neighbours sideways, which is what the first pass did.
  */
-const CHROME_DESKTOP = 330;
-const CHROME_MOBILE = 250;
+const DISTANCE_SCALE = [1.147, 1, 0.902];
 
-/** Hovering scales the card in place — growing its box would reflow the row. */
-const HOVER_SCALE = 1.06;
+const scaleAt = (distance: number) =>
+  DISTANCE_SCALE[Math.min(distance, DISTANCE_SCALE.length - 1)];
 
-function useCardSize(mobile: boolean) {
-  const [size, setSize] = useState({ width: 280, height: 498 });
+/** Caption, share dock and the air around them — the row gets what is left. */
+const BLOCK_DESKTOP = 110;
+const BLOCK_MOBILE = 152;
 
-  useEffect(() => {
-    const measure = () => {
-      const chrome = mobile ? CHROME_MOBILE : CHROME_DESKTOP;
-      const byHeight = Math.max(300, window.innerHeight - chrome);
-      // On a phone one card fills the screen; on desktop four share the row and
-      // the hovered one still has to fit inside its slot once scaled.
-      const byWidth = mobile
-        ? window.innerWidth - 32
-        : (window.innerWidth - 96 - 3 * 16) / 4 / HOVER_SCALE;
+const GAP_DESKTOP = 20;
+const PAD_DESKTOP = 48;
 
-      const height = Math.min(byHeight, byWidth / RATIO);
-      setSize({ width: Math.round(height * RATIO), height: Math.round(height) });
-    };
+/** A slide leaves the next placa visibly peeking at both sides, as designed. */
+const SLIDE_WIDTH_RATIO = 0.74;
+const GAP_MOBILE = 16;
 
+const useIsomorphicLayoutEffect =
+  typeof window === "undefined" ? useEffect : useLayoutEffect;
+
+interface Metrics {
+  /** Desktop: height of a card while nothing is hovered. */
+  neutral: number;
+  /** Mobile: width of one slide. */
+  slide: number;
+  viewportWidth: number;
+}
+
+/**
+ * Card sizes, measured rather than guessed.
+ *
+ * The space the row may use is the viewport minus wherever the row actually
+ * starts, so moving the header or the title row cannot leave a stale constant
+ * behind. Two details matter:
+ *
+ * - the row's offset is taken from the document, not the viewport, so it does
+ *   not drift as the page scrolls;
+ * - the viewport height comes from a `100svh` probe instead of `innerHeight`.
+ *   `innerHeight` grows when a phone's address bar slides away mid-scroll, and
+ *   the cards were visibly inflating along with it.
+ */
+function useMetrics(count: number) {
+  const rowRef = useRef<HTMLDivElement | null>(null);
+  const probeRef = useRef<HTMLDivElement | null>(null);
+  const [metrics, setMetrics] = useState<Metrics>({
+    neutral: 460,
+    slide: 280,
+    viewportWidth: 1280,
+  });
+
+  const measure = useCallback(() => {
+    const row = rowRef.current;
+    if (!row || count === 0) return;
+
+    const viewportWidth = window.innerWidth;
+    const viewportHeight = probeRef.current?.clientHeight || window.innerHeight;
+    const offsetTop = row.getBoundingClientRect().top + window.scrollY;
+    const room = (block: number) =>
+      Math.max(260, viewportHeight - offsetTop - block);
+
+    // Both layouts are solved on every pass, deliberately. Measuring only the
+    // live one would mean trusting `useMediaQuery`, which reports desktop on
+    // the first client render — one stale pass and the other layout renders at
+    // zero.
+    const slide = Math.min(
+      viewportWidth * SLIDE_WIDTH_RATIO,
+      room(BLOCK_MOBILE) * RATIO,
+    );
+
+    // The widest the row ever gets is with one card hovered, so the neutral
+    // size is solved against that rather than against the resting row.
+    const spread = scaleAt(0) + 1 + scaleAt(2) * Math.max(0, count - 2);
+    const usable = Math.max(
+      240,
+      viewportWidth - 2 * PAD_DESKTOP - (count - 1) * GAP_DESKTOP,
+    );
+    const hovered = Math.min(
+      room(BLOCK_DESKTOP),
+      (usable / spread / RATIO) * scaleAt(0),
+    );
+
+    setMetrics({ neutral: hovered / scaleAt(0), slide, viewportWidth });
+  }, [count]);
+
+  useIsomorphicLayoutEffect(() => {
     measure();
     window.addEventListener("resize", measure);
-    return () => window.removeEventListener("resize", measure);
-  }, [mobile]);
+    window.addEventListener("orientationchange", measure);
+    return () => {
+      window.removeEventListener("resize", measure);
+      window.removeEventListener("orientationchange", measure);
+    };
+  }, [measure]);
 
-  return size;
+  return { rowRef, probeRef, metrics };
+}
+
+/** Reads `100svh`, which `innerHeight` cannot be trusted to match on a phone. */
+function ViewportProbe({ innerRef }: { innerRef: React.Ref<HTMLDivElement> }) {
+  return (
+    <Box
+      ref={innerRef}
+      aria-hidden
+      sx={{
+        position: "fixed",
+        top: 0,
+        left: 0,
+        width: 0,
+        height: "100svh",
+        visibility: "hidden",
+        pointerEvents: "none",
+      }}
+    />
+  );
 }
 
 /**
@@ -58,16 +152,15 @@ function useCardSize(mobile: boolean) {
 function PlacaCard({
   kind,
   recap,
-  width,
   height,
   active,
 }: {
   kind: PlacaKind;
   recap: Recap;
-  width: number;
   height: number;
   active: boolean;
 }) {
+  const width = height * RATIO;
   return (
     <Box
       sx={{
@@ -78,9 +171,8 @@ function PlacaCard({
         flexShrink: 0,
         border: active ? "2px solid #3B82F6" : "1px solid #334155",
         boxShadow: active ? "0 24px 60px rgba(59,130,246,0.30)" : "none",
-        transform: active ? `scale(${HOVER_SCALE})` : "none",
-        transition: "transform .2s ease, box-shadow .2s ease, border-color .2s ease",
-        willChange: "transform",
+        transition:
+          "width .22s ease, height .22s ease, box-shadow .22s ease, border-color .22s ease",
       }}
     >
       <Box
@@ -89,6 +181,7 @@ function PlacaCard({
           height: PLACA_HEIGHT,
           transform: `scale(${width / PLACA_WIDTH})`,
           transformOrigin: "top left",
+          transition: "transform .22s ease",
         }}
       >
         <Placa kind={kind} recap={recap} />
@@ -153,7 +246,7 @@ const TARGETS: ShareTarget[] = [
   },
   {
     id: "download",
-    label: "Descargar",
+    label: "Guardar",
     primary: true,
     icon: svg(
       <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4 19.5h16" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />,
@@ -164,14 +257,24 @@ const TARGETS: ShareTarget[] = [
 function ShareDock({
   onShare,
   busy,
+  labelled = false,
 }: {
   onShare: (target: string) => void;
   busy: boolean;
+  /** Phones have the room and no tooltips to fall back on. */
+  labelled?: boolean;
 }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "center", gap: "10px" }}>
-      {TARGETS.map((target) => (
-        <Tooltip key={target.id} title={target.label} arrow>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "flex-start",
+        justifyContent: "center",
+        gap: labelled ? "6px" : "10px",
+      }}
+    >
+      {TARGETS.map((target) => {
+        const button = (
           <Box
             component="button"
             type="button"
@@ -199,36 +302,70 @@ function ShareDock({
           >
             {target.icon}
           </Box>
-        </Tooltip>
-      ))}
+        );
+
+        if (!labelled) {
+          return (
+            <Tooltip key={target.id} title={target.label} arrow>
+              {button}
+            </Tooltip>
+          );
+        }
+
+        return (
+          <Box
+            key={target.id}
+            sx={{
+              display: "flex",
+              flexDirection: "column",
+              alignItems: "center",
+              gap: "6px",
+              width: 58,
+            }}
+          >
+            {button}
+            <Typography
+              sx={{ fontSize: 11, color: "#94A3B8", whiteSpace: "nowrap" }}
+            >
+              {target.label}
+            </Typography>
+          </Box>
+        );
+      })}
     </Box>
   );
 }
 
+/**
+ * The label under a card. Its size never changes with hover — only the share
+ * buttons appearing below mark which card is selected, so the row of captions
+ * stays a steady baseline to read across.
+ */
 function Caption({
   kind,
   index,
   total,
-  strong,
+  active,
 }: {
   kind: PlacaKind;
   index: number;
   total: number;
-  strong: boolean;
+  active: boolean;
 }) {
   return (
     <Box sx={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
       <Typography
         sx={{
-          fontSize: strong ? 17 : 15,
-          fontWeight: strong ? 700 : 600,
-          color: strong ? "#F1F5F9" : "#CBD5E1",
+          fontSize: 16,
+          fontWeight: 700,
+          color: active ? "#F1F5F9" : "#CBD5E1",
           whiteSpace: "nowrap",
+          transition: "color .22s ease",
         }}
       >
         {PLACA_LABELS[kind]}
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "#64748B" }}>
+      <Typography sx={{ fontSize: 13, color: "#64748B", whiteSpace: "nowrap" }}>
         {index + 1} de {total}
       </Typography>
     </Box>
@@ -236,41 +373,66 @@ function Caption({
 }
 
 /**
- * Phones get the placas as a swipeable row, one per screen, the way a story
- * reads — scroll snapping rather than a carousel library, so a flick behaves
- * like the rest of the OS. The dock stays put below and acts on whichever card
- * is snapped, because there is no hover to reveal it.
+ * Phones get the placas as a swipeable row the way a story reads: one centred
+ * card with the next one peeking at either side, so it is obvious there is more
+ * to swipe to. Scroll snapping rather than a carousel library, so a flick
+ * behaves like the rest of the OS. The dock stays put below and acts on
+ * whichever card is snapped, because there is no hover to reveal it.
  */
 function MobileCarousel({
   recap,
   kinds,
-  size,
+  slide,
+  viewportWidth,
   onShare,
   busy,
 }: {
   recap: Recap;
   kinds: PlacaKind[];
-  size: { width: number; height: number };
+  slide: number;
+  viewportWidth: number;
   onShare: (kind: PlacaKind, target: string) => void;
   busy: boolean;
 }) {
   const trackRef = useRef<HTMLDivElement | null>(null);
   const [current, setCurrent] = useState(0);
+  const sidePad = Math.max(0, (viewportWidth - slide) / 2);
 
+  /**
+   * Which placa the caption and the share buttons belong to: whichever slide
+   * sits closest to the middle of the scrollport.
+   *
+   * Measured from the slides themselves rather than dividing `scrollLeft` by a
+   * slide width plus a gap — that arithmetic drifts a couple of pixels against
+   * where snapping actually lands, and breaks outright if the slides are ever
+   * sized unevenly.
+   */
   const onScroll = useCallback(() => {
     const track = trackRef.current;
     if (!track) return;
-    const index = Math.round(track.scrollLeft / track.clientWidth);
-    setCurrent(Math.min(Math.max(index, 0), kinds.length - 1));
-  }, [kinds.length]);
+    const middle = track.scrollLeft + track.clientWidth / 2;
+    let best = 0;
+    let bestDistance = Infinity;
+    Array.from(track.children).forEach((child, index) => {
+      const slide = child as HTMLElement;
+      const distance = Math.abs(slide.offsetLeft + slide.offsetWidth / 2 - middle);
+      if (distance < bestDistance) {
+        bestDistance = distance;
+        best = index;
+      }
+    });
+    setCurrent(best);
+  }, []);
 
   return (
-    <Box sx={{ display: "flex", flexDirection: "column", gap: "12px", flexGrow: 1 }}>
+    <>
       <Box
         ref={trackRef}
         onScroll={onScroll}
         sx={{
           display: "flex",
+          gap: `${GAP_MOBILE}px`,
+          px: `${sidePad}px`,
           overflowX: "auto",
           scrollSnapType: "x mandatory",
           scrollbarWidth: "none",
@@ -282,19 +444,15 @@ function MobileCarousel({
           <Box
             key={kind}
             sx={{
-              minWidth: "100%",
+              flex: "0 0 auto",
               scrollSnapAlign: "center",
               scrollSnapStop: "always",
-              display: "flex",
-              justifyContent: "center",
-              px: "16px",
             }}
           >
             <PlacaCard
               kind={kind}
               recap={recap}
-              width={size.width}
-              height={size.height}
+              height={slide / RATIO}
               active={false}
             />
           </Box>
@@ -307,21 +465,25 @@ function MobileCarousel({
           flexDirection: "column",
           alignItems: "center",
           gap: "10px",
+          pt: "14px",
           pb: "16px",
         }}
       >
-        <Caption
-          kind={kinds[current]}
-          index={current}
-          total={kinds.length}
-          strong
-        />
+        <Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "2px" }}>
+          <Typography sx={{ fontSize: 17, fontWeight: 700, color: "#F1F5F9" }}>
+            {PLACA_LABELS[kinds[current]]}
+          </Typography>
+          <Typography sx={{ fontSize: 13, color: "#64748B" }}>
+            {current + 1} de {kinds.length} · Deslizá para ver más
+          </Typography>
+        </Box>
         <ShareDock
           busy={busy}
+          labelled
           onShare={(target) => onShare(kinds[current], target)}
         />
       </Box>
-    </Box>
+    </>
   );
 }
 
@@ -336,38 +498,50 @@ export function RecapDock({
 }) {
   const theme = useTheme();
   const mobile = useMediaQuery(theme.breakpoints.down("md"));
-  const size = useCardSize(mobile);
   const kinds = PLACA_ORDER.filter((kind) => canRender(kind, recap));
   const [active, setActive] = useState<PlacaKind | null>(null);
+  const { rowRef, probeRef, metrics } = useMetrics(kinds.length);
 
   if (kinds.length === 0) return null;
 
   if (mobile) {
     return (
-      <MobileCarousel
-        recap={recap}
-        kinds={kinds}
-        size={size}
-        onShare={onShare}
-        busy={busy}
-      />
+      <Box ref={rowRef} sx={{ display: "flex", flexDirection: "column" }}>
+        <ViewportProbe innerRef={probeRef} />
+        <MobileCarousel
+          recap={recap}
+          kinds={kinds}
+          slide={metrics.slide}
+          viewportWidth={metrics.viewportWidth}
+          onShare={onShare}
+          busy={busy}
+        />
+      </Box>
     );
   }
 
+  const activeIndex = active ? kinds.indexOf(active) : -1;
+
   return (
     <Box
+      ref={rowRef}
       sx={{
         display: "flex",
-        alignItems: "flex-start",
+        alignItems: "center",
         justifyContent: "center",
-        gap: "16px",
-        px: "48px",
-        pb: "24px",
+        gap: `${GAP_DESKTOP}px`,
+        px: `${PAD_DESKTOP}px`,
         flexGrow: 1,
       }}
     >
+      <ViewportProbe innerRef={probeRef} />
+
       {kinds.map((kind, index) => {
         const isActive = active === kind;
+        const height =
+          metrics.neutral *
+          (activeIndex === -1 ? 1 : scaleAt(Math.abs(index - activeIndex)));
+
         return (
           <Box
             key={kind}
@@ -387,8 +561,6 @@ export function RecapDock({
               gap: "14px",
               flexShrink: 0,
               outline: "none",
-              // The hovered card scales up and must sit over its neighbours.
-              zIndex: isActive ? 2 : 1,
               "&:focus-visible > :first-of-type": {
                 outline: "2px solid #60A5FA",
                 outlineOffset: "3px",
@@ -398,25 +570,38 @@ export function RecapDock({
             <PlacaCard
               kind={kind}
               recap={recap}
-              width={size.width}
-              height={size.height}
+              height={height}
               active={isActive}
             />
 
-            {/* Pushed clear of the scaled card so it never sits under it. */}
-            <Box sx={{ mt: isActive ? `${size.height * (HOVER_SCALE - 1)}px` : 0 }}>
-              <Caption
-                kind={kind}
-                index={index}
-                total={kinds.length}
-                strong={isActive}
-              />
-            </Box>
+            <Caption
+              kind={kind}
+              index={index}
+              total={kinds.length}
+              active={isActive}
+            />
 
-            {/* Reserved whether or not it shows, so the row does not jump. */}
-            <Box sx={{ height: 44, display: "flex", alignItems: "center" }}>
+            {/*
+              The slot is reserved whether or not the dock shows, and the dock
+              itself is taken out of flow: it is wider than a card, so leaving
+              it in would widen this column the moment it appears and shove the
+              whole row sideways.
+            */}
+            <Box sx={{ height: 44, width: "100%", position: "relative" }}>
               {isActive && (
-                <ShareDock busy={busy} onShare={(target) => onShare(kind, target)} />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    top: 0,
+                    left: "50%",
+                    transform: "translateX(-50%)",
+                  }}
+                >
+                  <ShareDock
+                    busy={busy}
+                    onShare={(target) => onShare(kind, target)}
+                  />
+                </Box>
               )}
             </Box>
           </Box>
