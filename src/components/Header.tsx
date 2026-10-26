@@ -31,6 +31,7 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
   
   const isCanalesPage = pathname === '/';
   const isStreamersPage = pathname === '/streamers';
+  const isMiResumenPage = pathname === '/mi-resumen';
 
   // Responsive logo/text height usando tokens
   const logoHeight = isMobile ? '8.25vh' : '11vh';
@@ -203,6 +204,49 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
             >
               Streamers
             </Typography>
+            {/* Only for signed-in users: the recap is about them, and the page
+                sends a visitor straight back to the grid. */}
+            {isAuth && (
+              <Typography
+                onClick={() => {
+                  router.push('/mi-resumen');
+                  gaEvent({
+                    action: 'navigation_click',
+                    params: { section: 'mi_resumen', location: 'header' },
+                    userData: typedSession?.user
+                  });
+                }}
+                sx={{
+                  cursor: 'pointer',
+                  fontSize: '1.125rem',
+                  fontWeight: 600,
+                  textTransform: 'uppercase',
+                  fontFamily: '"Outfit", sans-serif',
+                  whiteSpace: 'nowrap',
+                  color: isMiResumenPage
+                    ? '#ffffff'
+                    : 'rgba(255,255,255,0.6)',
+                  transition: 'color 0.2s ease-in-out',
+                  '&:hover': {
+                    color: isMiResumenPage
+                      ? '#ffffff'
+                      : 'rgba(255,255,255,0.9)',
+                  },
+                  position: 'relative',
+                  '&::after': isMiResumenPage ? {
+                    content: '""',
+                    position: 'absolute',
+                    bottom: '-8px',
+                    left: 0,
+                    right: 0,
+                    height: '2px',
+                    backgroundColor: '#42a5f5',
+                  } : {},
+                }}
+              >
+                Mi resumen
+              </Typography>
+            )}
           </Box>
         )}
 

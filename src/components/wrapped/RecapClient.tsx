@@ -172,6 +172,9 @@ export function RecapClient() {
         display: "flex",
         flexDirection: "column",
         background: "linear-gradient(135deg,#0f172a 0%,#131d33 100%)",
+        // Same breathing room the landing gives the header; without it the logo
+        // sits flush against the top of the window and looks clipped.
+        py: { xs: 1, sm: 2 },
       }}
     >
       <Header />
@@ -181,8 +184,9 @@ export function RecapClient() {
           display: "flex",
           alignItems: "center",
           gap: "16px",
-          px: "48px",
-          pt: "24px",
+          px: { xs: "16px", md: "48px" },
+          pt: { xs: "16px", md: "24px" },
+          pb: { xs: "16px", md: "28px" },
           flexWrap: "wrap",
         }}
       >

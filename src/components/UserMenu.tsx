@@ -15,7 +15,6 @@ import {
 } from '@mui/material';
 import PersonIcon from '@mui/icons-material/Person';
 import SubscriptionsIcon from '@mui/icons-material/Subscriptions';
-import AutoAwesomeIcon from '@mui/icons-material/AutoAwesome';
 import AdminPanelSettingsIcon from '@mui/icons-material/AdminPanelSettings';
 import HomeIcon from '@mui/icons-material/Home';
 import LogoutIcon from '@mui/icons-material/Logout';
@@ -179,17 +178,6 @@ export default function UserMenu({ onLogout, showHomeOption = false }: UserMenuP
             <SubscriptionsIcon fontSize="small" />
           </ListItemIcon>
           Favoritos
-        </MenuItem>
-        <MenuItem
-          onClick={() => {
-            handleClose();
-            router.push('/mi-resumen');
-          }}
-        >
-          <ListItemIcon>
-            <AutoAwesomeIcon fontSize="small" />
-          </ListItemIcon>
-          Mi resumen
         </MenuItem>
         <Divider sx={{ my: 0.5, borderColor: 'rgba(255,255,255,0.12)' }} />
         {showHomeOption ? (
