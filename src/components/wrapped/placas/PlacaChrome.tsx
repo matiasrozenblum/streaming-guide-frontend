@@ -279,20 +279,27 @@ export function PlacaGrid({
                 {row.label}
               </div>
             )}
-            {row.cells.map((cell, index) => (
-              <div
-                key={`${row.label}-${index}`}
-                style={{
-                  flex: 1,
-                  height: cellHeight,
-                  borderRadius: 14,
-                  backgroundColor: cellColor(cell),
-                  border: cell.peak
-                    ? "4px solid #FFFFFF"
-                    : "4px solid transparent",
-                }}
-              />
-            ))}
+            {row.cells.map((cell, index) => {
+              const color = cellColor(cell);
+              return (
+                <div
+                  key={`${row.label}-${index}`}
+                  style={{
+                    flex: 1,
+                    height: cellHeight,
+                    borderRadius: 14,
+                    backgroundColor: color,
+                    // The ring marks the busiest cell. Cells without one still
+                    // carry a border, in their own colour, so every cell is the
+                    // same size — and crucially NOT a transparent one: satori
+                    // takes ~200ms to rasterise 35 cells with a solid border
+                    // and ~7s with a transparent one, which was almost the
+                    // entire cost of exporting a placa.
+                    border: `4px solid ${cell.peak ? "#FFFFFF" : color}`,
+                  }}
+                />
+              );
+            })}
           </div>
         );
       })}
