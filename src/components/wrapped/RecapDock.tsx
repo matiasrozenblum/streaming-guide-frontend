@@ -21,31 +21,51 @@ import {
 const RATIO = PLACA_WIDTH / PLACA_HEIGHT;
 
 /**
- * Caption, share buttons and the air around them — the row gets what is left.
+ * What sits under a card: its caption, a breath, and the share buttons.
  *
- * Desktop: 16 top + card + 12 + caption(20) + 12 + buttons(44) + 16 bottom.
+ * Every pixel here is one the placa does not get. A 9:16 card inside a
+ * landscape window is starved of height long before it runs out of width — on
+ * a 13" laptop the whole page is barely 660px tall — so this block is kept to
+ * the smallest it can still be read at.
  */
-const BLOCK_DESKTOP = 120;
+const CAPTION_HEIGHT = 18;
+const CAPTION_GAP = 6;
+const DOCK_HEIGHT = 34;
+const CHROME_DESKTOP = CAPTION_HEIGHT + CAPTION_GAP + DOCK_HEIGHT;
+
 const BLOCK_MOBILE = 152;
 
-const GAP_DESKTOP = 20;
+const GAP_MIN = 20;
 const PAD_DESKTOP = 40;
 
+/** The card's border, which `box-sizing: border-box` takes out of its width. */
+const CARD_BORDER = 2;
+
 /**
- * How much the placa under the mouse grows. It grows in layout rather than
- * with a transform, so the gap between placas stays exactly `GAP_DESKTOP` —
- * scaling only the hovered one eats into its neighbours' gaps instead.
- * The row is solved against this, so the hovered placa still fits.
+ * How much the placa under the mouse grows.
+ *
+ * Small on purpose, and not only because the old 1.1 felt violent: the row is
+ * solved so the *hovered* card is as tall as the row allows, which means a
+ * bigger scale buys nothing at the top and only shrinks the three cards that
+ * are sitting still. 6% is enough to read as "this one".
+ *
+ * It grows with a transform rather than in layout, so hovering moves exactly
+ * one card and never reflows the row.
  */
-const HOVER_SCALE = 1.1;
+const HOVER_SCALE = 1.06;
 
 /** Gap between the six share buttons; their size is solved from the card. */
-const DOCK_GAP = 10;
+const DOCK_GAP = 8;
 
-/** Six buttons that together are no wider than the placa above them. */
+/** Six buttons that together are no wider than the placa's resting width. */
 function dockButtonSize(cardWidth: number): number {
   const fromCard = Math.floor((cardWidth - 5 * DOCK_GAP) / 6);
-  return Math.max(26, Math.min(44, fromCard));
+  return Math.max(24, Math.min(DOCK_HEIGHT, fromCard));
+}
+
+/** Half the growth: the air a hovered card needs above, below and either side. */
+function clearance(card: number): number {
+  return Math.ceil((card * (HOVER_SCALE - 1)) / 2);
 }
 
 /** A slide leaves the next placa visibly peeking at both sides, as designed. */
@@ -58,6 +78,8 @@ const useIsomorphicLayoutEffect =
 interface Metrics {
   /** Desktop: height of every card — they are all the same size. */
   card: number;
+  /** Desktop: gap between cards, wide enough to absorb the hover. */
+  gap: number;
   /** Mobile: width of one slide. */
   slide: number;
   viewportWidth: number;
@@ -81,6 +103,7 @@ function useMetrics(count: number) {
   const probeRef = useRef<HTMLDivElement | null>(null);
   const [metrics, setMetrics] = useState<Metrics>({
     card: 460,
+    gap: GAP_MIN,
     slide: 280,
     viewportWidth: 1280,
   });
@@ -92,8 +115,13 @@ function useMetrics(count: number) {
     const viewportWidth = window.innerWidth;
     const viewportHeight = probeRef.current?.clientHeight || window.innerHeight;
     const offsetTop = row.getBoundingClientRect().top + window.scrollY;
+    // Whatever the page keeps for itself below the row. Read rather than
+    // hardcoded, for the same reason the offset above it is.
+    const tail = row.parentElement
+      ? parseFloat(getComputedStyle(row.parentElement).paddingBottom) || 0
+      : 0;
     const room = (block: number) =>
-      Math.max(260, viewportHeight - offsetTop - block);
+      Math.max(260, viewportHeight - offsetTop - tail - block);
 
     // Both layouts are solved on every pass, deliberately. Measuring only the
     // live one would mean trusting `useMediaQuery`, which reports desktop on
@@ -104,17 +132,34 @@ function useMetrics(count: number) {
       room(BLOCK_MOBILE) * RATIO,
     );
 
-    // Every resting card is the same size; one of them may be hovered and a
-    // tenth taller, so both budgets are solved against that widest state
-    // rather than the resting row.
-    const usable = Math.max(
-      240,
-      viewportWidth - 2 * PAD_DESKTOP - (count - 1) * GAP_DESKTOP,
-    );
-    const byWidth = usable / (count - 1 + HOVER_SCALE) / RATIO;
-    const card = Math.min(room(BLOCK_DESKTOP) / HOVER_SCALE, byWidth);
+    // Height first, because height is what runs out. The row holds the card,
+    // the clearance it grows into above and below, and the chrome underneath;
+    // since each clearance is half the growth, that comes to `card * scale`.
+    // Which is the point: the *hovered* card is exactly as tall as the row
+    // allows, whatever the scale, so a gentler hover costs nothing at the top
+    // and leaves the three resting cards bigger.
+    let card = room(CHROME_DESKTOP) / HOVER_SCALE;
+    let width = card * RATIO;
+    let gap = Math.max(GAP_MIN, Math.ceil(width * (HOVER_SCALE - 1)));
 
-    setMetrics({ card, slide, viewportWidth });
+    // Width only bites on a window that is wide *and* tall. The gap grows with
+    // the card so a hovered one never reaches its neighbour.
+    const usable = Math.max(240, viewportWidth - 2 * PAD_DESKTOP);
+    if (count * width + (count - 1) * gap > usable) {
+      // Settle the gap first and spend what is left on the cards, so the row
+      // lands on the usable width exactly rather than a pixel past it.
+      gap = Math.max(
+        GAP_MIN,
+        Math.ceil(
+          (usable / (count + (count - 1) * (HOVER_SCALE - 1))) *
+            (HOVER_SCALE - 1),
+        ),
+      );
+      width = (usable - (count - 1) * gap) / count;
+      card = width / RATIO;
+    }
+
+    setMetrics({ card, gap, slide, viewportWidth });
   }, [count]);
 
   useIsomorphicLayoutEffect(() => {
@@ -159,11 +204,14 @@ function PlacaCard({
   recap,
   height,
   active,
+  scale = 1,
 }: {
   kind: PlacaKind;
   recap: Recap;
   height: number;
   active: boolean;
+  /** How much to grow by while hovered. Layout size never changes. */
+  scale?: number;
 }) {
   const width = height * RATIO;
   return (
@@ -174,19 +222,26 @@ function PlacaCard({
         borderRadius: "16px",
         overflow: "hidden",
         flexShrink: 0,
-        border: active ? "2px solid #3B82F6" : "1px solid #334155",
-        boxShadow: active ? "0 20px 50px rgba(59,130,246,0.28)" : "none",
+        position: "relative",
+        zIndex: active ? 2 : 1,
+        // A transform, not a bigger box: growing in layout shoved every other
+        // card sideways and the whole row lurched. Nothing moves but this one.
+        transform: active ? `scale(${scale})` : "none",
+        // Constant width, colour-only change — a border that thickens on hover
+        // reflows the placa inside it by a pixel.
+        border: `${CARD_BORDER}px solid`,
+        borderColor: active ? "#3B82F6" : "#334155",
+        boxShadow: active ? "0 18px 44px rgba(2,6,23,0.55)" : "none",
         transition:
-          "width .2s ease, height .2s ease, box-shadow .2s ease, border-color .2s ease",
+          "transform .22s cubic-bezier(.22,.61,.36,1), box-shadow .22s ease, border-color .22s ease",
       }}
     >
       <Box
         sx={{
           width: PLACA_WIDTH,
           height: PLACA_HEIGHT,
-          transform: `scale(${width / PLACA_WIDTH})`,
+          transform: `scale(${(width - 2 * CARD_BORDER) / PLACA_WIDTH})`,
           transformOrigin: "top left",
-          transition: "transform .2s ease",
         }}
       >
         <Placa kind={kind} recap={recap} />
@@ -363,13 +418,21 @@ function Caption({
   active: boolean;
 }) {
   return (
-    <Box sx={{ display: "flex", alignItems: "baseline", gap: "10px" }}>
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "baseline",
+        justifyContent: "center",
+        gap: "8px",
+        height: `${CAPTION_HEIGHT}px`,
+      }}
+    >
       <Typography
         sx={{
           fontFamily: "Outfit, sans-serif",
-          fontSize: 15,
+          fontSize: 14,
           fontWeight: 700,
-          lineHeight: "20px",
+          lineHeight: `${CAPTION_HEIGHT}px`,
           color: active ? "#F1F5F9" : "#CBD5E1",
           whiteSpace: "nowrap",
           transition: "color .2s ease",
@@ -377,7 +440,14 @@ function Caption({
       >
         {PLACA_LABELS[kind]}
       </Typography>
-      <Typography sx={{ fontSize: 13, color: "#94A3B8", whiteSpace: "nowrap" }}>
+      <Typography
+        sx={{
+          fontSize: 12,
+          lineHeight: `${CAPTION_HEIGHT}px`,
+          color: "#94A3B8",
+          whiteSpace: "nowrap",
+        }}
+      >
         {index + 1} de {total}
       </Typography>
     </Box>
@@ -513,6 +583,7 @@ export function RecapDock({
   const kinds = PLACA_ORDER.filter((kind) => canRender(kind, recap));
   const [active, setActive] = useState<PlacaKind | null>(null);
   const { rowRef, probeRef, metrics } = useMetrics(kinds.length);
+  const clear = clearance(metrics.card);
 
   if (kinds.length === 0) return null;
 
@@ -539,9 +610,11 @@ export function RecapDock({
         display: "flex",
         alignItems: "center",
         justifyContent: "center",
-        gap: `${GAP_DESKTOP}px`,
+        gap: `${metrics.gap}px`,
         px: `${PAD_DESKTOP}px`,
-        py: "16px",
+        // Only above: below the card, the clearance sits between it and the
+        // caption, and nothing has to grow past the share buttons.
+        pt: `${clear}px`,
         flexGrow: 1,
       }}
     >
@@ -565,7 +638,10 @@ export function RecapDock({
               display: "flex",
               flexDirection: "column",
               alignItems: "center",
-              gap: "12px",
+              // Pinned to the card's resting width: a caption or a dock even a
+              // few pixels wider would widen the column, and the whole row
+              // would slide sideways the moment you hovered one card.
+              width: `${metrics.card * RATIO}px`,
               flexShrink: 0,
               outline: "none",
               "&:focus-visible > :first-of-type": {
@@ -577,9 +653,14 @@ export function RecapDock({
             <PlacaCard
               kind={kind}
               recap={recap}
-              height={metrics.card * (isActive ? HOVER_SCALE : 1)}
+              height={metrics.card}
               active={isActive}
+              scale={HOVER_SCALE}
             />
+
+            {/* The air the hovered card grows down into — without it, growing
+                would put the placa on top of its own caption. */}
+            <Box sx={{ height: `${clear}px`, flexShrink: 0 }} />
 
             <Caption
               kind={kind}
@@ -588,12 +669,20 @@ export function RecapDock({
               active={isActive}
             />
 
+            <Box sx={{ height: `${CAPTION_GAP}px`, flexShrink: 0 }} />
+
             {/* Reserved whether or not it shows, so the row keeps its height. */}
-            <Box sx={{ height: 44, display: "flex", alignItems: "center" }}>
+            <Box
+              sx={{
+                height: `${DOCK_HEIGHT}px`,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
               {isActive && (
                 <ShareDock
                   busy={busy}
-                  size={dockButtonSize(metrics.card * HOVER_SCALE * RATIO)}
+                  size={dockButtonSize(metrics.card * RATIO)}
                   onShare={(target) => onShare(kind, target)}
                 />
               )}

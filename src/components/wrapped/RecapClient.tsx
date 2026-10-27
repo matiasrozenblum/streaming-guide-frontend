@@ -56,7 +56,7 @@ function PeriodSwitch({
         display: "flex",
         alignItems: "center",
         gap: "4px",
-        p: "4px",
+        p: "3px",
         borderRadius: "999px",
         bgcolor: "#1E293B",
         width: "fit-content",
@@ -75,8 +75,8 @@ function PeriodSwitch({
             sx={{
               border: "none",
               borderRadius: "999px",
-              px: "22px",
-              py: "8px",
+              px: "18px",
+              py: "6px",
               fontSize: 14,
               fontFamily: "inherit",
               fontWeight: selected ? 600 : 500,
@@ -219,9 +219,10 @@ export function RecapClient() {
         display: "flex",
         flexDirection: "column",
         background: "linear-gradient(135deg,#0f172a 0%,#131d33 100%)",
-        // Same breathing room the landing gives the header; without it the logo
-        // sits flush against the top of the window and looks clipped.
-        py: { xs: 1, sm: 2 },
+        // Enough that the logo is not flush against the top of the window, and
+        // no more: on a 13" laptop the row below is fighting for every pixel.
+        pt: { xs: "8px", sm: "10px" },
+        pb: { xs: "8px", sm: "4px" },
       }}
     >
       <Header />
@@ -232,8 +233,8 @@ export function RecapClient() {
           alignItems: "center",
           gap: "16px",
           px: { xs: "16px", md: "40px" },
-          pt: { xs: "16px", md: "14px" },
-          pb: { xs: "16px", md: "14px" },
+          pt: { xs: "16px", md: "10px" },
+          pb: { xs: "16px", md: "10px" },
           flexWrap: "wrap",
         }}
       >
@@ -241,7 +242,7 @@ export function RecapClient() {
           component="h1"
           sx={{
             fontFamily: "Outfit, sans-serif",
-            fontSize: 26,
+            fontSize: { xs: 26, md: 22 },
             fontWeight: 800,
             letterSpacing: "-0.02em",
             color: "#F1F5F9",
