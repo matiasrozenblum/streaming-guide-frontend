@@ -1,12 +1,12 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
+import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Box, CircularProgress, Typography } from "@mui/material";
 import Header from "@/components/Header";
 import { getMyRecap, type Recap, type RecapPeriod } from "@/services/analytics";
 import { RecapDock } from "./RecapDock";
 import { EmptyRecap } from "./EmptyRecap";
-import type { PlacaKind } from "./placas/Placa";
+import { PLACA_ORDER, canRender, type PlacaKind } from "./placas/Placa";
 
 /**
  * Week and month only. The yearly recap stays hidden until there is a year of
@@ -122,14 +122,61 @@ export function RecapClient() {
     };
   }, [period]);
 
+  /**
+   * Rendered placas, keyed by period and kind.
+   *
+   * The export takes a few hundred milliseconds, which is a long time to stare
+   * at a button that has not acknowledged the click. Rendering them in the
+   * background as soon as the recap arrives means the share sheet opens on the
+   * blob that is already in hand.
+   */
+  const placas = useRef(new Map<string, Blob>());
+
+  useEffect(() => {
+    if (!recap?.enough_data) return;
+    const kinds = PLACA_ORDER.filter((kind) => canRender(kind, recap));
+    let cancelled = false;
+
+    void (async () => {
+      // One at a time: four 1080x1920 renders at once would spike the server
+      // for no gain, and they are all in hand within a couple of seconds.
+      for (const kind of kinds) {
+        if (cancelled) return;
+        const key = `${period}:${kind}`;
+        if (placas.current.has(key)) continue;
+        try {
+          const response = await fetch(
+            `/api/og/recap?period=${period}&kind=${kind}`,
+            { cache: "no-store" },
+          );
+          if (!response.ok || cancelled) continue;
+          placas.current.set(key, await response.blob());
+        } catch {
+          // Leave it out of the cache; sharing falls back to fetching on click.
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recap, period]);
+
   const handleShare = useCallback(
     async (kind: PlacaKind, target: string) => {
       setSharing(true);
       try {
-        const url = `/api/og/recap?period=${period}&kind=${kind}`;
-        const response = await fetch(url, { cache: "no-store" });
-        if (!response.ok) throw new Error("export failed");
-        const blob = await response.blob();
+        const key = `${period}:${kind}`;
+        let blob = placas.current.get(key);
+        if (!blob) {
+          const response = await fetch(
+            `/api/og/recap?period=${period}&kind=${kind}`,
+            { cache: "no-store" },
+          );
+          if (!response.ok) throw new Error("export failed");
+          blob = await response.blob();
+          placas.current.set(key, blob);
+        }
         const file = new File([blob], `mi-resumen-${kind}.png`, {
           type: "image/png",
         });

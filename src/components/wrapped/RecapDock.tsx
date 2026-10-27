@@ -21,21 +21,32 @@ import {
 const RATIO = PLACA_WIDTH / PLACA_HEIGHT;
 
 /**
- * Caption and the air around it — the row gets what is left.
+ * Caption, share buttons and the air around them — the row gets what is left.
  *
- * Desktop: 16 top + card + 12 + caption(20) + 16 bottom. The share buttons do
- * not appear here: on a screen wider than it is tall the cards are limited by
- * height, so a row reserved for the buttons came straight out of the placa.
- * They sit over the bottom of the selected placa instead.
+ * Desktop: 16 top + card + 12 + caption(20) + 12 + buttons(44) + 16 bottom.
  */
-const BLOCK_DESKTOP = 64;
+const BLOCK_DESKTOP = 120;
 const BLOCK_MOBILE = 152;
 
 const GAP_DESKTOP = 20;
 const PAD_DESKTOP = 40;
 
-/** Six 44px buttons with 10px between them — what ShareDock measures. */
-const DOCK_WIDTH = 6 * 44 + 5 * 10;
+/**
+ * How much the placa under the mouse grows. It grows in layout rather than
+ * with a transform, so the gap between placas stays exactly `GAP_DESKTOP` —
+ * scaling only the hovered one eats into its neighbours' gaps instead.
+ * The row is solved against this, so the hovered placa still fits.
+ */
+const HOVER_SCALE = 1.1;
+
+/** Gap between the six share buttons; their size is solved from the card. */
+const DOCK_GAP = 10;
+
+/** Six buttons that together are no wider than the placa above them. */
+function dockButtonSize(cardWidth: number): number {
+  const fromCard = Math.floor((cardWidth - 5 * DOCK_GAP) / 6);
+  return Math.max(26, Math.min(44, fromCard));
+}
 
 /** A slide leaves the next placa visibly peeking at both sides, as designed. */
 const SLIDE_WIDTH_RATIO = 0.74;
@@ -93,13 +104,15 @@ function useMetrics(count: number) {
       room(BLOCK_MOBILE) * RATIO,
     );
 
-    // Every card is the same size, so the row simply divides the width it has
-    // and takes the height only when that is the tighter of the two.
+    // Every resting card is the same size; one of them may be hovered and a
+    // tenth taller, so both budgets are solved against that widest state
+    // rather than the resting row.
     const usable = Math.max(
       240,
       viewportWidth - 2 * PAD_DESKTOP - (count - 1) * GAP_DESKTOP,
     );
-    const card = Math.min(room(BLOCK_DESKTOP), usable / count / RATIO);
+    const byWidth = usable / (count - 1 + HOVER_SCALE) / RATIO;
+    const card = Math.min(room(BLOCK_DESKTOP) / HOVER_SCALE, byWidth);
 
     setMetrics({ card, slide, viewportWidth });
   }, [count]);
@@ -146,20 +159,16 @@ function PlacaCard({
   recap,
   height,
   active,
-  overlay,
 }: {
   kind: PlacaKind;
   recap: Recap;
   height: number;
   active: boolean;
-  /** Drawn over the bottom of the placa — the share buttons, when selected. */
-  overlay?: React.ReactNode;
 }) {
   const width = height * RATIO;
   return (
     <Box
       sx={{
-        position: "relative",
         width,
         height,
         borderRadius: "16px",
@@ -167,7 +176,8 @@ function PlacaCard({
         flexShrink: 0,
         border: active ? "2px solid #3B82F6" : "1px solid #334155",
         boxShadow: active ? "0 20px 50px rgba(59,130,246,0.28)" : "none",
-        transition: "box-shadow .2s ease, border-color .2s ease",
+        transition:
+          "width .2s ease, height .2s ease, box-shadow .2s ease, border-color .2s ease",
       }}
     >
       <Box
@@ -176,11 +186,11 @@ function PlacaCard({
           height: PLACA_HEIGHT,
           transform: `scale(${width / PLACA_WIDTH})`,
           transformOrigin: "top left",
+          transition: "transform .2s ease",
         }}
       >
         <Placa kind={kind} recap={recap} />
       </Box>
-      {overlay}
     </Box>
   );
 }
@@ -193,7 +203,7 @@ type ShareTarget = {
 };
 
 const svg = (path: React.ReactNode) => (
-  <svg width="20" height="20" viewBox="0 0 24 24" fill="none" aria-hidden>
+  <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" aria-hidden>
     {path}
   </svg>
 );
@@ -253,11 +263,14 @@ function ShareDock({
   onShare,
   busy,
   labelled = false,
+  size = 44,
 }: {
   onShare: (target: string) => void;
   busy: boolean;
   /** Phones have the room and no tooltips to fall back on. */
   labelled?: boolean;
+  /** Solved from the placa's width so the six never outgrow it. */
+  size?: number;
 }) {
   return (
     <Box
@@ -265,7 +278,7 @@ function ShareDock({
         display: "flex",
         alignItems: "flex-start",
         justifyContent: "center",
-        gap: labelled ? "6px" : "10px",
+        gap: labelled ? "6px" : `${DOCK_GAP}px`,
       }}
     >
       {TARGETS.map((target) => {
@@ -277,8 +290,8 @@ function ShareDock({
             disabled={busy}
             onClick={() => onShare(target.id)}
             sx={{
-              width: 44,
-              height: 44,
+              width: size,
+              height: size,
               borderRadius: "999px",
               display: "flex",
               alignItems: "center",
@@ -295,7 +308,9 @@ function ShareDock({
               },
             }}
           >
-            {target.icon}
+            <Box sx={{ width: size * 0.46, height: size * 0.46, display: "flex" }}>
+              {target.icon}
+            </Box>
           </Box>
         );
 
@@ -562,47 +577,8 @@ export function RecapDock({
             <PlacaCard
               kind={kind}
               recap={recap}
-              height={metrics.card}
+              height={metrics.card * (isActive ? HOVER_SCALE : 1)}
               active={isActive}
-              overlay={
-                isActive && (
-                  <Box
-                    sx={{
-                      position: "absolute",
-                      left: 0,
-                      right: 0,
-                      bottom: 0,
-                      height: Math.max(84, metrics.card * 0.17),
-                      display: "flex",
-                      alignItems: "flex-end",
-                      justifyContent: "center",
-                      pb: "16px",
-                      // The placa's own footer sits above this band, so the
-                      // scrim darkens empty canvas rather than hiding content.
-                      background:
-                        "linear-gradient(to bottom, rgba(10,13,18,0) 0%, rgba(10,13,18,0.72) 46%, rgba(10,13,18,0.92) 100%)",
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        // Narrow desktop windows give narrow cards; scaling
-                        // keeps the six buttons inside the placa instead of
-                        // letting them spill over its edges.
-                        transform: `scale(${Math.min(
-                          1,
-                          (metrics.card * RATIO - 24) / DOCK_WIDTH,
-                        )})`,
-                        transformOrigin: "bottom center",
-                      }}
-                    >
-                      <ShareDock
-                        busy={busy}
-                        onShare={(target) => onShare(kind, target)}
-                      />
-                    </Box>
-                  </Box>
-                )
-              }
             />
 
             <Caption
@@ -611,6 +587,17 @@ export function RecapDock({
               total={kinds.length}
               active={isActive}
             />
+
+            {/* Reserved whether or not it shows, so the row keeps its height. */}
+            <Box sx={{ height: 44, display: "flex", alignItems: "center" }}>
+              {isActive && (
+                <ShareDock
+                  busy={busy}
+                  size={dockButtonSize(metrics.card * HOVER_SCALE * RATIO)}
+                  onShare={(target) => onShare(kind, target)}
+                />
+              )}
+            </Box>
           </Box>
         );
       })}
