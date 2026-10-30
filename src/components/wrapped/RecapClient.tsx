@@ -3,6 +3,9 @@
 import { useCallback, useEffect, useRef, useState } from "react";
 import { Alert, Box, CircularProgress, Typography } from "@mui/material";
 import Header from "@/components/Header";
+import BottomNavigation, {
+  useBottomNavHeight,
+} from "@/components/BottomNavigation";
 import { getMyRecap, type Recap, type RecapPeriod } from "@/services/analytics";
 import { RecapDock } from "./RecapDock";
 import { EmptyRecap } from "./EmptyRecap";
@@ -95,6 +98,7 @@ function PeriodSwitch({
 }
 
 export function RecapClient() {
+  const navHeight = useBottomNavHeight();
   const [period, setPeriod] = useState<RecapPeriod>("week");
   const [recap, setRecap] = useState<Recap | null>(null);
   const [loading, setLoading] = useState(true);
@@ -280,7 +284,12 @@ export function RecapClient() {
         // Enough that the logo is not flush against the top of the window, and
         // no more: on a 13" laptop the row below is fighting for every pixel.
         pt: { xs: "8px", sm: "10px" },
-        pb: { xs: "8px", sm: "4px" },
+        // Clear of the bottom bar when there is one. The row of placas reads
+        // this padding back when it sizes itself, so the carousel never ends up
+        // underneath the navigation.
+        pb: navHeight
+          ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
+          : { xs: "8px", sm: "4px" },
       }}
     >
       <Header />
@@ -364,7 +373,9 @@ export function RecapClient() {
             position: "fixed",
             left: 0,
             right: 0,
-            bottom: "16px",
+            bottom: navHeight
+              ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 12px)`
+              : "16px",
             display: "flex",
             justifyContent: "center",
             px: "16px",
@@ -385,6 +396,8 @@ export function RecapClient() {
           </Alert>
         </Box>
       )}
+
+      <BottomNavigation />
     </Box>
   );
 }
