@@ -100,6 +100,22 @@ export function RecapClient() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [sharing, setSharing] = useState(false);
+  /**
+   * Feedback about sharing, kept apart from `error`, which is about the recap
+   * itself failing to load. It shows as a floating toast rather than a banner
+   * in the column: a banner pushes the whole row of placas down, and they are
+   * sized against the space above them.
+   */
+  const [shareMessage, setShareMessage] = useState<{
+    severity: "error" | "info";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!shareMessage) return;
+    const timer = setTimeout(() => setShareMessage(null), 6000);
+    return () => clearTimeout(timer);
+  }, [shareMessage]);
 
   useEffect(() => {
     let cancelled = false;
@@ -162,21 +178,49 @@ export function RecapClient() {
     };
   }, [recap, period]);
 
+  /** The one thing that always works: hand the file to the browser. */
+  const save = useCallback((blob: Blob, kind: PlacaKind) => {
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `mi-resumen-${kind}.png`;
+    anchor.click();
+    // Revoking it in the same tick can cancel the download before it starts.
+    setTimeout(() => URL.revokeObjectURL(href), 10000);
+  }, []);
+
   const handleShare = useCallback(
     async (kind: PlacaKind, target: string) => {
       setSharing(true);
+      setShareMessage(null);
+
+      // Making the image and handing it over are two different things, and only
+      // the first one can fail to produce anything. Lumping them together meant
+      // closing the share sheet reported "no pudimos generar la imagen" about a
+      // PNG that was already sitting in memory.
+      let blob: Blob | undefined;
       try {
         const key = `${period}:${kind}`;
-        let blob = placas.current.get(key);
+        blob = placas.current.get(key);
         if (!blob) {
           const response = await fetch(
             `/api/og/recap?period=${period}&kind=${kind}`,
             { cache: "no-store" },
           );
-          if (!response.ok) throw new Error("export failed");
+          if (!response.ok) throw new Error(`export failed: ${response.status}`);
           blob = await response.blob();
           placas.current.set(key, blob);
         }
+      } catch {
+        setShareMessage({
+          severity: "error",
+          text: "No pudimos generar la imagen. Probá de nuevo.",
+        });
+        setSharing(false);
+        return;
+      }
+
+      try {
         const file = new File([blob], `mi-resumen-${kind}.png`, {
           type: "image/png",
         });
@@ -190,26 +234,40 @@ export function RecapClient() {
           navigator.canShare({ files: [file] });
 
         if (shareable) {
-          await navigator.share({
-            files: [file],
-            text: "Mi resumen en La Guía del Streaming",
-          });
-          return;
+          try {
+            await navigator.share({
+              files: [file],
+              text: "Mi resumen en La Guía del Streaming",
+            });
+            return;
+          } catch (cause) {
+            // Closing the share sheet is a decision, not a failure.
+            if ((cause as DOMException | undefined)?.name === "AbortError") {
+              return;
+            }
+            // Anything else means the system had nowhere to send it. The image
+            // exists, so save it rather than pretending nothing was made.
+            save(blob, kind);
+            setShareMessage({
+              severity: "info",
+              text: "No se pudo abrir el menú de compartir, así que descargamos la placa.",
+            });
+            return;
+          }
         }
 
-        const href = URL.createObjectURL(blob);
-        const anchor = document.createElement("a");
-        anchor.href = href;
-        anchor.download = file.name;
-        anchor.click();
-        URL.revokeObjectURL(href);
-      } catch {
-        setError("No pudimos generar la imagen. Probá de nuevo.");
+        save(blob, kind);
+        if (target !== "download") {
+          setShareMessage({
+            severity: "info",
+            text: "Tu navegador no puede compartir archivos: descargamos la placa para que la subas.",
+          });
+        }
       } finally {
         setSharing(false);
       }
     },
-    [period],
+    [period, save],
   );
 
   return (
@@ -298,6 +356,34 @@ export function RecapClient() {
 
       {!loading && recap?.enough_data && (
         <RecapDock recap={recap} onShare={handleShare} busy={sharing} />
+      )}
+
+      {shareMessage && (
+        <Box
+          sx={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: "16px",
+            display: "flex",
+            justifyContent: "center",
+            px: "16px",
+            zIndex: (theme) => theme.zIndex.snackbar,
+            pointerEvents: "none",
+          }}
+        >
+          <Alert
+            severity={shareMessage.severity}
+            onClose={() => setShareMessage(null)}
+            sx={{
+              pointerEvents: "auto",
+              maxWidth: "520px",
+              boxShadow: "0 12px 32px rgba(2,6,23,0.6)",
+            }}
+          >
+            {shareMessage.text}
+          </Alert>
+        </Box>
       )}
     </Box>
   );
