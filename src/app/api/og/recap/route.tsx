@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { ImageResponse } from "next/og";
-import { requireAccessToken } from "@/utils/auth-server";
+import { requireAccessTokenOrBearer } from "@/utils/auth-server";
 import type { Recap } from "@/services/analytics";
 import {
   PLACA_HEIGHT,
@@ -30,7 +30,7 @@ function parseKind(value: string | null): PlacaKind | null {
 export async function GET(request: NextRequest) {
   let token: string;
   try {
-    token = await requireAccessToken(request);
+    token = await requireAccessTokenOrBearer(request);
   } catch {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
