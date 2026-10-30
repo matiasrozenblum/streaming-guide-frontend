@@ -195,8 +195,30 @@ export function RecapClient() {
 
   const handleShare = useCallback(
     async (kind: PlacaKind, target: string) => {
-      setSharing(true);
       setShareMessage(null);
+
+      // Passing the page along needs no image at all. Taken from the current
+      // origin rather than hardcoded, so testing on staging copies a staging
+      // link instead of sending you to production.
+      if (target === "link") {
+        try {
+          await navigator.clipboard.writeText(
+            `${window.location.origin}/mi-resumen`,
+          );
+          setShareMessage({
+            severity: "info",
+            text: "Copiamos el link de Mi resumen.",
+          });
+        } catch {
+          setShareMessage({
+            severity: "error",
+            text: "No pudimos copiar el link. Probá de nuevo.",
+          });
+        }
+        return;
+      }
+
+      setSharing(true);
 
       // Making the image and handing it over are two different things, and only
       // the first one can fail to produce anything. Lumping them together meant

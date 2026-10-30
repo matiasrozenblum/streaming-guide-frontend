@@ -57,12 +57,6 @@ const HOVER_SCALE = 1.06;
 /** Gap between the six share buttons; their size is solved from the card. */
 const DOCK_GAP = 8;
 
-/** Six buttons that together are no wider than the placa's resting width. */
-function dockButtonSize(cardWidth: number): number {
-  const fromCard = Math.floor((cardWidth - 5 * DOCK_GAP) / 6);
-  return Math.max(24, Math.min(DOCK_HEIGHT, fromCard));
-}
-
 /** Half the growth: the air a hovered card needs above, below and either side. */
 function clearance(card: number): number {
   return Math.ceil((card * (HOVER_SCALE - 1)) / 2);
@@ -313,6 +307,110 @@ const TARGETS: ShareTarget[] = [
     ),
   },
 ];
+
+/**
+ * Desktop gets two actions, not six.
+ *
+ * There is nothing a browser on a laptop can do with a per-network button that
+ * it cannot do better with these: hand the page along, or keep the image.
+ */
+const ACTIONS = [
+  {
+    id: "link",
+    label: "Compartir",
+    primary: true,
+    icon: svg(
+      <>
+        <path d="M10.5 13.5a3.5 3.5 0 0 0 5 0l3-3a3.54 3.54 0 0 0-5-5l-1.2 1.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+        <path d="M13.5 10.5a3.5 3.5 0 0 0-5 0l-3 3a3.54 3.54 0 0 0 5 5l1.2-1.2" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
+      </>,
+    ),
+  },
+  {
+    id: "download",
+    label: "Descargar",
+    icon: svg(
+      <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4 19.5h16" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />,
+    ),
+  },
+];
+
+/** Below this the two labels stop fitting side by side inside the placa. */
+const LABELLED_FROM = 210;
+
+function DesktopActions({
+  width,
+  busy,
+  onShare,
+}: {
+  /** The placa's resting width — the two buttons fill exactly that. */
+  width: number;
+  busy: boolean;
+  onShare: (target: string) => void;
+}) {
+  const labelled = width >= LABELLED_FROM;
+
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        gap: "8px",
+        width: "100%",
+        height: `${DOCK_HEIGHT}px`,
+      }}
+    >
+      {ACTIONS.map((action) => (
+        <Tooltip key={action.id} title={labelled ? "" : action.label} arrow>
+          <Box
+            component="button"
+            type="button"
+            aria-label={action.label}
+            disabled={busy}
+            onClick={() => onShare(action.id)}
+            sx={{
+              flex: 1,
+              minWidth: 0,
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              gap: "6px",
+              px: "8px",
+              borderRadius: "999px",
+              cursor: busy ? "default" : "pointer",
+              opacity: busy ? 0.5 : 1,
+              color: "#F1F5F9",
+              fontFamily: "Outfit, sans-serif",
+              border: action.primary ? "none" : "1px solid #334155",
+              backgroundColor: action.primary ? "#3B82F6" : "#1E293B",
+              transition: "background-color .15s ease, transform .15s ease",
+              "&:hover": {
+                backgroundColor: action.primary ? "#2563EB" : "#334155",
+                transform: "translateY(-1px)",
+              },
+            }}
+          >
+            <Box sx={{ width: 16, height: 16, display: "flex", flexShrink: 0 }}>
+              {action.icon}
+            </Box>
+            {labelled && (
+              <Typography
+                component="span"
+                sx={{
+                  fontFamily: "inherit",
+                  fontSize: 12.5,
+                  fontWeight: 600,
+                  whiteSpace: "nowrap",
+                }}
+              >
+                {action.label}
+              </Typography>
+            )}
+          </Box>
+        </Tooltip>
+      ))}
+    </Box>
+  );
+}
 
 function ShareDock({
   onShare,
@@ -675,14 +773,15 @@ export function RecapDock({
             <Box
               sx={{
                 height: `${DOCK_HEIGHT}px`,
+                width: "100%",
                 display: "flex",
                 alignItems: "center",
               }}
             >
               {isActive && (
-                <ShareDock
+                <DesktopActions
                   busy={busy}
-                  size={dockButtonSize(metrics.card * RATIO)}
+                  width={metrics.card * RATIO}
                   onShare={(target) => onShare(kind, target)}
                 />
               )}
