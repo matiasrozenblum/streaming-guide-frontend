@@ -280,8 +280,14 @@ const ACTIONS = [
   },
 ];
 
-/** Below this the two labels stop fitting side by side inside the placa. */
-const LABELLED_FROM = 210;
+/**
+ * Below this the two labels stop fitting side by side inside the placa.
+ * Measured, not guessed: "Descargar" in Outfit 600 at 12.5px is 62px, and a
+ * button is 8 + icon(16) + 6 + label + 8, so each needs 100px and the pair
+ * needs 208 plus the gap. 224 leaves a few pixels for a different fallback
+ * font rather than clipping on the exact boundary.
+ */
+const LABELLED_FROM = 224;
 
 function ShareActions({
   width,
