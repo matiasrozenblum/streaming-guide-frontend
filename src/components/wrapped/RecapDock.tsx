@@ -33,7 +33,9 @@ const CAPTION_GAP = 6;
 const DOCK_HEIGHT = 34;
 const CHROME_DESKTOP = CAPTION_HEIGHT + CAPTION_GAP + DOCK_HEIGHT;
 
-const BLOCK_MOBILE = 152;
+/** 14 top + title block(38) + 10 + buttons(44) + 16 bottom. */
+const ACTIONS_MOBILE = 44;
+const BLOCK_MOBILE = 14 + 38 + 10 + ACTIONS_MOBILE + 16;
 
 const GAP_MIN = 20;
 const PAD_DESKTOP = 40;
@@ -53,9 +55,6 @@ const CARD_BORDER = 2;
  * one card and never reflows the row.
  */
 const HOVER_SCALE = 1.06;
-
-/** Gap between the six share buttons; their size is solved from the card. */
-const DOCK_GAP = 8;
 
 /** Half the growth: the air a hovered card needs above, below and either side. */
 function clearance(card: number): number {
@@ -244,75 +243,21 @@ function PlacaCard({
   );
 }
 
-type ShareTarget = {
-  id: string;
-  label: string;
-  icon: React.ReactNode;
-  primary?: boolean;
-};
-
 const svg = (path: React.ReactNode) => (
   <svg width="100%" height="100%" viewBox="0 0 24 24" fill="none" aria-hidden>
     {path}
   </svg>
 );
 
-const TARGETS: ShareTarget[] = [
-  {
-    id: "instagram",
-    label: "Instagram",
-    icon: svg(
-      <>
-        <rect x="3" y="3" width="18" height="18" rx="5" stroke="currentColor" strokeWidth="1.8" />
-        <circle cx="12" cy="12" r="4" stroke="currentColor" strokeWidth="1.8" />
-        <circle cx="17.5" cy="6.5" r="1.2" fill="currentColor" />
-      </>,
-    ),
-  },
-  {
-    id: "tiktok",
-    label: "TikTok",
-    icon: svg(
-      <>
-        <path d="M14 3v12.2a3.6 3.6 0 1 1-3.2-3.58" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-        <path d="M14 3a5.4 5.4 0 0 0 5 4.6" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round" />
-      </>,
-    ),
-  },
-  {
-    id: "whatsapp",
-    label: "WhatsApp",
-    icon: svg(
-      <path d="M12 3a9 9 0 0 0-7.7 13.6L3 21l4.6-1.2A9 9 0 1 0 12 3z" stroke="currentColor" strokeWidth="1.8" strokeLinejoin="round" />,
-    ),
-  },
-  {
-    id: "x",
-    label: "X",
-    icon: svg(<path d="M4 4l16 16M20 4L4 20" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />),
-  },
-  {
-    id: "facebook",
-    label: "Facebook",
-    icon: svg(
-      <path d="M14.5 8.5h2.2V5.6h-2.4c-2.2 0-3.6 1.4-3.6 3.6v1.6H8.4v2.9h2.3V21h3v-7.3h2.3l.4-2.9h-2.7V9.6c0-.7.3-1.1.8-1.1z" stroke="currentColor" strokeWidth="1.6" strokeLinejoin="round" />,
-    ),
-  },
-  {
-    id: "download",
-    label: "Guardar",
-    primary: true,
-    icon: svg(
-      <path d="M12 3.5v11M7.5 10.5 12 15l4.5-4.5M4 19.5h16" stroke="currentColor" strokeWidth="1.9" strokeLinecap="round" strokeLinejoin="round" />,
-    ),
-  },
-];
-
 /**
- * Desktop gets two actions, not six.
+ * Two actions, on every screen.
  *
- * There is nothing a browser on a laptop can do with a per-network button that
- * it cannot do better with these: hand the page along, or keep the image.
+ * A browser cannot hand a file to a named app: Instagram Stories wants
+ * `instagram-stories://` plus the pasteboard on iOS, or the
+ * `com.instagram.share.ADD_TO_STORY` intent on Android, and neither is
+ * reachable from a page. The deep links a browser does accept carry a link and
+ * no image. So a row of per-network buttons on the web promises something it
+ * cannot do; those belong in the native apps, where the intents exist.
  */
 const ACTIONS = [
   {
@@ -338,13 +283,16 @@ const ACTIONS = [
 /** Below this the two labels stop fitting side by side inside the placa. */
 const LABELLED_FROM = 210;
 
-function DesktopActions({
+function ShareActions({
   width,
+  height = DOCK_HEIGHT,
   busy,
   onShare,
 }: {
   /** The placa's resting width — the two buttons fill exactly that. */
   width: number;
+  /** Taller on a phone, where these are thumb targets rather than cursor ones. */
+  height?: number;
   busy: boolean;
   onShare: (target: string) => void;
 }) {
@@ -355,8 +303,8 @@ function DesktopActions({
       sx={{
         display: "flex",
         gap: "8px",
-        width: "100%",
-        height: `${DOCK_HEIGHT}px`,
+        width: `${width}px`,
+        height: `${height}px`,
       }}
     >
       {ACTIONS.map((action) => (
@@ -389,7 +337,14 @@ function DesktopActions({
               },
             }}
           >
-            <Box sx={{ width: 16, height: 16, display: "flex", flexShrink: 0 }}>
+            <Box
+              sx={{
+                width: height >= 40 ? 18 : 16,
+                height: height >= 40 ? 18 : 16,
+                display: "flex",
+                flexShrink: 0,
+              }}
+            >
               {action.icon}
             </Box>
             {labelled && (
@@ -397,7 +352,7 @@ function DesktopActions({
                 component="span"
                 sx={{
                   fontFamily: "inherit",
-                  fontSize: 12.5,
+                  fontSize: height >= 40 ? 14 : 12.5,
                   fontWeight: 600,
                   whiteSpace: "nowrap",
                 }}
@@ -408,93 +363,6 @@ function DesktopActions({
           </Box>
         </Tooltip>
       ))}
-    </Box>
-  );
-}
-
-function ShareDock({
-  onShare,
-  busy,
-  labelled = false,
-  size = 44,
-}: {
-  onShare: (target: string) => void;
-  busy: boolean;
-  /** Phones have the room and no tooltips to fall back on. */
-  labelled?: boolean;
-  /** Solved from the placa's width so the six never outgrow it. */
-  size?: number;
-}) {
-  return (
-    <Box
-      sx={{
-        display: "flex",
-        alignItems: "flex-start",
-        justifyContent: "center",
-        gap: labelled ? "6px" : `${DOCK_GAP}px`,
-      }}
-    >
-      {TARGETS.map((target) => {
-        const button = (
-          <Box
-            component="button"
-            type="button"
-            aria-label={target.label}
-            disabled={busy}
-            onClick={() => onShare(target.id)}
-            sx={{
-              width: size,
-              height: size,
-              borderRadius: "999px",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              cursor: busy ? "default" : "pointer",
-              opacity: busy ? 0.5 : 1,
-              color: "#F1F5F9",
-              border: target.primary ? "none" : "1px solid #334155",
-              backgroundColor: target.primary ? "#3B82F6" : "#1E293B",
-              transition: "background-color .15s ease, transform .15s ease",
-              "&:hover": {
-                backgroundColor: target.primary ? "#2563EB" : "#334155",
-                transform: "translateY(-1px)",
-              },
-            }}
-          >
-            <Box sx={{ width: size * 0.46, height: size * 0.46, display: "flex" }}>
-              {target.icon}
-            </Box>
-          </Box>
-        );
-
-        if (!labelled) {
-          return (
-            <Tooltip key={target.id} title={target.label} arrow>
-              {button}
-            </Tooltip>
-          );
-        }
-
-        return (
-          <Box
-            key={target.id}
-            sx={{
-              display: "flex",
-              flexDirection: "column",
-              alignItems: "center",
-              gap: "6px",
-              width: 58,
-            }}
-          >
-            {button}
-            <Typography
-              sx={{ fontSize: 11, color: "#94A3B8", whiteSpace: "nowrap" }}
-            >
-              {target.label}
-            </Typography>
-          </Box>
-        );
-      })}
     </Box>
   );
 }
@@ -657,9 +525,10 @@ function MobileCarousel({
             {current + 1} de {kinds.length} · Deslizá para ver más
           </Typography>
         </Box>
-        <ShareDock
+        <ShareActions
+          width={slide}
+          height={ACTIONS_MOBILE}
           busy={busy}
-          labelled
           onShare={(target) => onShare(kinds[current], target)}
         />
       </Box>
@@ -779,7 +648,7 @@ export function RecapDock({
               }}
             >
               {isActive && (
-                <DesktopActions
+                <ShareActions
                   busy={busy}
                   width={metrics.card * RATIO}
                   onShare={(target) => onShare(kind, target)}
