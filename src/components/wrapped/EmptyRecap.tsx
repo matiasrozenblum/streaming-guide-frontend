@@ -45,12 +45,19 @@ function PlacaSkeleton() {
         // Never bigger than the artboard, never so big that the page scrolls,
         // never so small that it stops reading as a placa.
         "--sk": {
-          xs: "190px",
+          xs: `clamp(120px, calc((100dvh - 480px) * ${SKELETON_RATIO}), 190px)`,
           md: `clamp(200px, calc((100dvh - 300px) * ${SKELETON_RATIO}), ${DESIGN_WIDTH}px)`,
         },
         width: "var(--sk)",
         height: u(533),
         flexShrink: 0,
+        // On a short phone there is not enough room for the placeholder and
+        // the message both, and shrinking it further turns it into a smudge.
+        // It is decoration — the message, the bar and the button are the
+        // content — so on those screens it steps aside instead.
+        "@media (max-width: 899.95px) and (max-height: 680px)": {
+          display: "none",
+        },
         boxSizing: "border-box",
         padding: u(36),
         display: "flex",
@@ -111,7 +118,7 @@ export function EmptyRecap({ recap }: { recap: Recap }) {
         justifyContent: "center",
         gap: { xs: "16px", md: "90px" },
         px: { xs: "32px", md: "48px", lg: "120px" },
-        py: { xs: "18px", md: "24px" },
+        py: { xs: "8px", md: "24px" },
       }}
     >
       <PlacaSkeleton />

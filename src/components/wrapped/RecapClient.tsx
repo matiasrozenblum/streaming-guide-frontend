@@ -322,8 +322,10 @@ export function RecapClient() {
           alignItems: "center",
           gap: "16px",
           px: { xs: "16px", md: "40px" },
-          pt: { xs: "16px", md: "10px" },
-          pb: { xs: "16px", md: "10px" },
+          pt: { xs: "10px", md: "10px" },
+          // Tight on a phone, where the row wraps onto two lines and every
+          // pixel it keeps is one the placa — or the placeholder — does not get.
+          pb: { xs: "8px", md: "10px" },
           flexWrap: "wrap",
         }}
       >
