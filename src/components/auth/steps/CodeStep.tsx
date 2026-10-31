@@ -29,25 +29,44 @@ interface OtpInputProps {
 function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputProps) {
   const inputs = React.useRef<(HTMLInputElement | null)[]>([]);
 
+  // `value` keeps one char per slot, with ' ' for empty slots, so digits
+  // stay in their position even if the user fills the boxes out of order.
+  const slots = Array.from({ length }, (_, i) => (value[i] ?? ' ').replace(/[^0-9]/, ' '));
+
+  const setSlot = (idx: number, digit: string) => {
+    const next = [...slots];
+    next[idx] = digit || ' ';
+    onChange(next.join(''));
+  };
+
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>, idx: number) => {
     const val = e.target.value.replace(/[^0-9]/g, ''); // Only numbers
-    if (!val) return;
-    const newValue = value.split('');
-    newValue[idx] = val[val.length - 1]; // Only last digit if pasted multiple
-    onChange(newValue.join(''));
+    if (!val) {
+      // Allows clearing the box (e.g. selecting the digit and deleting it)
+      setSlot(idx, '');
+      return;
+    }
+    // When typing over an existing digit the box holds two chars; keep the new
+    // one regardless of whether the caret was before or after the old digit.
+    const prev = slots[idx].trim();
+    const digit = val.length > 1 && val[val.length - 1] === prev ? val[0] : val[val.length - 1];
+    setSlot(idx, digit);
     // Move to next input
-    if (idx < length - 1 && val) {
+    if (idx < length - 1) {
       inputs.current[idx + 1]?.focus();
     }
   };
 
   const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, idx: number) => {
-    if (e.key === 'Backspace' && !value[idx] && idx > 0) {
-      const newValue = value.split('');
-      newValue[idx - 1] = '';
-      onChange(newValue.join(''));
+    if (e.key !== 'Backspace') return;
+    e.preventDefault();
+    if (slots[idx] !== ' ') {
+      // Box has a digit: clear it and stay here
+      setSlot(idx, '');
+    } else if (idx > 0) {
+      // Box is empty: clear the previous one and move back
+      setSlot(idx - 1, '');
       inputs.current[idx - 1]?.focus();
-      e.preventDefault();
     }
   };
 
@@ -66,11 +85,11 @@ function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputPro
         <TextField
           key={idx}
           inputRef={el => inputs.current[idx] = el}
-          value={value[idx] || ''}
+          value={slots[idx].trim()}
           onChange={(e: React.ChangeEvent<HTMLInputElement>) => handleChange(e, idx)}
           onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => handleKeyDown(e, idx)}
           inputProps={{
-            maxLength: 1,
+            maxLength: 2, // lets a new digit replace the existing one
             style: {
               textAlign: 'center',
               fontSize: 20,
@@ -98,7 +117,7 @@ export default function CodeStep({
   isLoading,
   error
 }: CodeStepProps) {
-  const [code, setCode] = useState(initialCode.padEnd(6, ''));
+  const [code, setCode] = useState(initialCode);
   const [localErr, setLocalErr] = useState('');
   const [countdown, setCountdown] = useState(30);
   const [canResend, setCanResend] = useState(false);
@@ -115,12 +134,13 @@ export default function CodeStep({
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!code || code.length < 6) {
+    const digits = code.replace(/[^0-9]/g, '');
+    if (digits.length < 6) {
       setLocalErr('El código debe tener 6 dígitos');
       return;
     }
     setLocalErr('');
-    onSubmit(code.trim());
+    onSubmit(digits);
   };
 
   const handleResend = async () => {

@@ -10,6 +10,15 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.33.2] - 2026-10-31
+
+### Fixed
+- **Olvide mi contrasena no permitia cambiar la contrasena**: despues de ingresar el codigo, el paso "Nueva contrasena" volvia a mostrar el ingreso del codigo, y su boton solo volvia a fijar el mismo paso, asi que nunca se llamaba a `/api/users/reset-password` y el flujo quedaba trabado. Ahora muestra el formulario de contrasena con confirmacion, resetea con email, codigo y contrasena nueva, e inicia sesion con la contrasena nueva.
+- **El codigo se valida en su propio paso**: un codigo vencido o mal tipeado se descubria recien al enviar la contrasena nueva. "Verificar" ahora lo chequea contra `/api/auth/check-code` —que lo valida sin consumirlo— y solo avanza si es correcto. Requiere `POST /auth/check-code` del backend, que tiene que estar en produccion antes o junto con este cambio.
+- **No se podian borrar los digitos del codigo**: el input ignoraba los cambios que dejaban una casilla vacia y Backspace solo actuaba sobre casillas que ya estaban vacias. Ademas, completar las casillas fuera de orden corria los digitos de lugar. Ahora cada casilla mantiene su posicion, Backspace borra la actual o la anterior, y se puede escribir encima de un digito. Afecta tambien al codigo del registro, que usa el mismo componente.
+
+---
+
 ## [1.33.1] - 2026-10-16
 
 ### Fixed
