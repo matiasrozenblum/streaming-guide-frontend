@@ -159,6 +159,25 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.33.2] - 2026-10-31
+
+### Fixed
+- **Olvide mi contrasena no permitia cambiar la contrasena**: despues de ingresar el codigo, el paso "Nueva contrasena" volvia a mostrar el ingreso del codigo, y su boton solo volvia a fijar el mismo paso, asi que nunca se llamaba a `/api/users/reset-password` y el flujo quedaba trabado. Ahora muestra el formulario de contrasena con confirmacion, resetea con email, codigo y contrasena nueva, e inicia sesion con la contrasena nueva.
+- **El codigo se valida en su propio paso**: un codigo vencido o mal tipeado se descubria recien al enviar la contrasena nueva. "Verificar" ahora lo chequea contra `/api/auth/check-code` —que lo valida sin consumirlo— y solo avanza si es correcto. Requiere `POST /auth/check-code` del backend, que tiene que estar en produccion antes o junto con este cambio.
+- **No se podian borrar los digitos del codigo**: el input ignoraba los cambios que dejaban una casilla vacia y Backspace solo actuaba sobre casillas que ya estaban vacias. Ademas, completar las casillas fuera de orden corria los digitos de lugar. Ahora cada casilla mantiene su posicion, Backspace borra la actual o la anterior, y se puede escribir encima de un digito. Afecta tambien al codigo del registro, que usa el mismo componente.
+
+---
+
+## [1.33.1] - 2026-10-16
+
+### Fixed
+- **El banner anterior titilaba al pasar de banner**: al terminar el fade-out, el banner saliente volvía por un frame a opacidad 1 antes de desmontarse, y el entrante caía por un frame a opacidad 0 al terminar su fade-in. No era un problema de `BannerCarousel` sino de framer-motion 12.12: cuando la animación de opacidad (que corre por WAAPI) terminaba, la cancelaba en el mismo frame pero recién escribía el valor final en el estilo inline en el frame siguiente, así que por un frame el elemento mostraba el valor previo a la animación. Medido frame a frame en producción, el saliente pasaba de 0.03 a 1.00 justo antes de desmontarse. Se actualizó `framer-motion` a 12.43.0, que escribe el valor final antes de cancelar; con eso la transición queda limpia en ambos sentidos. Afecta a todas las animaciones de opacidad del sitio, no solo al carousel.
+
+### Changed
+- **El carousel de banners pasa de fundido a negro a crossfade**: antes el banner saliente se desvanecía a negro y recién después aparecía el nuevo (`AnimatePresence` en modo `wait`, 0.5s + 0.5s). Ahora el nuevo se funde encima del anterior, que queda opaco debajo hasta quedar cubierto, así que el fondo no se ve en ningún momento. Se dejó `AnimatePresence`, que con clicks rápidos congelaba a mitad de fade al banner que salía y dejaba ver el fondo: todos los banners quedan montados y apilados, y el carousel controla cuál va arriba. Un banner que entra se remonta con opacidad 0 en el mismo render que lo sube, para que uno recién ocultado y todavía opaco no aparezca un frame encima antes de su fade; volver enseguida al anterior desvanece de nuevo al que estaba entrando en lugar de cortarlo. Como efecto lateral, las imágenes de todos los banners se cargan de entrada (solo el primero conserva `priority`), así que un banner que se ve por primera vez ya no se funde antes de tener su imagen, y el primero aparece sin fade al cargar la página, tal como llega del servidor.
+
+---
+
 ## [1.33.0] - 2026-09-07
 
 ### Added
