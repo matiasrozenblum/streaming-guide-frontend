@@ -131,6 +131,7 @@ function Artwork({
   width,
   round,
   accent,
+  tile,
 }: {
   src: string | null;
   alt: string;
@@ -139,6 +140,14 @@ function Artwork({
   width?: number;
   round: boolean;
   accent: string;
+  /**
+   * What the wordmark sits on: the channel's own `background_color` from the
+   * backoffice, the same one the schedule's channel column paints behind the
+   * same logo — white when nothing is set, which is what that column does too.
+   * Logos are drawn for their own background; painting them on the placa's
+   * accent put a Luzu wordmark on red when it belongs on white.
+   */
+  tile: string | null;
 }) {
   return (
     <div
@@ -151,7 +160,7 @@ function Artwork({
         alignItems: "center",
         justifyContent: "center",
         borderRadius: round ? 999 : Math.round(size * 0.22),
-        backgroundColor: round ? "#1E293B" : accent,
+        backgroundColor: round ? "#1E293B" : tile ?? "#FFFFFF",
         border: round ? `5px solid ${accent}` : "none",
       }}
     >
@@ -177,6 +186,7 @@ function Hero(props: {
   logo?: string;
   title: string;
   artwork: string | null;
+  tile: string | null;
   round: boolean;
   name: string;
   where: string;
@@ -216,6 +226,7 @@ function Hero(props: {
             size={120}
             round={props.round}
             accent={accent}
+            tile={props.tile}
           />
           <div style={{ display: "flex", flexDirection: "column", gap: 6 }}>
             <div
@@ -319,6 +330,7 @@ function Ranking(props: {
     key: string;
     name: string;
     artwork: string | null;
+    tile: string | null;
     plays: number;
     color: string;
   }>;
@@ -383,6 +395,7 @@ function Ranking(props: {
                 width={props.round ? 80 : 180}
                 round={props.round}
                 accent={row.color}
+                tile={row.tile}
               />
               <div
                 style={{
@@ -469,6 +482,7 @@ export function Placa({
         accent={accent}
         title="MI PROGRAMA MÁS VISTO"
         artwork={topProgram.channel_logo_url}
+        tile={topProgram.channel_background_color}
         round={false}
         name={topProgram.program_name}
         where={topProgram.channel_name ?? "La Guía"}
@@ -489,6 +503,8 @@ export function Placa({
         accent={platformColor(platform)}
         title="MI STREAMER MÁS VISTO"
         artwork={topStreamer.streamer_logo_url}
+        // A portrait is a circle on its own dark disc; it has no tile.
+        tile={null}
         round
         name={topStreamer.streamer_name}
         where={platform ? capitalise(platform) : "La Guía"}
@@ -504,6 +520,7 @@ export function Placa({
       key: String(program.program_id),
       name: program.program_name,
       artwork: program.channel_logo_url,
+      tile: program.channel_background_color,
       plays: program.plays,
       color: channelColor(program.channel_name),
     }));
@@ -526,6 +543,7 @@ export function Placa({
     key: String(streamer.streamer_id),
     name: streamer.streamer_name,
     artwork: streamer.streamer_logo_url,
+    tile: null,
     plays: streamer.plays,
     color: accent,
   }));

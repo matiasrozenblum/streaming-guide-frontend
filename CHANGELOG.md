@@ -25,6 +25,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
+- **El logo del canal en la placa iba sobre el color de la placa, no sobre el suyo**: el recuadro detras del wordmark se pintaba con el acento de la placa, asi que un logo de Luzu —dibujado para fondo blanco— terminaba sobre rojo. Pasa a usar el `background_color` que el canal tiene cargado en el backoffice, que es el mismo que la columna de canales de la grilla ya pinta detras de ese mismo logo, y blanco cuando no hay ninguno, igual que ahi. El dato ya venia en la respuesta del recap (`channel_background_color`); solo no se estaba usando. Alcanza tambien a la app, que descarga la misma imagen.
+
 - **El footer legal se escapaba hacia abajo al scrollear**: las paginas estaban medidas con `min-height: 100dvh`, y `dvh` crece cuando el navegador del telefono esconde su barra de direcciones — que es exactamente lo que pasa al scrollear. La pagina se hacia mas alta al mismo ritmo que uno bajaba, asi que el footer se corria y no habia forma de alcanzarlo. Pasa a `svh`, la ventana con la barra a la vista, que no cambia nunca: la pagina tiene un solo alto. Alcanza a mi resumen, a streamers y a toda pagina que no sea el home.
 
 - **El footer legal quedaba tapado por la barra de abajo**: la barra es `position: fixed`, asi que se apoya sobre lo ultimo que llega al final de la pagina, y lo ultimo es el footer. La grilla ya le reservaba el alto a su propia copia del footer; las paginas que usan el compartido —mi resumen y streamers— no tenian nada. Se lo reserva el envoltorio del footer, y solo en las rutas donde la barra aparece, asi que ninguna otra pagina gana un hueco al pie.
