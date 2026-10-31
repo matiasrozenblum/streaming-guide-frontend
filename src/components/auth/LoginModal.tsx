@@ -864,18 +864,57 @@ export default function LoginModal({
             ) : null}
 
             {step === "password" && forgotPassword && (
-              <CodeStep
-                email={email}
-                initialCode={code}
+              <PasswordStep
                 isLoading={isLoading}
                 error={error}
+                submitLabel="Cambiar contraseña"
                 onBack={() => {
-                  setStep("existing-user");
-                  setForgotPassword(false);
+                  setError("");
+                  setStep("code");
                 }}
-                onSubmit={async (c) => {
-                  setCode(c);
-                  setStep("password");
+                onSubmit={async (pw) => {
+                  setIsLoading(true);
+                  setError("");
+                  try {
+                    // The backend verifies the OTP here (the code step only collects it)
+                    const res = await fetch("/api/users/reset-password", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email, code, password: pw }),
+                    });
+                    const body = await res.json().catch(() => ({}));
+                    if (!res.ok) {
+                      throw new Error(
+                        body.message ||
+                          "No se pudo cambiar la contraseña. Revisá el código e intentá de nuevo.",
+                      );
+                    }
+                    // Log in with the new password
+                    const loginRes = await fetch("/api/auth/login", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({ email, password: pw }),
+                    });
+                    if (!loginRes.ok)
+                      throw new Error(
+                        "Contraseña cambiada. Iniciá sesión con tu nueva contraseña.",
+                      );
+                    const data = await loginRes.json();
+                    const nxt = await signIn("credentials", {
+                      redirect: false,
+                      accessToken: data.access_token,
+                      refreshToken: data.refresh_token,
+                    });
+                    if (nxt?.error)
+                      throw new Error(
+                        "Contraseña cambiada. Iniciá sesión con tu nueva contraseña.",
+                      );
+                    gaEvent({ action: "password_reset_success" });
+                    onClose();
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  }
+                  setIsLoading(false);
                 }}
               />
             )}
