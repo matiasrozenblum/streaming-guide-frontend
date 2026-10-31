@@ -762,29 +762,22 @@ export default function LoginModal({
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
-                onBack={() => {
-                  setError("");
-                  setStep("existing-user");
-                  setForgotPassword(false);
-                }}
+                onBack={() => { setError(''); setStep('existing-user'); setForgotPassword(false); }}
                 onSubmit={async (c) => {
-                  setIsLoading(true);
-                  setError("");
+                  setIsLoading(true); setError('');
                   try {
                     // Validate (without consuming) before asking for the new password
-                    const res = await fetch("/api/auth/check-code", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                    const res = await fetch('/api/auth/check-code', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ identifier: email, code: c }),
                     });
                     if (!res.ok) {
                       const body = await res.json().catch(() => ({}));
-                      throw new Error(
-                        body.message || "Código inválido o expirado",
-                      );
+                      throw new Error(body.message || 'Código inválido o expirado');
                     }
                     setCode(c);
-                    setStep("password");
+                    setStep('password');
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
                   }
@@ -883,53 +876,40 @@ export default function LoginModal({
               />
             ) : null}
 
-            {step === "password" && forgotPassword && (
+            {step === 'password' && forgotPassword && (
               <PasswordStep
                 isLoading={isLoading}
                 error={error}
                 submitLabel="Cambiar contraseña"
-                onBack={() => {
-                  setError("");
-                  setStep("code");
-                }}
+                onBack={() => { setError(''); setStep('code'); }}
                 onSubmit={async (pw) => {
-                  setIsLoading(true);
-                  setError("");
+                  setIsLoading(true); setError('');
                   try {
                     // The backend verifies the OTP here (the code step only collects it)
-                    const res = await fetch("/api/users/reset-password", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                    const res = await fetch('/api/users/reset-password', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ email, code, password: pw }),
                     });
                     const body = await res.json().catch(() => ({}));
                     if (!res.ok) {
-                      throw new Error(
-                        body.message ||
-                          "No se pudo cambiar la contraseña. Revisá el código e intentá de nuevo.",
-                      );
+                      throw new Error(body.message || 'No se pudo cambiar la contraseña. Revisá el código e intentá de nuevo.');
                     }
                     // Log in with the new password
-                    const loginRes = await fetch("/api/auth/login", {
-                      method: "POST",
-                      headers: { "Content-Type": "application/json" },
+                    const loginRes = await fetch('/api/auth/login', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
                       body: JSON.stringify({ email, password: pw }),
                     });
-                    if (!loginRes.ok)
-                      throw new Error(
-                        "Contraseña cambiada. Iniciá sesión con tu nueva contraseña.",
-                      );
+                    if (!loginRes.ok) throw new Error('Contraseña cambiada. Iniciá sesión con tu nueva contraseña.');
                     const data = await loginRes.json();
-                    const nxt = await signIn("credentials", {
+                    const nxt = await signIn('credentials', {
                       redirect: false,
                       accessToken: data.access_token,
                       refreshToken: data.refresh_token,
                     });
-                    if (nxt?.error)
-                      throw new Error(
-                        "Contraseña cambiada. Iniciá sesión con tu nueva contraseña.",
-                      );
-                    gaEvent({ action: "password_reset_success" });
+                    if (nxt?.error) throw new Error('Contraseña cambiada. Iniciá sesión con tu nueva contraseña.');
+                    gaEvent({ action: 'password_reset_success' });
                     onClose();
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
