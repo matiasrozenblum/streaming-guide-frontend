@@ -25,6 +25,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
+- **El footer legal quedaba tapado por la barra de abajo**: la barra es `position: fixed`, asi que se apoya sobre lo ultimo que llega al final de la pagina, y lo ultimo es el footer. La grilla ya le reservaba el alto a su propia copia del footer; las paginas que usan el compartido —mi resumen y streamers— no tenian nada. Se lo reserva el envoltorio del footer, y solo en las rutas donde la barra aparece, asi que ninguna otra pagina gana un hueco al pie.
+
+- **El contenido de "todavia no alcanza" se corria solo al scrollear en un telefono**: estaba medido contra `dvh`, que crece cuando el navegador esconde su barra de direcciones, y centrado, asi que la mitad de ese crecimiento se iba al hueco de arriba del dibujo y todo bajaba bajo el pulgar. Pasa a medirse contra `svh` —la ventana con la barra a la vista, la mas chica y la primera que se ve— y en mobile se ancla arriba en lugar de centrarse. Lo que sobra queda abajo del boton y nada se mueve.
+
 - **El aviso de "Llego tu resumen" no entraba en una notebook**: el artboard esta dibujado sobre una pantalla de 900px y una notebook da unos 700, asi que la tarjeta quedaba mas alta que la ventana y se abria un scroll adentro del propio cartel, con la letra chica cortada. MUI ademas se guarda 32px de margen por lado y limita la tarjeta a la ventana menos 64; se baja a la mitad. El abanico de placas pasa a tomar el alto que sobra en vez de 270px fijos: es la unica parte que puede ceder, porque todo lo de abajo es texto y achicarlo seria achicar la letra, y el abanico ya esta recortado por diseno. Verificado sin scroll de 560px de alto para arriba.
 
 - **El banner de cookies tapaba el boton del aviso legal**: esta fijo en z-index 9999, por encima de cualquier dialogo de MUI, y en un telefono caia justo sobre "Continuar y ver mi resumen" —el boton de una ventana que bloquea el sitio hasta que se responde—. El aviso pasa a estar por encima; el banner vuelve apenas se cierra.

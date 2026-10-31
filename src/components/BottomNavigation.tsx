@@ -26,6 +26,9 @@ const ITEMS: NavItem[] = [
   { path: '/mi-resumen', label: 'Mi resumen', section: 'mi_resumen', icon: <AutoAwesome /> },
 ];
 
+/** The routes the bar appears on. Anywhere else it renders nothing. */
+export const BOTTOM_NAV_PATHS: string[] = ITEMS.map((item) => item.path);
+
 /**
  * How much room the bar takes, or 0 when it is not showing — for pages that
  * size their content against the space they actually have.

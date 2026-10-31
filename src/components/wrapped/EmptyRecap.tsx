@@ -44,9 +44,14 @@ function PlacaSkeleton() {
       sx={{
         // Never bigger than the artboard, never so big that the page scrolls,
         // never so small that it stops reading as a placa.
+        // Measured against `svh`, not `dvh`: `dvh` grows as the phone's
+        // browser retracts its toolbar on scroll, and anything sized from it
+        // resizes under the reader's thumb. `svh` is the viewport with the
+        // toolbar showing — the smallest it gets, and the one the page is
+        // first seen at — so this is fixed from the first paint.
         "--sk": {
-          xs: `clamp(120px, calc((100dvh - 480px) * ${SKELETON_RATIO}), 190px)`,
-          md: `clamp(200px, calc((100dvh - 300px) * ${SKELETON_RATIO}), ${DESIGN_WIDTH}px)`,
+          xs: `clamp(120px, calc((100svh - 480px) * ${SKELETON_RATIO}), 190px)`,
+          md: `clamp(200px, calc((100svh - 300px) * ${SKELETON_RATIO}), ${DESIGN_WIDTH}px)`,
         },
         width: "var(--sk)",
         height: u(533),
@@ -55,7 +60,10 @@ function PlacaSkeleton() {
         // the message both, and shrinking it further turns it into a smudge.
         // It is decoration — the message, the bar and the button are the
         // content — so on those screens it steps aside instead.
-        "@media (max-width: 899.95px) and (max-height: 680px)": {
+        // The threshold is the window with the toolbar hidden, which is what a
+        // media query measures, so it allows for the ~60px the toolbar takes
+        // back when it is showing.
+        "@media (max-width: 899.95px) and (max-height: 740px)": {
           display: "none",
         },
         boxSizing: "border-box",
@@ -115,7 +123,11 @@ export function EmptyRecap({ recap }: { recap: Recap }) {
         // placeholder goes on top, the way the app's own screen has it.
         flexDirection: { xs: "column", md: "row" },
         alignItems: "center",
-        justifyContent: "center",
+        // Centred on a desktop, where the window does not move. On a phone the
+        // block is pinned to the top instead: this box grows when the browser
+        // retracts its toolbar, and centring handed half of that growth to the
+        // space above the placeholder, so everything slid down as you scrolled.
+        justifyContent: { xs: "flex-start", md: "center" },
         gap: { xs: "16px", md: "90px" },
         px: { xs: "32px", md: "48px", lg: "120px" },
         py: { xs: "8px", md: "24px" },
