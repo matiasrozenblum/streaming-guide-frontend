@@ -8,6 +8,10 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ## [Unreleased]
 
+---
+
+## [1.33.2] - 2026-10-31
+
 ### Fixed
 - **Olvide mi contrasena no permitia cambiar la contrasena**: despues de ingresar el codigo, el paso "Nueva contrasena" volvia a mostrar el ingreso del codigo, y su boton solo volvia a fijar el mismo paso, asi que nunca se llamaba a `/api/users/reset-password` y el flujo quedaba trabado. Ahora muestra el formulario de contrasena con confirmacion, resetea con email, codigo y contrasena nueva, e inicia sesion con la contrasena nueva.
 - **El codigo se valida en su propio paso**: un codigo vencido o mal tipeado se descubria recien al enviar la contrasena nueva. "Verificar" ahora lo chequea contra `/api/auth/check-code` —que lo valida sin consumirlo— y solo avanza si es correcto. Requiere `POST /auth/check-code` del backend, que tiene que estar en produccion antes o junto con este cambio.
