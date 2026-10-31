@@ -64,6 +64,22 @@ const STAGE = {
   sm: { width: 580, height: 270, cardW: 150, cardH: 267, radius: 14 },
 } as const;
 
+/**
+ * How tall the fan is allowed to be.
+ *
+ * Everything under it — the chip, the three blocks of copy, the button and the
+ * fine print — comes to around 390px and cannot shrink without the text getting
+ * smaller, so the fan takes whatever is left of the window and no more. The
+ * artboard is drawn on a 900px screen; a 13" laptop gives about 700, and at a
+ * fixed 270px the card ran past the bottom of the window and grew a scrollbar
+ * of its own. The fan is already cropped at the bottom by design, so losing a
+ * few more pixels of it costs nothing.
+ */
+const STAGE_HEIGHT = {
+  xs: `clamp(120px, calc(100dvh - 400px), ${STAGE.xs.height}px)`,
+  sm: `clamp(140px, calc(100dvh - 430px), ${STAGE.sm.height}px)`,
+};
+
 const PLACAS = [
   {
     src: "/img/recap-intro/left.jpg",
@@ -97,7 +113,7 @@ function PlacaStage() {
       sx={{
         position: "relative",
         width: "100%",
-        height: { xs: STAGE.xs.height, sm: STAGE.sm.height },
+        height: { xs: STAGE_HEIGHT.xs, sm: STAGE_HEIGHT.sm },
         overflow: "hidden",
         flexShrink: 0,
         // A pool of light under the placas, so the fan sits on something
@@ -215,6 +231,11 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
                   maxWidth: "calc(100% - 32px)",
                   borderRadius: "32px",
                   boxShadow: "0 40px 100px rgba(0, 0, 0, 0.55)",
+                  // MUI keeps 32px of margin on every side and caps the card at
+                  // the window minus 64. Halving that is 32px of card back on a
+                  // laptop, which is most of what was missing.
+                  m: "16px",
+                  maxHeight: "calc(100% - 32px)",
                 }),
           },
         },

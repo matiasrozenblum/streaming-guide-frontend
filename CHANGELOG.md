@@ -9,6 +9,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+- **El estado de "todavia no alcanza" pasa a ser el diseno de Paper**: una placa vacia, dibujada con el contorno punteado, al lado del texto y la barra de progreso —y arriba del texto en un telefono, como lo tiene la app—. El marcador deja de decir solo cuanto llevas y dice contra que: "Vas 1 de 3 reproducciones" con la meta al costado, que es la misma `minimum_plays` que manda la API. La placa vacia esta dibujada a 300px de ancho y todo adentro sale de esa fraccion, asi que se achica entera cuando la ventana es baja en lugar de recortarse: su contenido esta centrado, y bajarle solo el alto lo hubiera cortado.
+
 - **El aviso de "Llego tu resumen" pasa a ser una placa, y en el telefono una bandeja**: era una tarjeta chica con un icono generico, anunciando una seccion que esta hecha de imagenes sin mostrar ninguna. Ahora abre con las tres placas abiertas en abanico —las mismas que la persona va a ver al entrar—, el chip NUEVO, el titulo en Outfit 800 y un boton que ocupa todo el ancho. En desktop es un cartel centrado de 580px; abajo de 600px deja de ser una tarjeta flotante con margen alrededor y se vuelve una bandeja que sube desde el borde de abajo, que es donde esta el pulgar y donde ese margen era ancho desperdiciado. El titulo se dimensiona contra el ancho disponible para entrar siempre en una linea: Outfit 800 a los 38px del artboard mide 492px en un navegador contra los 474 que deja la tarjeta, asi que un numero fijo lo partia en dos.
 
 - **La ruta de la placa acepta el JWT del backend**: las apps nativas se autentican contra el backend y nunca tienen una cookie de NextAuth, asi que `/api/og/recap` les respondia 401. Pasa a aceptar tambien un header `Authorization: Bearer`. No habilita nada nuevo: el token se le pasa al backend tal cual y el backend lo scopea a su dueno, asi que por ese header solo se llega a lo mismo que llamando al backend directo. Es lo que deja que la app nativa muestre y comparta exactamente la misma placa que la web, en vez de volver a dibujarla por tercera vez.
@@ -20,6 +22,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
 
 ### Fixed
+
+- **El aviso de "Llego tu resumen" no entraba en una notebook**: el artboard esta dibujado sobre una pantalla de 900px y una notebook da unos 700, asi que la tarjeta quedaba mas alta que la ventana y se abria un scroll adentro del propio cartel, con la letra chica cortada. MUI ademas se guarda 32px de margen por lado y limita la tarjeta a la ventana menos 64; se baja a la mitad. El abanico de placas pasa a tomar el alto que sobra en vez de 270px fijos: es la unica parte que puede ceder, porque todo lo de abajo es texto y achicarlo seria achicar la letra, y el abanico ya esta recortado por diseno. Verificado sin scroll de 560px de alto para arriba.
 
 - **El banner de cookies tapaba el boton del aviso legal**: esta fijo en z-index 9999, por encima de cualquier dialogo de MUI, y en un telefono caia justo sobre "Continuar y ver mi resumen" —el boton de una ventana que bloquea el sitio hasta que se responde—. El aviso pasa a estar por encima; el banner vuelve apenas se cierra.
 
