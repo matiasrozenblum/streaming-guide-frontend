@@ -651,10 +651,26 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
-                onBack={() => { setStep('existing-user'); setForgotPassword(false); }}
+                onBack={() => { setError(''); setStep('existing-user'); setForgotPassword(false); }}
                 onSubmit={async (c) => {
-                  setCode(c);
-                  setStep('password');
+                  setIsLoading(true); setError('');
+                  try {
+                    // Validate (without consuming) before asking for the new password
+                    const res = await fetch('/api/auth/check-code', {
+                      method: 'POST',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ identifier: email, code: c }),
+                    });
+                    if (!res.ok) {
+                      const body = await res.json().catch(() => ({}));
+                      throw new Error(body.message || 'Código inválido o expirado');
+                    }
+                    setCode(c);
+                    setStep('password');
+                  } catch (err: unknown) {
+                    setError(getErrorMessage(err));
+                  }
+                  setIsLoading(false);
                 }}
               />
             )}
