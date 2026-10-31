@@ -394,7 +394,7 @@ export default function StreamersClient({ initialStreamers, initialCategories = 
   return (
     <Box
       sx={{
-        minHeight: '100dvh',
+        minHeight: '100svh',
         background: 'linear-gradient(135deg,#0f172a 0%,#1e293b 100%)',
         py: { xs: 1, sm: 2 },
         // Add bottom padding on mobile for bottom navigation + safe area inset (only if streamers enabled)

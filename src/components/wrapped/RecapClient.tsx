@@ -299,7 +299,9 @@ export function RecapClient() {
   return (
     <Box
       sx={{
-        minHeight: "100dvh",
+        // `svh`, not `dvh`: see ConditionalLayoutWrapper. A page measured
+        // against the dynamic viewport grows while it is being scrolled.
+        minHeight: "100svh",
         display: "flex",
         flexDirection: "column",
         background: "linear-gradient(135deg,#0f172a 0%,#131d33 100%)",
