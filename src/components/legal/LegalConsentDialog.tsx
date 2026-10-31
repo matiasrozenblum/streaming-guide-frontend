@@ -233,21 +233,9 @@ export function LegalConsentDialogView({ onAccept, onSignOut }: ViewProps) {
       {/* The stage runs edge to edge, so every inset below is applied by the
           blocks themselves rather than by the content wrapper. */}
       <DialogContent sx={{ p: 0, "&.MuiDialogContent-root": { p: 0 } }}>
-        {isSheet && (
-          <Box
-            aria-hidden
-            sx={{
-              width: 44,
-              height: 5,
-              borderRadius: "3px",
-              backgroundColor: "#475569",
-              mx: "auto",
-              mt: "10px",
-              mb: "2px",
-            }}
-          />
-        )}
-
+        {/* No grab handle on the sheet on purpose: it cannot be dragged
+            away — the only ways past it are accepting or signing out — and a
+            handle would promise a gesture that does not exist. */}
         <PlacaStage />
 
         <Box
