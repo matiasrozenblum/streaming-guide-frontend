@@ -9,6 +9,7 @@ import BottomNavigation, {
 import { getMyRecap, type Recap, type RecapPeriod } from "@/services/analytics";
 import { RecapDock } from "./RecapDock";
 import { EmptyRecap } from "./EmptyRecap";
+import { event as trackEvent } from "@/lib/gtag";
 import { PLACA_ORDER, canRender, type PlacaKind } from "./placas/Placa";
 
 /**
@@ -197,6 +198,18 @@ export function RecapClient() {
     async (kind: PlacaKind, target: string) => {
       setShareMessage(null);
 
+      /**
+       * One event per tap, naming how it ended. Same event name and same
+       * vocabulary the app sends, so the two surfaces land in one funnel
+       * instead of two that have to be reconciled by hand. `event()` fans it
+       * out to GA4, PostHog, Datadog RUM and our own pipeline.
+       */
+      const track = (outcome: string) =>
+        trackEvent({
+          action: "recap_share",
+          params: { target, outcome, kind, period, surface: "web" },
+        });
+
       // Passing the page along needs no image at all. Taken from the current
       // origin rather than hardcoded, so testing on staging copies a staging
       // link instead of sending you to production.
@@ -209,11 +222,13 @@ export function RecapClient() {
             severity: "info",
             text: "Copiamos el link de Mi resumen.",
           });
+          track("copied");
         } catch {
           setShareMessage({
             severity: "error",
             text: "No pudimos copiar el link. Probá de nuevo.",
           });
+          track("error");
         }
         return;
       }
@@ -242,6 +257,7 @@ export function RecapClient() {
           severity: "error",
           text: "No pudimos generar la imagen. Probá de nuevo.",
         });
+        track("error");
         setSharing(false);
         return;
       }
@@ -265,10 +281,12 @@ export function RecapClient() {
               files: [file],
               text: "Mi resumen en La Guía del Streaming",
             });
+            track("shared");
             return;
           } catch (cause) {
             // Closing the share sheet is a decision, not a failure.
             if ((cause as DOMException | undefined)?.name === "AbortError") {
+              track("cancelled");
               return;
             }
             // Anything else means the system had nowhere to send it. The image
@@ -278,6 +296,7 @@ export function RecapClient() {
               severity: "info",
               text: "No se pudo abrir el menú de compartir, así que descargamos la placa.",
             });
+            track("fallback");
             return;
           }
         }
@@ -288,6 +307,9 @@ export function RecapClient() {
             severity: "info",
             text: "Tu navegador no puede compartir archivos: descargamos la placa para que la subas.",
           });
+          track("fallback");
+        } else {
+          track("saved");
         }
       } finally {
         setSharing(false);
