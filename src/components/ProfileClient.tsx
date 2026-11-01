@@ -35,6 +35,7 @@ import EditIcon from "@mui/icons-material/Edit";
 import Header from "@/components/Header";
 import { birthDateError } from "@/utils/age";
 import { useSessionContext } from "@/contexts/SessionContext";
+import { RecapNotificationSettings } from "@/components/profile/RecapNotificationSettings";
 import type { SessionWithToken } from "@/types/session";
 import { event as gaEvent } from "@/lib/gtag";
 import { useCookieConsent } from "@/contexts/CookieConsentContext";
@@ -477,15 +478,15 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                 mb: 4,
               }}
             >
+              {/* The colour here used to be a dark brown at 60% opacity, a
+                  leftover from when the site had a light theme: on the dark
+                  background it read as a smudge. `background-clip: text` went
+                  with it, and did nothing without a gradient behind it. */}
               <Typography
                 variant="h5"
-                sx={{
-                  fontWeight: 600,
-                  color: "rgba(78, 58, 58, 0.6)",
-                  WebkitBackgroundClip: "text",
-                }}
+                sx={{ fontWeight: 600, color: "text.primary" }}
               >
-                Mi cuenta
+                Mi perfil
               </Typography>
               <Button
                 startIcon={<ArrowBackIcon />}
@@ -814,6 +815,13 @@ export default function ProfileClient({ initialUser }: ProfileClientProps) {
                   </>
                 }
                 onEdit={() => openPreferences()}
+              />
+
+              {/* The notification only ever reaches the app, but the setting
+                  belongs to the account, so it has to be reachable from here
+                  as well. */}
+              <RecapNotificationSettings
+                accessToken={typedSession?.accessToken ?? null}
               />
             </Stack>
             <Box sx={{ mt: 6, textAlign: "center" }}>

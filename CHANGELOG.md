@@ -9,6 +9,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+- **Los avisos de Mi resumen se pueden apagar tambien desde la web**: la notificacion llega solo a la app, pero la preferencia es de la cuenta y no del telefono, asi que quien vive en el sitio tiene que poder apagarla desde ahi. La tarjeta lo dice en una linea, para no prometer un aviso que el navegador nunca va a mostrar.
+
 - **Los botones de compartir del resumen ahora se miden**: la seccion no reportaba nada, asi que no habia forma de saber si la gente los usa. Cada toque emite un `recap_share` con el boton, el desenlace, que placa y que periodo, y `event()` lo reparte a GA4, PostHog, Datadog RUM y al pipeline propio. El desenlace importa tanto como el toque: copiar el link, entregarlo al menu del sistema, cerrarlo —que es una decision, no un fallo—, caer en la descarga porque el navegador no sabe compartir archivos, o fallar al generar la imagen son cinco cosas distintas que un contador de clicks confundiria en una sola. Mismo nombre de evento y mismo vocabulario que ya manda la app, para que las dos superficies caigan en un unico embudo.
 
 - **El estado de "todavia no alcanza" entra en la pantalla de un telefono**: el boton quedaba cortado por la barra de navegacion. La placa vacia pasa a medirse contra el alto de la ventana tambien en mobile, y la fila del titulo y el bloque se aprietan contra la linea de la fecha, que es de donde sobraba aire. En un telefono de menos de 680px de alto la placa vacia directamente no se dibuja: es decoracion, y el mensaje, la barra y el boton son el contenido. Medido en 412x788 —un Pixel— con el boton 18px arriba de la barra, y en 390x844, 430x932 y 360x640.
@@ -26,6 +28,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
 
 ### Fixed
+
+- **El titulo del perfil era ilegible y decia otra cosa**: "Mi cuenta" en un marron oscuro al 60% de opacidad —un resto de cuando el sitio tenia tema claro— sobre fondo oscuro, o sea una mancha. Pasa a "Mi perfil", el mismo nombre que usa la app, en el color de texto del tema. De paso se va un `background-clip: text` que no hacia nada sin un gradiente detras.
 
 - **El logo del canal en la placa iba sobre el color de la placa, no sobre el suyo**: el recuadro detras del wordmark se pintaba con el acento de la placa, asi que un logo de Luzu —dibujado para fondo blanco— terminaba sobre rojo. Pasa a usar el `background_color` que el canal tiene cargado en el backoffice, que es el mismo que la columna de canales de la grilla ya pinta detras de ese mismo logo, y blanco cuando no hay ninguno, igual que ahi. El dato ya venia en la respuesta del recap (`channel_background_color`); solo no se estaba usando. Alcanza tambien a la app, que descarga la misma imagen.
 
