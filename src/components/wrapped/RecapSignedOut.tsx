@@ -1,5 +1,6 @@
 "use client";
 
+import { useCallback, useState } from "react";
 import { Box, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
@@ -10,65 +11,63 @@ import BottomNavigation, {
 } from "@/components/BottomNavigation";
 
 /**
- * The fan is drawn 560px wide, so every piece inside it is written as a
- * fraction of that and multiplied by the width it ends up with. That is what
- * lets the same arrangement shrink onto a phone without each placa having to
- * be positioned twice.
+ * Each fan is written as fractions of the width it was drawn at, so one set of
+ * coordinates survives every screen. The phone artboard shows two placas and
+ * the desktop one three — on 390px a third is a sliver, which is why they
+ * differ rather than one being a scaled copy of the other.
  */
-const FAN_WIDTH = 560;
-const u = (n: number) => `calc(var(--fan) * ${n} / ${FAN_WIDTH})`;
+const DESKTOP_FAN = 560;
+const MOBILE_FAN = 390;
 
-/**
- * Straight from the artboard, including the rotation about the top-left
- * corner, which is what splays them outward from the middle one.
- */
-const PLACAS = [
-  { src: "/img/recap-intro/left.jpg", left: 40, top: 30, rotate: -8 },
-  { src: "/img/recap-intro/center.jpg", left: 205, top: 0, rotate: 0 },
-  { src: "/img/recap-intro/right.jpg", left: 370, top: 30, rotate: 8 },
+const DESKTOP_PLACAS = [
+  { src: "/img/recap-intro/left.jpg", left: 40, top: 30, w: 150, h: 267, r: 16, b: 3, rotate: -8 },
+  { src: "/img/recap-intro/center.jpg", left: 205, top: 0, w: 150, h: 267, r: 16, b: 3, rotate: 0 },
+  { src: "/img/recap-intro/right.jpg", left: 370, top: 30, w: 150, h: 267, r: 16, b: 3, rotate: 8 },
 ];
 
-function PlacaFan() {
+const MOBILE_PLACAS = [
+  { src: "/img/recap-intro/left.jpg", left: 62, top: 22, w: 128, h: 228, r: 16, b: 2, rotate: -8 },
+  { src: "/img/recap-intro/center.jpg", left: 176, top: 0, w: 150, h: 267, r: 18, b: 2, rotate: 0 },
+];
+
+function Fan({
+  design,
+  placas,
+  height,
+  sx,
+}: {
+  design: number;
+  placas: typeof DESKTOP_PLACAS;
+  height: number;
+  sx?: object;
+}) {
+  const u = (n: number) => `calc(var(--fan) * ${n} / ${design})`;
+
   return (
     <Box
       aria-hidden
       sx={{
-        /**
-         * A real length and not a percentage: this feeds both the width and
-         * the height, and a percentage inside the height calc resolves against
-         * the container's height instead of its width — which collapsed the
-         * whole fan on a phone.
-         */
-        "--fan": {
-          xs: "min(calc(100vw - 40px), 400px)",
-          /**
-           * Never wider than drawn, and never so tall that the page needs
-           * scrolling: the artboard assumes a 900px window and a laptop gives
-           * about 700. Everything above the fan is text and cannot give, so
-           * the fan takes what is left — the ratio turns the height it can
-           * have into the width that produces it.
-           */
-          md: `min(${FAN_WIDTH}px, calc((100svh - 470px) * ${FAN_WIDTH} / 290))`,
-        },
         position: "relative",
         width: "var(--fan)",
-        height: u(290),
+        height: u(height),
         flexShrink: 0,
-        mt: u(20),
+        // Clipped, as drawn: the placas run off the bottom of the stage.
+        overflow: "hidden",
+        ...sx,
       }}
     >
-      {PLACAS.map((placa) => (
+      {placas.map((placa) => (
         <Box
           key={placa.src}
           sx={{
             position: "absolute",
             left: u(placa.left),
             top: u(placa.top),
-            width: u(150),
-            height: u(267),
-            borderRadius: u(24),
-            border: `${u(3)} solid #334155`,
-            boxShadow: "0 16px 32px rgba(0, 0, 0, 0.4)",
+            width: u(placa.w),
+            height: u(placa.h),
+            borderRadius: u(placa.r),
+            border: `${u(placa.b)} solid #334155`,
+            boxShadow: "0 12px 24px rgba(0, 0, 0, 0.4)",
             rotate: `${placa.rotate}deg`,
             transformOrigin: "0% 0%",
             backgroundImage: `url(${placa.src})`,
@@ -86,27 +85,46 @@ function PlacaFan() {
  *
  * The section used to be hidden from visitors and the page bounced them to the
  * grid, which is the worst of both worlds: the feature most worth signing up
- * for was the one nobody could see. The pitch and the form sit side by side —
- * the form is not a dialog over the page, it is half of it.
+ * for was the one nobody could see.
+ *
+ * One tree for both shapes, not two. The form holds the whole state of the
+ * sign-up — e-mail, code, the account being created — and mounting it twice,
+ * once per breakpoint, would run two of those side by side.
  */
 export function RecapSignedOut() {
   const router = useRouter();
   const navHeight = useBottomNavHeight();
 
+  /**
+   * Set once the form leaves the e-mail step. On a phone the panel then takes
+   * the whole screen: the steps that follow need the room the pitch is using.
+   */
+  const [expanded, setExpanded] = useState(false);
+  const handlePhase = useCallback((phase: "email" | "flow") => {
+    setExpanded(phase === "flow");
+  }, []);
+
+  const ease = "cubic-bezier(.22,.61,.36,1)";
+
   return (
     <Box
       sx={{
-        minHeight: "100svh",
+        height: { xs: "100svh", md: "auto" },
+        minHeight: { md: "100svh" },
         display: "flex",
         flexDirection: "column",
+        overflow: { xs: "hidden", md: "visible" },
         backgroundColor: "#0F172A",
-        // The header's logo is deliberately taller than the header itself
-        // (11vh against 10vh), so without this it gets clipped by the top of
-        // the window. Every other page keeps the same sliver.
+        // The header's logo is taller than the header itself (11vh against
+        // 10vh) and overflows on purpose; without this it meets the top of the
+        // window instead of a sliver of page.
         pt: { xs: "8px", sm: "10px" },
-        pb: navHeight
-          ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
-          : 0,
+        pb: {
+          xs: 0,
+          md: navHeight
+            ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
+            : 0,
+        },
       }}
     >
       <Header />
@@ -114,51 +132,88 @@ export function RecapSignedOut() {
       <Box
         sx={{
           flexGrow: 1,
+          minHeight: 0,
           display: "flex",
-          // Side by side on a desktop; stacked on a phone, with the pitch
-          // first so the form is not the first thing a visitor meets.
+          // Stacked on a phone — there are no two halves to divide — and side
+          // by side from md, which is the wide artboard.
           flexDirection: { xs: "column", md: "row" },
-          alignItems: "center",
-          justifyContent: "center",
-          gap: { xs: "28px", md: "70px" },
-          px: { xs: "20px", md: "40px", lg: "70px" },
-          py: { xs: "24px", md: "32px" },
+          alignItems: { md: "center" },
+          justifyContent: { md: "center" },
+          gap: { md: "70px" },
+          px: { md: "40px", lg: "70px" },
+          py: { md: "32px" },
         }}
       >
         <Box
           sx={{
             width: "100%",
             maxWidth: { md: 700 },
-            flexShrink: 0,
+            flexShrink: { md: 0 },
             display: "flex",
             flexDirection: "column",
             alignItems: "center",
-            gap: "16px",
+            gap: { md: "16px" },
             textAlign: "center",
+            "--fan": {
+              xs: `min(100vw, ${MOBILE_FAN}px)`,
+              /**
+               * A length and not a percentage: it feeds the height too, where
+               * a percentage resolves against the container's height. Never
+               * wider than drawn and never so tall that the page scrolls — the
+               * artboard assumes 900px of window, a laptop gives about 700.
+               */
+              md: `min(${DESKTOP_FAN}px, calc((100svh - 470px) * ${DESKTOP_FAN} / 290))`,
+            },
+            // Collapsing the pitch is the animation: the panel below takes the
+            // room it gives up, which reads as the panel growing.
+            flexGrow: { xs: expanded ? 0 : 1, md: 0 },
+            flexBasis: { xs: expanded ? 0 : "auto", md: "auto" },
+            opacity: { xs: expanded ? 0 : 1, md: 1 },
+            overflow: { xs: "hidden", md: "visible" },
+            transition: `flex-grow .34s ${ease}, flex-basis .34s ${ease}, opacity .2s ease`,
           }}
         >
           <Typography
             component="h1"
             sx={{
-              maxWidth: 620,
+              maxWidth: { xs: 340, md: 620 },
+              px: { xs: "24px", md: 0 },
+              pt: { xs: "14px", md: 0 },
               fontFamily: "Outfit, sans-serif",
-              fontSize: { xs: 28, md: 36, lg: 44 },
-              "@media (min-width: 900px) and (max-height: 800px)": {
-                fontSize: 36,
-              },
+              fontSize: { xs: 27, md: 36, lg: 44 },
               fontWeight: 800,
               letterSpacing: "-0.03em",
               lineHeight: 1.05,
               color: "#F1F5F9",
+              "@media (min-width: 900px) and (max-height: 800px)": {
+                fontSize: 36,
+              },
             }}
           >
             Tu resumen, en placas para compartir
           </Typography>
 
+          {/* Two readings of the same idea: the phone artboard trims it to a
+              line and a half, which is all there is room for above the fan. */}
           <Typography
             sx={{
+              display: { xs: "block", md: "none" },
+              maxWidth: 320,
+              px: "24px",
+              mt: "8px",
+              fontSize: 14,
+              lineHeight: "21px",
+              color: "#CBD5E1",
+            }}
+          >
+            Los programas y streamers que más viste, listos para subir a tus
+            historias.
+          </Typography>
+          <Typography
+            sx={{
+              display: { xs: "none", md: "block" },
               maxWidth: 600,
-              fontSize: { xs: 15, md: 16 },
+              fontSize: 16,
               lineHeight: 1.5,
               color: "#CBD5E1",
             }}
@@ -168,54 +223,112 @@ export function RecapSignedOut() {
             listo para subir a tus historias.
           </Typography>
 
-          {/* Asking a visitor for an account needs a reason, and the reason is
-              not obvious: the recap is built out of what they watch, so there
-              is nothing to build until there is somebody to build it for. */}
+          <Fan
+            design={MOBILE_FAN}
+            placas={MOBILE_PLACAS}
+            height={176}
+            sx={{ display: { xs: "block", md: "none" }, mt: "14px" }}
+          />
+
+          {/* Why an account at all, which is the question a wall provokes and
+              nobody was answering. */}
           <Box
             sx={{
-              mt: "4px",
-              width: "100%",
-              maxWidth: 560,
+              order: { xs: 0, md: -1 },
+              // Its own margins, not a full width plus margins: that
+              // overflowed the screen by exactly the two gutters.
+              width: { xs: "calc(100% - 40px)", md: "100%" },
+              maxWidth: { md: 560 },
+              mt: { xs: "14px", md: "4px" },
+              px: { xs: "14px", md: "18px" },
+              py: { xs: "12px", md: "14px" },
+              boxSizing: "border-box",
+              alignSelf: "center",
               display: "flex",
               alignItems: "center",
-              gap: "14px",
-              px: "18px",
-              py: "14px",
+              gap: { xs: "12px", md: "14px" },
               borderRadius: "12px",
-              backgroundColor: "rgba(59, 130, 246, 0.10)",
-              border: "1px solid rgba(59, 130, 246, 0.25)",
+              backgroundColor: { xs: "#13223E", md: "rgba(59, 130, 246, 0.10)" },
+              border: "1px solid",
+              borderColor: { xs: "#1A325D", md: "rgba(59, 130, 246, 0.25)" },
               textAlign: "left",
             }}
           >
-            <LockOutlinedIcon sx={{ fontSize: 22, color: "#60A5FA", flexShrink: 0 }} />
-            <Typography sx={{ fontSize: 14, lineHeight: "21px", color: "#E2E8F0" }}>
-              <Box component="span" sx={{ color: "#F1F5F9", fontWeight: 600 }}>
-                ¿Por qué te pedimos una cuenta?
+            <LockOutlinedIcon
+              sx={{ fontSize: { xs: 20, md: 22 }, color: "#60A5FA", flexShrink: 0 }}
+            />
+            <Typography
+              sx={{
+                fontSize: { xs: 12.5, md: 14 },
+                lineHeight: { xs: "18px", md: "21px" },
+                color: "#E2E8F0",
+              }}
+            >
+              <Box
+                component="span"
+                sx={{ color: "#F1F5F9", fontWeight: 600 }}
+              >
+                ¿Por qué
+                <Box component="span" sx={{ display: { xs: "none", md: "inline" } }}>
+                  {" "}te pedimos
+                </Box>{" "}
+                una cuenta?
               </Box>{" "}
               Para armar tu resumen necesitamos saber qué mirás: con tu usuario
-              vamos acumulando los programas que viste.
+              vamos sumando los programas que viste.
             </Typography>
           </Box>
 
-          <PlacaFan />
+          <Fan
+            design={DESKTOP_FAN}
+            placas={DESKTOP_PLACAS}
+            height={290}
+            sx={{ display: { xs: "none", md: "block" }, mt: "20px" }}
+          />
         </Box>
 
         <Box
           sx={{
             width: "100%",
-            maxWidth: 444,
+            maxWidth: { md: 444 },
             flexShrink: 0,
-            // The card is its own surface in the artboard; the steps inside
-            // paint their own background, which would cover it.
+            // On a phone the form is a panel hinged to the bottom edge, which
+            // grows into the whole screen once the steps begin.
+            flexGrow: { xs: expanded ? 1 : 0, md: 0 },
+            minHeight: 0,
+            overflowY: { xs: expanded ? "auto" : "visible", md: "visible" },
+            backgroundColor: { xs: "#141C30", md: "transparent" },
+            borderTop: { xs: "1px solid #334155", md: "none" },
+            borderTopLeftRadius: { xs: "20px", md: 0 },
+            borderTopRightRadius: { xs: "20px", md: 0 },
+            px: { xs: "20px", md: 0 },
+            pt: { xs: "18px", md: 0 },
+            // The bottom bar is fixed, so it sits over whatever reaches the
+            // end of the panel; its height has to be reserved here.
+            pb: {
+              xs: navHeight
+                ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 14px)`
+                : "14px",
+              md: 0,
+            },
+            transition: `flex-grow .34s ${ease}`,
+            // The panel is its own surface; the steps inside paint their own
+            // background, which would cover it.
             "& .MuiDialogTitle-root, & .MuiDialogContent-root": {
               backgroundColor: "transparent",
+              px: { xs: 0, md: undefined },
+            },
+            "& .MuiPaper-root": {
+              backgroundColor: { xs: "transparent", md: "#141C30" },
             },
           }}
         >
-          {/* The same component the grid opens as a dialog, inline. Signing in
-              only changes the session on the client, and this page decides what
-              to render on the server, so it has to be asked again. */}
-          <LoginModal open variant="inline" onClose={() => router.refresh()} />
+          <LoginModal
+            open
+            variant="inline"
+            onPhaseChange={handlePhase}
+            onClose={() => router.refresh()}
+          />
         </Box>
       </Box>
 
