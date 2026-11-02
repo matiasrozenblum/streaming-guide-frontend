@@ -6,23 +6,14 @@ import {
   DialogTitle,
   DialogContent,
   Paper,
+  Typography,
   IconButton,
   Box,
-  useTheme,
-  Stepper,
-  Step,
-  StepLabel,
-  StepConnector,
-  stepConnectorClasses,
-  StepIconProps,
   Button,
   Tooltip,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import MailOutlineIcon from "@mui/icons-material/MailOutline";
-import VpnKeyIcon from "@mui/icons-material/VpnKey";
-import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { signIn, useSession } from "next-auth/react";
 import EmailStep from "./steps/EmailStep";
 import CodeStep from "./steps/CodeStep";
@@ -32,7 +23,6 @@ import ExistingUserStep from "./steps/ExistingUserStep";
 import { useDeviceId } from "@/hooks/useDeviceId";
 import { event as gaEvent } from "@/lib/gtag";
 import { useTooltip } from "@/contexts/TooltipContext";
-import { styled, Theme } from "@mui/material/styles";
 import GoogleIcon from "@mui/icons-material/Google";
 import AppleIcon from "@mui/icons-material/Apple";
 // import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
@@ -57,102 +47,8 @@ const STEP_LABELS: Record<StepKey, string> = {
   password: "Contraseña",
   "existing-user": "Acceso",
 };
-const STEP_ICONS: Record<StepKey, React.ReactNode> = {
-  email: <MailOutlineIcon fontSize="small" />,
-  code: <VpnKeyIcon fontSize="small" />,
-  profile: <PersonOutlineIcon fontSize="small" />,
-  password: <LockOutlinedIcon fontSize="small" />,
-  "existing-user": <VpnKeyIcon fontSize="small" />,
-};
-
-// Custom StepConnector with loading animation
-const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(
-  ({ theme, isLoading }: { theme: Theme; isLoading?: boolean }) => ({
-    [`& .${stepConnectorClasses.line}`]: {
-      borderTopWidth: 3,
-      borderRadius: 1,
-      borderColor: theme.palette.divider,
-      position: "relative",
-      overflow: "hidden",
-      transition: "border-color 0.3s",
-    },
-    [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-      borderColor: theme.palette.primary.main,
-    },
-    [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-      borderColor: isLoading
-        ? theme.palette.divider
-        : theme.palette.primary.main,
-      "&::after": isLoading
-        ? {
-            content: '""',
-            position: "absolute",
-            top: 0,
-            left: 0,
-            height: "100%",
-            width: "100%",
-            background: `linear-gradient(90deg, transparent 0%, ${theme.palette.primary.main} 50%, transparent 100%)`,
-            animation: "progress-wave 1.5s infinite",
-          }
-        : {},
-    },
-    "@keyframes progress-wave": {
-      "0%": {
-        transform: "translateX(-100%)",
-      },
-      "100%": {
-        transform: "translateX(100%)",
-      },
-    },
-  }),
-);
 
 // Custom StepIcon that uses your icons and colors them blue for active/completed steps
-function CustomStepIcon(
-  props: StepIconProps & {
-    stepKey?: StepKey;
-    isLoading?: boolean;
-    completedSteps?: Set<StepKey>;
-  },
-) {
-  const { active, completed, icon, stepKey, isLoading, completedSteps } = props;
-  const theme = useTheme();
-  const iconKey =
-    stepKey ||
-    (typeof icon === "number" ? Object.keys(STEP_ICONS)[icon - 1] : icon);
-
-  const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
-  const shouldBeBlue = isStepCompleted || (active && !isLoading);
-  const shouldAnimate = active && isLoading;
-
-  return (
-    <Box
-      sx={{
-        color: shouldBeBlue
-          ? theme.palette.primary.main
-          : theme.palette.text.disabled,
-        display: "flex",
-        alignItems: "center",
-        justifyContent: "center",
-        width: 32,
-        height: 32,
-        fontSize: 22,
-        transition: "color 0.3s",
-        animation: shouldAnimate ? "pulse 1.5s infinite" : "none",
-        "@keyframes pulse": {
-          "0%, 100%": {
-            opacity: 0.5,
-          },
-          "50%": {
-            opacity: 1,
-          },
-        },
-      }}
-    >
-      {STEP_ICONS[iconKey as StepKey]}
-    </Box>
-  );
-}
 
 const mapGenderToBackend = (g: string) => {
   switch (g) {
@@ -238,6 +134,35 @@ export default function LoginModal({
       setSocialLoginPending(false);
     }
   }, [open, variant]);
+
+  /**
+   * Back to the e-mail panel with the address still in hand, which is both
+   * what "Cambiar correo" means and where the header arrow goes from the first
+   * step of the flow.
+   */
+  const returnToEmail = () => {
+    setError("");
+    setCode("");
+    setForgotPassword(false);
+    setIsUserExisting(false);
+    setStep("email");
+    setPhase("email");
+  };
+
+  /** One step back, following the same path each step's own button takes. */
+  const goBack = () => {
+    setError("");
+    if (step === "existing-user") return returnToEmail();
+    if (forgotPassword && step === "code") {
+      setForgotPassword(false);
+      setStep("existing-user");
+      return;
+    }
+    if (forgotPassword && step === "password") return setStep("code");
+    const index = steps.indexOf(step);
+    if (index <= 0) return returnToEmail();
+    setStep(steps[index - 1]);
+  };
 
   useEffect(() => {
     onPhaseChange?.(phase);
@@ -328,7 +253,12 @@ export default function LoginModal({
       <DialogTitle
         sx={{
           display: "flex",
-          justifyContent: "space-between",
+          alignItems: "center",
+          // With the arrow in front, the title belongs beside it; pushed apart
+          // it drifted to the far edge and read as a right-aligned heading.
+          justifyContent:
+            variant === "inline" ? "flex-start" : "space-between",
+          gap: variant === "inline" ? 0.5 : 0,
           px: 3,
           py: 2,
           backgroundColor: "#0F172A",
@@ -351,8 +281,17 @@ export default function LoginModal({
                       ? "Nueva contraseña"
                       : "Creá tu contraseña"
                     : ""}
-        {/* Nothing to close when the form is the page: inline, the cross
-            would offer an exit that leads nowhere. */}
+        {/* Inline the cross would offer an exit that leads nowhere, so the way
+            back is an arrow instead — and in a dialog both make sense. */}
+        {variant === "inline" && phase === "flow" && (
+          <IconButton
+            aria-label="Volver"
+            onClick={socialLoginPending ? undefined : goBack}
+            sx={{ order: -1, ml: -1, mr: 0.5 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
+        )}
         {variant === "dialog" && (
           <Tooltip title="Cerrar modal" arrow>
             <IconButton
@@ -368,65 +307,37 @@ export default function LoginModal({
       {
         <>
           {phase === "flow" && (
-            <Box sx={{ px: 3, pt: 2, backgroundColor: "#0F172A" }}>
-              <Stepper
-                nonLinear
-                alternativeLabel
-                activeStep={activeStep}
-                connector={<BlueConnector isLoading={isLoading} />}
-                sx={{
-                  width: "100%",
-                  minWidth: 0,
-                  backgroundColor: "transparent",
-                  ".MuiStepConnector-line": {
-                    minWidth: 24,
-                  },
-                }}
+            /**
+             * Four bars and a line of text, in place of the stepper with icons
+             * and labels under each one. That one needs room a 390px screen
+             * does not have, and this says the same thing — where you are and
+             * how much is left — in a quarter of the height. The bars are
+             * decoration; the sentence is what a screen reader gets.
+             */
+            <Box sx={{ px: 3, pt: 2 }}>
+              <Box sx={{ display: "flex", gap: "6px" }} aria-hidden>
+                {steps.map((key, index) => (
+                  <Box
+                    key={key}
+                    sx={{
+                      flexGrow: 1,
+                      height: 4,
+                      borderRadius: "2px",
+                      backgroundColor:
+                        completedSteps.has(key) || index <= activeStep
+                          ? "primary.main"
+                          : "#1E293B",
+                      transition: "background-color .25s ease",
+                    }}
+                  />
+                ))}
+              </Box>
+              <Typography
+                sx={{ mt: "8px", fontSize: 12, lineHeight: "16px", color: "#94A3B8" }}
               >
-                {steps.map((key) => {
-                  const isCompleted = completedSteps.has(key);
-                  const isActive = step === key;
-                  const isCurrentlyLoading = isActive && isLoading;
-                  return (
-                    <Step key={key} completed={isCompleted} active={isActive}>
-                      <StepLabel
-                        sx={{
-                          mt: 0,
-                          mb: 0,
-                          ".MuiStepLabel-label": {
-                            marginTop: "0px",
-                            marginBottom: "0px",
-                            lineHeight: 1.1,
-                            color: (theme) => theme.palette.text.secondary,
-                            fontWeight: 600,
-                            fontSize: 13,
-                          },
-                          ".MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed":
-                            {
-                              color: (theme) => theme.palette.primary.main,
-                              marginTop: "0px",
-                              marginBottom: "0px",
-                            },
-                          ".MuiStepLabel-label.MuiStepLabel-alternativeLabel": {
-                            marginTop: "0px !important",
-                            marginBottom: "0px !important",
-                          },
-                        }}
-                        StepIconComponent={(props) => (
-                          <CustomStepIcon
-                            {...props}
-                            stepKey={key}
-                            isLoading={isCurrentlyLoading}
-                            completedSteps={completedSteps}
-                          />
-                        )}
-                      >
-                        {STEP_LABELS[key]}
-                      </StepLabel>
-                    </Step>
-                  );
-                })}
-              </Stepper>
+                Paso {activeStep + 1} de {steps.length} ·{" "}
+                {STEP_LABELS[steps[activeStep] ?? steps[0]]}
+              </Typography>
             </Box>
           )}
 
@@ -810,6 +721,7 @@ export default function LoginModal({
             {step === "code" && forgotPassword && (
               <CodeStep
                 email={email}
+                onChangeEmail={returnToEmail}
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
@@ -840,6 +752,7 @@ export default function LoginModal({
             {step === "code" && !forgotPassword && (
               <CodeStep
                 email={email}
+                onChangeEmail={returnToEmail}
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
