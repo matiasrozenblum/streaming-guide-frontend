@@ -41,7 +41,14 @@ function PlacaFan() {
          */
         "--fan": {
           xs: "min(calc(100vw - 40px), 400px)",
-          md: `${FAN_WIDTH}px`,
+          /**
+           * Never wider than drawn, and never so tall that the page needs
+           * scrolling: the artboard assumes a 900px window and a laptop gives
+           * about 700. Everything above the fan is text and cannot give, so
+           * the fan takes what is left — the ratio turns the height it can
+           * have into the width that produces it.
+           */
+          md: `min(${FAN_WIDTH}px, calc((100svh - 470px) * ${FAN_WIDTH} / 290))`,
         },
         position: "relative",
         width: "var(--fan)",
@@ -93,6 +100,10 @@ export function RecapSignedOut() {
         display: "flex",
         flexDirection: "column",
         backgroundColor: "#0F172A",
+        // The header's logo is deliberately taller than the header itself
+        // (11vh against 10vh), so without this it gets clipped by the top of
+        // the window. Every other page keeps the same sliver.
+        pt: { xs: "8px", sm: "10px" },
         pb: navHeight
           ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
           : 0,
@@ -132,6 +143,9 @@ export function RecapSignedOut() {
               maxWidth: 620,
               fontFamily: "Outfit, sans-serif",
               fontSize: { xs: 28, md: 36, lg: 44 },
+              "@media (min-width: 900px) and (max-height: 800px)": {
+                fontSize: 36,
+              },
               fontWeight: 800,
               letterSpacing: "-0.03em",
               lineHeight: 1.05,
