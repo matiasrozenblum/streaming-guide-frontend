@@ -227,16 +227,26 @@ export function RecapSignedOut() {
             design={MOBILE_FAN}
             placas={MOBILE_PLACAS}
             height={176}
-            sx={{ display: { xs: "block", md: "none" }, mt: "14px" }}
+            sx={{
+              display: { xs: "block", md: "none" },
+              mt: "14px",
+              /**
+               * What gives when the screen is short. The fan is a cropped
+               * stage already, so losing more of it costs nothing; the
+               * paragraph under it is text, and half a sentence looks broken.
+               */
+              flexShrink: 1,
+              minHeight: 0,
+            }}
           />
 
           {/* Why an account at all, which is the question a wall provokes and
               nobody was answering. */}
           <Box
             sx={{
-              order: { xs: 0, md: -1 },
               // Its own margins, not a full width plus margins: that
               // overflowed the screen by exactly the two gutters.
+              flexShrink: 0,
               width: { xs: "calc(100% - 40px)", md: "100%" },
               maxWidth: { md: 560 },
               mt: { xs: "14px", md: "4px" },
@@ -316,7 +326,11 @@ export function RecapSignedOut() {
             // background, which would cover it.
             "& .MuiDialogTitle-root, & .MuiDialogContent-root": {
               backgroundColor: "transparent",
-              px: { xs: 0, md: undefined },
+              // Zero on a phone because the panel already supplies its 20px,
+              // and the card's own 24px from md up. A bare `undefined` does
+              // not override the previous breakpoint, so it was zero at both
+              // and the form sat flush against the card's edges.
+              px: { xs: 0, md: "24px" },
             },
             "& .MuiPaper-root": {
               backgroundColor: { xs: "transparent", md: "#141C30" },
