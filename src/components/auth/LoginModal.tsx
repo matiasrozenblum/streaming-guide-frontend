@@ -161,7 +161,14 @@ export default function LoginModal({
     if (forgotPassword && step === "password") return setStep("code");
     const index = steps.indexOf(step);
     if (index <= 0) return returnToEmail();
-    setStep(steps[index - 1]);
+    /**
+     * Landing on the e-mail step means leaving the flow, not just moving the
+     * cursor: the e-mail field renders in the other phase, so setting the step
+     * alone left the panel with nothing in it.
+     */
+    const previous = steps[index - 1];
+    if (previous === "email") return returnToEmail();
+    setStep(previous);
   };
 
   useEffect(() => {
@@ -281,9 +288,11 @@ export default function LoginModal({
                       ? "Nueva contraseña"
                       : "Creá tu contraseña"
                     : ""}
-        {/* Inline the cross would offer an exit that leads nowhere, so the way
-            back is an arrow instead — and in a dialog both make sense. */}
-        {variant === "inline" && phase === "flow" && (
+        {/* The way back is the arrow, in both shapes. The cross is the way
+            out, which is a different thing: somebody who mistyped a step does
+            not want to lose the three they already filled in. Inline there is
+            no cross, because there is nothing to close. */}
+        {phase === "flow" && (
           <IconButton
             aria-label="Volver"
             onClick={socialLoginPending ? undefined : goBack}

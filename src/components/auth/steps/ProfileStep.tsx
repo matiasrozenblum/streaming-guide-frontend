@@ -9,7 +9,6 @@ import {
   CircularProgress,
 } from "@mui/material";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import MenuItem from "@mui/material/MenuItem";
 import { useSession } from "next-auth/react";
 import { DatePicker } from "@mui/x-date-pickers/DatePicker";
@@ -33,10 +32,10 @@ interface ProfileStepProps {
     birthDate: string,
     gender: string,
   ) => void;
-  onBack: () => void;
+  /** Kept for the callers; the header arrow is what goes back now. */
+  onBack?: () => void;
   error?: string;
   isLoading?: boolean;
-  showBackButton?: boolean;
 }
 
 export default function ProfileStep({
@@ -46,9 +45,7 @@ export default function ProfileStep({
   initialGender = "",
   error,
   onSubmit,
-  onBack,
   isLoading = false,
-  showBackButton = true,
 }: ProfileStepProps) {
   const { data: session } = useSession();
   const [first, setFirst] = useState(initialFirst);
@@ -173,17 +170,6 @@ export default function ProfileStep({
         </Alert>
       )}
       <Box sx={{ display: "flex", gap: 1 }}>
-        {showBackButton && (
-          <Button
-            variant="outlined"
-            startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-            fullWidth
-            onClick={onBack}
-            aria-label="Volver al paso anterior"
-          >
-            Volver
-          </Button>
-        )}
         <Button
           type="submit"
           variant="contained"

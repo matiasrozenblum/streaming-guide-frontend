@@ -10,6 +10,7 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 
 - **El alta sigue el diseno de la pantalla de registro**, tanto desde Mi resumen como desde la grilla: el stepper de iconos y etiquetas pasa a **cuatro barras y una linea** ("Paso 2 de 4 · Verificar"), que dice lo mismo —donde estas y cuanto falta— en un cuarto del alto; las barras son decorativas y la frase es lo que lee un lector de pantalla. Donde el formulario es la pantalla, el encabezado suma una **flecha de volver**; en el dialogo sobre la grilla conviven la flecha no, porque ahi la cruz tiene que seguir cerrando.
+- **Se va el boton "Volver" de cada paso**: con la flecha en el encabezado —que ahora esta tambien en el dialogo sobre la grilla— habia dos caminos de vuelta para lo mismo. Queda uno. La cruz sigue siendo otra cosa: es la salida, no el paso atras.
 - **"Cambiar correo" en el paso del codigo**, con lapiz, justo debajo de la direccion: el momento en que alguien nota el error de tipeo es leyendo esa linea, y una salida al otro extremo de la pantalla —o una flecha que hay que interpretar— no es una respuesta. Vuelve al panel del correo con la direccion todavia cargada.
 
 - **En un telefono la pantalla sin sesion sigue el artboard de la app**: el argumento ocupa la pantalla y el formulario es un panel apoyado en el borde de abajo. Cuando el formulario pasa del correo a los pasos que siguen, **ese panel crece hasta tragarse la pantalla** y el argumento se colapsa: una sola animacion de altura, sin que nada aparezca de la nada. Los botones de Google y Apple van uno al lado del otro en un telefono —dos filas enteras cuestan 54px de alto que no sobran— y el logo del proveedor alcanza sin las palabras.
@@ -35,6 +36,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
 
 ### Fixed
+
+- **La flecha de volver podia dejar el panel en blanco**: retrocedia al paso del correo sin salir de la fase del flujo, y el campo de correo solo se renderiza en la otra. Volver al primer paso ahora cierra el flujo, que es lo que hacia el boton que reemplaza.
 
 - **La pantalla sin sesion no entraba en una notebook**: estaba copiada de un artboard de 900px de alto con medidas fijas, y en una ventana de 700 el abanico quedaba abajo del pliegue. El abanico pasa a tomar el alto que sobra —es la unica parte que puede ceder, el resto es texto— y el titulo baja a 36px en ventanas de menos de 800. Medido a 1280x680, 1440x700, 1440x760 y 1440x900.
 - **El logo del header aparecia cortado en esa pantalla**: el logo mide 11vh dentro de un header de 10vh, o sea que desborda a proposito, y las demas paginas le dejan unos pixeles de padding arriba que esta no tenia.
