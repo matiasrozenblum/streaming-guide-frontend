@@ -9,7 +9,6 @@ import {
   Typography,
   CircularProgress
 } from '@mui/material';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface CodeStepProps {
   email: string;
@@ -21,7 +20,8 @@ interface CodeStepProps {
   onChangeEmail?: () => void;
   initialCode?: string;
   onSubmit: (code: string) => void;
-  onBack: () => void;
+  /** Kept for the callers; the header arrow is what goes back now. */
+  onBack?: () => void;
   isLoading: boolean;
   error?: string;
 }
@@ -121,7 +121,6 @@ export default function CodeStep({
   onChangeEmail,
   initialCode = '',
   onSubmit,
-  onBack,
   isLoading,
   error
 }: CodeStepProps) {
@@ -223,16 +222,6 @@ export default function CodeStep({
           aria-label={isLoading ? 'Verificando' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verificar'}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          disabled={isLoading}
-          onClick={onBack}
-          aria-label="Volver al paso anterior"
-        >
-          Volver
         </Button>
       </Box>
     </Box>

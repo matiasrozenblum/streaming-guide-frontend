@@ -15,12 +15,12 @@ import {
 import LockOutlinedIcon from "@mui/icons-material/LockOutlined";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
-import ArrowBackIosNewIcon from "@mui/icons-material/ArrowBackIosNew";
 import Link from "next/link";
 
 interface PasswordStepProps {
   onSubmit: (password: string) => void;
-  onBack: () => void;
+  /** Kept for the callers; the header arrow is what goes back now. */
+  onBack?: () => void;
   isLoading: boolean;
   error?: string;
   submitLabel?: string;
@@ -28,7 +28,6 @@ interface PasswordStepProps {
 
 export default function PasswordStep({
   onSubmit,
-  onBack,
   isLoading,
   error,
   submitLabel = "Registrarme",
@@ -188,16 +187,6 @@ export default function PasswordStep({
         .
       </Typography>
       <Box sx={{ display: "flex", gap: 1 }}>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          disabled={isLoading}
-          onClick={onBack}
-          aria-label="Volver al paso anterior"
-        >
-          Volver
-        </Button>
         <Button
           type="submit"
           variant="contained"

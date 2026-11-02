@@ -14,14 +14,14 @@ import {
 import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
 import VisibilityIcon from '@mui/icons-material/Visibility';
 import VisibilityOffIcon from '@mui/icons-material/VisibilityOff';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface ExistingUserStepProps {
   email: string;
   firstName?: string;
   gender?: string;
   onSubmit: (password: string) => void;
-  onBack: () => void;
+  /** Kept for the callers; the header arrow is what goes back now. */
+  onBack?: () => void;
   isLoading: boolean;
   error?: string;
   onForgotPassword: () => void;
@@ -32,7 +32,6 @@ export default function ExistingUserStep({
   firstName,
   gender,
   onSubmit,
-  onBack,
   isLoading,
   error,
   onForgotPassword
@@ -124,16 +123,6 @@ export default function ExistingUserStep({
           aria-label={isLoading ? 'Iniciando sesión' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Iniciar sesión'}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          disabled={isLoading}
-          onClick={onBack}
-          aria-label="Volver al paso anterior"
-        >
-          Volver
         </Button>
         <Button
           variant="text"
