@@ -1018,9 +1018,10 @@ export default function LoginModal({
       <Paper
         elevation={0}
         sx={{
-          backgroundColor: "#0F172A",
+          backgroundColor: "#141C30",
           borderRadius: 2,
           overflow: "hidden",
+          pb: 1,
         }}
       >
         {content}
