@@ -5,6 +5,7 @@ import {
   Dialog,
   DialogTitle,
   DialogContent,
+  Paper,
   IconButton,
   Box,
   useTheme,
@@ -174,9 +175,16 @@ declare global {}
 export default function LoginModal({
   open,
   onClose,
+  variant = "dialog",
 }: {
   open: boolean;
   onClose: () => void;
+  /**
+   * "dialog" floats over whatever page you were on. "inline" drops the same
+   * steps into the layout, for the signed-out /mi-resumen, where the form is
+   * not an interruption — it is the content of that half of the screen.
+   */
+  variant?: "dialog" | "inline";
 }) {
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
@@ -201,7 +209,9 @@ export default function LoginModal({
   const [socialLoginPending, setSocialLoginPending] = useState(false);
 
   useEffect(() => {
-    if (!open) {
+    // Inline it never closes, so there is nothing to reset: leaving this on
+    // `open` alone would wipe the form the moment it mounted.
+    if (!open && variant === "dialog") {
       setStep("email");
       setIsUserExisting(false);
       setCompletedSteps(new Set());
@@ -220,7 +230,7 @@ export default function LoginModal({
       setPhase("email");
       setSocialLoginPending(false);
     }
-  }, [open]);
+  }, [open, variant]);
 
   // Track social login success when session becomes authenticated
   useEffect(() => {
@@ -296,21 +306,14 @@ export default function LoginModal({
   // Remove popup-based social login handler
   // const handleSocialLogin = async (provider: 'google' | 'facebook') => { ... };
 
-  return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      fullWidth
-      maxWidth="xs"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 2,
-            backgroundColor: "#0F172A",
-          },
-        },
-      }}
-    >
+  /**
+   * The steps themselves, with no shell around them. The auth flow is the
+   * one piece of this app that must not exist twice — the signed-out
+   * version of /mi-resumen shows this very form as its right-hand column,
+   * so it is the same component with a different wrapper, not a copy.
+   */
+  const content = (
+    <>
       <DialogTitle
         sx={{
           display: "flex",
@@ -337,14 +340,18 @@ export default function LoginModal({
                       ? "Nueva contraseña"
                       : "Creá tu contraseña"
                     : ""}
-        <Tooltip title="Cerrar modal" arrow>
-          <IconButton
-            aria-label="Cerrar modal"
-            onClick={socialLoginPending ? undefined : onClose}
-          >
-            <CloseIcon />
-          </IconButton>
-        </Tooltip>
+        {/* Nothing to close when the form is the page: inline, the cross
+            would offer an exit that leads nowhere. */}
+        {variant === "dialog" && (
+          <Tooltip title="Cerrar modal" arrow>
+            <IconButton
+              aria-label="Cerrar modal"
+              onClick={socialLoginPending ? undefined : onClose}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </DialogTitle>
 
       {
@@ -1003,6 +1010,40 @@ export default function LoginModal({
           </DialogContent>
         </>
       }
+    </>
+  );
+
+  if (variant === "inline") {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          backgroundColor: "#0F172A",
+          borderRadius: 2,
+          overflow: "hidden",
+        }}
+      >
+        {content}
+      </Paper>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xs"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            backgroundColor: "#0F172A",
+          },
+        },
+      }}
+    >
+      {content}
     </Dialog>
   );
 }

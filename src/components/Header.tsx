@@ -204,10 +204,10 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
             >
               Streamers
             </Typography>
-            {/* Only for signed-in users: the recap is about them, and the page
-                sends a visitor straight back to the grid. */}
-            {isAuth && (
-              <Typography
+            {/* Shown to everybody. A visitor who follows it gets the pitch and
+                the sign-in form, which is the point: the section is the best
+                reason to open an account. */}
+            <Typography
                 onClick={() => {
                   router.push('/mi-resumen');
                   gaEvent({
@@ -244,9 +244,8 @@ export default function Header({ streamersEnabled }: HeaderProps = {}) {
                   } : {},
                 }}
               >
-                Mi resumen
-              </Typography>
-            )}
+              Mi resumen
+            </Typography>
           </Box>
         )}
 

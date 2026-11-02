@@ -49,8 +49,6 @@ export default function BottomNavigation() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const { streamersEnabled, loading } = useStreamersConfig();
-  const isAuth =
-    typedSession?.user.role === 'user' || typedSession?.user.role === 'admin';
 
   // Only show on mobile
   if (!isMobile) {
@@ -69,7 +67,9 @@ export default function BottomNavigation() {
 
   // "Mi resumen" is about the signed-in user, and the page sends a visitor
   // straight back to the grid — the same rule the header follows.
-  const items = ITEMS.filter((item) => item.path !== '/mi-resumen' || isAuth);
+  // Every item, for everybody: /mi-resumen answers a visitor with the pitch
+  // and the sign-in form rather than sending them away.
+  const items = ITEMS;
 
   // Only show on the main pages (not on subscriptions, profile, etc.)
   const currentValue = items.findIndex((item) => item.path === pathname);
