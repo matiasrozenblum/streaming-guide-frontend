@@ -1,8 +1,8 @@
 import type { Metadata } from "next";
 import { getServerSession } from "next-auth";
-import { redirect } from "next/navigation";
 import { authOptions } from "@/lib/auth";
 import { RecapClient } from "@/components/wrapped/RecapClient";
+import { RecapSignedOut } from "@/components/wrapped/RecapSignedOut";
 
 export const metadata: Metadata = {
   title: "Mi resumen | La Guía del Streaming",
@@ -10,11 +10,15 @@ export const metadata: Metadata = {
 };
 
 export default async function MiResumenPage() {
-  // Same gate as /subscriptions: this page is only about the signed-in user, so
-  // there is nothing to render for a visitor.
+  /**
+   * A visitor used to be bounced to the grid, which hid the feature most worth
+   * signing up for from exactly the people who have not signed up. They get the
+   * pitch and the form instead; the recap itself still needs an account,
+   * because it is made of their own history.
+   */
   const session = await getServerSession(authOptions);
   if (!session?.user?.id) {
-    redirect("/");
+    return <RecapSignedOut />;
   }
 
   return <RecapClient />;
