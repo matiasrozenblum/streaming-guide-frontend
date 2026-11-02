@@ -32,6 +32,9 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
+- **La pantalla sin sesion no entraba en una notebook**: estaba copiada de un artboard de 900px de alto con medidas fijas, y en una ventana de 700 el abanico quedaba abajo del pliegue. El abanico pasa a tomar el alto que sobra —es la unica parte que puede ceder, el resto es texto— y el titulo baja a 36px en ventanas de menos de 800. Medido a 1280x680, 1440x700, 1440x760 y 1440x900.
+- **El logo del header aparecia cortado en esa pantalla**: el logo mide 11vh dentro de un header de 10vh, o sea que desborda a proposito, y las demas paginas le dejan unos pixeles de padding arriba que esta no tenia.
+
 - **El titulo del perfil era ilegible y decia otra cosa**: "Mi cuenta" en un marron oscuro al 60% de opacidad —un resto de cuando el sitio tenia tema claro— sobre fondo oscuro, o sea una mancha. Pasa a "Mi perfil", el mismo nombre que usa la app, en el color de texto del tema. De paso se va un `background-clip: text` que no hacia nada sin un gradiente detras.
 
 - **El logo del canal en la placa iba sobre el color de la placa, no sobre el suyo**: el recuadro detras del wordmark se pintaba con el acento de la placa, asi que un logo de Luzu —dibujado para fondo blanco— terminaba sobre rojo. Pasa a usar el `background_color` que el canal tiene cargado en el backoffice, que es el mismo que la columna de canales de la grilla ya pinta detras de ese mismo logo, y blanco cuando no hay ninguno, igual que ahi. El dato ya venia en la respuesta del recap (`channel_background_color`); solo no se estaba usando. Alcanza tambien a la app, que descarga la misma imagen.
