@@ -176,9 +176,16 @@ export default function LoginModal({
   open,
   onClose,
   variant = "dialog",
+  onPhaseChange,
 }: {
   open: boolean;
   onClose: () => void;
+  /**
+   * Fires when the form moves from asking for an e-mail to the steps that
+   * follow. The signed-out page listens so it can give the form the whole
+   * screen: those steps need room the pitch is holding.
+   */
+  onPhaseChange?: (phase: "email" | "flow") => void;
   /**
    * "dialog" floats over whatever page you were on. "inline" drops the same
    * steps into the layout, for the signed-out /mi-resumen, where the form is
@@ -231,6 +238,10 @@ export default function LoginModal({
       setSocialLoginPending(false);
     }
   }, [open, variant]);
+
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [phase, onPhaseChange]);
 
   // Track social login success when session becomes authenticated
   useEffect(() => {
@@ -505,8 +516,17 @@ export default function LoginModal({
                   </Box>
                   <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
                 </Box>
-                {/* Social login buttons */}
-                <Box sx={{ display: "flex", flexDirection: "column", gap: 1 }}>
+                {/* Social login buttons. Side by side on a phone: two full
+                    rows cost 54px of height that the signed-out screen does
+                    not have, and the provider's logo carries the meaning
+                    without the words. */}
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "row", sm: "column" },
+                    gap: 1,
+                  }}
+                >
                   <Button
                     variant="outlined"
                     fullWidth
@@ -552,6 +572,8 @@ export default function LoginModal({
                       "&:disabled": {
                         opacity: 0.6,
                       },
+                      flex: { xs: 1, sm: "none" },
+                      minWidth: 0,
                     }}
                   >
                     {socialLoginPending ? (
@@ -562,9 +584,19 @@ export default function LoginModal({
                     ) : (
                       <GoogleIcon sx={{ color: "#4285F4" }} />
                     )}
-                    {socialLoginPending
-                      ? "Conectando..."
-                      : "Conectate con Google"}
+                    {socialLoginPending ? (
+                      "Conectando..."
+                    ) : (
+                      <>
+                        <Box
+                          component="span"
+                          sx={{ display: { xs: "none", sm: "inline" } }}
+                        >
+                          Conectate con{" "}
+                        </Box>
+                        Google
+                      </>
+                    )}
                   </Button>
 
                   <Button
@@ -611,6 +643,8 @@ export default function LoginModal({
                       "&:disabled": {
                         opacity: 0.6,
                       },
+                      flex: { xs: 1, sm: "none" },
+                      minWidth: 0,
                     }}
                   >
                     {socialLoginPending ? (
@@ -621,9 +655,19 @@ export default function LoginModal({
                     ) : (
                       <AppleIcon sx={{ color: "#FFF" }} />
                     )}
-                    {socialLoginPending
-                      ? "Conectando..."
-                      : "Conectate con Apple"}
+                    {socialLoginPending ? (
+                      "Conectando..."
+                    ) : (
+                      <>
+                        <Box
+                          component="span"
+                          sx={{ display: { xs: "none", sm: "inline" } }}
+                        >
+                          Conectate con{" "}
+                        </Box>
+                        Apple
+                      </>
+                    )}
                   </Button>
 
                   {/* Facebook login temporarily disabled - requires app review
