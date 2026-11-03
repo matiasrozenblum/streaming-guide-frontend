@@ -126,8 +126,10 @@ export function RecapSignedOut() {
         backgroundColor: "#0F172A",
         // The header's logo is taller than the header itself (11vh against
         // 10vh) and overflows on purpose; without this it meets the top of the
-        // window instead of a sliver of page.
-        pt: { xs: "8px", sm: "10px" },
+        // window instead of a sliver of page. The same figure the grid and
+        // Streamers use, so the logo does not sit 6px higher here than on
+        // every other page.
+        pt: { xs: 1, sm: 2 },
         pb: {
           xs: 0,
           md: navHeight
