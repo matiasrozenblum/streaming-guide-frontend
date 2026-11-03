@@ -346,15 +346,20 @@ export function RecapSignedOut() {
               px: { xs: 0, md: "24px" },
             },
             /**
-             * A phone browser keeps about 130px for its address bar, so the
-             * screen the artboard was drawn for — 844px, which is what the app
-             * gets — is not what the web gets. The fan is what absorbs the
-             * difference, and past a point it has nothing left to give. Below
-             * 780px the form gives some back: the air around its own title and
-             * fields is the cheapest thing on the screen, and every pixel it
-             * returns is another pixel of placa.
+             * Every phone needs this, so the condition is the phone and not a
+             * height. Measured in Chrome on a Pixel 8: the window is 843px and
+             * the layout at full size wants about 905, because the artboard
+             * never had to reserve a browser address bar or the bottom nav.
+             * An earlier `max-height: 780px` was guesswork and matched nothing
+             * — no phone is that short. The fan absorbs the difference and
+             * past a point has nothing left to give, so here the form gives
+             * back: the air around its own title and fields is the cheapest
+             * thing on the screen, and every pixel it returns is placa.
+             *
+             * The width is the same boundary as the `xs` values above, so this
+             * stops exactly where the form becomes a card beside the pitch.
              */
-            "@media (max-height: 780px)": {
+            "@media (max-width: 899.95px)": {
               pt: "10px",
               pb: navHeight
                 ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
