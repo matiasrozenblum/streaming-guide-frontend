@@ -355,8 +355,21 @@ export function RecapSignedOut() {
              * returns is another pixel of placa.
              */
             "@media (max-height: 780px)": {
+              pt: "10px",
+              pb: navHeight
+                ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
+                : "8px",
               "& .MuiDialogTitle-root": { pt: "6px", pb: "2px" },
-              "& .MuiDialogContent-root": { py: "8px" },
+              "& .MuiDialogContent-root": { py: "4px" },
+              // The form's own breathing room, halved. Nothing here is a
+              // touch target getting smaller: the buttons keep 46px, over
+              // the 44 a thumb needs.
+              "& .MuiDialogContent-root form": { gap: "12px" },
+              "& .auth-social-separator": { my: "8px" },
+              "& .auth-social-buttons .MuiButton-root": {
+                minHeight: 46,
+                py: "8px",
+              },
             },
             "& .MuiPaper-root": {
               backgroundColor: { xs: "transparent", md: "#141C30" },

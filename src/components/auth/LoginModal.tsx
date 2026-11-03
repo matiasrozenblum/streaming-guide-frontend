@@ -450,8 +450,13 @@ export default function LoginModal({
                     setIsLoading(false);
                   }}
                 />
-                {/* Social login separator */}
-                <Box sx={{ display: "flex", alignItems: "center", my: 2 }}>
+                {/* Social login separator. Named so a host that is short of
+                    room — the signed-out screen on a phone — can tighten it
+                    without reaching in by shape. */}
+                <Box
+                  className="auth-social-separator"
+                  sx={{ display: "flex", alignItems: "center", my: 2 }}
+                >
                   <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
                   <Box sx={{ mx: 2, color: "text.secondary", fontWeight: 600 }}>
                     o
@@ -463,6 +468,7 @@ export default function LoginModal({
                     not have, and the provider's logo carries the meaning
                     without the words. */}
                 <Box
+                  className="auth-social-buttons"
                   sx={{
                     display: "flex",
                     flexDirection: { xs: "row", sm: "column" },
