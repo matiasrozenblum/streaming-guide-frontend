@@ -6,7 +6,6 @@ import {
   DialogTitle,
   DialogContent,
   Paper,
-  Typography,
   IconButton,
   Box,
   Button,
@@ -96,7 +95,6 @@ export default function LoginModal({
   const [step, setStep] = useState<StepKey>("email");
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<Set<StepKey>>(new Set());
   const [email, setEmail] = useState("");
   const [code, setCode] = useState("");
   const [registrationToken, setRegistrationToken] = useState("");
@@ -117,7 +115,6 @@ export default function LoginModal({
     if (!open && variant === "dialog") {
       setStep("email");
       setIsUserExisting(false);
-      setCompletedSteps(new Set());
       setEmail("");
       setCode("");
       setRegistrationToken("");
@@ -317,41 +314,46 @@ export default function LoginModal({
         <>
           {phase === "flow" && !isUserExisting && (
             /**
-             * Four bars and a line of text, in place of the stepper with icons
-             * and labels under each one. That one needs room a 390px screen
-             * does not have, and this says the same thing — where you are and
-             * how much is left — in a quarter of the height. The bars are
-             * decoration; the sentence is what a screen reader gets.
+             * One bar that fills, in place of the stepper with icons and labels
+             * under each one. That one needs room a 390px screen does not have,
+             * and nobody reads "Paso 2 de 4 · Verificar" as anything but
+             * paperwork — the heading right above it already says which step
+             * this is, so the sentence was saying it twice in worse words. What
+             * the bar adds is the part the heading cannot show: how much is
+             * left. The progress is announced instead of drawn, so a screen
+             * reader still gets the count the sentence used to carry.
              *
              * Only while signing up. Somebody who already has an account types
              * an address and then a password: there is no journey to chart, and
              * the recovery branch is not in `ALL_STEPS.existing` at all, so the
-             * bars there counted a step that the array does not contain.
+             * bar there would measure against a list it is not part of.
              */
             <Box sx={{ px: 3, pt: 2 }}>
-              <Box sx={{ display: "flex", gap: "6px" }} aria-hidden>
-                {steps.map((key, index) => (
-                  <Box
-                    key={key}
-                    sx={{
-                      flexGrow: 1,
-                      height: 4,
-                      borderRadius: "2px",
-                      backgroundColor:
-                        completedSteps.has(key) || index <= activeStep
-                          ? "primary.main"
-                          : "#1E293B",
-                      transition: "background-color .25s ease",
-                    }}
-                  />
-                ))}
-              </Box>
-              <Typography
-                sx={{ mt: "8px", fontSize: 12, lineHeight: "16px", color: "#94A3B8" }}
+              <Box
+                role="progressbar"
+                aria-valuemin={1}
+                aria-valuemax={steps.length}
+                aria-valuenow={activeStep + 1}
+                aria-valuetext={`Paso ${activeStep + 1} de ${steps.length}: ${
+                  STEP_LABELS[steps[activeStep] ?? steps[0]]
+                }`}
+                sx={{
+                  height: 4,
+                  borderRadius: "2px",
+                  backgroundColor: "#1E293B",
+                  overflow: "hidden",
+                }}
               >
-                Paso {activeStep + 1} de {steps.length} ·{" "}
-                {STEP_LABELS[steps[activeStep] ?? steps[0]]}
-              </Typography>
+                <Box
+                  sx={{
+                    height: "100%",
+                    borderRadius: "inherit",
+                    backgroundColor: "primary.main",
+                    width: `${((activeStep + 1) / steps.length) * 100}%`,
+                    transition: "width .32s cubic-bezier(.22,1,.36,1)",
+                  }}
+                />
+              </Box>
             </Box>
           )}
 
@@ -372,9 +374,6 @@ export default function LoginModal({
                         const userData = await res.json();
                         setUserFirstName(userData.firstName || "");
                         setUserGender(userData.gender || "");
-                        setCompletedSteps(
-                          (prev) => new Set([...prev, "email"]),
-                        );
                         setIsUserExisting(true);
 
                         // Check if user registered via social login
@@ -413,9 +412,6 @@ export default function LoginModal({
                           setPhase("flow");
                         }
                       } else if (res.status === 404) {
-                        setCompletedSteps(
-                          (prev) => new Set([...prev, "email"]),
-                        );
                         setIsUserExisting(false);
                         await fetch("/api/auth/send-code", {
                           method: "POST",
@@ -696,9 +692,6 @@ export default function LoginModal({
                         },
                       });
                     } else {
-                      setCompletedSteps(
-                        (prev) => new Set([...prev, "existing-user"]),
-                      );
                       gaEvent({
                         action: "login_success",
                         params: {
@@ -791,12 +784,10 @@ export default function LoginModal({
                     const body = await res.json();
                     if (!res.ok) throw new Error(body.message || "Error");
                     if (body.isNew) {
-                      setCompletedSteps((prev) => new Set([...prev, "code"]));
                       trackSignupStep("email_verification");
                       setRegistrationToken(body.registration_token);
                       setStep("profile");
                     } else {
-                      setCompletedSteps((prev) => new Set([...prev, "code"]));
                       gaEvent({
                         action: "login_success",
                         params: {
@@ -844,7 +835,6 @@ export default function LoginModal({
                   setLastName(l);
                   setBirthDate(b);
                   setGender(g);
-                  setCompletedSteps((prev) => new Set([...prev, "profile"]));
                   setStep("password");
                 }}
                 onBack={() => {
@@ -953,7 +943,6 @@ export default function LoginModal({
                       // Non-fatal; the dialog is the fallback.
                     }
 
-                    setCompletedSteps((prev) => new Set([...prev, "password"]));
                     gaEvent({
                       action: "signup_success",
                       params: {
