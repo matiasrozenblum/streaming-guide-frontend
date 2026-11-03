@@ -324,6 +324,8 @@ export function RecapSignedOut() {
             borderTopRightRadius: { xs: "20px", md: 0 },
             px: { xs: "20px", md: 0 },
             pt: { xs: "18px", md: 0 },
+            // The artboard leaves the panel detached from the card above it.
+            mt: { xs: "16px", md: 0 },
             // The bottom bar is fixed, so it sits over whatever reaches the
             // end of the panel; its height has to be reserved here.
             pb: {
@@ -342,6 +344,19 @@ export function RecapSignedOut() {
               // not override the previous breakpoint, so it was zero at both
               // and the form sat flush against the card's edges.
               px: { xs: 0, md: "24px" },
+            },
+            /**
+             * A phone browser keeps about 130px for its address bar, so the
+             * screen the artboard was drawn for — 844px, which is what the app
+             * gets — is not what the web gets. The fan is what absorbs the
+             * difference, and past a point it has nothing left to give. Below
+             * 780px the form gives some back: the air around its own title and
+             * fields is the cheapest thing on the screen, and every pixel it
+             * returns is another pixel of placa.
+             */
+            "@media (max-height: 780px)": {
+              "& .MuiDialogTitle-root": { pt: "6px", pb: "2px" },
+              "& .MuiDialogContent-root": { py: "8px" },
             },
             "& .MuiPaper-root": {
               backgroundColor: { xs: "transparent", md: "#141C30" },

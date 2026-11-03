@@ -382,6 +382,7 @@ export default function LoginModal({
               <>
                 <EmailStep
                   initialEmail={email}
+                  autoFocus={variant === "dialog"}
                   isLoading={isLoading}
                   error={error}
                   onSubmit={async (e) => {
@@ -528,7 +529,7 @@ export default function LoginModal({
                     {socialLoginPending ? (
                       "Conectando..."
                     ) : (
-                      <>
+                      <Box component="span">
                         <Box
                           component="span"
                           sx={{ display: { xs: "none", sm: "inline" } }}
@@ -536,7 +537,7 @@ export default function LoginModal({
                           Conectate con{" "}
                         </Box>
                         Google
-                      </>
+                      </Box>
                     )}
                   </Button>
 
@@ -599,7 +600,7 @@ export default function LoginModal({
                     {socialLoginPending ? (
                       "Conectando..."
                     ) : (
-                      <>
+                      <Box component="span">
                         <Box
                           component="span"
                           sx={{ display: { xs: "none", sm: "inline" } }}
@@ -607,7 +608,7 @@ export default function LoginModal({
                           Conectate con{" "}
                         </Box>
                         Apple
-                      </>
+                      </Box>
                     )}
                   </Button>
 
