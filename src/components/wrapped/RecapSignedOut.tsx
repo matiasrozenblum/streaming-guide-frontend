@@ -19,6 +19,14 @@ import BottomNavigation, {
 const DESKTOP_FAN = 560;
 const MOBILE_FAN = 390;
 
+/**
+ * Tall enough to hold every placa, which is not the artboard's 290. The placas
+ * rotate about their top-left corner, so the one tilted clockwise swings its
+ * bottom-left corner lower than the others: 322 against the 300 of its mirror
+ * image. Sizing the stage by eye cut that one placa straight across the bottom.
+ */
+const DESKTOP_FAN_H = 322;
+
 const DESKTOP_PLACAS = [
   { src: "/img/recap-intro/left.jpg", left: 40, top: 30, w: 150, h: 267, r: 16, b: 3, rotate: -8 },
   { src: "/img/recap-intro/center.jpg", left: 205, top: 0, w: 150, h: 267, r: 16, b: 3, rotate: 0 },
@@ -51,7 +59,8 @@ function Fan({
         width: "var(--fan)",
         height: u(height),
         flexShrink: 0,
-        // Clipped, as drawn: the placas run off the bottom of the stage.
+        // The phone stage is shorter than its placas on purpose; the desktop
+        // one is sized to hold them, and this keeps the shadows off the text.
         overflow: "hidden",
         ...sx,
       }}
@@ -162,7 +171,7 @@ export function RecapSignedOut() {
                * wider than drawn and never so tall that the page scrolls — the
                * artboard assumes 900px of window, a laptop gives about 700.
                */
-              md: `min(${DESKTOP_FAN}px, calc((100svh - 470px) * ${DESKTOP_FAN} / 290))`,
+              md: `min(${DESKTOP_FAN}px, calc((100svh - 470px) * ${DESKTOP_FAN} / ${DESKTOP_FAN_H}))`,
             },
             // Collapsing the pitch is the animation: the panel below takes the
             // room it gives up, which reads as the panel growing.
@@ -292,7 +301,7 @@ export function RecapSignedOut() {
           <Fan
             design={DESKTOP_FAN}
             placas={DESKTOP_PLACAS}
-            height={290}
+            height={DESKTOP_FAN_H}
             sx={{ display: { xs: "none", md: "block" }, mt: "20px" }}
           />
         </Box>

@@ -315,13 +315,18 @@ export default function LoginModal({
 
       {
         <>
-          {phase === "flow" && (
+          {phase === "flow" && !isUserExisting && (
             /**
              * Four bars and a line of text, in place of the stepper with icons
              * and labels under each one. That one needs room a 390px screen
              * does not have, and this says the same thing — where you are and
              * how much is left — in a quarter of the height. The bars are
              * decoration; the sentence is what a screen reader gets.
+             *
+             * Only while signing up. Somebody who already has an account types
+             * an address and then a password: there is no journey to chart, and
+             * the recovery branch is not in `ALL_STEPS.existing` at all, so the
+             * bars there counted a step that the array does not contain.
              */
             <Box sx={{ px: 3, pt: 2 }}>
               <Box sx={{ display: "flex", gap: "6px" }} aria-hidden>
