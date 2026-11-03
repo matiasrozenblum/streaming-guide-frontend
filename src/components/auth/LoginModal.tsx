@@ -1028,6 +1028,14 @@ export default function LoginModal({
           sx: {
             borderRadius: 2,
             backgroundColor: "#0F172A",
+            /**
+             * MUI tints a raised Paper with white in dark mode, and a dialog
+             * sits at elevation 24. The title and the content paint over it
+             * with their own colour, so nobody ever wanted that tint here —
+             * but the strip between them has no background of its own, and
+             * there the 16% showed through as a grey band.
+             */
+            backgroundImage: "none",
           },
         },
       }}
