@@ -108,6 +108,12 @@ export default function LoginModal({
   const [userGender, setUserGender] = useState("");
   const [phase, setPhase] = useState<"email" | "flow">("email");
   const [socialLoginPending, setSocialLoginPending] = useState(false);
+  /**
+   * The last step is done when the password is accepted, not when it is shown.
+   * Without this the bar would be full while the form is still empty, and the
+   * one moment the sign-up is actually finished would have nothing to show.
+   */
+  const [flowComplete, setFlowComplete] = useState(false);
 
   useEffect(() => {
     // Inline it never closes, so there is nothing to reset: leaving this on
@@ -129,6 +135,7 @@ export default function LoginModal({
       setUserGender("");
       setPhase("email");
       setSocialLoginPending(false);
+      setFlowComplete(false);
     }
   }, [open, variant]);
 
@@ -331,12 +338,16 @@ export default function LoginModal({
             <Box sx={{ px: 3, pt: 2 }}>
               <Box
                 role="progressbar"
-                aria-valuemin={1}
+                aria-valuemin={0}
                 aria-valuemax={steps.length}
-                aria-valuenow={activeStep + 1}
-                aria-valuetext={`Paso ${activeStep + 1} de ${steps.length}: ${
-                  STEP_LABELS[steps[activeStep] ?? steps[0]]
-                }`}
+                aria-valuenow={flowComplete ? steps.length : activeStep}
+                aria-valuetext={
+                  flowComplete
+                    ? "Listo"
+                    : `Paso ${activeStep + 1} de ${steps.length}: ${
+                        STEP_LABELS[steps[activeStep] ?? steps[0]]
+                      }`
+                }
                 sx={{
                   height: 4,
                   borderRadius: "2px",
@@ -349,7 +360,16 @@ export default function LoginModal({
                     height: "100%",
                     borderRadius: "inherit",
                     backgroundColor: "primary.main",
-                    width: `${((activeStep + 1) / steps.length) * 100}%`,
+                    /**
+                     * Steps left behind, not the one in front of you: standing
+                     * on the last step is three quarters of the way, and the
+                     * bar closes when that step is accepted.
+                     */
+                    width: `${
+                      ((flowComplete ? steps.length : activeStep) /
+                        steps.length) *
+                      100
+                    }%`,
                     transition: "width .32s cubic-bezier(.22,1,.36,1)",
                   }}
                 />
@@ -921,6 +941,12 @@ export default function LoginModal({
                     if (nxt?.error)
                       throw new Error("No se pudo iniciar sesión");
 
+                    // Here is where the sign-up is finished. The wait runs
+                    // alongside the call below rather than after it, so the
+                    // bar gets its moment without the person waiting twice.
+                    setFlowComplete(true);
+                    const barFilled = new Promise((r) => setTimeout(r, 420));
+
                     // The password step is where the terms are accepted, so
                     // record it now — otherwise the consent dialog would greet
                     // this user asking them to accept what they just accepted.
@@ -952,8 +978,10 @@ export default function LoginModal({
                         has_gender: !!gender,
                       },
                     });
+                    await barFilled;
                     onClose();
                   } catch (err: unknown) {
+                    setFlowComplete(false);
                     setError(getErrorMessage(err));
                     gaEvent({
                       action: "signup_error",
