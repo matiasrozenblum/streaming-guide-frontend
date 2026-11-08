@@ -142,7 +142,6 @@ export interface Recap {
    * How many plays a recap needs. Sent by the API rather than hardcoded here so
    * the "you are at 2 of 3" progress cannot drift from the rule gating it.
    */
-  minimum_plays: number;
   period: { type: RecapPeriod; from: string; to: string; label: string };
   top_programs: RecapProgram[];
   top_channels: RecapChannel[];

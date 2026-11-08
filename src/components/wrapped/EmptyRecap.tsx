@@ -2,6 +2,7 @@
 
 import { Box, Button, Typography } from "@mui/material";
 import { useRouter } from "next/navigation";
+import { recapWaiting } from "@/utils/recapSchedule";
 import type { Recap } from "@/services/analytics";
 
 /**
@@ -103,16 +104,19 @@ function PlacaSkeleton() {
 }
 
 /**
- * What most people see at first: the recap needs a handful of plays before it
- * says anything worth sharing. The bar turns the gate into progress instead of
- * a dead end, and the target comes from the API so it cannot drift from the
- * rule that actually withholds the recap.
+ * What there is to say when the recap is not there yet.
+ *
+ * There used to be a counter here — "vas 1 de 3 reproducciones" — from back
+ * when a handful of plays was the gate. The gate is the calendar now, and the
+ * counter was worse than redundant: from Monday to Thursday the week on screen
+ * is already closed, so it promised that a few more plays would fill a period
+ * nothing could change. What it says instead is when the next one lands.
  */
 export function EmptyRecap({ recap }: { recap: Recap }) {
   const router = useRouter();
-  const done = recap.totals.plays;
-  const target = Math.max(recap.minimum_plays, 1);
-  const pct = Math.min(100, Math.round((done / target) * 100));
+  const waiting = recapWaiting(
+    recap.period.type === "month" ? "month" : "week",
+  );
 
   return (
     <Box
@@ -156,7 +160,7 @@ export function EmptyRecap({ recap }: { recap: Recap }) {
             color: "#F1F5F9",
           }}
         >
-          Estamos armando tu resumen
+          {waiting.title}
         </Typography>
 
         <Typography
@@ -166,40 +170,8 @@ export function EmptyRecap({ recap }: { recap: Recap }) {
             color: "#CBD5E1",
           }}
         >
-          Para construirlo necesitamos que sigas mirando programas y streamers
-          en La Guía. Con unas pocas reproducciones más, tu resumen aparece acá.
+          {waiting.body}
         </Typography>
-
-        <Box sx={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-          <Box sx={{ display: "flex", justifyContent: "space-between", gap: "12px" }}>
-            <Typography
-              sx={{ fontSize: { xs: 12, md: 13 }, fontWeight: 600, color: "#F1F5F9" }}
-            >
-              Vas {done} de {target}{" "}
-              {target === 1 ? "reproducción" : "reproducciones"}
-            </Typography>
-            <Typography sx={{ fontSize: { xs: 12, md: 13 }, color: "#94A3B8" }}>
-              Meta: {target}
-            </Typography>
-          </Box>
-          <Box
-            role="progressbar"
-            aria-valuenow={done}
-            aria-valuemin={0}
-            aria-valuemax={target}
-            sx={{ height: 8, borderRadius: "4px", bgcolor: "#1E293B", overflow: "hidden" }}
-          >
-            <Box
-              sx={{
-                width: `${pct}%`,
-                height: "100%",
-                borderRadius: "4px",
-                bgcolor: "#3B82F6",
-                transition: "width .3s ease",
-              }}
-            />
-          </Box>
-        </Box>
 
         <Button
           variant="contained"
