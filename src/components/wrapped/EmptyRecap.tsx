@@ -116,6 +116,7 @@ export function EmptyRecap({ recap }: { recap: Recap }) {
   const router = useRouter();
   const waiting = recapWaiting(
     recap.period.type === "month" ? "month" : "week",
+    recap.period,
   );
 
   return (
