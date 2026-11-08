@@ -94,10 +94,17 @@ export async function inlineImage(url: string | null): Promise<string | null> {
       return `data:${type};base64,${buffer.toString("base64")}`;
     }
 
-    // WebP, AVIF and friends: re-encode. SVG is skipped outright — sharp can
-    // rasterise it, but only at a size it has to guess, and the result is
-    // unreliable enough that the text fallback reads better.
-    if (type.includes("svg")) return null;
+    /**
+     * SVG goes through as itself. This used to return null on the theory that
+     * rasterising needs a size we would have to guess — but satori reads an
+     * SVG data URI directly and scales it to the box it is given, so there is
+     * nothing to guess. Discarding it did not fall back to text either: the
+     * placa simply drew an empty tile, which is how Vorterix's wordmark became
+     * a black square on every placa its channel appeared in.
+     */
+    if (type.includes("svg")) {
+      return `data:image/svg+xml;base64,${buffer.toString("base64")}`;
+    }
 
     return await toPng(buffer);
   } catch {
