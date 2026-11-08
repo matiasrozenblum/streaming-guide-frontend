@@ -9,6 +9,8 @@ import BottomNavigation, {
 import { getMyRecap, type Recap, type RecapPeriod } from "@/services/analytics";
 import { RecapDock } from "./RecapDock";
 import { EmptyRecap } from "./EmptyRecap";
+import { RecapStatusPill } from "./RecapStatusPill";
+import { recapWaiting } from "@/utils/recapSchedule";
 import { event as trackEvent } from "@/lib/gtag";
 import { PLACA_ORDER, canRender, type PlacaKind } from "./placas/Placa";
 
@@ -370,9 +372,18 @@ export function RecapClient() {
 
         {recap && (
           <Typography sx={{ fontSize: 14, color: "#94A3B8" }}>
-            {rangeLabel(recap)}
+            {/* While there is nothing to show, the dates are the ones the next
+                recap will cover: the period the API hands back is the closed
+                one behind us, and printing it next to "tu primer resumen llega
+                el viernes" would date the promise to a week already gone. */}
+            {recap.enough_data
+              ? rangeLabel(recap)
+              : recapWaiting(recap.period.type === "month" ? "month" : "week")
+                  .rangeLabel}
           </Typography>
         )}
+
+        {recap?.enough_data && <RecapStatusPill range={recap.period} />}
 
         {recap?.enough_data && (
           <Typography

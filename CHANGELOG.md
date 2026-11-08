@@ -35,6 +35,11 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - **En mobile las placas se deslizan como historias**: en lugar de apilarse verticalmente, ocupan casi toda la pantalla y se pasa de una a la otra con el dedo. Es scroll-snap del navegador y no un carrusel con libreria, asi que el gesto se siente como el del resto del sistema; sin progressbar, y los botones de compartir quedan fijos abajo actuando sobre la placa que esta a la vista.
 - **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
 
+### Changed
+
+- **Mi resumen dice en qué parte del calendario está**: una pastilla arriba del carrusel con lo que estás viendo y lo que viene — "Semana pasada · Nuevo resumen el viernes a las 18 hs", "Lunes a viernes · Mañana se suma el sábado". El rango de fechas solo no alcanzaba: de lunes a jueves lo que se muestra es la semana pasada, y un resumen viejo sin explicación se lee como un resumen roto. La frase sale del rango que manda la API y no del reloj del aparato, así que un teléfono en otro huso no puede nombrar el día equivocado.
+- **Se va el contador de reproducciones de la pantalla de espera**. El mínimo de tres ya no existe —la única regla es el calendario— y además el contador mentía: de lunes a jueves prometía que unas reproducciones más llenaban una semana que ya había cerrado. En su lugar dice cuándo llega el próximo resumen y con qué días se va a armar, y el encabezado muestra esas fechas y no las del período cerrado que quedó atrás.
+
 ### Fixed
 
 - **Entrar a Mi resumen sin sesión abría el teclado solo**: el campo del correo tenía el foco puesto desde que se montaba, así que en un teléfono el teclado tapaba la pantalla antes de que nadie llegara a leer de qué se trataba la sección. El foco ahora es una decisión de quien monta el formulario: encendido en el diálogo, donde la persona acaba de tocar "Ingresar" y el campo es lo que fue a buscar; apagado donde el formulario es la página.
