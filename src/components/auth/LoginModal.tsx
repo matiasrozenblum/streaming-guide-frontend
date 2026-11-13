@@ -1,200 +1,203 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect } from "react";
 import {
-  Dialog, DialogTitle, DialogContent,
-  IconButton, Box, useTheme, Stepper, Step, StepLabel, StepConnector, stepConnectorClasses, StepIconProps, Button, Tooltip
-} from '@mui/material';
-import CloseIcon from '@mui/icons-material/Close';
-import MailOutlineIcon from '@mui/icons-material/MailOutline';
-import VpnKeyIcon from '@mui/icons-material/VpnKey';
-import PersonOutlineIcon from '@mui/icons-material/PersonOutline';
-import LockOutlinedIcon from '@mui/icons-material/LockOutlined';
-import { signIn, useSession } from 'next-auth/react';
-import EmailStep from './steps/EmailStep';
-import CodeStep from './steps/CodeStep';
-import ProfileStep from './steps/ProfileStep';
-import PasswordStep from './steps/PasswordStep';
-import ExistingUserStep from './steps/ExistingUserStep';
-import { useDeviceId } from '@/hooks/useDeviceId';
-import { event as gaEvent } from '@/lib/gtag';
-import { useTooltip } from '@/contexts/TooltipContext';
-import { styled, Theme } from '@mui/material/styles';
-import GoogleIcon from '@mui/icons-material/Google';
-import AppleIcon from '@mui/icons-material/Apple';
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  Paper,
+  IconButton,
+  Box,
+  Button,
+  Tooltip,
+} from "@mui/material";
+import CloseIcon from "@mui/icons-material/Close";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { signIn, useSession } from "next-auth/react";
+import EmailStep from "./steps/EmailStep";
+import CodeStep from "./steps/CodeStep";
+import ProfileStep from "./steps/ProfileStep";
+import PasswordStep from "./steps/PasswordStep";
+import ExistingUserStep from "./steps/ExistingUserStep";
+import { useDeviceId } from "@/hooks/useDeviceId";
+import { event as gaEvent } from "@/lib/gtag";
+import { useTooltip } from "@/contexts/TooltipContext";
+import GoogleIcon from "@mui/icons-material/Google";
+import AppleIcon from "@mui/icons-material/Apple";
 // import FacebookIcon from '@mui/icons-material/Facebook'; // Temporarily disabled - requires app review
-import CircularProgress from '@mui/material/CircularProgress';
+import CircularProgress from "@mui/material/CircularProgress";
+import { buildLegalConsentEntry } from "@/constants/legal";
 
 // Helper para extraer mensaje de Error
 function getErrorMessage(err: unknown): string {
   return err instanceof Error ? err.message : String(err);
 }
 
-type StepKey = 'email' | 'code' | 'profile' | 'password' | 'existing-user';
+type StepKey = "email" | "code" | "profile" | "password" | "existing-user";
 
-const ALL_STEPS: Record<'new' | 'existing', StepKey[]> = {
-  new: ['email', 'code', 'profile', 'password'],
-  existing: ['email', 'existing-user']
+const ALL_STEPS: Record<"new" | "existing", StepKey[]> = {
+  new: ["email", "code", "profile", "password"],
+  existing: ["email", "existing-user"],
 };
 const STEP_LABELS: Record<StepKey, string> = {
-  email: 'Correo',
-  code: 'Verificar',
-  profile: 'Perfil',
-  password: 'Contraseña',
-  'existing-user': 'Acceso'
+  email: "Correo",
+  code: "Verificar",
+  profile: "Perfil",
+  password: "Contraseña",
+  "existing-user": "Acceso",
 };
-const STEP_ICONS: Record<StepKey, React.ReactNode> = {
-  email: <MailOutlineIcon fontSize="small" />,
-  code: <VpnKeyIcon fontSize="small" />,
-  profile: <PersonOutlineIcon fontSize="small" />,
-  password: <LockOutlinedIcon fontSize="small" />,
-  'existing-user': <VpnKeyIcon fontSize="small" />
-};
-
-// Custom StepConnector with loading animation
-const BlueConnector = styled(StepConnector)<{ isLoading?: boolean }>(({ theme, isLoading }: { theme: Theme; isLoading?: boolean }) => ({
-  [`& .${stepConnectorClasses.line}`]: {
-    borderTopWidth: 3,
-    borderRadius: 1,
-    borderColor: theme.palette.divider,
-    position: 'relative',
-    overflow: 'hidden',
-    transition: 'border-color 0.3s',
-  },
-  [`&.${stepConnectorClasses.completed} .${stepConnectorClasses.line}`]: {
-    borderColor: theme.palette.primary.main,
-  },
-  [`&.${stepConnectorClasses.active} .${stepConnectorClasses.line}`]: {
-    borderColor: isLoading ? theme.palette.divider : theme.palette.primary.main,
-    '&::after': isLoading ? {
-      content: '""',
-      position: 'absolute',
-      top: 0,
-      left: 0,
-      height: '100%',
-      width: '100%',
-      background: `linear-gradient(90deg, transparent 0%, ${theme.palette.primary.main} 50%, transparent 100%)`,
-      animation: 'progress-wave 1.5s infinite',
-    } : {},
-  },
-  '@keyframes progress-wave': {
-    '0%': {
-      transform: 'translateX(-100%)',
-    },
-    '100%': {
-      transform: 'translateX(100%)',
-    },
-  },
-}));
 
 // Custom StepIcon that uses your icons and colors them blue for active/completed steps
-function CustomStepIcon(props: StepIconProps & { stepKey?: StepKey; isLoading?: boolean; completedSteps?: Set<StepKey> }) {
-  const { active, completed, icon, stepKey, isLoading, completedSteps } = props;
-  const theme = useTheme();
-  const iconKey = stepKey || (typeof icon === 'number' ? Object.keys(STEP_ICONS)[icon - 1] : icon);
-
-  const isStepCompleted = completedSteps?.has(stepKey as StepKey) || completed;
-  const shouldBeBlue = isStepCompleted || (active && !isLoading);
-  const shouldAnimate = active && isLoading;
-
-  return (
-    <Box
-      sx={{
-        color: shouldBeBlue ? theme.palette.primary.main : theme.palette.text.disabled,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        width: 32,
-        height: 32,
-        fontSize: 22,
-        transition: 'color 0.3s',
-        animation: shouldAnimate ? 'pulse 1.5s infinite' : 'none',
-        '@keyframes pulse': {
-          '0%, 100%': {
-            opacity: 0.5,
-          },
-          '50%': {
-            opacity: 1,
-          },
-        },
-      }}
-    >
-      {STEP_ICONS[iconKey as StepKey]}
-    </Box>
-  );
-}
 
 const mapGenderToBackend = (g: string) => {
   switch (g) {
-    case 'masculino': return 'male';
-    case 'femenino': return 'female';
-    case 'no_binario': return 'non_binary';
-    case 'prefiero_no_decir': return 'rather_not_say';
-    default: return 'rather_not_say';
+    case "masculino":
+      return "male";
+    case "femenino":
+      return "female";
+    case "no_binario":
+      return "non_binary";
+    case "prefiero_no_decir":
+      return "rather_not_say";
+    default:
+      return "rather_not_say";
   }
 };
 
 // Add global type for window.__socialLoginHandled
-declare global {
+declare global {}
 
-}
-
-export default function LoginModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+export default function LoginModal({
+  open,
+  onClose,
+  variant = "dialog",
+  onPhaseChange,
+}: {
+  open: boolean;
+  onClose: () => void;
+  /**
+   * Fires when the form moves from asking for an e-mail to the steps that
+   * follow. The signed-out page listens so it can give the form the whole
+   * screen: those steps need room the pitch is holding.
+   */
+  onPhaseChange?: (phase: "email" | "flow") => void;
+  /**
+   * "dialog" floats over whatever page you were on. "inline" drops the same
+   * steps into the layout, for the signed-out /mi-resumen, where the form is
+   * not an interruption — it is the content of that half of the screen.
+   */
+  variant?: "dialog" | "inline";
+}) {
   const deviceId = useDeviceId();
   const { closeTooltip } = useTooltip();
   const { data: session, status: sessionStatus } = useSession();
 
-  const [step, setStep] = useState<StepKey>('email');
+  const [step, setStep] = useState<StepKey>("email");
   const [isUserExisting, setIsUserExisting] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
-  const [completedSteps, setCompletedSteps] = useState<Set<StepKey>>(new Set());
-  const [email, setEmail] = useState('');
-  const [code, setCode] = useState('');
-  const [registrationToken, setRegistrationToken] = useState('');
-  const [firstName, setFirstName] = useState('');
-  const [lastName, setLastName] = useState('');
-  const [error, setError] = useState('');
+  const [email, setEmail] = useState("");
+  const [code, setCode] = useState("");
+  const [registrationToken, setRegistrationToken] = useState("");
+  const [firstName, setFirstName] = useState("");
+  const [lastName, setLastName] = useState("");
+  const [error, setError] = useState("");
   const [forgotPassword, setForgotPassword] = useState(false);
-  const [birthDate, setBirthDate] = useState('');
-  const [gender, setGender] = useState('');
-  const [userFirstName, setUserFirstName] = useState('');
-  const [userGender, setUserGender] = useState('');
-  const [phase, setPhase] = useState<'email' | 'flow'>('email');
+  const [birthDate, setBirthDate] = useState("");
+  const [gender, setGender] = useState("");
+  const [userFirstName, setUserFirstName] = useState("");
+  const [userGender, setUserGender] = useState("");
+  const [phase, setPhase] = useState<"email" | "flow">("email");
   const [socialLoginPending, setSocialLoginPending] = useState(false);
+  /**
+   * The last step is done when the password is accepted, not when it is shown.
+   * Without this the bar would be full while the form is still empty, and the
+   * one moment the sign-up is actually finished would have nothing to show.
+   */
+  const [flowComplete, setFlowComplete] = useState(false);
 
   useEffect(() => {
-    if (!open) {
-      setStep('email'); setIsUserExisting(false);
-      setCompletedSteps(new Set());
-      setEmail(''); setCode(''); setRegistrationToken('');
-      setFirstName(''); setLastName(''); setError(''); setIsLoading(false);
+    // Inline it never closes, so there is nothing to reset: leaving this on
+    // `open` alone would wipe the form the moment it mounted.
+    if (!open && variant === "dialog") {
+      setStep("email");
+      setIsUserExisting(false);
+      setEmail("");
+      setCode("");
+      setRegistrationToken("");
+      setFirstName("");
+      setLastName("");
+      setError("");
+      setIsLoading(false);
       setForgotPassword(false);
-      setBirthDate(''); setGender('');
-      setUserFirstName(''); setUserGender('');
-      setPhase('email');
+      setBirthDate("");
+      setGender("");
+      setUserFirstName("");
+      setUserGender("");
+      setPhase("email");
       setSocialLoginPending(false);
+      setFlowComplete(false);
     }
-  }, [open]);
+  }, [open, variant]);
+
+  /**
+   * Back to the e-mail panel with the address still in hand, which is both
+   * what "Cambiar correo" means and where the header arrow goes from the first
+   * step of the flow.
+   */
+  const returnToEmail = () => {
+    setError("");
+    setCode("");
+    setForgotPassword(false);
+    setIsUserExisting(false);
+    setStep("email");
+    setPhase("email");
+  };
+
+  /** One step back, following the same path each step's own button takes. */
+  const goBack = () => {
+    setError("");
+    if (step === "existing-user") return returnToEmail();
+    if (forgotPassword && step === "code") {
+      setForgotPassword(false);
+      setStep("existing-user");
+      return;
+    }
+    if (forgotPassword && step === "password") return setStep("code");
+    const index = steps.indexOf(step);
+    if (index <= 0) return returnToEmail();
+    /**
+     * Landing on the e-mail step means leaving the flow, not just moving the
+     * cursor: the e-mail field renders in the other phase, so setting the step
+     * alone left the panel with nothing in it.
+     */
+    const previous = steps[index - 1];
+    if (previous === "email") return returnToEmail();
+    setStep(previous);
+  };
+
+  useEffect(() => {
+    onPhaseChange?.(phase);
+  }, [phase, onPhaseChange]);
 
   // Track social login success when session becomes authenticated
   useEffect(() => {
-    if (sessionStatus === 'authenticated' && session?.user) {
+    if (sessionStatus === "authenticated" && session?.user) {
       // Check if this was a social login by looking at sessionStorage
-      const socialProvider = sessionStorage.getItem('lastSocialProvider');
+      const socialProvider = sessionStorage.getItem("lastSocialProvider");
       if (socialProvider) {
         // Clear the sessionStorage
-        sessionStorage.removeItem('lastSocialProvider');
+        sessionStorage.removeItem("lastSocialProvider");
 
         // For existing users, track login success immediately
         // For new users, we'll track signup success when they reach profile completion
-        if (window.location.pathname !== '/profile-completion') {
+        if (window.location.pathname !== "/profile-completion") {
           gaEvent({
-            action: 'social_login_success',
+            action: "social_login_success",
             params: {
               provider: socialProvider,
-              method: 'social_login',
-              user_type: 'existing',
-            }
+              method: "social_login",
+              user_type: "existing",
+            },
           });
         }
       }
@@ -206,10 +209,10 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
     if (open) {
       closeTooltip(); // Close all tooltips when modal opens
       gaEvent({
-        action: 'auth_modal_open',
+        action: "auth_modal_open",
         params: {
           is_existing_user: isUserExisting,
-        }
+        },
       });
     }
   }, [open, isUserExisting, closeTooltip]);
@@ -218,12 +221,12 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
   useEffect(() => {
     if (open) {
       gaEvent({
-        action: 'auth_step_change',
+        action: "auth_step_change",
         params: {
           step,
           is_existing_user: isUserExisting,
           has_error: !!error,
-        }
+        },
       });
     }
   }, [step, open, isUserExisting, error]);
@@ -234,7 +237,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
   // Track signup step complete (for funnel)
   const trackSignupStep = (stepName: string, extraParams = {}) => {
     gaEvent({
-      action: 'signup_step_complete',
+      action: "signup_step_complete",
       params: {
         step: stepName,
         email_provided: !!email,
@@ -242,166 +245,204 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
         has_last_name: !!lastName,
         has_birth_date: !!birthDate,
         has_gender: !!gender,
-        ...extraParams
-      }
+        ...extraParams,
+      },
     });
   };
-
-
-
-
 
   // Remove popup-based social login handler
   // const handleSocialLogin = async (provider: 'google' | 'facebook') => { ... };
 
-  return (
-    <Dialog open={open} onClose={onClose} fullWidth maxWidth="xs"
-      slotProps={{
-        paper: {
-          sx: {
-            borderRadius: 2,
-            backgroundColor: '#0F172A'
-          }
-        }
-      }}
-    >
-      <DialogTitle sx={{ display: 'flex', justifyContent: 'space-between', px: 3, py: 2, backgroundColor: '#0F172A' }}>
-        {phase === 'email' ? '¡Bienvenid@ a La Guía!' : (
-          isUserExisting && step === 'existing-user'
-            ? 'Iniciar Sesión'
-            : !isUserExisting && step === 'email'
-              ? 'Acceder / Registrarse'
-              : step === 'code'
-                ? (forgotPassword ? 'Recuperar contraseña' : 'Verificar correo')
-                : step === 'profile'
-                  ? 'Completa tu perfil'
-                  : step === 'password'
-                    ? (forgotPassword ? 'Nueva contraseña' : 'Creá tu contraseña')
-                    : ''
+  /**
+   * The steps themselves, with no shell around them. The auth flow is the
+   * one piece of this app that must not exist twice — the signed-out
+   * version of /mi-resumen shows this very form as its right-hand column,
+   * so it is the same component with a different wrapper, not a copy.
+   */
+  const content = (
+    <>
+      <DialogTitle
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          // With the arrow in front, the title belongs beside it; pushed apart
+          // it drifted to the far edge and read as a right-aligned heading.
+          justifyContent:
+            variant === "inline" ? "flex-start" : "space-between",
+          gap: variant === "inline" ? 0.5 : 0,
+          px: 3,
+          py: 2,
+          backgroundColor: "#0F172A",
+        }}
+      >
+        {phase === "email"
+          ? "¡Bienvenid@ a La Guía!"
+          : isUserExisting && step === "existing-user"
+            ? "Iniciar Sesión"
+            : !isUserExisting && step === "email"
+              ? "Acceder / Registrarse"
+              : step === "code"
+                ? forgotPassword
+                  ? "Recuperar contraseña"
+                  : "Verificar correo"
+                : step === "profile"
+                  ? "Completa tu perfil"
+                  : step === "password"
+                    ? forgotPassword
+                      ? "Nueva contraseña"
+                      : "Creá tu contraseña"
+                    : ""}
+        {/* The way back is the arrow, in both shapes. The cross is the way
+            out, which is a different thing: somebody who mistyped a step does
+            not want to lose the three they already filled in. Inline there is
+            no cross, because there is nothing to close. */}
+        {phase === "flow" && (
+          <IconButton
+            aria-label="Volver"
+            onClick={socialLoginPending ? undefined : goBack}
+            sx={{ order: -1, ml: -1, mr: 0.5 }}
+          >
+            <ArrowBackIcon />
+          </IconButton>
         )}
-        <Tooltip title="Cerrar modal" arrow>
-          <IconButton aria-label="Cerrar modal" onClick={socialLoginPending ? undefined : onClose}><CloseIcon /></IconButton>
-        </Tooltip>
+        {variant === "dialog" && (
+          <Tooltip title="Cerrar modal" arrow>
+            <IconButton
+              aria-label="Cerrar modal"
+              onClick={socialLoginPending ? undefined : onClose}
+            >
+              <CloseIcon />
+            </IconButton>
+          </Tooltip>
+        )}
       </DialogTitle>
 
-      {(
+      {
         <>
-          {phase === 'flow' && (
-            <Box sx={{ px: 3, pt: 2, backgroundColor: '#0F172A' }}>
-              <Stepper
-                nonLinear
-                alternativeLabel
-                activeStep={activeStep}
-                connector={<BlueConnector isLoading={isLoading} />}
+          {phase === "flow" && !isUserExisting && (
+            /**
+             * One bar that fills, in place of the stepper with icons and labels
+             * under each one. That one needs room a 390px screen does not have,
+             * and nobody reads "Paso 2 de 4 · Verificar" as anything but
+             * paperwork — the heading right above it already says which step
+             * this is, so the sentence was saying it twice in worse words. What
+             * the bar adds is the part the heading cannot show: how much is
+             * left. The progress is announced instead of drawn, so a screen
+             * reader still gets the count the sentence used to carry.
+             *
+             * Only while signing up. Somebody who already has an account types
+             * an address and then a password: there is no journey to chart, and
+             * the recovery branch is not in `ALL_STEPS.existing` at all, so the
+             * bar there would measure against a list it is not part of.
+             */
+            <Box sx={{ px: 3, pt: 2 }}>
+              <Box
+                role="progressbar"
+                aria-valuemin={0}
+                aria-valuemax={steps.length}
+                aria-valuenow={flowComplete ? steps.length : activeStep}
+                aria-valuetext={
+                  flowComplete
+                    ? "Listo"
+                    : `Paso ${activeStep + 1} de ${steps.length}: ${
+                        STEP_LABELS[steps[activeStep] ?? steps[0]]
+                      }`
+                }
                 sx={{
-                  width: '100%',
-                  minWidth: 0,
-                  backgroundColor: 'transparent',
-                  '.MuiStepConnector-line': {
-                    minWidth: 24,
-                  },
+                  height: 4,
+                  borderRadius: "2px",
+                  backgroundColor: "#1E293B",
+                  overflow: "hidden",
                 }}
               >
-                {steps.map((key) => {
-                  const isCompleted = completedSteps.has(key);
-                  const isActive = step === key;
-                  const isCurrentlyLoading = isActive && isLoading;
-                  return (
-                    <Step key={key} completed={isCompleted} active={isActive}>
-                      <StepLabel
-                        sx={{
-                          mt: 0,
-                          mb: 0,
-                          '.MuiStepLabel-label': {
-                            marginTop: '0px',
-                            marginBottom: '0px',
-                            lineHeight: 1.1,
-                            color: (theme) => theme.palette.text.secondary,
-                            fontWeight: 600,
-                            fontSize: 13,
-                          },
-                          '.MuiStepLabel-label.Mui-active, .MuiStepLabel-label.Mui-completed': {
-                            color: (theme) => theme.palette.primary.main,
-                            marginTop: '0px',
-                            marginBottom: '0px',
-                          },
-                          '.MuiStepLabel-label.MuiStepLabel-alternativeLabel': {
-                            marginTop: '0px !important',
-                            marginBottom: '0px !important',
-                          },
-                        }}
-                        StepIconComponent={(props) => (
-                          <CustomStepIcon
-                            {...props}
-                            stepKey={key}
-                            isLoading={isCurrentlyLoading}
-                            completedSteps={completedSteps}
-                          />
-                        )}
-                      >
-                        {STEP_LABELS[key]}
-                      </StepLabel>
-                    </Step>
-                  );
-                })}
-              </Stepper>
+                <Box
+                  sx={{
+                    height: "100%",
+                    borderRadius: "inherit",
+                    backgroundColor: "primary.main",
+                    /**
+                     * Steps left behind, not the one in front of you: standing
+                     * on the last step is three quarters of the way, and the
+                     * bar closes when that step is accepted.
+                     */
+                    width: `${
+                      ((flowComplete ? steps.length : activeStep) /
+                        steps.length) *
+                      100
+                    }%`,
+                    transition: "width .32s cubic-bezier(.22,1,.36,1)",
+                  }}
+                />
+              </Box>
             </Box>
           )}
 
-          <DialogContent sx={{ px: 3, py: 2, backgroundColor: '#0F172A' }}>
-            {phase === 'email' && (
+          <DialogContent sx={{ px: 3, py: 2, backgroundColor: "#0F172A" }}>
+            {phase === "email" && (
               <>
                 <EmailStep
                   initialEmail={email}
+                  autoFocus={variant === "dialog"}
                   isLoading={isLoading}
                   error={error}
                   onSubmit={async (e) => {
-                    setIsLoading(true); setError(''); setEmail(e);
+                    setIsLoading(true);
+                    setError("");
+                    setEmail(e);
                     try {
                       const res = await fetch(`/api/users/email/${e}`);
                       if (res.ok) {
                         const userData = await res.json();
-                        setUserFirstName(userData.firstName || '');
-                        setUserGender(userData.gender || '');
-                        setCompletedSteps(prev => new Set([...prev, 'email']));
+                        setUserFirstName(userData.firstName || "");
+                        setUserGender(userData.gender || "");
                         setIsUserExisting(true);
 
                         // Check if user registered via social login
-                        if (userData.origin && userData.origin !== 'traditional') {
+                        if (
+                          userData.origin &&
+                          userData.origin !== "traditional"
+                        ) {
                           // Automatically trigger social login for the detected provider
-                          const provider = userData.origin === 'google' ? 'google' : 'facebook';
+                          const provider =
+                            userData.origin === "google"
+                              ? "google"
+                              : "facebook";
                           setSocialLoginPending(true);
                           // Store provider in sessionStorage for tracking
-                          sessionStorage.setItem('lastSocialProvider', provider);
+                          sessionStorage.setItem(
+                            "lastSocialProvider",
+                            provider,
+                          );
                           // Track social login attempt
                           gaEvent({
-                            action: 'social_login_attempt',
+                            action: "social_login_attempt",
                             params: {
                               provider: provider,
-                              method: 'auto_redirect',
-                            }
+                              method: "auto_redirect",
+                            },
                           });
                           // Automatically trigger the social login
-                          await signIn(provider, { callbackUrl: '/profile-completion' });
+                          await signIn(provider, {
+                            callbackUrl: "/profile-completion",
+                          });
                           setSocialLoginPending(false);
                           return; // Exit early to prevent further processing
                         } else {
                           // Regular email user, proceed to password step
-                          setStep('existing-user');
-                          setPhase('flow');
+                          setStep("existing-user");
+                          setPhase("flow");
                         }
                       } else if (res.status === 404) {
-                        setCompletedSteps(prev => new Set([...prev, 'email']));
                         setIsUserExisting(false);
-                        await fetch('/api/auth/send-code', {
-                          method: 'POST',
-                          headers: { 'Content-Type': 'application/json' },
+                        await fetch("/api/auth/send-code", {
+                          method: "POST",
+                          headers: { "Content-Type": "application/json" },
                           body: JSON.stringify({ identifier: e }),
                         });
-                        setStep('code');
-                        setPhase('flow');
+                        setStep("code");
+                        setPhase("flow");
                       } else {
-                        throw new Error('Error inesperado');
+                        throw new Error("Error inesperado");
                       }
                     } catch (err: unknown) {
                       setError(getErrorMessage(err));
@@ -409,61 +450,101 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     setIsLoading(false);
                   }}
                 />
-                {/* Social login separator */}
-                <Box sx={{ display: 'flex', alignItems: 'center', my: 2 }}>
-                  <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
-                  <Box sx={{ mx: 2, color: 'text.secondary', fontWeight: 600 }}>o</Box>
-                  <Box sx={{ flex: 1, height: 1, bgcolor: 'divider' }} />
+                {/* Social login separator. Named so a host that is short of
+                    room — the signed-out screen on a phone — can tighten it
+                    without reaching in by shape. */}
+                <Box
+                  className="auth-social-separator"
+                  sx={{ display: "flex", alignItems: "center", my: 2 }}
+                >
+                  <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
+                  <Box sx={{ mx: 2, color: "text.secondary", fontWeight: 600 }}>
+                    o
+                  </Box>
+                  <Box sx={{ flex: 1, height: 1, bgcolor: "divider" }} />
                 </Box>
-                {/* Social login buttons */}
-                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 1 }}>
+                {/* Social login buttons. Side by side on a phone: two full
+                    rows cost 54px of height that the signed-out screen does
+                    not have, and the provider's logo carries the meaning
+                    without the words. */}
+                <Box
+                  className="auth-social-buttons"
+                  sx={{
+                    display: "flex",
+                    flexDirection: { xs: "row", sm: "column" },
+                    gap: 1,
+                  }}
+                >
                   <Button
                     variant="outlined"
                     fullWidth
                     onClick={async () => {
                       setSocialLoginPending(true);
                       // Store provider in sessionStorage for tracking
-                      sessionStorage.setItem('lastSocialProvider', 'google');
+                      sessionStorage.setItem("lastSocialProvider", "google");
                       gaEvent({
-                        action: 'social_login_attempt',
+                        action: "social_login_attempt",
                         params: {
-                          provider: 'google',
-                          method: 'social_signup',
-                        }
+                          provider: "google",
+                          method: "social_signup",
+                        },
                       });
-                      await signIn('google', { callbackUrl: '/profile-completion' });
+                      await signIn("google", {
+                        callbackUrl: "/profile-completion",
+                      });
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
-                    aria-label={socialLoginPending ? 'Conectando con Google' : 'Conectate con Google'}
+                    aria-label={
+                      socialLoginPending
+                        ? "Conectando con Google"
+                        : "Conectate con Google"
+                    }
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       gap: 1,
                       py: 1.5,
                       borderRadius: 1.5,
-                      textTransform: 'none',
+                      textTransform: "none",
                       fontSize: 16,
                       fontWeight: 600,
-                      borderColor: 'text.primary',
-                      color: 'text.primary',
-                      backgroundColor: '#0F172A',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        backgroundColor: 'action.hover',
+                      borderColor: "text.primary",
+                      color: "text.primary",
+                      backgroundColor: "#0F172A",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        backgroundColor: "action.hover",
                       },
-                      '&:disabled': {
+                      "&:disabled": {
                         opacity: 0.6,
-                      }
+                      },
+                      flex: { xs: 1, sm: "none" },
+                      minWidth: 0,
                     }}
                   >
                     {socialLoginPending ? (
-                      <CircularProgress size={20} sx={{ color: 'text.primary' }} />
+                      <CircularProgress
+                        size={20}
+                        sx={{ color: "text.primary" }}
+                      />
                     ) : (
-                      <GoogleIcon sx={{ color: '#4285F4' }} />
+                      <GoogleIcon sx={{ color: "#4285F4" }} />
                     )}
-                    {socialLoginPending ? 'Conectando...' : 'Conectate con Google'}
+                    {socialLoginPending ? (
+                      "Conectando..."
+                    ) : (
+                      <Box component="span">
+                        <Box
+                          component="span"
+                          sx={{ display: { xs: "none", sm: "inline" } }}
+                        >
+                          Conectate con{" "}
+                        </Box>
+                        Google
+                      </Box>
+                    )}
                   </Button>
 
                   <Button
@@ -471,47 +552,70 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                     fullWidth
                     onClick={async () => {
                       setSocialLoginPending(true);
-                      sessionStorage.setItem('lastSocialProvider', 'apple');
+                      sessionStorage.setItem("lastSocialProvider", "apple");
                       gaEvent({
-                        action: 'social_login_attempt',
+                        action: "social_login_attempt",
                         params: {
-                          provider: 'apple',
-                          method: 'social_signup',
-                        }
+                          provider: "apple",
+                          method: "social_signup",
+                        },
                       });
-                      await signIn('apple', { callbackUrl: '/profile-completion' });
+                      await signIn("apple", {
+                        callbackUrl: "/profile-completion",
+                      });
                       setSocialLoginPending(false);
                     }}
                     disabled={socialLoginPending}
-                    aria-label={socialLoginPending ? 'Conectando con Apple' : 'Conectate con Apple'}
+                    aria-label={
+                      socialLoginPending
+                        ? "Conectando con Apple"
+                        : "Conectate con Apple"
+                    }
                     sx={{
-                      display: 'flex',
-                      alignItems: 'center',
-                      justifyContent: 'center',
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
                       gap: 1,
                       py: 1.5,
                       borderRadius: 1.5,
-                      textTransform: 'none',
+                      textTransform: "none",
                       fontSize: 16,
                       fontWeight: 600,
-                      borderColor: 'text.primary',
-                      color: 'text.primary',
-                      backgroundColor: '#0F172A',
-                      '&:hover': {
-                        borderColor: 'primary.main',
-                        backgroundColor: 'action.hover',
+                      borderColor: "text.primary",
+                      color: "text.primary",
+                      backgroundColor: "#0F172A",
+                      "&:hover": {
+                        borderColor: "primary.main",
+                        backgroundColor: "action.hover",
                       },
-                      '&:disabled': {
+                      "&:disabled": {
                         opacity: 0.6,
-                      }
+                      },
+                      flex: { xs: 1, sm: "none" },
+                      minWidth: 0,
                     }}
                   >
                     {socialLoginPending ? (
-                      <CircularProgress size={20} sx={{ color: 'text.primary' }} />
+                      <CircularProgress
+                        size={20}
+                        sx={{ color: "text.primary" }}
+                      />
                     ) : (
-                      <AppleIcon sx={{ color: '#FFF' }} />
+                      <AppleIcon sx={{ color: "#FFF" }} />
                     )}
-                    {socialLoginPending ? 'Conectando...' : 'Conectate con Apple'}
+                    {socialLoginPending ? (
+                      "Conectando..."
+                    ) : (
+                      <Box component="span">
+                        <Box
+                          component="span"
+                          sx={{ display: { xs: "none", sm: "inline" } }}
+                        >
+                          Conectate con{" "}
+                        </Box>
+                        Apple
+                      </Box>
+                    )}
                   </Button>
 
                   {/* Facebook login temporarily disabled - requires app review
@@ -564,59 +668,62 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
               </>
             )}
 
-            {step === 'existing-user' && (
+            {step === "existing-user" && (
               <ExistingUserStep
                 email={email}
                 firstName={userFirstName}
                 gender={userGender}
                 isLoading={isLoading}
                 error={error}
-                onBack={() => { setStep('email'); setPhase('email'); }}
+                onBack={() => {
+                  setStep("email");
+                  setPhase("email");
+                }}
                 onSubmit={async (pw) => {
-                  setIsLoading(true); setError('');
+                  setIsLoading(true);
+                  setError("");
                   try {
                     // Call the login API route
-                    const res = await fetch('/api/auth/login', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                    const res = await fetch("/api/auth/login", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({ email, password: pw }),
                     });
                     if (!res.ok) {
-                      setError('Credenciales inválidas');
+                      setError("Credenciales inválidas");
                       gaEvent({
-                        action: 'login_error',
+                        action: "login_error",
                         params: {
-                          method: 'password',
-                          error: 'invalid_credentials',
+                          method: "password",
+                          error: "invalid_credentials",
                           email_provided: !!email,
-                        }
+                        },
                       });
                       setIsLoading(false);
                       return;
                     }
                     const data = await res.json();
-                    const nxt = await signIn('credentials', {
+                    const nxt = await signIn("credentials", {
                       redirect: false,
                       accessToken: data.access_token,
                       refreshToken: data.refresh_token,
                     });
                     if (nxt?.error) {
-                      setError('Credenciales inválidas');
+                      setError("Credenciales inválidas");
                       gaEvent({
-                        action: 'login_error',
+                        action: "login_error",
                         params: {
-                          method: 'password',
-                          error: 'invalid_credentials',
+                          method: "password",
+                          error: "invalid_credentials",
                           email_provided: !!email,
-                        }
+                        },
                       });
                     } else {
-                      setCompletedSteps(prev => new Set([...prev, 'existing-user']));
                       gaEvent({
-                        action: 'login_success',
+                        action: "login_success",
                         params: {
-                          method: 'password',
-                        }
+                          method: "password",
+                        },
                       });
                       onClose();
                     }
@@ -628,14 +735,14 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                 onForgotPassword={() => {
                   setForgotPassword(true);
                   setIsLoading(true);
-                  fetch('/api/auth/send-code', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
+                  fetch("/api/auth/send-code", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ identifier: email }),
                   })
                     .then(() => {
-                      setStep('code');
-                      setError('');
+                      setStep("code");
+                      setError("");
                     })
                     .catch((err) => {
                       setError(getErrorMessage(err));
@@ -645,9 +752,10 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
               />
             )}
 
-            {step === 'code' && forgotPassword && (
+            {step === "code" && forgotPassword && (
               <CodeStep
                 email={email}
+                onChangeEmail={returnToEmail}
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
@@ -675,37 +783,45 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
               />
             )}
 
-            {step === 'code' && !forgotPassword && (
+            {step === "code" && !forgotPassword && (
               <CodeStep
                 email={email}
+                onChangeEmail={returnToEmail}
                 initialCode={code}
                 isLoading={isLoading}
                 error={error}
-                onBack={() => { setStep('email'); setPhase('email'); }}
+                onBack={() => {
+                  setStep("email");
+                  setPhase("email");
+                }}
                 onSubmit={async (c) => {
-                  setIsLoading(true); setError(''); setCode(c);
+                  setIsLoading(true);
+                  setError("");
+                  setCode(c);
                   try {
-                    const res = await fetch('/api/auth/verify-code', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ identifier: email, code: c, deviceId }),
+                    const res = await fetch("/api/auth/verify-code", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
+                      body: JSON.stringify({
+                        identifier: email,
+                        code: c,
+                        deviceId,
+                      }),
                     });
                     const body = await res.json();
-                    if (!res.ok) throw new Error(body.message || 'Error');
+                    if (!res.ok) throw new Error(body.message || "Error");
                     if (body.isNew) {
-                      setCompletedSteps(prev => new Set([...prev, 'code']));
-                      trackSignupStep('email_verification');
+                      trackSignupStep("email_verification");
                       setRegistrationToken(body.registration_token);
-                      setStep('profile');
+                      setStep("profile");
                     } else {
-                      setCompletedSteps(prev => new Set([...prev, 'code']));
                       gaEvent({
-                        action: 'login_success',
+                        action: "login_success",
                         params: {
-                          method: 'otp',
-                        }
+                          method: "otp",
+                        },
                       });
-                      const nxt = await signIn('credentials', {
+                      const nxt = await signIn("credentials", {
                         redirect: false,
                         accessToken: body.access_token,
                         refreshToken: body.refresh_token,
@@ -717,12 +833,15 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                   } catch (err: unknown) {
                     setError(getErrorMessage(err));
                     gaEvent({
-                      action: 'login_error',
+                      action: "login_error",
                       params: {
-                        method: 'otp',
-                        error: err instanceof Error ? err.message : 'otp_verification_failed',
+                        method: "otp",
+                        error:
+                          err instanceof Error
+                            ? err.message
+                            : "otp_verification_failed",
                         email_provided: !!email,
-                      }
+                      },
                     });
                   }
                   setIsLoading(false);
@@ -730,7 +849,7 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
               />
             )}
 
-            {step === 'profile' && registrationToken ? (
+            {step === "profile" && registrationToken ? (
               <ProfileStep
                 initialFirst={firstName}
                 initialLast={lastName}
@@ -743,10 +862,12 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                   setLastName(l);
                   setBirthDate(b);
                   setGender(g);
-                  setCompletedSteps(prev => new Set([...prev, 'profile']));
-                  setStep('password');
+                  setStep("password");
                 }}
-                onBack={() => { setStep('email'); setPhase('email'); }}
+                onBack={() => {
+                  setStep("email");
+                  setPhase("email");
+                }}
               />
             ) : null}
 
@@ -793,18 +914,19 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
               />
             )}
 
-            {step === 'password' && !forgotPassword && (
+            {step === "password" && !forgotPassword && (
               <PasswordStep
                 isLoading={isLoading}
                 error={error}
-                onBack={() => setStep('profile')}
+                onBack={() => setStep("profile")}
                 submitLabel="Registrarme"
                 onSubmit={async (pw) => {
-                  setIsLoading(true); setError('');
+                  setIsLoading(true);
+                  setError("");
                   try {
-                    const res = await fetch('/api/auth/register', {
-                      method: 'POST',
-                      headers: { 'Content-Type': 'application/json' },
+                    const res = await fetch("/api/auth/register", {
+                      method: "POST",
+                      headers: { "Content-Type": "application/json" },
                       body: JSON.stringify({
                         registration_token: registrationToken,
                         firstName,
@@ -812,36 +934,68 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
                         password: pw,
                         deviceId,
                         birthDate: birthDate || undefined,
-                        gender: mapGenderToBackend(gender)
+                        gender: mapGenderToBackend(gender),
                       }),
                     });
                     const body = await res.json();
-                    if (!res.ok) throw new Error(body.message || 'Error registro');
-                    const nxt = await signIn('credentials', {
+                    if (!res.ok)
+                      throw new Error(body.message || "Error registro");
+                    const nxt = await signIn("credentials", {
                       redirect: false,
                       accessToken: body.access_token,
                       refreshToken: body.refresh_token,
                     });
-                    if (nxt?.error) throw new Error('No se pudo iniciar sesión');
-                    setCompletedSteps(prev => new Set([...prev, 'password']));
+                    if (nxt?.error)
+                      throw new Error("No se pudo iniciar sesión");
+
+                    // Here is where the sign-up is finished. The wait runs
+                    // alongside the call below rather than after it, so the
+                    // bar gets its moment without the person waiting twice.
+                    setFlowComplete(true);
+                    const barFilled = new Promise((r) => setTimeout(r, 420));
+
+                    // The password step is where the terms are accepted, so
+                    // record it now — otherwise the consent dialog would greet
+                    // this user asking them to accept what they just accepted.
+                    // Best effort: if it fails they simply see the dialog once.
+                    try {
+                      await fetch(
+                        `${process.env.NEXT_PUBLIC_API_URL}/users/me/seen-features`,
+                        {
+                          method: "POST",
+                          headers: {
+                            "Content-Type": "application/json",
+                            Authorization: `Bearer ${body.access_token}`,
+                          },
+                          body: JSON.stringify({
+                            feature: buildLegalConsentEntry(),
+                          }),
+                        },
+                      );
+                    } catch {
+                      // Non-fatal; the dialog is the fallback.
+                    }
+
                     gaEvent({
-                      action: 'signup_success',
+                      action: "signup_success",
                       params: {
                         has_first_name: !!firstName,
                         has_last_name: !!lastName,
                         has_birth_date: !!birthDate,
                         has_gender: !!gender,
-                      }
+                      },
                     });
+                    await barFilled;
                     onClose();
                   } catch (err: unknown) {
+                    setFlowComplete(false);
                     setError(getErrorMessage(err));
                     gaEvent({
-                      action: 'signup_error',
+                      action: "signup_error",
                       params: {
-                        step: 'final_registration',
-                        error: err instanceof Error ? err.message : 'unknown',
-                      }
+                        step: "final_registration",
+                        error: err instanceof Error ? err.message : "unknown",
+                      },
                     });
                   }
                   setIsLoading(false);
@@ -850,7 +1004,50 @@ export default function LoginModal({ open, onClose }: { open: boolean; onClose: 
             )}
           </DialogContent>
         </>
-      )}
+      }
+    </>
+  );
+
+  if (variant === "inline") {
+    return (
+      <Paper
+        elevation={0}
+        sx={{
+          backgroundColor: "#141C30",
+          borderRadius: 2,
+          overflow: "hidden",
+          pb: 1,
+        }}
+      >
+        {content}
+      </Paper>
+    );
+  }
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onClose}
+      fullWidth
+      maxWidth="xs"
+      slotProps={{
+        paper: {
+          sx: {
+            borderRadius: 2,
+            backgroundColor: "#0F172A",
+            /**
+             * MUI tints a raised Paper with white in dark mode, and a dialog
+             * sits at elevation 24. The title and the content paint over it
+             * with their own colour, so nobody ever wanted that tint here —
+             * but the strip between them has no background of its own, and
+             * there the 16% showed through as a grey band.
+             */
+            backgroundImage: "none",
+          },
+        },
+      }}
+    >
+      {content}
     </Dialog>
   );
 }

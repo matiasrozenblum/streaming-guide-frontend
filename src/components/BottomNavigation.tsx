@@ -3,11 +3,43 @@
 import React from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import { Box, BottomNavigation as MuiBottomNavigation, BottomNavigationAction, useTheme, useMediaQuery } from '@mui/material';
-import { Schedule, LiveTv } from '@mui/icons-material';
+import { Schedule, LiveTv, AutoAwesome } from '@mui/icons-material';
 import { useSessionContext } from '@/contexts/SessionContext';
 import type { SessionWithToken } from '@/types/session';
 import { event as gaEvent } from '@/lib/gtag';
 import { useStreamersConfig } from '@/hooks/useStreamersConfig';
+
+/** The height the bar occupies, for pages that have to keep clear of it. */
+export const BOTTOM_NAV_HEIGHT = 56;
+
+interface NavItem {
+  path: string;
+  label: string;
+  /** What the analytics event calls this section. */
+  section: string;
+  icon: React.ReactNode;
+}
+
+const ITEMS: NavItem[] = [
+  { path: '/', label: 'Canales', section: 'canales', icon: <Schedule /> },
+  { path: '/streamers', label: 'Streamers', section: 'streamers', icon: <LiveTv /> },
+  { path: '/mi-resumen', label: 'Mi resumen', section: 'mi_resumen', icon: <AutoAwesome /> },
+];
+
+/** The routes the bar appears on. Anywhere else it renders nothing. */
+export const BOTTOM_NAV_PATHS: string[] = ITEMS.map((item) => item.path);
+
+/**
+ * How much room the bar takes, or 0 when it is not showing — for pages that
+ * size their content against the space they actually have.
+ */
+export function useBottomNavHeight(): number {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const { streamersEnabled, loading } = useStreamersConfig();
+  if (!isMobile || loading || !streamersEnabled) return 0;
+  return BOTTOM_NAV_HEIGHT;
+}
 
 export default function BottomNavigation() {
   const router = useRouter();
@@ -33,31 +65,27 @@ export default function BottomNavigation() {
     return null;
   }
 
-  // Only show on main pages (not on subscriptions, profile, etc.)
-  const showOnPage = pathname === '/' || pathname === '/streamers';
-  
-  if (!showOnPage) {
+  // "Mi resumen" is about the signed-in user, and the page sends a visitor
+  // straight back to the grid — the same rule the header follows.
+  // Every item, for everybody: /mi-resumen answers a visitor with the pitch
+  // and the sign-in form rather than sending them away.
+  const items = ITEMS;
+
+  // Only show on the main pages (not on subscriptions, profile, etc.)
+  const currentValue = items.findIndex((item) => item.path === pathname);
+  if (currentValue === -1) {
     return null;
   }
 
-  const currentValue = pathname === '/streamers' ? 1 : 0;
-
   const handleChange = (_event: React.SyntheticEvent, newValue: number) => {
-    if (newValue === 0) {
-      router.push('/');
-      gaEvent({
-        action: 'navigation_click',
-        params: { section: 'canales', location: 'bottom_nav' },
-        userData: typedSession?.user
-      });
-    } else if (newValue === 1) {
-      router.push('/streamers');
-      gaEvent({
-        action: 'navigation_click',
-        params: { section: 'streamers', location: 'bottom_nav' },
-        userData: typedSession?.user
-      });
-    }
+    const item = items[newValue];
+    if (!item) return;
+    router.push(item.path);
+    gaEvent({
+      action: 'navigation_click',
+      params: { section: item.section, location: 'bottom_nav' },
+      userData: typedSession?.user
+    });
   };
 
   return (
@@ -81,8 +109,12 @@ export default function BottomNavigation() {
         showLabels
         sx={{
           backgroundColor: 'transparent',
+          height: `${BOTTOM_NAV_HEIGHT}px`,
           '& .MuiBottomNavigationAction-root': {
             color: 'rgba(255,255,255,0.6)',
+            // Three labels have to fit on a 320px screen without wrapping.
+            minWidth: 0,
+            px: '6px',
             '&.Mui-selected': {
               color: '#42a5f5',
             },
@@ -90,20 +122,19 @@ export default function BottomNavigation() {
               textTransform: 'uppercase',
               fontFamily: '"Outfit", sans-serif',
               fontWeight: 600,
+              whiteSpace: 'nowrap',
             },
           },
         }}
       >
-        <BottomNavigationAction
-          label="Canales"
-          icon={<Schedule />}
-        />
-        <BottomNavigationAction
-          label="Streamers"
-          icon={<LiveTv />}
-        />
+        {items.map((item) => (
+          <BottomNavigationAction
+            key={item.path}
+            label={item.label}
+            icon={item.icon}
+          />
+        ))}
       </MuiBottomNavigation>
     </Box>
   );
 }
-

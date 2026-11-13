@@ -1,70 +1,71 @@
-import { AppThemeProvider } from '@/theme/ThemeProvider';
-import '@/styles/globals.css';
-import type { Metadata, Viewport } from 'next';
-import { Inter } from 'next/font/google';
-import ConditionalFooter from '@/components/ConditionalFooter';
-import ConditionalLayoutWrapper from '@/components/ConditionalLayoutWrapper';
-import { YouTubePlayerProvider } from '@/contexts/YouTubeGlobalPlayerContext';
-import { YouTubeGlobalPlayer } from '@/components/YouTubeGlobalPlayer';
-import SessionProviderWrapper from '@/components/SessionProviderWrapper';
-import { PushProvider } from '@/contexts/PushContext';
-import { TooltipProvider } from '@/contexts/TooltipContext';
-import { CookieConsentProvider } from '@/contexts/CookieConsentContext';
-import { CookieConsentBanner } from '@/components/CookieConsentBanner';
-import { CookiePreferencesModal } from '@/components/CookiePreferencesModal';
-import { 
-  ConditionalTrackingLoader, 
-  ConditionalClarityLoader, 
-  ConditionalHotjarLoader 
-} from '@/components/ConditionalTrackingLoader';
-import PageviewTracker from '@/components/PageviewTracker';
-import LiveStatusListener from '@/components/LiveStatusListener';
-import PageRefreshListener from '@/components/PageRefreshListener';
-import { SpeedInsights } from '@vercel/speed-insights/next';
-import { Analytics } from '@vercel/analytics/react';
+import { AppThemeProvider } from "@/theme/ThemeProvider";
+import "@/styles/globals.css";
+import type { Metadata, Viewport } from "next";
+import { Inter } from "next/font/google";
+import ConditionalFooter from "@/components/ConditionalFooter";
+import ConditionalLayoutWrapper from "@/components/ConditionalLayoutWrapper";
+import { YouTubePlayerProvider } from "@/contexts/YouTubeGlobalPlayerContext";
+import { YouTubeGlobalPlayer } from "@/components/YouTubeGlobalPlayer";
+import SessionProviderWrapper from "@/components/SessionProviderWrapper";
+import { LegalConsentDialog } from "@/components/legal/LegalConsentDialog";
+import { PushProvider } from "@/contexts/PushContext";
+import { TooltipProvider } from "@/contexts/TooltipContext";
+import { CookieConsentProvider } from "@/contexts/CookieConsentContext";
+import { CookieConsentBanner } from "@/components/CookieConsentBanner";
+import { CookiePreferencesModal } from "@/components/CookiePreferencesModal";
+import {
+  ConditionalTrackingLoader,
+  ConditionalClarityLoader,
+  ConditionalHotjarLoader,
+} from "@/components/ConditionalTrackingLoader";
+import PageviewTracker from "@/components/PageviewTracker";
+import LiveStatusListener from "@/components/LiveStatusListener";
+import PageRefreshListener from "@/components/PageRefreshListener";
+import { SpeedInsights } from "@vercel/speed-insights/next";
+import { Analytics } from "@vercel/analytics/react";
 
-const inter = Inter({ subsets: ['latin'] });
+const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  metadataBase: new URL('https://laguiadelstreaming.com'),
-  title: 'La Guía del Streaming',
-  description: 'Guía de programación de streaming',
-  manifest: '/manifest.json',
+  metadataBase: new URL("https://laguiadelstreaming.com"),
+  title: "La Guía del Streaming",
+  description: "Guía de programación de streaming",
+  manifest: "/manifest.json",
   icons: {
-    icon: '/favicon.png',
-    apple: '/icons/icon-192.png',
+    icon: "/favicon.png",
+    apple: "/icons/icon-192.png",
   },
   openGraph: {
-    type: 'website',
-    siteName: 'La Guía del Streaming',
-    title: 'La Guía del Streaming',
-    description: 'Guía de programación de streaming',
-    url: 'https://laguiadelstreaming.com',
-    locale: 'es_AR',
+    type: "website",
+    siteName: "La Guía del Streaming",
+    title: "La Guía del Streaming",
+    description: "Guía de programación de streaming",
+    url: "https://laguiadelstreaming.com",
+    locale: "es_AR",
     images: [
       {
-        url: '/og-image.png',
+        url: "/og-image.png",
         width: 1200,
         height: 630,
-        alt: 'La Guía del Streaming',
+        alt: "La Guía del Streaming",
       },
     ],
   },
   twitter: {
-    card: 'summary_large_image',
-    title: 'La Guía del Streaming',
-    description: 'Guía de programación de streaming',
-    images: ['/og-image.png'],
+    card: "summary_large_image",
+    title: "La Guía del Streaming",
+    description: "Guía de programación de streaming",
+    images: ["/og-image.png"],
   },
   appleWebApp: {
     capable: true,
-    statusBarStyle: 'default',
-    title: 'La Guía del Streaming',
+    statusBarStyle: "default",
+    title: "La Guía del Streaming",
   },
   other: {
-    'apple-mobile-web-app-capable': 'yes',
-    'apple-mobile-web-app-status-bar-style': 'default',
-    'apple-mobile-web-app-title': 'La Guía del Streaming',
+    "apple-mobile-web-app-capable": "yes",
+    "apple-mobile-web-app-status-bar-style": "default",
+    "apple-mobile-web-app-title": "La Guía del Streaming",
   },
 };
 
@@ -73,29 +74,29 @@ export const metadata: Metadata = {
 // Lives in the root layout so it is part of the server-rendered HTML that
 // non-JS crawlers read.
 const organizationJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'Organization',
-  name: 'La Guía del Streaming',
-  url: 'https://laguiadelstreaming.com',
-  logo: 'https://laguiadelstreaming.com/icons/icon-512.png',
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  name: "La Guía del Streaming",
+  url: "https://laguiadelstreaming.com",
+  logo: "https://laguiadelstreaming.com/icons/icon-512.png",
   sameAs: [] as string[],
 };
 
 const websiteJsonLd = {
-  '@context': 'https://schema.org',
-  '@type': 'WebSite',
-  name: 'La Guía del Streaming',
-  url: 'https://laguiadelstreaming.com',
+  "@context": "https://schema.org",
+  "@type": "WebSite",
+  name: "La Guía del Streaming",
+  url: "https://laguiadelstreaming.com",
 };
 
 export const viewport: Viewport = {
-  themeColor: '#0f172a',
-  colorScheme: 'dark',
-  width: 'device-width',
+  themeColor: "#0f172a",
+  colorScheme: "dark",
+  width: "device-width",
   initialScale: 1,
   maximumScale: 1,
   userScalable: false,
-  viewportFit: 'cover',
+  viewportFit: "cover",
 };
 
 export default function RootLayout({
@@ -108,7 +109,9 @@ export default function RootLayout({
       <body suppressHydrationWarning className={inter.className}>
         <script
           type="application/ld+json"
-          dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationJsonLd) }}
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify(organizationJsonLd),
+          }}
         />
         <script
           type="application/ld+json"
@@ -131,10 +134,15 @@ export default function RootLayout({
                     <SpeedInsights />
                     <Analytics />
                   </YouTubePlayerProvider>
-                  
+
                   {/* Cookie Consent Components */}
                   <CookieConsentBanner />
                   <CookiePreferencesModal />
+
+                  {/* Inside AppThemeProvider on purpose: a MUI Dialog mounted
+                      outside it falls back to MUI's default light theme, which
+                      on a dark-only site renders as a white card. */}
+                  <LegalConsentDialog />
                 </AppThemeProvider>
               </TooltipProvider>
             </PushProvider>

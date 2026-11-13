@@ -5,8 +5,216 @@ Todas las modificaciones importantes de este proyecto se documentarán en este a
 El formato está basado en [Keep a Changelog](https://keepachangelog.com/es/1.0.0/)
 y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
-
 ## [Unreleased]
+
+### Added
+
+### Changed
+
+### Removed
+
+### Fixed
+
+---
+
+## [1.37.0] - 2026-11-13
+
+### Added
+
+- **El alta sigue el diseño de la pantalla de registro**, tanto desde Mi resumen como desde la grilla: el stepper de iconos y etiquetas pasa a **una sola barra que se llena**, en un cuarto del alto que pedía el anterior. No lleva leyenda: "Paso 2 de 4 · Verificar" no se lee como ayuda sino como trámite, y encima repetía lo que ya dice el encabezado que tiene justo arriba. Lo único que agregaba —cuánto falta— es exactamente lo que muestra la barra. El dato no se pierde para quien no la ve: es un `progressbar` con `aria-valuetext`, así que un lector de pantalla escucha la misma frase que antes estaba escrita. La barra mide los pasos que quedaron atrás y no el que tenés delante, así que el último cuarto lo cierra el registro aceptado y no el formulario abierto; si el registro falla, vuelve atrás junto con el error. Aparece **solo en el alta**: quien ya tiene cuenta escribe una dirección y una contraseña, y ahí no hay recorrido que contar. Donde el formulario es la pantalla, el encabezado suma una **flecha de volver**; en el diálogo sobre la grilla la flecha convive con la cruz, porque ahí la cruz tiene que seguir cerrando.
+- **Se va el boton "Volver" de cada paso**: con la flecha en el encabezado —que ahora esta tambien en el dialogo sobre la grilla— habia dos caminos de vuelta para lo mismo. Queda uno. La cruz sigue siendo otra cosa: es la salida, no el paso atras.
+- **"Cambiar correo" en el paso del codigo**, con lapiz, justo debajo de la direccion: el momento en que alguien nota el error de tipeo es leyendo esa linea, y una salida al otro extremo de la pantalla —o una flecha que hay que interpretar— no es una respuesta. Vuelve al panel del correo con la direccion todavia cargada.
+
+- **En un telefono la pantalla sin sesion sigue el artboard de la app**: el argumento ocupa la pantalla y el formulario es un panel apoyado en el borde de abajo. Cuando el formulario pasa del correo a los pasos que siguen, **ese panel crece hasta tragarse la pantalla** y el argumento se colapsa: una sola animacion de altura, sin que nada aparezca de la nada. Los botones de Google y Apple van uno al lado del otro en un telefono —dos filas enteras cuestan 54px de alto que no sobran— y el logo del proveedor alcanza sin las palabras.
+- **La pantalla sin sesion sigue el artboard "Web · Sin sesion"**: titulo de 44px, el copy que explica que es la seccion, un cartel que contesta por que pedimos una cuenta —que es la pregunta que un visitante se hace y nadie le estaba respondiendo— y el abanico de placas con el borde de 3px y las rotaciones del diseno. La tarjeta del formulario toma el fondo del artboard.
+- **"Mi resumen" se ve siempre, y responde a quien no tiene cuenta**: la entrada estaba escondida para los visitantes y la pagina los rebotaba a la grilla, o sea que la funcion mas convincente para abrirse una cuenta era la unica que no podia ver nadie que no la tuviera. Ahora la pagina se parte en dos: a la izquierda el abanico de placas y que es la seccion; a la derecha **el mismo formulario de alta e ingreso que la home abre como dialogo**, pero como contenido de esa mitad y no flotando encima. Es literalmente el mismo componente con otro envoltorio —el flujo de autenticacion es la pieza que no puede existir dos veces—, con la cruz de cerrar escondida porque ahi no hay nada que cerrar. En un telefono se apila: primero el argumento, despues el formulario. El resumen en si sigue pidiendo cuenta, porque esta hecho con el historial de cada uno.
+
+- **Los avisos de Mi resumen se pueden apagar tambien desde la web**: la notificacion llega solo a la app, pero la preferencia es de la cuenta y no del telefono, asi que quien vive en el sitio tiene que poder apagarla desde ahi. La tarjeta lo dice en una linea, para no prometer un aviso que el navegador nunca va a mostrar.
+
+- **Los botones de compartir del resumen ahora se miden**: la seccion no reportaba nada, asi que no habia forma de saber si la gente los usa. Cada toque emite un `recap_share` con el boton, el desenlace, que placa y que periodo, y `event()` lo reparte a GA4, PostHog, Datadog RUM y al pipeline propio. El desenlace importa tanto como el toque: copiar el link, entregarlo al menu del sistema, cerrarlo —que es una decision, no un fallo—, caer en la descarga porque el navegador no sabe compartir archivos, o fallar al generar la imagen son cinco cosas distintas que un contador de clicks confundiria en una sola. Mismo nombre de evento y mismo vocabulario que ya manda la app, para que las dos superficies caigan en un unico embudo.
+
+- **El estado de "todavia no alcanza" entra en la pantalla de un telefono**: el boton quedaba cortado por la barra de navegacion. La placa vacia pasa a medirse contra el alto de la ventana tambien en mobile, y la fila del titulo y el bloque se aprietan contra la linea de la fecha, que es de donde sobraba aire. En un telefono de menos de 680px de alto la placa vacia directamente no se dibuja: es decoracion, y el mensaje, la barra y el boton son el contenido. Medido en 412x788 —un Pixel— con el boton 18px arriba de la barra, y en 390x844, 430x932 y 360x640.
+
+- **El estado de "todavia no alcanza" pasa a ser el diseno de Paper**: una placa vacia, dibujada con el contorno punteado, al lado del texto y la barra de progreso —y arriba del texto en un telefono, como lo tiene la app—. El marcador deja de decir solo cuanto llevas y dice contra que: "Vas 1 de 3 reproducciones" con la meta al costado, que es la misma `minimum_plays` que manda la API. La placa vacia esta dibujada a 300px de ancho y todo adentro sale de esa fraccion, asi que se achica entera cuando la ventana es baja en lugar de recortarse: su contenido esta centrado, y bajarle solo el alto lo hubiera cortado.
+
+- **El aviso de "Llego tu resumen" pasa a ser una placa, y en el telefono una bandeja**: era una tarjeta chica con un icono generico, anunciando una seccion que esta hecha de imagenes sin mostrar ninguna. Ahora abre con las tres placas abiertas en abanico —las mismas que la persona va a ver al entrar—, el chip NUEVO, el titulo en Outfit 800 y un boton que ocupa todo el ancho. En desktop es un cartel centrado de 580px; abajo de 600px deja de ser una tarjeta flotante con margen alrededor y se vuelve una bandeja que sube desde el borde de abajo, que es donde esta el pulgar y donde ese margen era ancho desperdiciado. El titulo se dimensiona contra el ancho disponible para entrar siempre en una linea: Outfit 800 a los 38px del artboard mide 492px en un navegador contra los 474 que deja la tarjeta, asi que un numero fijo lo partia en dos.
+
+- **La ruta de la placa acepta el JWT del backend**: las apps nativas se autentican contra el backend y nunca tienen una cookie de NextAuth, asi que `/api/og/recap` les respondia 401. Pasa a aceptar tambien un header `Authorization: Bearer`. No habilita nada nuevo: el token se le pasa al backend tal cual y el backend lo scopea a su dueno, asi que por ese header solo se llega a lo mismo que llamando al backend directo. Es lo que deja que la app nativa muestre y comparta exactamente la misma placa que la web, en vez de volver a dibujarla por tercera vez.
+- **"Mi resumen" pasa a ser una fila de placas compartibles**: la pantalla dejaba de parecerse a lo que la gente iba a subir a una historia. Ahora muestra las cuatro placas —programa mas visto, top de programas, streamer mas visto y top de streamers— en formato 9:16, y pasar el mouse por una agranda esa tarjeta y revela los botones de compartir. El foco de teclado hace lo mismo, asi que las acciones no quedan atadas al mouse. Las placas se arman con **reproducciones**, que es lo que medimos; el diseno original hablaba de horas, que no tenemos.
+- **La tarjeta y la imagen descargable son el mismo componente**: la placa se dibuja una sola vez a 1080x1920 y la tarjeta la escala con un transform, en lugar de maquetarla dos veces. Por eso esta escrita con elementos planos y estilos inline y no con MUI: el export lo renderiza satori, que entiende estilos inline pero no las clases que genera emotion. Si fueran dos implementaciones se desincronizarian al primer ajuste.
+- **"Mi resumen" tambien en la barra de abajo**: en desktop estaba en el header, pero en mobile la navegacion real es la barra fija de abajo y ahi solo estaban Canales y Streamers, asi que desde el telefono no habia como entrar. Pasa a ser el tercer item, solo con sesion iniciada, igual que en el header. La barra deja de estar cableada a dos indices y se arma desde la lista de secciones, asi que cual esta activa sale del pathname y no de un numero. La pagina del resumen reserva el alto de la barra y las placas lo descuentan al medirse, para que el carrusel no quede debajo de la navegacion.
+- **"Mi resumen" sube al header**: deja de estar escondido en el menu del usuario y pasa a ser una tercera seccion junto a CANALES y STREAMERS, con el mismo subrayado de activo que las otras dos. Solo aparece con sesion iniciada, porque sin usuario no hay resumen que mostrar.
+- **En mobile las placas se deslizan como historias**: en lugar de apilarse verticalmente, ocupan casi toda la pantalla y se pasa de una a la otra con el dedo. Es scroll-snap del navegador y no un carrusel con libreria, asi que el gesto se siente como el del resto del sistema; sin progressbar, y los botones de compartir quedan fijos abajo actuando sobre la placa que esta a la vista.
+- **Estado de pocos datos con progreso en lugar de un cartel**: quien todavia no llega al minimo ve cuanto le falta y un acceso a la grilla en vivo. El umbral llega desde la API (`minimum_plays`) y no hardcodeado, para que la barra no mienta si la regla cambia del lado del servidor.
+
+### Changed
+
+- **Mi resumen dice en qué parte del calendario está**: una pastilla arriba del carrusel con lo que estás viendo y lo que viene — "Semana pasada · Nuevo resumen el viernes a las 18 hs", "Lunes a viernes · Mañana se suma el sábado". El rango de fechas solo no alcanzaba: de lunes a jueves lo que se muestra es la semana pasada, y un resumen viejo sin explicación se lee como un resumen roto. La frase sale del rango que manda la API y no del reloj del aparato, así que un teléfono en otro huso no puede nombrar el día equivocado.
+- **El aviso dice lo mismo en menos palabras en la app**, que tiene el ancho de un teléfono y una pastilla de un renglón por diseño: "Nuevo resumen el viernes 18 hs" contra "a las 18 hs", "Cierra mañana" contra "El cierre sale mañana", "Mes hasta hoy" contra "Tu mes hasta hoy". En 390px la versión larga se pasaba del final y quedaba cortada. Los otros estados entran igual y se leen idénticos: es una cuestión de lugar, no de dos voces.
+- **La espera sobre un período ya publicado no anuncia la hora de cierre**: a quien no miró nada no le sirve el plazo de un resumen que va a estar vacío igual. Queda una sola frase, la que dice qué hacer, y el botón debajo lo hace. La hora de cierre vive en la pastilla, que es donde hay un resumen que cerrar.
+- **La espera sobre un período ya abierto toma las fechas del servidor**, en lugar de recalcularlas: un domingo mostraba "2 — 6 de noviembre", que es la entrega del viernes, cuando la vigente ya llegaba al sábado. Y deja de nombrar el día cuando el día es hoy — "se completa hoy a las 22 hs" y no "el domingo", que se leía como el domingo que viene.
+- **Se va el contador de reproducciones de la pantalla de espera**. El mínimo de tres ya no existe —la única regla es el calendario— y además el contador mentía: de lunes a jueves prometía que unas reproducciones más llenaban una semana que ya había cerrado. En su lugar dice cuándo llega el próximo resumen y con qué días se va a armar, y el encabezado muestra esas fechas y no las del período cerrado que quedó atrás.
+
+### Fixed
+
+- **El logo de Vorterix salía como un recuadro negro en las placas**: su wordmark es un `.svg` y el que arma la imagen lo descartaba, por la idea de que rasterizarlo exigía adivinar un tamaño. Satori lee un SVG en data URI y lo escala a la caja que le dan, así que no hay nada que adivinar; y el descarte tampoco caía a un texto alternativo, simplemente dejaba el casillero vacío. Afecta a toda placa donde aparezca un canal con logo vectorial, no sólo a Vorterix.
+
+- **Entrar a Mi resumen sin sesión abría el teclado solo**: el campo del correo tenía el foco puesto desde que se montaba, así que en un teléfono el teclado tapaba la pantalla antes de que nadie llegara a leer de qué se trataba la sección. El foco ahora es una decisión de quien monta el formulario: encendido en el diálogo, donde la persona acaba de tocar "Ingresar" y el campo es lo que fue a buscar; apagado donde el formulario es la página.
+
+- **En un teléfono el abanico se quedaba sin alto y el panel estaba pegado al cartel**: el artboard es el de la app, o sea 844px de pantalla limpia, y un navegador se queda con unos 130px para su barra de direcciones. El abanico es lo que absorbe esa diferencia y había llegado a 113px contra los 176 del diseño. En la forma de teléfono el formulario devuelve parte: el aire de su propio título, el del separador de la "o", la separación entre campos y el alto de los botones sociales —que quedan en 46px, sobre los 44 que necesita un pulgar—. Es lo más barato de la pantalla, y cada pixel que suelta es otro pixel de placa. Además el panel recupera los 16px que lo separan del cartel en el diseño. Medido en Chrome sobre un Pixel 8 con la barra de navegación puesta: el abanico vuelve a sus 176px.
+
+- **Doble espacio en "Conectate con  Google"**: el "Conectate con" y el nombre del proveedor eran dos ítems flex distintos, así que entre ellos caía el `gap` de 8px del botón además del espacio del texto. Pasan a ser uno solo.
+
+- **El diálogo del alta se veía con una banda gris detrás de la barra de progreso**: no era un color nuestro. MUI tiñe de blanco un `Paper` elevado en modo oscuro y un diálogo está en elevación 24, o sea `rgba(255,255,255,0.165)` sobre `#0F172A`. El título y el contenido lo tapaban con su propio fondo —prueba de que ese velo nunca se quiso acá—, y la franja de la barra, que no tiene fondo propio, era el único lugar donde asomaba. Se apaga en el papel, que es la causa y no el síntoma, así que el diálogo entero queda del color que dice tener.
+
+- **La barra de progreso del alta iba un paso adelantada**: contaba el paso en el que estás parado, así que la pantalla de la contraseña —donde todavía no escribiste nada— ya mostraba el 100% y el momento en que el alta termina de verdad no tenía nada que mostrar. Ahora cierra cuando el registro es aceptado. El instante que necesita para verse corre en paralelo con la llamada que viene después, para no sumarle espera a alguien que ya terminó.
+
+- **El stepper aparecía también al iniciar sesión**, donde son dos pasos y no hay nada que contar; peor todavía en el camino de recuperar contraseña, que pasa por pasos que no están en la lista de quien ya tiene cuenta, así que el contador medía contra una lista de la que no forma parte y anunciaba "Paso 0 de 2".
+
+- **Una placa del abanico quedaba cortada abajo**: el escenario medía los 290px del artboard, pero las placas rotan sobre su esquina superior izquierda y con ese origen la rotación no es simétrica —la inclinada en sentido horario baja hasta 322 contra los 300 de su espejo—, así que se cortaba una sola. La altura pasa a ser una constante que alimenta también el cálculo contra el alto de la ventana, de modo que en una notebook el abanico se achica entero en lugar de recortarse.
+
+- **El cartel de "por qué te pedimos una cuenta" estaba arriba del título** en lugar de ir entre el texto y las placas, y **la tarjeta del formulario no tenía márgenes a los costados**. Lo segundo era un `px: { xs: 0, md: undefined }`: en MUI `undefined` no pisa el breakpoint anterior, así que quedaba cero en todos los anchos. Al devolver el cartel a su lugar empezó a recortarse contra el panel en un teléfono, y ahora cede el abanico y no el texto: el abanico ya es un recorte a propósito y perder un poco más no cuesta nada, media frase cortada se ve rota.
+
+- **El encabezado de Mi resumen estaba 6px más arriba que en el resto del sitio**: la pantalla sin sesión tenía un padding propio en lugar del que usan la grilla y Streamers. Medido: el logo arrancaba a 5,5px del borde contra los 11,5 de la home.
+
+- **La flecha de volver podia dejar el panel en blanco**: retrocedia al paso del correo sin salir de la fase del flujo, y el campo de correo solo se renderiza en la otra. Volver al primer paso ahora cierra el flujo, que es lo que hacia el boton que reemplaza.
+
+- **La pantalla sin sesion no entraba en una notebook**: estaba copiada de un artboard de 900px de alto con medidas fijas, y en una ventana de 700 el abanico quedaba abajo del pliegue. El abanico pasa a tomar el alto que sobra —es la unica parte que puede ceder, el resto es texto— y el titulo baja a 36px en ventanas de menos de 800. Medido a 1280x680, 1440x700, 1440x760 y 1440x900.
+- **El logo del header aparecia cortado en esa pantalla**: el logo mide 11vh dentro de un header de 10vh, o sea que desborda a proposito, y las demas paginas le dejan unos pixeles de padding arriba que esta no tenia.
+
+- **El titulo del perfil era ilegible y decia otra cosa**: "Mi cuenta" en un marron oscuro al 60% de opacidad —un resto de cuando el sitio tenia tema claro— sobre fondo oscuro, o sea una mancha. Pasa a "Mi perfil", el mismo nombre que usa la app, en el color de texto del tema. De paso se va un `background-clip: text` que no hacia nada sin un gradiente detras.
+
+- **El logo del canal en la placa iba sobre el color de la placa, no sobre el suyo**: el recuadro detras del wordmark se pintaba con el acento de la placa, asi que un logo de Luzu —dibujado para fondo blanco— terminaba sobre rojo. Pasa a usar el `background_color` que el canal tiene cargado en el backoffice, que es el mismo que la columna de canales de la grilla ya pinta detras de ese mismo logo, y blanco cuando no hay ninguno, igual que ahi. El dato ya venia en la respuesta del recap (`channel_background_color`); solo no se estaba usando. Alcanza tambien a la app, que descarga la misma imagen.
+
+- **El footer legal se escapaba hacia abajo al scrollear**: las paginas estaban medidas con `min-height: 100dvh`, y `dvh` crece cuando el navegador del telefono esconde su barra de direcciones — que es exactamente lo que pasa al scrollear. La pagina se hacia mas alta al mismo ritmo que uno bajaba, asi que el footer se corria y no habia forma de alcanzarlo. Pasa a `svh`, la ventana con la barra a la vista, que no cambia nunca: la pagina tiene un solo alto. Alcanza a mi resumen, a streamers y a toda pagina que no sea el home.
+
+- **El footer legal quedaba tapado por la barra de abajo**: la barra es `position: fixed`, asi que se apoya sobre lo ultimo que llega al final de la pagina, y lo ultimo es el footer. La grilla ya le reservaba el alto a su propia copia del footer; las paginas que usan el compartido —mi resumen y streamers— no tenian nada. Se lo reserva el envoltorio del footer, y solo en las rutas donde la barra aparece, asi que ninguna otra pagina gana un hueco al pie.
+
+- **El contenido de "todavia no alcanza" se corria solo al scrollear en un telefono**: estaba medido contra `dvh`, que crece cuando el navegador esconde su barra de direcciones, y centrado, asi que la mitad de ese crecimiento se iba al hueco de arriba del dibujo y todo bajaba bajo el pulgar. Pasa a medirse contra `svh` —la ventana con la barra a la vista, la mas chica y la primera que se ve— y en mobile se ancla arriba en lugar de centrarse. Lo que sobra queda abajo del boton y nada se mueve.
+
+- **El aviso de "Llego tu resumen" no entraba en una notebook**: el artboard esta dibujado sobre una pantalla de 900px y una notebook da unos 700, asi que la tarjeta quedaba mas alta que la ventana y se abria un scroll adentro del propio cartel, con la letra chica cortada. MUI ademas se guarda 32px de margen por lado y limita la tarjeta a la ventana menos 64; se baja a la mitad. El abanico de placas pasa a tomar el alto que sobra en vez de 270px fijos: es la unica parte que puede ceder, porque todo lo de abajo es texto y achicarlo seria achicar la letra, y el abanico ya esta recortado por diseno. Verificado sin scroll de 560px de alto para arriba.
+
+- **El banner de cookies tapaba el boton del aviso legal**: esta fijo en z-index 9999, por encima de cualquier dialogo de MUI, y en un telefono caia justo sobre "Continuar y ver mi resumen" —el boton de una ventana que bloquea el sitio hasta que se responde—. El aviso pasa a estar por encima; el banner vuelve apenas se cierra.
+
+- **La imagen que se comparte ahora es la placa**: el export seguia dibujando la tarjeta vieja, asi que lo que se veia en pantalla y lo que se descargaba no tenian nada que ver. La ruta `/api/og/recap` pasa a renderizar el mismo componente `Placa`, a 1080x1920 y sin nada de interfaz alrededor, y acepta `kind` para saber cual de las cuatro generar. Tres cosas hubo que acomodar para satori: los numeros van como texto (rechaza cualquier hijo que no sea string en un div sin `display: flex`), los colores salen en hex y `rgba()` en vez de hex de ocho digitos, y el glow pasa a ser lineal porque ignora la posicion de un radial y lo centra en el canvas.
+- **Las placas no estaban usando la tipografia condensada**: pedian Archivo, que no se cargaba en ningun lado, asi que caian a Inter y el display perdia el ancho que el diseno le daba. Se agrega Archivo con el eje `wdth`; el export carga aparte la instancia ya fijada en ese ancho, porque satori ignora `font-stretch`.
+- **Las placas se generan de fondo, asi que compartir es inmediato**: apenas llega el resumen se renderizan las cuatro imagenes en segundo plano, de a una para no pegarle al servidor, y quedan guardadas en memoria. Cuando se toca compartir ya estan hechas, en vez de esperar a que se generen con el boton apretado. Si alguna fallo, el boton la pide igual como antes.
+- **Vuelve la animacion de hover, solo sobre la placa apuntada, y sin sacudir la fila**: la primera version crecia ocupando lugar y empujaba a las otras tres, y los botones —calculados contra el ancho de la placa ya agrandada— ensanchaban su columna al aparecer, asi que toda la fila se corria. Ahora crece con un transform sobre una columna de ancho fijo: se mueve exactamente una placa y las otras tres quedan clavadas al pixel. Crece 6% y no 10%, que no es timidez sino aritmetica: la fila se resuelve para que la placa agrandada ocupe todo el alto disponible, asi que una escala mas grande no la hace mas alta, solo achica las tres que estan quietas.
+- **Quedan dos acciones en vez de seis, en toda la web**: "Compartir", que copia el link de la seccion, y "Descargar", que baja la placa. Ningun navegador puede entregarle un archivo a una app puntual —Instagram Stories quiere `instagram-stories://` mas el pasteboard en iOS, o el intent `com.instagram.share.ADD_TO_STORY` en Android, y ninguno se alcanza desde una pagina; los deep links que si acepta un navegador llevan link y no imagen—, asi que seis botones por red prometian algo que siempre terminaba en la misma hoja de compartir del sistema. Los botones por red social van a existir en las apps nativas, que es donde los intents existen. Los dos botones ocupan juntos exactamente el ancho de la placa; abajo de 224px se quedan sin etiqueta y van con tooltip, y en mobile son de 44px porque ahi son blanco de dedo y no de cursor. El bloque de abajo del carrusel pasa de 152 a 122px, asi que en mobile la placa gana alto.
+- **Los botones de compartir vuelven abajo de la placa**: separados de ella, y con el tamano calculado a partir del ancho de la placa en reposo —no del agrandado— para que los seis entren siempre en ese ancho y para que aparecer no ensanche la columna (entre 24 y 34px segun la pantalla). Reservar esa fila cuesta alto de placa, que es el intercambio por tenerlos afuera y no encima.
+- **Cerrar el menu de compartir decia "no pudimos generar la imagen"**: generar la placa y entregarla eran un solo `try`, asi que cualquier cosa que pasara despues —cerrar la hoja de compartir del sistema, que el SO no tuviera a donde mandarla— se reportaba como un fallo al generar una imagen que ya estaba hecha y en memoria. Quedan separados: si falla generarla, lo dice; si cerras el menu, no dice nada, porque cerrarlo es una decision; y si compartir falla por cualquier otro motivo, descarga la placa y avisa que la descargo. El aviso ademas pasa a ser un toast flotante en vez de un cartel en la columna, que empujaba la fila de placas hacia abajo y las recortaba, justo lo contrario de lo que necesitan.
+- **Las placas se leian con lupa en una notebook**: en un Mac de 13" la pagina tiene 658px de alto, no los 900 del artboard, y la placa quedaba de 190x337 con el cuerpo de texto en 8px. El alto que faltaba estaba repartido en margenes: se juntaron las secciones (padding de pagina de 16 a 10, fila de titulo de 69 a 55) y el bloque de epigrafe y botones paso de 120 a 58px, ademas de dejar de reservar el crecimiento del hover en el ancho de la fila. En esa misma pantalla la placa pasa a 238x424 —57% mas de area—, en una de 14" a 324x576, que es la medida del diseno en Paper (325x578), y en una de 15,6" a 367x652. El alto disponible se mide ademas descontando lo que la pagina se guarda debajo de la fila, que antes la desbordaba por una decena de pixeles.
+
+- **Generar una placa tardaba 6,5 segundos y ahora tarda 0,65**: las celdas sin pico llevaban `border: 4px solid transparent` para medir igual que la celda con el anillo blanco. Satori tarda ~200ms en rasterizar 35 celdas con un borde solido y ~7000ms con uno transparente, asi que ese borde era practicamente todo el costo de exportar una placa (lienzo vacio 70ms, texto 120ms, grilla con borde transparente 6970ms). El borde ahora es del mismo color que la celda: se ve igual, mide igual, y las cuatro placas pasan de 26s a 2,5s.
+
+- **La pill del periodo se comia el borde de la placa**: mostraba `period.label`, que es la frase que encabeza la pagina ("Semana del 26 de octubre al 1 de noviembre") y no entraba ni de cerca —"noviembre" quedaba cortado por el borde—. Pasa a mostrar la version corta que pide el diseno: "26 OCT — 1 NOV", "5 — 11 OCT" cuando la semana no cruza de mes, y "OCTUBRE" en el mensual.
+- **Las placas no respetaban las medidas del diseno**: se habian ido achicando a mano para que entrara el contenido y quedaron lejos de los artboards. Se portaron los valores exactos de Paper (C1/C5/C7 v2): el margen del lienzo pasa de 88/80 a 200/170, el titulo de 38 a 50, el nombre a 170 en semanal y 140 en mensual, el numero de 156 a 120, la frase de 54 a 46, el logo de 330x90 a 296x80 y las celdas de la grilla a 82 (semanal) y 52 (mensual), o 60/38 cuando arriba hay un ranking. Las ocho placas se renderizaron a 1080x1920 para confirmar que ninguna desborda.
+
+- **Los botones de compartir pasan a ir sobre la placa elegida**: tenian una fila reservada debajo, y en una pantalla mas ancha que alta las placas estan limitadas por el alto, asi que esa fila salia directamente del tamano de la placa. Ahora aparecen sobre el borde inferior de la elegida, con un degradado para que se lean. En 2000x910 la placa pasa de 518x291 a 610x343 y la fila de 1240 a 1432; en 1920x1080 y 1512x850 la fila pasa a ocupar el ancho completo. Mientras esta el mouse encima tapan el pie de la placa, que es la invitacion a crearse un usuario; en la imagen que se comparte sigue estando.
+- **El hover ya no cambia el tamano de las placas**: crecer con el mouse encima hacia que el espacio entre una y otra cambiara segun donde estuviera el cursor, y los botones de compartir —mas anchos que una placa— ensanchaban su columna al aparecer. Las cuatro placas quedan siempre del mismo tamano; lo unico que marca cual esta elegida son el borde y los botones que aparecen abajo, y los botones salen del flujo asi que aparecer no corre nada.
+- **El texto debajo de las placas cambiaba de tamano al hacer hover**: la linea de abajo servia de referencia para leer de una placa a la otra y saltaba cada vez. Queda del mismo tamano siempre; lo unico que marca cual esta elegida son los botones que aparecen abajo.
+- **Las placas desaprovechaban el espacio en desktop**: el alto disponible se descontaba con una constante que sobraba y despues se dividia por el factor del hover, asi que las tarjetas quedaban bastante mas chicas de lo que entraba. Ahora el alto se mide desde donde arranca la fila y, como ya no hay que reservar nada para el hover, las placas se reparten el ancho de la pagina: a 1440x900 quedan de 325x578 y la fila ocupa el ancho completo. En pantallas mas anchas que altas el limite pasa a ser el alto —cuatro placas 9:16 una al lado de la otra no dan para mas— y la fila queda centrada.
+- **En mobile la placa se agrandaba al scrollear**: el tamano salia de `innerHeight`, que crece cuando el navegador del telefono esconde la barra de direcciones, asi que la placa se inflaba sola a mitad de scroll. Pasa a medirse con `100svh`, que no se mueve, y el offset se toma del documento en vez del viewport.
+- **En mobile la placa tapaba todo el ancho**: no se veia que hubiera otra al costado. Ahora ocupa el 74% del ancho y las vecinas asoman a los dos lados, con el texto y los botones de compartir abajo.
+
+- **El header de "Mi resumen" quedaba pegado al borde y las tarjetas no entraban**: las placas median exactamente el alto del viewport, asi que al hacer hover crecian fuera de la pantalla y los botones de compartir quedaban abajo del pliegue. Ahora el tamano se calcula descontando el espacio que necesitan titulo, epigrafe y acciones, y el hover escala con un transform en lugar de agrandar la caja, que era lo que empujaba la fila.
+- **El logo del canal se recortaba en las placas**: los tiles usaban `object-fit: cover`, que sobre un wordmark apaisado como el de Luzu recorta el medio y deja un pedazo ilegible. Los logos pasan a `contain` y solo las fotos redondas de streamers siguen con `cover`, que es donde recortar es lo correcto.
+
+---
+
+## [1.36.0] - 2026-10-11
+
+### Added
+
+- **Aviso de aceptación de legales, bloqueante y por única vez**: a todo usuario con sesión iniciada le aparece un cartel que anuncia la función de resumen y toma, en un mismo paso, la aceptación de los Términos, la Política de Privacidad y la declaración de ser mayor de 18. No se puede descartar: las únicas salidas son aceptar o cerrar sesión, que es un enlace dentro del propio cartel.
+  - La aceptación se guarda como una entrada en `seen_features` con la forma `legal_accepted:<versión>:<timestamp ISO>`, sin necesidad de migración. La versión permite volver a pedirla cuando el documento cambie, y el timestamp permite responder cuándo aceptó cada persona y a qué texto.
+  - Al no haber forma de descartarlo, el manejo de errores es parte del diseño: si falla el guardado se muestra el error, el botón queda habilitado para reintentar y el enlace de cerrar sesión sigue disponible. Y si falla la *lectura* de qué aceptó el usuario, el cartel no se muestra — un corte de red no puede dejar a alguien afuera de un sitio cuyos términos quizá ya aceptó.
+  - Al registrarse, la aceptación queda registrada en el mismo momento en que se setea la contraseña, de modo que a quien acaba de aceptar no se le vuelve a preguntar.
+
+### Changed
+
+- **Ajustes visuales del aviso de aceptación**: el botón pasa a medir lo que mide su texto en lugar de ocupar todo el ancho, la letra chica legal baja a 11px para distinguirse del cuerpo como es habitual en ese tipo de texto, y los márgenes entre el borde del cartel y el contenido se ajustaron otra vez. Alto del diálogo: 377px → 342px.
+- **El aviso de aceptación es más compacto**: el padding del cartel y los márgenes entre sus elementos se ajustaron sin tocar los tamaños de texto. Además de ganar prolijidad, achicarlo reduce los casos en que el cartel no entra en pantalla: con el navegador muy ampliado el contenido del propio diálogo tiene que scrollear para alcanzar el botón, y cuanto más chico sea, más tarde ocurre eso.
+- **El texto de aceptación del registro se alineó con el del aviso**: mencionaba solo los términos; ahora incluye la declaración de mayoría de edad y el enlace a la Política de Privacidad.
+- **Términos y Condiciones y Política de Privacidad actualizados a la versión del 2 de octubre de 2026**: los TyC suman la sección de requisitos de edad (registro reservado a mayores de 18) y la de notificaciones push; la Política suma la política de menores, los tokens de push —qué se guarda, por qué y hasta cuándo—, Firebase entre las herramientas de terceros, el alojamiento en Brasil como transferencia internacional, y el detalle de retención partido en cuatro niveles según el tipo de dato.
+- **La Política describe el manejo de notificaciones y la retención de tokens tal como funcionan**: la gestión del consentimiento ahora aclara que las alertas se administran de forma individual por programa o streamer además de revocarse globalmente desde el navegador o el sistema operativo, y el ítem de retención de tokens explica el mecanismo real —se eliminan en el primer intento de envío posterior, cuando el proveedor reporta que el identificador ya no es válido— en lugar de atribuirlo a una limpieza periódica que no existe.
+- **El panel de cookies ahora dice que la categoría de Análisis incluye nuestro sistema propio**: la Política remite a ese panel para desactivar "el sistema de análisis interno", pero el panel solo nombraba herramientas de terceros, así que el control al que apuntaba el texto no se correspondía con lo que mostraba.
+
+### Fixed
+
+- **En web mobile el enlace de cerrar sesión quedaba separado del resto de la letra chica**: el control era un `<button>` metido dentro del párrafo legal. Un botón es `inline-block`, o sea que arrastra su propia caja, y los motores la miden distinto: en Android el renglón donde caía quedaba visiblemente más alto que los demás. Pasa a ser un `<span>` —un elemento inline de verdad, que fluye como texto— con el rol de botón y el manejo de teclado agregados a mano, de modo que sigue siendo accesible. Medido en los tres anchos de teléfono: el espaciado entre renglones quedó uniforme.
+- **El aviso usa valores distintos en desktop y en mobile**: en teléfonos la grilla queda justo detrás de la tarjeta y el vidrio liviano funciona bien, pero en desktop el cartel cae sobre el banner claro, donde esos mismos valores dejan pasar demasiado y el texto compite con la foto. Desktop vuelve al velo y la superficie más densos; mobile conserva los livianos.
+- **La letra chica deja de repartir sus renglones**: equilibrarlos convertía el bloque en tres líneas llenas, y dos líneas llenas con una cola corta se lee más liviana al pie de la tarjeta.
+- **El aviso se ve más como una lámina de vidrio delante del sitio**: MUI oscurece la página con un velo negro al 50% por defecto, así que la tarjeta estaba mirando a través de un sitio ya ensombrecido — por eso se percibía opaca aun estando al 78%. Se aclaró el velo, se bajó un poco la opacidad de la tarjeta y se suavizó la sombra, que estaba demasiado marcada para el efecto buscado.
+- **La letra chica reparte sus renglones**: en teléfonos la última línea quedaba con una sola palabra. Ahora las líneas se equilibran entre sí. No es posible llevarla a dos renglones: a ese ancho el texto necesitaría bajar a unos 7,5px, muy por debajo de lo legible para algo con peso legal.
+- **Rediseño visual del aviso de aceptación**: la tarjeta pasa a leerse como una superficie flotando sobre el sitio en lugar de pintada encima — un azul un paso más claro que el fondo, traslúcido sobre un desenfoque, con un borde de un píxel y una sombra profunda debajo. Se amplió la escala tipográfica para que el título y el botón dejen de medir casi lo mismo que el cuerpo, el texto explicativo se partió en dos párrafos y usa `text-wrap: balance` para que no quede una palabra sola en el último renglón, y la letra chica legal bajó a 10px para entrar en dos renglones al pie de la tarjeta. En teléfonos el botón pasa a ancho completo con tipografía y costados algo más ajustados, porque a 360px la etiqueta se partía en dos líneas dentro del botón.
+- **El aviso seguía en pantalla después de cerrar sesión**: el efecto que decide si mostrarlo cortaba temprano cuando ya no había sesión, y al cortar sin cerrar dejaba en pantalla lo que hubiera de antes. El resultado era un cartel de aceptación flotando sobre un sitio deslogueado. Ahora todos los caminos que terminan sin mostrarlo lo cierran de forma explícita.
+- **Cerrar sesión desde el aviso no cerraba sesión**: usaba `signOut({ callbackUrl })`, que lanza la navegación en paralelo a la petición que limpia la sesión. Las dos compiten, y cuando gana la navegación la página nueva carga con la cookie todavía válida: el usuario volvía a aparecer logueado y el cartel reaparecía. Ahora se espera a que el cierre termine y recién después se navega, igual que hace el logout del header.
+- **El aviso tardaba en aparecer y consultaba el backend varias veces por carga**: el efecto dependía del objeto de sesión, al que next-auth le da una identidad nueva en cada refresco, así que se re-ejecutaba y volvía a pedir el estado de aceptación —se midieron 8 consultas en una sola carga—. Ahora depende del id de usuario y del token. Además dejó de usar la instancia compartida de axios, que resuelve la sesión antes de cada pedido y agregaba un viaje extra a `/api/auth/session` de entre 185 y 1400 ms; el token ya está disponible en el componente, así que la llamada va directa.
+- **Aceptar ya no muestra un spinner**: el botón pasaba a decir "Guardando…" con un indicador de carga mientras esperaba la confirmación del servidor. Ahora la navegación al resumen ocurre al instante y la marca de aceptación se guarda en segundo plano. Si esa escritura falla no se pierde nada: simplemente no queda registrada y el aviso vuelve a aparecer la próxima vez, que es el lado seguro. Como efecto lateral desaparece el escenario de quedar trabado esperando a la red, porque ya no se espera nada.
+- **El aviso tapaba las propias páginas de legales**: está montado en el layout, así que aparecía en cualquier ruta, incluidas las de Términos y Condiciones y Política de Privacidad a las que el propio cartel enlaza. Pedirle a alguien que acepte un documento mientras le tapás ese documento no tiene sentido. Esas rutas quedan excluidas, y la exclusión también cierra el cartel si se llega a ellas por navegación interna y no solo en una carga nueva.
+- **Se podía seguir scrolleando el sitio con el aviso abierto**: el home no usa scroll nativo. `HomeClient` escucha `wheel` sobre `window` y mueve el banner por `transform` mientras empuja a mano el `scrollTop` de la grilla. El bloqueo de scroll que aplica un modal —`overflow: hidden` sobre el `body`— solo detiene el scroll del navegador y no tiene efecto sobre ese mecanismo, así que la página seguía desplazándose por debajo del cartel. El handler ahora no hace nada mientras haya un diálogo en pantalla, lo que cubre también el panel de cookies y cualquier modal futuro.
+- **El aviso de aceptación se renderizaba con el tema claro**: estaba montado en `SessionProviderWrapper`, que envuelve a `AppThemeProvider` en lugar de estar dentro suyo. Un `Dialog` de MUI fuera del provider cae al tema por defecto de la librería, que es claro, así que el cartel aparecía como una tarjeta blanca sobre un sitio que es dark-only. Pasa a montarse junto al resto de los overlays globales, dentro del provider.
+- **La fecha de "Última actualización" de la Política de Privacidad era `new Date()`**: se renderizaba la fecha del día en cada visita, de modo que el documento siempre parecía haberse actualizado hoy. Pasa a una constante compartida con los TyC (`src/constants/legal.ts`), que además expone la versión publicada para que el aviso de aceptación pueda compararla contra lo que aceptó cada usuario.
+- **El alta por login social no verificaba la edad**: la regla de 18 años vivía en el formulario de registro con email, pero `ProfileCompletionForm` —el paso de completar perfil al que se redirige a todo usuario que entra con Google o Apple— no la tenía. Quien se registraba por ahí nunca cruzaba una barrera de edad.
+- **La fecha de nacimiento arrancaba en "hoy" y la validación solo corría al tocar el campo**: en el registro web y en el alta social el valor por defecto era la fecha actual, así que un usuario que completaba el resto del formulario sin abrir el calendario enviaba una fecha de nacimiento de hoy, es decir una edad de cero. Ahora el campo arranca vacío, la validación también corre al enviar y el calendario no deja elegir un año que no llegue a los 18.
+- **La misma cuenta de edad estaba copiada en cuatro archivos** (registro, alta social, edición de perfil y alta de usuarios del backoffice), cada una con su propio texto de error. Pasan todas por `src/utils/age.ts`, que replica la regla del servidor en un solo lugar.
+- **Ningún evento llegaba asociado a un usuario, así que "Mi resumen" no podía llenarse nunca**: la cola de analíticas enviaba los lotes sin encabezado de autorización, y el servidor toma el usuario del token. El resultado era que el cien por ciento de los eventos quedaba anónimo y la tabla que alimenta el resumen por persona permanecía vacía. Se agrega el token a cada envío, mediante un módulo que el proveedor de sesión mantiene al día.
+- **El envío al ocultarse la pestaña perdía la atribución por diseño**: usaba `sendBeacon`, que sobrevive a la descarga de la página pero no admite encabezados. Pasa a un `fetch` con `keepalive`, que sobrevive igual y sí lleva el token; su único límite es un cuerpo de 64KB, muy por encima de un lote de 50 eventos.
+- **El zapping no dejaba rastro rankeable**: `zap_use` mandaba el canal y el programa solo como texto dentro de las propiedades, y el promotor de ids busca las claves canónicas. Las columnas `program_id` y `channel_id` quedaban nulas en todos los eventos de zapping —el más frecuente del sitio—, así que el backoffice no podía ordenarlo. Ahora el evento viaja con los ids; el del programa es el real, tomado del horario del que se arma la lista, en vez de resolverse por nombre, que colapsa dos programas homónimos de distintos canales en un solo id. No cuenta como reproducción en Mi Resumen: un zap es un salto de dos segundos, no una vista.
+
+---
+
+## [1.36.1] - 2026-10-15
+
+### Fixed
+- **El banner anterior titilaba al pasar de banner**: al terminar el fade-out, el banner saliente volvía por un frame a opacidad 1 antes de desmontarse, y el entrante caía por un frame a opacidad 0 al terminar su fade-in. No era un problema de `BannerCarousel` sino de framer-motion 12.12: cuando la animación de opacidad (que corre por WAAPI) terminaba, la cancelaba en el mismo frame pero recién escribía el valor final en el estilo inline en el frame siguiente, así que por un frame el elemento mostraba el valor previo a la animación. Medido frame a frame en producción, el saliente pasaba de 0.03 a 1.00 justo antes de desmontarse. Se actualizó `framer-motion` a 12.43.0, que escribe el valor final antes de cancelar; con eso la transición queda limpia en ambos sentidos. Afecta a todas las animaciones de opacidad del sitio, no solo al carousel.
+
+### Changed
+- **El carousel de banners pasa de fundido a negro a crossfade**: antes el banner saliente se desvanecía a negro y recién después aparecía el nuevo (`AnimatePresence` en modo `wait`, 0.5s + 0.5s). Ahora el nuevo se funde encima del anterior, que queda opaco debajo hasta quedar cubierto, así que el fondo no se ve en ningún momento. Se dejó `AnimatePresence`, que con clicks rápidos congelaba a mitad de fade al banner que salía y dejaba ver el fondo: todos los banners quedan montados y apilados, y el carousel controla cuál va arriba. Un banner que entra se remonta con opacidad 0 en el mismo render que lo sube, para que uno recién ocultado y todavía opaco no aparezca un frame encima antes de su fade; volver enseguida al anterior desvanece de nuevo al que estaba entrando en lugar de cortarlo. Como efecto lateral, las imágenes de todos los banners se cargan de entrada (solo el primero conserva `priority`), así que un banner que se ve por primera vez ya no se funde antes de tener su imagen, y el primero aparece sin fade al cargar la página, tal como llega del servidor.
+
+---
+
+## [1.35.0] - 2026-09-09
+
+### Added
+
+- **Pestaña de Streamers en Métricas, con su propio ranking**: hasta ahora los streamers no tenían sección propia pese a que la app los trackea desde hace tiempo. Se rankean por `streamer_service_click` —salir hacia su canal de Twitch, Kick o YouTube— y no por `click_youtube_live`, que es un evento que un streamer no emite. Requirió promover `streamer_id` a columna en el backend (ver 1.46.0 del backend); hasta ahora viajaba enterrado en el jsonb de propiedades.
+- **Exportar la imagen de Instagram también para canales y streamers**: el botón dejó de ser exclusivo del ranking de programas. La ruta pasa a tomar `?kind=programs|channels|streamers` y aplica el default de métrica correcto para cada uno.
+
+### Changed
+
+- **La imagen ajusta el tratamiento del logo según qué rankea**: los logos de canal son wordmarks apaisados y siguen usando el recuadro ancho; los de streamer son fotos de una persona, así que van en un recorte cuadrado y circular. El redondeo vive en el contenedor y no en el `<img>`, porque satori no recorta un `borderRadius` puesto sobre la imagen.
+- **`/mi-resumen` pasó a tener el chrome del resto del sitio**: era una página suelta sin header, sin logo y sin menú de usuario, que no se parecía a ninguna otra ruta accesible por un usuario no admin. Ahora sigue el mismo patrón que `/subscriptions` —`Header`, contenedor, botón de volver y animación de entrada— y suma el detalle que le faltaba: la primera posición marcada con el color de marca como en la imagen compartible, el conteo de veces por programa, los canales más vistos, la comparación contra el período anterior, un skeleton mientras carga y un estado vacío con salida a la grilla. La página además redirige a un visitante no logueado en el servidor, en vez de renderizar y avisar en el cliente.
+
+---
+
+## [1.34.0] - 2026-09-09
+
+### Added
+
+- **Sección de Métricas en el backoffice (`/backoffice/analytics`)**: resumen con tiles de KPI y variación contra la ventana previa, curvas de tendencia con granularidad día/semana/mes, y rankings de programas y canales con movimiento de posición. Convive con Estadísticas, que sigue reportando sobre el estado de la base (altas, suscripciones, PDFs); esta sección reporta sobre lo que la gente hace. Los datos salen del pipeline propio del backend, así que a diferencia de Datadog —que retiene un mes— el histórico no se corta.
+- **Envío de eventos a nuestro propio backend** (`src/lib/analyticsQueue.ts`): cuarto sink junto a PostHog, Datadog, GA4 y Clarity, enganchado en el mismo punto único por el que ya pasan todos los eventos (`event()` y `pageview()` en `src/lib/gtag.ts`), de modo que hereda el filtro de admins y las reglas de consent existentes. Los eventos se batchean y se mandan cada 10 segundos, al llegar a 20, y —lo importante— cuando la pestaña se oculta o se cierra, vía `sendBeacon`, que es el único transporte que el browser garantiza en ese momento. Falla en silencio siempre: perder un evento es aceptable, romper un click handler por registrarlo no.
+- **Exportador de imagen para Instagram**: botón en el ranking de programas que genera el top 10 como PNG de 1080×1350 (formato 4:5, el más alto que Instagram no recorta), replicando el diseño de referencia. Renderizado server-side con `ImageResponse` de `next/og`, sin dependencias nuevas. Los logos de canal se descargan e incrustan como data URI en vez de referenciarse por URL, así un logo caído degrada a "sin logo" en vez de tumbar la imagen entera.
+- **Mi resumen (`/mi-resumen`)**: recap personal estilo Wrapped con el top 5 de programas, totales y día favorito, en ventana semanal, mensual o anual. Se comparte como imagen 1080×1920 a través de la Web Share API cuando el browser la soporta, con fallback a descarga —Chrome y Firefox de escritorio no comparten archivos, y un share sheet que no hace nada es peor que una imagen guardada. Accesible desde el menú de usuario.
+
+### Changed
+
+- **`click_youtube_live`, `click_youtube_deferred` y `program_subscribe` ahora mandan `program_id` y `channel_id`**: hasta ahora solo viajaban los nombres, lo que obligaba al backend a resolverlos contra un mapa por texto. Con los ids, los rankings agregan sobre una columna entera indexada en vez de un lookup en jsonb.
+- **Política de privacidad actualizada**: se declara la recolección propia (qué se guarda, con qué identificador, y que los eventos individuales se borran a los 90 días quedando solo totales agregados) y se suma Datadog, que ya estaba integrado pero no figuraba.
+
+### Fixed
+
+- **Los logos en formato WebP tumbaban la generación de imagen**: satori solo decodifica PNG, JPEG y GIF, y ante cualquier otro formato no lo saltea sino que lanza (`TypeError: a is not iterable`) y se lleva puesto el render entero. El bucket de logos tiene los tres formatos mezclados —Luzu es PNG, Blender JPEG, Olga WebP—, así que cualquier top 10 que incluyera a Olga fallaba. Ahora los formatos que satori no soporta se reconvierten a PNG con `sharp` (que pasa a ser dependencia directa en vez de transitiva de Next), y si la conversión falla se cae al nombre del canal en texto en lugar de romper la imagen.
+- **La imagen generada quedaba congelada con datos viejos**: `ImageResponse` de `next/og` responde por defecto con `cache-control: public, immutable, max-age=31536000`, que tiene sentido para una OG card cuyo contenido no cambia y ninguno para esta, cuyo ranking se mueve a medida que entran eventos. Generar la imagen una vez fijaba ese PNG por un año para esa URL, así que volver a pedirla tras acumular datos devolvía la versión vieja. Ambas rutas OG pasan a mandar `private, no-store`, y los fetch del cliente van con `cache: 'no-store'`.
+- **El resumen personal viajaba con `cache-control: public`**: por el mismo default, la imagen del recap —que es dato personal detrás de sesión— quedaba marcada como cacheable por proxies compartidos. Ahora es `private, no-store`.
+- **El punto del gráfico de tendencias era invisible**: `MarkElement` de x-charts usa `fill: background.paper` y `stroke: <color de la serie>`; al pisar solo el `stroke` con el color de fondo, relleno y borde quedaron ambos en `#1e293b` y el punto solo se veía al pasar el cursor. Ahora el relleno es el azul de la serie (el mismo `primary.main` de los botones) y el borde es la superficie, que además mantiene separables los puntos que se superponen.
+- **Los logos anchos se renderizaban diminutos**: el contenedor era cuadrado, así que un wordmark apaisado como el de LUZU u OLGA entraba por altura y quedaba ilegible. El recuadro pasó a ser más ancho que alto en ambas imágenes.
+
+### Notes
+
+- El backoffice queda excluido del sink propio, igual que ya lo estaba en Datadog: el tráfico de `/backoffice` somos nosotros, no los usuarios.
+- La paleta de los gráficos se validó como set categórico contra la superficie oscura (`#1e293b`): peor par CVD ΔE 9.4, peor par de visión normal ΔE 24.0, los tres colores por encima de 3:1 de contraste.
 
 ---
 
@@ -296,6 +504,22 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ---
 
+## [1.19.0] - 2026-05-31
+
+### Added
+- Day overflow zone: cada columna de día extiende 4 horas pasada la medianoche (00:00–03:59), mostrando programas que cruzan la medianoche como un bloque continuo en lugar de divididos en dos días
+- El domingo muestra los programas del próximo lunes en la zona de overflow, incluyendo cambios semanales (cancelaciones, horarios alterados, programas especiales) aplicados en tiempo real
+- Zona de overflow con fondo diferenciado y borde punteado en el límite de medianoche (00:00)
+- Actualización en tiempo real vía SSE: el overflow del domingo reacciona a overrides del lunes siguiente sin recargar la página
+
+### Fixed
+- Programas que cruzan medianoche (ej: 23:00–01:00) ahora se renderizan como un único bloque continuo
+- Programas con el mismo `program.id` en días consecutivos (inyección de overflow) ahora tienen lane assignments independientes, evitando renderizado a media altura
+- El guard de out-of-bounds se ejecuta después de todos los hooks (corrección de rules-of-hooks)
+- La columna de canal sticky y el TimeHeader ya no se rompen por el contenido de overflow
+
+---
+
 ## [1.18.2] - 2026-05-26
 
 ### Added
@@ -426,7 +650,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Fixed bell icon not showing up for users without session on streamers
 - Fixed bell icon triggering browser confirm message
 
-
 ## [1.16.3] - 2026-03-23
 
 ### Changed
@@ -501,7 +724,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 ### Added
 - Added upload banner logic
 - Added fixed banner logic
-
 
 ## [1.15.2] - 2025-12-31
 
@@ -742,7 +964,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 - Added logic to weekly override whole programs
 - Added logic to add panelists to weekly overrides
 - added statistics backoffice section for users and subscriptions
-
 
 ## [1.2.8] - 2025-06-20
 
@@ -1129,7 +1350,6 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Changed
 - Now youtube link opens embedded modal
-
 
 ## [0.0.17] - 2025-04-15
 

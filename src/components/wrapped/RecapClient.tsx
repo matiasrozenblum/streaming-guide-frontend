@@ -1,0 +1,464 @@
+"use client";
+
+import { useCallback, useEffect, useRef, useState } from "react";
+import { Alert, Box, CircularProgress, Typography } from "@mui/material";
+import Header from "@/components/Header";
+import BottomNavigation, {
+  useBottomNavHeight,
+} from "@/components/BottomNavigation";
+import { getMyRecap, type Recap, type RecapPeriod } from "@/services/analytics";
+import { RecapDock } from "./RecapDock";
+import { EmptyRecap } from "./EmptyRecap";
+import { RecapStatusPill } from "./RecapStatusPill";
+import { recapWaiting } from "@/utils/recapSchedule";
+import { event as trackEvent } from "@/lib/gtag";
+import { PLACA_ORDER, canRender, type PlacaKind } from "./placas/Placa";
+
+/**
+ * Week and month only. The yearly recap stays hidden until there is a year of
+ * history worth showing — the data exists, the product decision does not.
+ */
+const PERIODS: Array<{ id: RecapPeriod; label: string }> = [
+  { id: "week", label: "Semana" },
+  { id: "month", label: "Mes" },
+];
+
+const MONTHS = [
+  "enero",
+  "febrero",
+  "marzo",
+  "abril",
+  "mayo",
+  "junio",
+  "julio",
+  "agosto",
+  "septiembre",
+  "octubre",
+  "noviembre",
+  "diciembre",
+];
+
+/** "5 — 11 de octubre" for a week, "octubre de 2026" for a month. */
+function rangeLabel(recap: Recap): string {
+  if (recap.period.type !== "week") return recap.period.label;
+  const from = new Date(`${recap.period.from}T12:00:00Z`);
+  const to = new Date(`${recap.period.to}T12:00:00Z`);
+  const month = MONTHS[to.getUTCMonth()];
+  return `${from.getUTCDate()} — ${to.getUTCDate()} de ${month}`;
+}
+
+function PeriodSwitch({
+  value,
+  onChange,
+  disabled,
+}: {
+  value: RecapPeriod;
+  onChange: (next: RecapPeriod) => void;
+  disabled: boolean;
+}) {
+  return (
+    <Box
+      sx={{
+        display: "flex",
+        alignItems: "center",
+        gap: "4px",
+        p: "3px",
+        borderRadius: "999px",
+        bgcolor: "#1E293B",
+        width: "fit-content",
+      }}
+    >
+      {PERIODS.map((period) => {
+        const selected = period.id === value;
+        return (
+          <Box
+            key={period.id}
+            component="button"
+            type="button"
+            disabled={disabled}
+            aria-pressed={selected}
+            onClick={() => onChange(period.id)}
+            sx={{
+              border: "none",
+              borderRadius: "999px",
+              px: "18px",
+              py: "6px",
+              fontSize: 14,
+              fontFamily: "inherit",
+              fontWeight: selected ? 600 : 500,
+              cursor: disabled ? "default" : "pointer",
+              color: selected ? "#FFFFFF" : "#CBD5E1",
+              bgcolor: selected ? "#3B82F6" : "transparent",
+              transition: "background-color .15s ease",
+            }}
+          >
+            {period.label}
+          </Box>
+        );
+      })}
+    </Box>
+  );
+}
+
+export function RecapClient() {
+  const navHeight = useBottomNavHeight();
+  const [period, setPeriod] = useState<RecapPeriod>("week");
+  const [recap, setRecap] = useState<Recap | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sharing, setSharing] = useState(false);
+  /**
+   * Feedback about sharing, kept apart from `error`, which is about the recap
+   * itself failing to load. It shows as a floating toast rather than a banner
+   * in the column: a banner pushes the whole row of placas down, and they are
+   * sized against the space above them.
+   */
+  const [shareMessage, setShareMessage] = useState<{
+    severity: "error" | "info";
+    text: string;
+  } | null>(null);
+
+  useEffect(() => {
+    if (!shareMessage) return;
+    const timer = setTimeout(() => setShareMessage(null), 6000);
+    return () => clearTimeout(timer);
+  }, [shareMessage]);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+
+    getMyRecap({ period })
+      .then((data) => {
+        if (!cancelled) setRecap(data);
+      })
+      .catch(() => {
+        if (!cancelled) setError("No pudimos traer tu resumen. Probá de nuevo.");
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [period]);
+
+  /**
+   * Rendered placas, keyed by period and kind.
+   *
+   * The export takes a few hundred milliseconds, which is a long time to stare
+   * at a button that has not acknowledged the click. Rendering them in the
+   * background as soon as the recap arrives means the share sheet opens on the
+   * blob that is already in hand.
+   */
+  const placas = useRef(new Map<string, Blob>());
+
+  useEffect(() => {
+    if (!recap?.enough_data) return;
+    const kinds = PLACA_ORDER.filter((kind) => canRender(kind, recap));
+    let cancelled = false;
+
+    void (async () => {
+      // One at a time: four 1080x1920 renders at once would spike the server
+      // for no gain, and they are all in hand within a couple of seconds.
+      for (const kind of kinds) {
+        if (cancelled) return;
+        const key = `${period}:${kind}`;
+        if (placas.current.has(key)) continue;
+        try {
+          const response = await fetch(
+            `/api/og/recap?period=${period}&kind=${kind}`,
+            { cache: "no-store" },
+          );
+          if (!response.ok || cancelled) continue;
+          placas.current.set(key, await response.blob());
+        } catch {
+          // Leave it out of the cache; sharing falls back to fetching on click.
+        }
+      }
+    })();
+
+    return () => {
+      cancelled = true;
+    };
+  }, [recap, period]);
+
+  /** The one thing that always works: hand the file to the browser. */
+  const save = useCallback((blob: Blob, kind: PlacaKind) => {
+    const href = URL.createObjectURL(blob);
+    const anchor = document.createElement("a");
+    anchor.href = href;
+    anchor.download = `mi-resumen-${kind}.png`;
+    anchor.click();
+    // Revoking it in the same tick can cancel the download before it starts.
+    setTimeout(() => URL.revokeObjectURL(href), 10000);
+  }, []);
+
+  const handleShare = useCallback(
+    async (kind: PlacaKind, target: string) => {
+      setShareMessage(null);
+
+      /**
+       * One event per tap, naming how it ended. Same event name and same
+       * vocabulary the app sends, so the two surfaces land in one funnel
+       * instead of two that have to be reconciled by hand. `event()` fans it
+       * out to GA4, PostHog, Datadog RUM and our own pipeline.
+       */
+      const track = (outcome: string) =>
+        trackEvent({
+          action: "recap_share",
+          params: { target, outcome, kind, period, surface: "web" },
+        });
+
+      // Passing the page along needs no image at all. Taken from the current
+      // origin rather than hardcoded, so testing on staging copies a staging
+      // link instead of sending you to production.
+      if (target === "link") {
+        try {
+          await navigator.clipboard.writeText(
+            `${window.location.origin}/mi-resumen`,
+          );
+          setShareMessage({
+            severity: "info",
+            text: "Copiamos el link de Mi resumen.",
+          });
+          track("copied");
+        } catch {
+          setShareMessage({
+            severity: "error",
+            text: "No pudimos copiar el link. Probá de nuevo.",
+          });
+          track("error");
+        }
+        return;
+      }
+
+      setSharing(true);
+
+      // Making the image and handing it over are two different things, and only
+      // the first one can fail to produce anything. Lumping them together meant
+      // closing the share sheet reported "no pudimos generar la imagen" about a
+      // PNG that was already sitting in memory.
+      let blob: Blob | undefined;
+      try {
+        const key = `${period}:${kind}`;
+        blob = placas.current.get(key);
+        if (!blob) {
+          const response = await fetch(
+            `/api/og/recap?period=${period}&kind=${kind}`,
+            { cache: "no-store" },
+          );
+          if (!response.ok) throw new Error(`export failed: ${response.status}`);
+          blob = await response.blob();
+          placas.current.set(key, blob);
+        }
+      } catch {
+        setShareMessage({
+          severity: "error",
+          text: "No pudimos generar la imagen. Probá de nuevo.",
+        });
+        track("error");
+        setSharing(false);
+        return;
+      }
+
+      try {
+        const file = new File([blob], `mi-resumen-${kind}.png`, {
+          type: "image/png",
+        });
+
+        // The share sheet is the only path that actually posts to a network from
+        // the browser; everything else can do no better than hand over the file.
+        const shareable =
+          target !== "download" &&
+          typeof navigator !== "undefined" &&
+          typeof navigator.canShare === "function" &&
+          navigator.canShare({ files: [file] });
+
+        if (shareable) {
+          try {
+            await navigator.share({
+              files: [file],
+              text: "Mi resumen en La Guía del Streaming",
+            });
+            track("shared");
+            return;
+          } catch (cause) {
+            // Closing the share sheet is a decision, not a failure.
+            if ((cause as DOMException | undefined)?.name === "AbortError") {
+              track("cancelled");
+              return;
+            }
+            // Anything else means the system had nowhere to send it. The image
+            // exists, so save it rather than pretending nothing was made.
+            save(blob, kind);
+            setShareMessage({
+              severity: "info",
+              text: "No se pudo abrir el menú de compartir, así que descargamos la placa.",
+            });
+            track("fallback");
+            return;
+          }
+        }
+
+        save(blob, kind);
+        if (target !== "download") {
+          setShareMessage({
+            severity: "info",
+            text: "Tu navegador no puede compartir archivos: descargamos la placa para que la subas.",
+          });
+          track("fallback");
+        } else {
+          track("saved");
+        }
+      } finally {
+        setSharing(false);
+      }
+    },
+    [period, save],
+  );
+
+  return (
+    <Box
+      sx={{
+        // `svh`, not `dvh`: see ConditionalLayoutWrapper. A page measured
+        // against the dynamic viewport grows while it is being scrolled.
+        minHeight: "100svh",
+        display: "flex",
+        flexDirection: "column",
+        background: "linear-gradient(135deg,#0f172a 0%,#131d33 100%)",
+        // Enough that the logo is not flush against the top of the window, and
+        // no more: on a 13" laptop the row below is fighting for every pixel.
+        pt: { xs: "8px", sm: "10px" },
+        // Clear of the bottom bar when there is one. The row of placas reads
+        // this padding back when it sizes itself, so the carousel never ends up
+        // underneath the navigation.
+        pb: navHeight
+          ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 8px)`
+          : { xs: "8px", sm: "4px" },
+      }}
+    >
+      <Header />
+
+      <Box
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          gap: "16px",
+          px: { xs: "16px", md: "40px" },
+          pt: { xs: "10px", md: "10px" },
+          // Tight on a phone, where the row wraps onto two lines and every
+          // pixel it keeps is one the placa — or the placeholder — does not get.
+          pb: { xs: "8px", md: "10px" },
+          flexWrap: "wrap",
+        }}
+      >
+        <Typography
+          component="h1"
+          sx={{
+            fontFamily: "Outfit, sans-serif",
+            fontSize: { xs: 26, md: 22 },
+            fontWeight: 800,
+            letterSpacing: "-0.02em",
+            color: "#F1F5F9",
+          }}
+        >
+          Mi resumen
+        </Typography>
+
+        <PeriodSwitch value={period} onChange={setPeriod} disabled={loading} />
+
+        {recap && (
+          <Typography sx={{ fontSize: 14, color: "#94A3B8" }}>
+            {/* While there is nothing to show, the dates are the ones the next
+                recap will cover: the period the API hands back is the closed
+                one behind us, and printing it next to "tu primer resumen llega
+                el viernes" would date the promise to a week already gone. */}
+            {recap.enough_data
+              ? rangeLabel(recap)
+              : recapWaiting(
+                  recap.period.type === "month" ? "month" : "week",
+                  recap.period,
+                ).rangeLabel}
+          </Typography>
+        )}
+
+        {recap?.enough_data && <RecapStatusPill range={recap.period} />}
+
+        {recap?.enough_data && (
+          <Typography
+            sx={{
+              flexGrow: 1,
+              textAlign: "right",
+              fontSize: 13,
+              fontWeight: 500,
+              color: "#94A3B8",
+              display: { xs: "none", lg: "block" },
+            }}
+          >
+            Pasá el mouse por una tarjeta para compartirla
+          </Typography>
+        )}
+      </Box>
+
+      {error && (
+        <Alert severity="error" sx={{ mx: "48px", mt: "16px" }}>
+          {error}
+        </Alert>
+      )}
+
+      {loading && (
+        <Box
+          sx={{
+            flexGrow: 1,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+          }}
+        >
+          <CircularProgress />
+        </Box>
+      )}
+
+      {!loading && recap && !recap.enough_data && <EmptyRecap recap={recap} />}
+
+      {!loading && recap?.enough_data && (
+        <RecapDock recap={recap} onShare={handleShare} busy={sharing} />
+      )}
+
+      {shareMessage && (
+        <Box
+          sx={{
+            position: "fixed",
+            left: 0,
+            right: 0,
+            bottom: navHeight
+              ? `calc(${navHeight}px + env(safe-area-inset-bottom, 0px) + 12px)`
+              : "16px",
+            display: "flex",
+            justifyContent: "center",
+            px: "16px",
+            zIndex: (theme) => theme.zIndex.snackbar,
+            pointerEvents: "none",
+          }}
+        >
+          <Alert
+            severity={shareMessage.severity}
+            onClose={() => setShareMessage(null)}
+            sx={{
+              pointerEvents: "auto",
+              maxWidth: "520px",
+              boxShadow: "0 12px 32px rgba(2,6,23,0.6)",
+            }}
+          >
+            {shareMessage.text}
+          </Alert>
+        </Box>
+      )}
+
+      <BottomNavigation />
+    </Box>
+  );
+}

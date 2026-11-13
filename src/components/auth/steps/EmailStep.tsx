@@ -15,13 +15,20 @@ interface EmailStepProps {
   onSubmit: (email: string) => void;
   isLoading: boolean;
   error?: string;
+  /**
+   * Off where the form is a page rather than a dialog: on a phone the caret
+   * brings the keyboard, and the keyboard covers everything the page was
+   * trying to say before asking for an address.
+   */
+  autoFocus?: boolean;
 }
 
 export default function EmailStep({
   initialEmail = '',
   onSubmit,
   isLoading,
-  error
+  error,
+  autoFocus = true
 }: EmailStepProps) {
   const [email, setEmail] = useState(initialEmail);
   const [localErr, setLocalErr] = useState('');
@@ -50,7 +57,7 @@ export default function EmailStep({
         value={email}
         onChange={e => setEmail(e.target.value)}
         disabled={isLoading}
-        autoFocus
+        autoFocus={autoFocus}
         InputProps={{
           startAdornment: (
             <InputAdornment position="start">
