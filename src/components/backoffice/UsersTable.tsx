@@ -1,6 +1,6 @@
-'use client';
+"use client";
 
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback } from "react";
 import {
   Table,
   TableBody,
@@ -28,34 +28,41 @@ import {
   Pagination,
   SelectChangeEvent,
   Tooltip,
-} from '@mui/material';
-import { Edit, Delete, Add, NavigateBefore, NavigateNext } from '@mui/icons-material';
-import { User } from '@/types/user';
-import { useSessionContext } from '@/contexts/SessionContext';
-import type { SessionWithToken } from '@/types/session';
-import { ManageDevicesDialog } from './ManageDevicesDialog';
-import { ManageSubscriptionsDialog } from './ManageSubscriptionsDialog';
+} from "@mui/material";
+import {
+  Edit,
+  Delete,
+  Add,
+  NavigateBefore,
+  NavigateNext,
+} from "@mui/icons-material";
+import { User } from "@/types/user";
+import { useSessionContext } from "@/contexts/SessionContext";
+import type { SessionWithToken } from "@/types/session";
+import { ManageDevicesDialog } from "./ManageDevicesDialog";
+import { ManageSubscriptionsDialog } from "./ManageSubscriptionsDialog";
+import { calculateAge, MINIMUM_AGE_YEARS } from "@/utils/age";
 
 // Helper to extract error messages
 function getErrorMessage(err: unknown): string {
-  if (!err) return 'Error desconocido';
-  if (typeof err === 'string') return err;
+  if (!err) return "Error desconocido";
+  if (typeof err === "string") return err;
   if (err instanceof Error) return err.message;
-  if (typeof err === 'object' && err !== null) {
+  if (typeof err === "object" && err !== null) {
     const obj = err as Record<string, unknown>;
-    if ('message' in obj) {
+    if ("message" in obj) {
       const msg = obj.message;
-      if (Array.isArray(msg)) return msg.join(' | ');
-      if (typeof msg === 'string') return msg;
+      if (Array.isArray(msg)) return msg.join(" | ");
+      if (typeof msg === "string") return msg;
     }
-    if ('details' in obj && typeof obj.details === 'string') {
+    if ("details" in obj && typeof obj.details === "string") {
       return obj.details;
     }
   }
   return JSON.stringify(err);
 }
 
-type Gender = 'male' | 'female' | 'non_binary' | 'rather_not_say';
+type Gender = "male" | "female" | "non_binary" | "rather_not_say";
 
 interface FormData {
   firstName: string;
@@ -63,8 +70,8 @@ interface FormData {
   email: string;
   phone: string;
   password: string;
-  role: 'admin' | 'user';
-  gender: Gender | '';
+  role: "admin" | "user";
+  gender: Gender | "";
   birthDate: string;
 }
 
@@ -80,51 +87,60 @@ export function UsersTable() {
   const typedSession = session as SessionWithToken | null;
   const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
-  const [searchTerm, setSearchTerm] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
   const [openDialog, setOpenDialog] = useState(false);
   const [editingUser, setEditingUser] = useState<User | null>(null);
   const [formData, setFormData] = useState<FormData>({
-    firstName: '',
-    lastName: '',
-    email: '',
-    phone: '',
-    password: '',
-    role: 'user',
-    gender: '',
-    birthDate: '',
+    firstName: "",
+    lastName: "",
+    email: "",
+    phone: "",
+    password: "",
+    role: "user",
+    gender: "",
+    birthDate: "",
   });
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<string | null>(null);
   const [fieldErrors, setFieldErrors] = useState<{ [key: string]: string }>({});
-  const [managingDevicesForUser, setManagingDevicesForUser] = useState<User | null>(null);
-  const [managingSubsForUser, setManagingSubsForUser] = useState<User | null>(null);
-  
+  const [managingDevicesForUser, setManagingDevicesForUser] =
+    useState<User | null>(null);
+  const [managingSubsForUser, setManagingSubsForUser] = useState<User | null>(
+    null,
+  );
+
   // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const [pageSize, setPageSize] = useState(20);
   const [totalUsers, setTotalUsers] = useState(0);
 
-  const fetchUsers = useCallback(async (page: number = currentPage, size: number = pageSize) => {
-    try {
-      setLoading(true);
-      const response = await fetch(`/api/users?page=${page}&pageSize=${size}`, {
-        headers: {
-          Authorization: `Bearer ${typedSession?.accessToken}`,
-        },
-      });
-      if (!response.ok) throw new Error('Failed to fetch users');
-      const data: PaginatedUsersResponse = await response.json();
-      setUsers(data.users);
-      setTotalUsers(data.total);
-      setCurrentPage(data.page);
-      setPageSize(data.pageSize);
-    } catch (error) {
-      setError('Error loading users');
-      console.error('Error:', error);
-    } finally {
-      setLoading(false);
-    }
-  }, [typedSession?.accessToken, currentPage, pageSize]);
+  const fetchUsers = useCallback(
+    async (page: number = currentPage, size: number = pageSize) => {
+      try {
+        setLoading(true);
+        const response = await fetch(
+          `/api/users?page=${page}&pageSize=${size}`,
+          {
+            headers: {
+              Authorization: `Bearer ${typedSession?.accessToken}`,
+            },
+          },
+        );
+        if (!response.ok) throw new Error("Failed to fetch users");
+        const data: PaginatedUsersResponse = await response.json();
+        setUsers(data.users);
+        setTotalUsers(data.total);
+        setCurrentPage(data.page);
+        setPageSize(data.pageSize);
+      } catch (error) {
+        setError("Error loading users");
+        console.error("Error:", error);
+      } finally {
+        setLoading(false);
+      }
+    },
+    [typedSession?.accessToken, currentPage, pageSize],
+  );
 
   useEffect(() => {
     if (typedSession?.accessToken) {
@@ -132,7 +148,10 @@ export function UsersTable() {
     }
   }, [fetchUsers, typedSession?.accessToken]);
 
-  const handlePageChange = (event: React.ChangeEvent<unknown>, newPage: number) => {
+  const handlePageChange = (
+    event: React.ChangeEvent<unknown>,
+    newPage: number,
+  ) => {
     setCurrentPage(newPage);
     fetchUsers(newPage, pageSize);
   };
@@ -148,26 +167,26 @@ export function UsersTable() {
     if (user) {
       setEditingUser(user);
       setFormData({
-        firstName: user.firstName || '',
-        lastName: user.lastName || '',
-        email: user.email || '',
-        phone: user.phone || '',
-        password: '', // Don't show current password
-        role: user.role === 'admin' ? 'admin' : 'user',
-        gender: user.gender || '',
-        birthDate: user.birthDate ? user.birthDate.slice(0, 10) : '',
+        firstName: user.firstName || "",
+        lastName: user.lastName || "",
+        email: user.email || "",
+        phone: user.phone || "",
+        password: "", // Don't show current password
+        role: user.role === "admin" ? "admin" : "user",
+        gender: user.gender || "",
+        birthDate: user.birthDate ? user.birthDate.slice(0, 10) : "",
       });
     } else {
       setEditingUser(null);
       setFormData({
-        firstName: '',
-        lastName: '',
-        email: '',
-        phone: '',
-        password: '',
-        role: 'user',
-        gender: '',
-        birthDate: '',
+        firstName: "",
+        lastName: "",
+        email: "",
+        phone: "",
+        password: "",
+        role: "user",
+        gender: "",
+        birthDate: "",
       });
     }
     setOpenDialog(true);
@@ -177,58 +196,54 @@ export function UsersTable() {
     setOpenDialog(false);
     setEditingUser(null);
     setFormData({
-      firstName: '',
-      lastName: '',
-      email: '',
-      phone: '',
-      password: '',
-      role: 'user',
-      gender: '',
-      birthDate: '',
+      firstName: "",
+      lastName: "",
+      email: "",
+      phone: "",
+      password: "",
+      role: "user",
+      gender: "",
+      birthDate: "",
     });
   };
 
   const validateFields = () => {
     const errors: { [key: string]: string } = {};
     if (!formData.firstName.trim()) {
-      errors.firstName = 'El nombre es obligatorio.';
+      errors.firstName = "El nombre es obligatorio.";
     }
     if (!formData.lastName.trim()) {
-      errors.lastName = 'El apellido es obligatorio.';
+      errors.lastName = "El apellido es obligatorio.";
     }
     if (!formData.email.trim()) {
-      errors.email = 'El correo electrónico es obligatorio.';
+      errors.email = "El correo electrónico es obligatorio.";
     } else {
-      if (!formData.email.includes('@')) {
+      if (!formData.email.includes("@")) {
         errors.email = 'El correo electrónico debe contener un "@"';
       } else if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(formData.email)) {
-        errors.email = 'El correo electrónico debe tener un formato válido (ejemplo: usuario@ejemplo.com)';
+        errors.email =
+          "El correo electrónico debe tener un formato válido (ejemplo: usuario@ejemplo.com)";
       }
     }
     if (formData.phone && !/^\+?\d{7,15}$/.test(formData.phone)) {
-      errors.phone = 'El teléfono debe estar en formato internacional (ej: +5491123456789)';
+      errors.phone =
+        "El teléfono debe estar en formato internacional (ej: +5491123456789)";
     }
     if (!editingUser && !formData.password) {
-      errors.password = 'La contraseña es obligatoria para nuevos usuarios.';
+      errors.password = "La contraseña es obligatoria para nuevos usuarios.";
     } else if (formData.password && formData.password.length < 6) {
-      errors.password = 'La contraseña debe tener al menos 6 caracteres.';
+      errors.password = "La contraseña debe tener al menos 6 caracteres.";
     }
     if (!formData.gender) {
-      errors.gender = 'El género es obligatorio.';
+      errors.gender = "El género es obligatorio.";
     }
     if (!formData.birthDate) {
-      errors.birthDate = 'La fecha de nacimiento es obligatoria.';
+      errors.birthDate = "La fecha de nacimiento es obligatoria.";
     } else {
-      // Validate 18+
-      const birth = new Date(formData.birthDate);
-      const now = new Date();
-      let age = now.getFullYear() - birth.getFullYear();
-      const m = now.getMonth() - birth.getMonth();
-      if (m < 0 || (m === 0 && now.getDate() < birth.getDate())) {
-        age--;
-      }
-      if (age < 18) {
-        errors.birthDate = 'El usuario debe ser mayor de 18 años.';
+      // Same age rule as signup and as the server; the wording differs because
+      // here an admin is editing somebody else's account.
+      if (calculateAge(new Date(formData.birthDate)) < MINIMUM_AGE_YEARS) {
+        errors.birthDate = `El usuario debe ser mayor de ${MINIMUM_AGE_YEARS} años.`;
       }
     }
     return errors;
@@ -244,23 +259,23 @@ export function UsersTable() {
     }
 
     try {
-      const url = editingUser ? `/api/users/${editingUser.id}` : '/api/users';
-      const method = editingUser ? 'PATCH' : 'POST';
-  
+      const url = editingUser ? `/api/users/${editingUser.id}` : "/api/users";
+      const method = editingUser ? "PATCH" : "POST";
+
       // Remove empty string fields
       const filteredFormData = Object.fromEntries(
-        Object.entries(formData).filter(([, v]) => v !== '')
+        Object.entries(formData).filter(([, v]) => v !== ""),
       );
-  
+
       const response = await fetch(url, {
         method,
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
           Authorization: `Bearer ${typedSession?.accessToken}`,
         },
         body: JSON.stringify(filteredFormData),
       });
-  
+
       if (!response.ok) {
         let data;
         try {
@@ -270,21 +285,25 @@ export function UsersTable() {
         }
         throw new Error(getErrorMessage(data));
       }
-  
+
       handleCloseDialog();
       fetchUsers(); // Refresh current page
-      setSuccess(editingUser ? 'Usuario actualizado correctamente' : 'Usuario creado correctamente');
+      setSuccess(
+        editingUser
+          ? "Usuario actualizado correctamente"
+          : "Usuario creado correctamente",
+      );
     } catch (error) {
       setError(getErrorMessage(error));
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('¿Estás seguro que deseas eliminar este usuario?')) return;
+    if (!confirm("¿Estás seguro que deseas eliminar este usuario?")) return;
     try {
       const response = await fetch(`/api/users/${id}`, {
-        method: 'DELETE',
+        method: "DELETE",
         headers: {
           Authorization: `Bearer ${typedSession?.accessToken}`,
         },
@@ -299,10 +318,10 @@ export function UsersTable() {
         throw new Error(getErrorMessage(data));
       }
       fetchUsers(); // Refresh current page
-      setSuccess('Usuario eliminado correctamente');
+      setSuccess("Usuario eliminado correctamente");
     } catch (error) {
       setError(getErrorMessage(error));
-      console.error('Error:', error);
+      console.error("Error:", error);
     }
   };
 
@@ -313,13 +332,18 @@ export function UsersTable() {
 
   if (loading) {
     return (
-      <Box display="flex" justifyContent="center" alignItems="center" minHeight="200px">
+      <Box
+        display="flex"
+        justifyContent="center"
+        alignItems="center"
+        minHeight="200px"
+      >
         <CircularProgress />
       </Box>
     );
   }
 
-  const filteredUsers = users.filter(user => {
+  const filteredUsers = users.filter((user) => {
     const searchLower = searchTerm.toLowerCase();
     return (
       user.firstName?.toLowerCase().includes(searchLower) ||
@@ -333,11 +357,20 @@ export function UsersTable() {
 
   return (
     <Box>
-      <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', mb: 2 }}>
-        <Typography variant="h6" color="text.primary">Usuarios</Typography>
-        <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+      <Box
+        sx={{
+          display: "flex",
+          justifyContent: "space-between",
+          alignItems: "center",
+          mb: 2,
+        }}
+      >
+        <Typography variant="h6" color="text.primary">
+          Usuarios
+        </Typography>
+        <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
           {/* Pagination Controls */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Typography variant="body2" color="text.secondary">
               Mostrar:
             </Typography>
@@ -355,14 +388,19 @@ export function UsersTable() {
               de {totalUsers} usuarios
             </Typography>
           </Box>
-          
+
           {/* Page Navigation */}
-          <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
+          <Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
             <Tooltip title="Página anterior" arrow>
               <span>
                 <IconButton
                   aria-label="Página anterior"
-                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage - 1)}
+                  onClick={() =>
+                    handlePageChange(
+                      {} as React.ChangeEvent<unknown>,
+                      currentPage - 1,
+                    )
+                  }
                   disabled={currentPage <= 1}
                   size="small"
                 >
@@ -377,7 +415,12 @@ export function UsersTable() {
               <span>
                 <IconButton
                   aria-label="Página siguiente"
-                  onClick={() => handlePageChange({} as React.ChangeEvent<unknown>, currentPage + 1)}
+                  onClick={() =>
+                    handlePageChange(
+                      {} as React.ChangeEvent<unknown>,
+                      currentPage + 1,
+                    )
+                  }
                   disabled={currentPage >= totalPages}
                   size="small"
                 >
@@ -386,8 +429,12 @@ export function UsersTable() {
               </span>
             </Tooltip>
           </Box>
-          
-          <Button variant="contained" startIcon={<Add />} onClick={() => handleOpenDialog()}>
+
+          <Button
+            variant="contained"
+            startIcon={<Add />}
+            onClick={() => handleOpenDialog()}
+          >
             Nuevo Usuario
           </Button>
         </Box>
@@ -400,7 +447,7 @@ export function UsersTable() {
           size="small"
           fullWidth
           value={searchTerm}
-          onChange={e => setSearchTerm(e.target.value)}
+          onChange={(e) => setSearchTerm(e.target.value)}
           placeholder="Buscar por nombre, apellido, email o teléfono"
         />
       </Box>
@@ -418,30 +465,46 @@ export function UsersTable() {
             </TableRow>
           </TableHead>
           <TableBody>
-            {filteredUsers.map(user => (
+            {filteredUsers.map((user) => (
               <TableRow key={user.id}>
                 <TableCell>{user.firstName}</TableCell>
                 <TableCell>{user.lastName}</TableCell>
                 <TableCell>{user.email}</TableCell>
                 <TableCell>
-                  <Button size="small" aria-label={`Ver ${user.devices?.length || 0} dispositivos de ${user.email}`} onClick={() => setManagingDevicesForUser(user)}>
+                  <Button
+                    size="small"
+                    aria-label={`Ver ${user.devices?.length || 0} dispositivos de ${user.email}`}
+                    onClick={() => setManagingDevicesForUser(user)}
+                  >
                     Ver ({user.devices?.length || 0})
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Button size="small" aria-label={`Ver ${user.subscriptions?.length || 0} suscripciones de ${user.email}`} onClick={() => setManagingSubsForUser(user)}>
+                  <Button
+                    size="small"
+                    aria-label={`Ver ${user.subscriptions?.length || 0} suscripciones de ${user.email}`}
+                    onClick={() => setManagingSubsForUser(user)}
+                  >
                     Ver ({user.subscriptions?.length || 0})
                   </Button>
                 </TableCell>
                 <TableCell>
-                  <Box sx={{ display: 'flex', gap: 0.5 }}>
+                  <Box sx={{ display: "flex", gap: 0.5 }}>
                     <Tooltip title="Editar usuario" arrow>
-                      <IconButton aria-label="Editar usuario" size="small" onClick={() => handleOpenDialog(user)}>
+                      <IconButton
+                        aria-label="Editar usuario"
+                        size="small"
+                        onClick={() => handleOpenDialog(user)}
+                      >
                         <Edit />
                       </IconButton>
                     </Tooltip>
                     <Tooltip title="Eliminar usuario" arrow>
-                      <IconButton aria-label="Eliminar usuario" size="small" onClick={() => handleDelete(user.id)}>
+                      <IconButton
+                        aria-label="Eliminar usuario"
+                        size="small"
+                        onClick={() => handleDelete(user.id)}
+                      >
                         <Delete />
                       </IconButton>
                     </Tooltip>
@@ -454,7 +517,7 @@ export function UsersTable() {
       </TableContainer>
 
       {/* Pagination at bottom */}
-      <Box sx={{ display: 'flex', justifyContent: 'center', mt: 2 }}>
+      <Box sx={{ display: "flex", justifyContent: "center", mt: 2 }}>
         <Pagination
           count={totalPages}
           page={currentPage}
@@ -465,9 +528,14 @@ export function UsersTable() {
         />
       </Box>
 
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
-        <DialogTitle sx={{ fontWeight: 'bold', fontSize: '1.5rem' }}>
-          {editingUser ? 'Editar Usuario' : 'Nuevo Usuario'}
+      <Dialog
+        open={openDialog}
+        onClose={handleCloseDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle sx={{ fontWeight: "bold", fontSize: "1.5rem" }}>
+          {editingUser ? "Editar Usuario" : "Nuevo Usuario"}
         </DialogTitle>
         <form onSubmit={handleSubmit}>
           <DialogContent>
@@ -475,50 +543,50 @@ export function UsersTable() {
               <TextField
                 label="Nombre"
                 value={formData.firstName}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, firstName: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, firstName: '' }));
+                  setFieldErrors((prev) => ({ ...prev, firstName: "" }));
                 }}
                 fullWidth
                 required
                 error={!!fieldErrors.firstName}
-                helperText={fieldErrors.firstName || ''}
+                helperText={fieldErrors.firstName || ""}
               />
               <TextField
                 label="Apellido"
                 value={formData.lastName}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, lastName: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, lastName: '' }));
+                  setFieldErrors((prev) => ({ ...prev, lastName: "" }));
                 }}
                 fullWidth
                 required
                 error={!!fieldErrors.lastName}
-                helperText={fieldErrors.lastName || ''}
+                helperText={fieldErrors.lastName || ""}
               />
               <TextField
                 label="Email"
                 type="text"
                 value={formData.email}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, email: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, email: '' }));
+                  setFieldErrors((prev) => ({ ...prev, email: "" }));
                 }}
                 fullWidth
                 required
                 error={!!fieldErrors.email}
-                helperText={fieldErrors.email || ''}
+                helperText={fieldErrors.email || ""}
               />
               <TextField
                 label="Teléfono"
                 value={formData.phone}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, phone: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, phone: '' }));
+                  setFieldErrors((prev) => ({ ...prev, phone: "" }));
                 }}
                 fullWidth
                 error={!!fieldErrors.phone}
-                helperText={fieldErrors.phone || ''}
+                helperText={fieldErrors.phone || ""}
               />
               <FormControl fullWidth>
                 <InputLabel id="role-label">Rol</InputLabel>
@@ -528,8 +596,11 @@ export function UsersTable() {
                   value={formData.role}
                   label="Rol"
                   onChange={(e) => {
-                    setFormData({ ...formData, role: e.target.value as 'admin' | 'user' });
-                    setFieldErrors(prev => ({ ...prev, role: '' }));
+                    setFormData({
+                      ...formData,
+                      role: e.target.value as "admin" | "user",
+                    });
+                    setFieldErrors((prev) => ({ ...prev, role: "" }));
                   }}
                 >
                   <MenuItem value="user">Usuario</MenuItem>
@@ -543,8 +614,11 @@ export function UsersTable() {
                   value={formData.gender}
                   label="Género"
                   onChange={(e) => {
-                    setFormData({ ...formData, gender: e.target.value as Gender });
-                    setFieldErrors(prev => ({ ...prev, gender: '' }));
+                    setFormData({
+                      ...formData,
+                      gender: e.target.value as Gender,
+                    });
+                    setFieldErrors((prev) => ({ ...prev, gender: "" }));
                   }}
                   error={!!fieldErrors.gender}
                 >
@@ -553,37 +627,54 @@ export function UsersTable() {
                   <MenuItem value="non_binary">No binario</MenuItem>
                   <MenuItem value="rather_not_say">Prefiero no decir</MenuItem>
                 </Select>
-                {fieldErrors.gender && <Typography color="error" variant="caption">{fieldErrors.gender}</Typography>}
+                {fieldErrors.gender && (
+                  <Typography color="error" variant="caption">
+                    {fieldErrors.gender}
+                  </Typography>
+                )}
               </FormControl>
               <TextField
                 label="Fecha de nacimiento"
                 type="date"
                 value={formData.birthDate}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, birthDate: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, birthDate: '' }));
+                  setFieldErrors((prev) => ({ ...prev, birthDate: "" }));
                 }}
                 fullWidth
                 InputLabelProps={{ shrink: true }}
                 error={!!fieldErrors.birthDate}
-                helperText={fieldErrors.birthDate || ''}
+                helperText={fieldErrors.birthDate || ""}
               />
               <TextField
                 label="Contraseña"
                 type="password"
                 value={formData.password}
-                onChange={e => {
+                onChange={(e) => {
                   setFormData({ ...formData, password: e.target.value });
-                  setFieldErrors(prev => ({ ...prev, password: '' }));
+                  setFieldErrors((prev) => ({ ...prev, password: "" }));
                 }}
                 fullWidth
                 required={!editingUser}
                 error={!!fieldErrors.password}
-                helperText={fieldErrors.password || (editingUser ? 'Dejar en blanco para mantener la contraseña actual' : '')}
+                helperText={
+                  fieldErrors.password ||
+                  (editingUser
+                    ? "Dejar en blanco para mantener la contraseña actual"
+                    : "")
+                }
               />
             </Box>
           </DialogContent>
-          <DialogActions sx={{ p: 2, display: 'flex', flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center' }}>
+          <DialogActions
+            sx={{
+              p: 2,
+              display: "flex",
+              flexDirection: "row",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             {error && (
               <Alert
                 severity="error"
@@ -594,18 +685,18 @@ export function UsersTable() {
                   maxWidth: 320,
                   px: 2,
                   py: 0.5,
-                  fontSize: '0.95rem',
+                  fontSize: "0.95rem",
                   flex: 1,
-                  whiteSpace: 'pre-line',
+                  whiteSpace: "pre-line",
                 }}
               >
                 {error}
               </Alert>
             )}
-            <Box sx={{ display: 'flex', gap: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
               <Button onClick={handleCloseDialog}>Cancelar</Button>
               <Button type="submit" variant="contained">
-                {editingUser ? 'Guardar' : 'Crear'}
+                {editingUser ? "Guardar" : "Crear"}
               </Button>
             </Box>
           </DialogActions>
@@ -623,7 +714,7 @@ export function UsersTable() {
           // setManagingDevicesForUser(null);
         }}
       />
-      
+
       <ManageSubscriptionsDialog
         open={!!managingSubsForUser}
         onClose={() => setManagingSubsForUser(null)}
@@ -636,11 +727,19 @@ export function UsersTable() {
         }}
       />
 
-      <Snackbar open={!!success} autoHideDuration={6000} onClose={handleCloseSnackbar}>
-        <Alert onClose={handleCloseSnackbar} severity="success" sx={{ width: '100%' }}>
+      <Snackbar
+        open={!!success}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <Alert
+          onClose={handleCloseSnackbar}
+          severity="success"
+          sx={{ width: "100%" }}
+        >
           {success}
         </Alert>
       </Snackbar>
     </Box>
   );
-} 
+}

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import EditOutlinedIcon from '@mui/icons-material/EditOutlined';
 import {
   Box,
   TextField,
@@ -8,13 +9,19 @@ import {
   Typography,
   CircularProgress
 } from '@mui/material';
-import ArrowBackIosNewIcon from '@mui/icons-material/ArrowBackIosNew';
 
 interface CodeStepProps {
   email: string;
+  /**
+   * Going back to fix a typo in the address. Offered right under it, because
+   * that is where somebody is looking when they notice it — a way out at the
+   * other end of the screen, or an arrow to interpret, is not an answer.
+   */
+  onChangeEmail?: () => void;
   initialCode?: string;
   onSubmit: (code: string) => void;
-  onBack: () => void;
+  /** Kept for the callers; the header arrow is what goes back now. */
+  onBack?: () => void;
   isLoading: boolean;
   error?: string;
 }
@@ -111,9 +118,9 @@ function OtpInput({ value, onChange, length = 6, disabled = false }: OtpInputPro
 
 export default function CodeStep({
   email,
+  onChangeEmail,
   initialCode = '',
   onSubmit,
-  onBack,
   isLoading,
   error
 }: CodeStepProps) {
@@ -171,6 +178,23 @@ export default function CodeStep({
       <Typography variant="body2" textAlign="center">
         Ingresá el código que recibiste en <strong>{email}</strong>
       </Typography>
+      {onChangeEmail && (
+        <Button
+          onClick={onChangeEmail}
+          disabled={isLoading}
+          startIcon={<EditOutlinedIcon fontSize="small" />}
+          sx={{
+            alignSelf: "center",
+            mt: -1.5,
+            textTransform: "none",
+            fontSize: 13,
+            fontWeight: 600,
+            color: "#60A5FA",
+          }}
+        >
+          Cambiar correo
+        </Button>
+      )}
       <OtpInput value={code} onChange={setCode} length={6} disabled={isLoading} />
       {(localErr || error) && (
         <Alert severity="error">
@@ -198,16 +222,6 @@ export default function CodeStep({
           aria-label={isLoading ? 'Verificando' : undefined}
         >
           {isLoading ? <CircularProgress size={24} color="inherit" /> : 'Verificar'}
-        </Button>
-        <Button
-          variant="outlined"
-          startIcon={<ArrowBackIosNewIcon fontSize="small" />}
-          fullWidth
-          disabled={isLoading}
-          onClick={onBack}
-          aria-label="Volver al paso anterior"
-        >
-          Volver
         </Button>
       </Box>
     </Box>

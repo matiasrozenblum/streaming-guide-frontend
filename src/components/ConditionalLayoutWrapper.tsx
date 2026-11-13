@@ -23,9 +23,14 @@ export default function ConditionalLayoutWrapper({ children }: ConditionalLayout
     );
   }
   
-  // For other pages, use normal layout with scrolling
+  // For other pages, use normal layout with scrolling.
+  //
+  // `svh` and not `dvh`: on a phone `dvh` grows as the browser retracts its
+  // address bar, so the page got taller at the same rate the reader scrolled
+  // and the footer walked away from them — unreachable. `svh` is the window
+  // with the bar showing, which never changes, so the page has one height.
   return (
-    <div style={{ minHeight: '100dvh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100svh', display: 'flex', flexDirection: 'column' }}>
       <div style={{ flex: 1 }}>
         {children}
       </div>
