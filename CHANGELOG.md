@@ -9,6 +9,18 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Fixed
+
+---
+
+## [1.37.0] - 2026-11-13
+
+### Added
+
 - **El alta sigue el diseño de la pantalla de registro**, tanto desde Mi resumen como desde la grilla: el stepper de iconos y etiquetas pasa a **una sola barra que se llena**, en un cuarto del alto que pedía el anterior. No lleva leyenda: "Paso 2 de 4 · Verificar" no se lee como ayuda sino como trámite, y encima repetía lo que ya dice el encabezado que tiene justo arriba. Lo único que agregaba —cuánto falta— es exactamente lo que muestra la barra. El dato no se pierde para quien no la ve: es un `progressbar` con `aria-valuetext`, así que un lector de pantalla escucha la misma frase que antes estaba escrita. La barra mide los pasos que quedaron atrás y no el que tenés delante, así que el último cuarto lo cierra el registro aceptado y no el formulario abierto; si el registro falla, vuelve atrás junto con el error. Aparece **solo en el alta**: quien ya tiene cuenta escribe una dirección y una contraseña, y ahí no hay recorrido que contar. Donde el formulario es la pantalla, el encabezado suma una **flecha de volver**; en el diálogo sobre la grilla la flecha convive con la cruz, porque ahí la cruz tiene que seguir cerrando.
 - **Se va el boton "Volver" de cada paso**: con la flecha en el encabezado —que ahora esta tambien en el dialogo sobre la grilla— habia dos caminos de vuelta para lo mismo. Queda uno. La cruz sigue siendo otra cosa: es la salida, no el paso atras.
 - **"Cambiar correo" en el paso del codigo**, con lapiz, justo debajo de la direccion: el momento en que alguien nota el error de tipeo es leyendo esa linea, y una salida al otro extremo de la pantalla —o una flecha que hay que interpretar— no es una respuesta. Vuelve al panel del correo con la direccion todavia cargada.
