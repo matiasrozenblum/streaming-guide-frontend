@@ -15,6 +15,8 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Fixed
 
+- **La placa vacía de Mi resumen no se dibujaba en casi ningún teléfono.** Quedaba solo el texto y el botón, con media pantalla libre debajo. La regla que la esconde en pantallas sin lugar medía contra 740px de alto, y ahí entra casi cualquier teléfono con un navegador: un iPhone Pro Max en Chrome reporta unos 733px cuando la barra se retrae, así que caía dentro de la regla aun teniendo unos 300px de sobra para una placa que pedía 229. El umbral baja a 660px y el piso del tamaño, de 120px de ancho a 90, que es lo que permite que en vez de desaparecer se achique: medido contra el cromo real —header, fila del título y la barra de 56px— el lugar disponible va de ~150px en una ventana de 560 a ~320px en una de 730, y ahora la placa sigue esa curva en lugar de apoyarse en un piso que ninguna de las cortas podía sostener. Verificado en 360x540, 360x560, 360x600, 375x612, 390x640, 390x664, 393x700, 412x730, 430x683 y 430x790, simulando la diferencia entre el alto que ve la media query y el que ve `svh`: en todos sobra espacio, y en los dos más chicos la placa sigue dando un paso al costado porque genuinamente no entra.
+
 ---
 
 ## [1.37.0] - 2026-11-13

@@ -51,20 +51,27 @@ function PlacaSkeleton() {
         // toolbar showing — the smallest it gets, and the one the page is
         // first seen at — so this is fixed from the first paint.
         "--sk": {
-          xs: `clamp(120px, calc((100svh - 480px) * ${SKELETON_RATIO}), 190px)`,
+          xs: `clamp(90px, calc((100svh - 450px) * ${SKELETON_RATIO}), 190px)`,
           md: `clamp(200px, calc((100svh - 300px) * ${SKELETON_RATIO}), ${DESIGN_WIDTH}px)`,
         },
         width: "var(--sk)",
         height: u(533),
         flexShrink: 0,
-        // On a short phone there is not enough room for the placeholder and
-        // the message both, and shrinking it further turns it into a smudge.
-        // It is decoration — the message, the bar and the button are the
-        // content — so on those screens it steps aside instead.
+        // Only when there is genuinely no room left. The first cut at this
+        // hid the placeholder below 740px, which is nearly every phone in a
+        // browser: a 430x683 window — an iPhone Pro Max in Chrome — reports
+        // about 733px here once the toolbar retracts, so it fell inside the
+        // rule although it had some 300px of room to spare for a placeholder
+        // that needed 229. Measured against the real chrome (header, title
+        // row and the 56px bar), the room runs from ~150px on a 560px window
+        // to ~320px on a 730px one, and the clamp above now follows that
+        // instead of sitting on a floor none of the short ones could take.
+        // It is decoration — the message and the button are the content — so
+        // below this it still steps aside rather than crush them.
         // The threshold is the window with the toolbar hidden, which is what a
-        // media query measures, so it allows for the ~60px the toolbar takes
+        // media query measures, so it allows for the ~75px the toolbar takes
         // back when it is showing.
-        "@media (max-width: 899.95px) and (max-height: 740px)": {
+        "@media (max-width: 899.95px) and (max-height: 660px)": {
           display: "none",
         },
         boxSizing: "border-box",
