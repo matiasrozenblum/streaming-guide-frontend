@@ -9,6 +9,20 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
+### Changed
+
+### Removed
+
+### Fixed
+
+- **La placa vacía de Mi resumen no se dibujaba en casi ningún teléfono.** Quedaba solo el texto y el botón, con media pantalla libre debajo. La regla que la esconde en pantallas sin lugar medía contra 740px de alto, y ahí entra casi cualquier teléfono con un navegador: un iPhone Pro Max en Chrome reporta unos 733px cuando la barra se retrae, así que caía dentro de la regla aun teniendo unos 300px de sobra para una placa que pedía 229. El umbral baja a 660px y el piso del tamaño, de 120px de ancho a 90, que es lo que permite que en vez de desaparecer se achique: medido contra el cromo real —header, fila del título y la barra de 56px— el lugar disponible va de ~150px en una ventana de 560 a ~320px en una de 730, y ahora la placa sigue esa curva en lugar de apoyarse en un piso que ninguna de las cortas podía sostener. Verificado en 360x540, 360x560, 360x600, 375x612, 390x640, 390x664, 393x700, 412x730, 430x683 y 430x790, simulando la diferencia entre el alto que ve la media query y el que ve `svh`: en todos sobra espacio, y en los dos más chicos la placa sigue dando un paso al costado porque genuinamente no entra.
+
+---
+
+## [1.37.0] - 2026-11-13
+
+### Added
+
 - **El alta sigue el diseño de la pantalla de registro**, tanto desde Mi resumen como desde la grilla: el stepper de iconos y etiquetas pasa a **una sola barra que se llena**, en un cuarto del alto que pedía el anterior. No lleva leyenda: "Paso 2 de 4 · Verificar" no se lee como ayuda sino como trámite, y encima repetía lo que ya dice el encabezado que tiene justo arriba. Lo único que agregaba —cuánto falta— es exactamente lo que muestra la barra. El dato no se pierde para quien no la ve: es un `progressbar` con `aria-valuetext`, así que un lector de pantalla escucha la misma frase que antes estaba escrita. La barra mide los pasos que quedaron atrás y no el que tenés delante, así que el último cuarto lo cierra el registro aceptado y no el formulario abierto; si el registro falla, vuelve atrás junto con el error. Aparece **solo en el alta**: quien ya tiene cuenta escribe una dirección y una contraseña, y ahí no hay recorrido que contar. Donde el formulario es la pantalla, el encabezado suma una **flecha de volver**; en el diálogo sobre la grilla la flecha convive con la cruz, porque ahí la cruz tiene que seguir cerrando.
 - **Se va el boton "Volver" de cada paso**: con la flecha en el encabezado —que ahora esta tambien en el dialogo sobre la grilla— habia dos caminos de vuelta para lo mismo. Queda uno. La cruz sigue siendo otra cosa: es la salida, no el paso atras.
 - **"Cambiar correo" en el paso del codigo**, con lapiz, justo debajo de la direccion: el momento en que alguien nota el error de tipeo es leyendo esa linea, y una salida al otro extremo de la pantalla —o una flecha que hay que interpretar— no es una respuesta. Vuelve al panel del correo con la direccion todavia cargada.
