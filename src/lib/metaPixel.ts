@@ -11,7 +11,7 @@
  * metadata) is switched off.
  */
 
-export const META_PIXEL_ID = "1434823278676903";
+export const META_PIXEL_ID = "2432205470918656";
 
 type Fbq = ((...args: unknown[]) => void) & {
   callMethod?: (...args: unknown[]) => void;
