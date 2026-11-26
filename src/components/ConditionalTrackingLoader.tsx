@@ -1,8 +1,9 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { useCookieConsent } from '@/contexts/CookieConsentContext';
 import { useSessionContext } from '@/contexts/SessionContext';
 import { GA_TRACKING_ID, initDatadogRum, setDatadogUser } from '@/lib/gtag';
+import { loadMetaPixel, setMetaPixelConsent } from '@/lib/metaPixel';
 import posthog from 'posthog-js';
 import type { SessionWithToken } from '@/types/session';
 
@@ -181,4 +182,28 @@ export function ConditionalHotjarLoader() {
   }, [hasConsent, hotjarLoaded, isAdmin]);
 
   return null;
-} 
+}
+
+// Meta Pixel, only with marketing consent (skip for admin users). The base
+// code also covers client-side route changes: fbevents.js follows the History
+// API and sends a PageView for every new URL.
+export function ConditionalMetaPixelLoader() {
+  const { hasConsent } = useCookieConsent();
+  const { session } = useSessionContext();
+  const isAdmin = (session as SessionWithToken | null)?.user?.role === 'admin';
+  const allowed = hasConsent('marketing') && !isAdmin;
+  const loadedRef = useRef(false);
+
+  useEffect(() => {
+    if (allowed && !loadedRef.current) {
+      loadedRef.current = true;
+      loadMetaPixel();
+      return;
+    }
+    // Consent withdrawn (or granted again) after the script is in the page:
+    // it cannot be unloaded, but it can be told to stop sending.
+    if (loadedRef.current) setMetaPixelConsent(allowed);
+  }, [allowed]);
+
+  return null;
+}
