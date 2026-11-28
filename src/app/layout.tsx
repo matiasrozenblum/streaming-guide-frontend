@@ -17,6 +17,7 @@ import {
   ConditionalTrackingLoader,
   ConditionalClarityLoader,
   ConditionalHotjarLoader,
+  ConditionalMetaPixelLoader,
 } from "@/components/ConditionalTrackingLoader";
 import PageviewTracker from "@/components/PageviewTracker";
 import LiveStatusListener from "@/components/LiveStatusListener";
@@ -151,6 +152,7 @@ export default function RootLayout({
             <ConditionalTrackingLoader />
             <ConditionalClarityLoader />
             <ConditionalHotjarLoader />
+            <ConditionalMetaPixelLoader />
           </SessionProviderWrapper>
         </CookieConsentProvider>
       </body>
