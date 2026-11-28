@@ -9,13 +9,19 @@ y este proyecto utiliza [SemVer](https://semver.org/lang/es/).
 
 ### Added
 
-- **Meta Pixel (`2432205470918656`) para medir las campañas de Meta**: un PageView por cada página que se abre, también al navegar dentro del sitio sin recargar, y un `CompleteRegistration` por cada alta. El alta se cuenta cuando el backend la confirma, no al tocar el botón: por correo, cuando `/auth/register` crea el usuario; con Google o Apple, cuando se completa el perfil, porque la vuelta de OAuth no distingue a alguien nuevo de alguien que ya tenía cuenta y sin fecha de nacimiento ni género la cuenta todavía no se puede usar. Los eventos salen sin parámetros —ni email ni nombre— y con la configuración automática de Meta apagada. El pixel carga solo si se aceptaron las cookies de marketing del banner y nunca para administradores; si después se retira el consentimiento, se le indica que deje de enviar.
-
 ### Changed
 
 ### Removed
 
 ### Fixed
+
+---
+
+## [1.38.0] - 2026-11-28
+
+### Added
+
+- **Meta Pixel (`2432205470918656`) para medir las campañas de Meta**: un PageView por cada página que se abre, también al navegar dentro del sitio sin recargar, y un `CompleteRegistration` por cada alta. El alta se cuenta cuando el backend la confirma, no al tocar el botón: por correo, cuando `/auth/register` crea el usuario; con Google o Apple, cuando se completa el perfil, porque la vuelta de OAuth no distingue a alguien nuevo de alguien que ya tenía cuenta y sin fecha de nacimiento ni género la cuenta todavía no se puede usar. Los eventos salen sin parámetros —ni email ni nombre— y con la configuración automática de Meta apagada. El pixel carga solo si se aceptaron las cookies de marketing del banner y nunca para administradores; si después se retira el consentimiento, se le indica que deje de enviar.
 
 ---
 
