@@ -21,6 +21,7 @@ import PasswordStep from "./steps/PasswordStep";
 import ExistingUserStep from "./steps/ExistingUserStep";
 import { useDeviceId } from "@/hooks/useDeviceId";
 import { event as gaEvent } from "@/lib/gtag";
+import { trackMetaEvent } from "@/lib/metaPixel";
 import { useTooltip } from "@/contexts/TooltipContext";
 import GoogleIcon from "@mui/icons-material/Google";
 import AppleIcon from "@mui/icons-material/Apple";
@@ -940,6 +941,10 @@ export default function LoginModal({
                     const body = await res.json();
                     if (!res.ok)
                       throw new Error(body.message || "Error registro");
+                    // The account exists from this response on, whatever
+                    // happens to the sign-in below. A retry cannot fire it
+                    // twice: the e-mail is unique, so a second call fails.
+                    trackMetaEvent("CompleteRegistration");
                     const nxt = await signIn("credentials", {
                       redirect: false,
                       accessToken: body.access_token,

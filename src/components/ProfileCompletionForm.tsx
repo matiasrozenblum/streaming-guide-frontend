@@ -29,6 +29,7 @@ import "dayjs/locale/es";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import Header from "./Header";
 import { event as gaEvent } from "@/lib/gtag";
+import { trackMetaEvent } from "@/lib/metaPixel";
 
 interface ProfileCompletionFormProps {
   registrationToken: string;
@@ -168,6 +169,12 @@ export default function ProfileCompletionForm({
       }
 
       const data = await res.json();
+
+      // A Google/Apple sign-up is finished here, not at the OAuth callback:
+      // the backend creates the row then, but without the birth date and
+      // gender the account cannot be used, and that callback cannot tell a
+      // new user from a returning one.
+      trackMetaEvent("CompleteRegistration");
 
       // Update the session with the new tokens
       await signIn("credentials", {
